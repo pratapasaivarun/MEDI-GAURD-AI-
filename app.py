@@ -35,6 +35,7 @@ MAX_PAGES = int(os.getenv("MAX_DOCUMENT_PAGES", "10"))
 MAX_FILE_MB = int(os.getenv("MAX_FILE_MB", "15"))
 APP_ENV = os.getenv("APP_ENV", "development").lower()
 APP_BASE_URL = os.getenv("APP_BASE_URL", "http://localhost:8505").rstrip("/")
+MFA_ENCRYPTION_KEY = os.getenv("MEDIGUARD_MFA_KEY", os.getenv("MEDIGUARD_BACKUP_KEY", ""))
 # Reserved for a future signed-token/session layer. It is intentionally not treated as active security yet.
 AUTH_REQUIRED = os.getenv("AUTH_REQUIRED", "true").lower() == "true"
 STORAGE_DIR = Path(os.getenv("MEDIGUARD_STORAGE_DIR", str(DATA_DIR))).resolve()
@@ -95,14 +96,115 @@ def _claim_access(claim_id: str, user: dict | sqlite3.Row, write: bool = False) 
     return claim
 
 
-def authenticate_user(email: str, password: str) -> sqlite3.Row | None:
+def authenticate_password(email: str, password: str) -> sqlite3.Row | None:
     with db() as conn:
         user = conn.execute("SELECT * FROM users WHERE email=?", (email.strip().lower(),)).fetchone()
     return user if user and user["is_active"] and _verify_password(password, user["password_hash"]) else None
 
 
+def _mfa_fernet():
+    encryption_key = os.getenv("MEDIGUARD_MFA_KEY") or os.getenv("MEDIGUARD_BACKUP_KEY") or MFA_ENCRYPTION_KEY
+    if len(encryption_key) < 32:
+        raise RuntimeError("MEDIGUARD_MFA_KEY or MEDIGUARD_BACKUP_KEY must be configured with at least 32 characters before MFA can be enabled.")
+    from cryptography.fernet import Fernet
+    key = base64.urlsafe_b64encode(hashlib.sha256(encryption_key.encode("utf-8")).digest())
+    return Fernet(key)
+
+
+def authenticate_user(email: str, password: str, totp_code: str | None = None) -> sqlite3.Row | None:
+    user = authenticate_password(email, password)
+    if user is None:
+        return None
+    if user["mfa_enabled"]:
+        if not totp_code or not verify_totp(user, totp_code):
+            return None
+    return user
+
+
+def begin_totp_enrollment(user: dict | sqlite3.Row) -> dict[str, str]:
+    if not user or not user["is_active"]:
+        raise PermissionError("Active authentication is required to enable MFA.")
+    import pyotp
+    secret = pyotp.random_base32()
+    encrypted = _mfa_fernet().encrypt(secret.encode("utf-8")).decode("ascii")
+    with db() as conn:
+        conn.execute("UPDATE users SET mfa_secret_encrypted=?, mfa_enabled=0 WHERE user_id=?", (encrypted, user["user_id"]))
+        conn.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), None, user["user_id"], "mfa_enrollment_started", json.dumps({"user_id": user["user_id"]}), utc_now()))
+    uri = pyotp.TOTP(secret).provisioning_uri(name=user["email"], issuer_name="Medi Gaurd AI")
+    return {"secret": secret, "otpauth_uri": uri}
+
+
+def verify_totp(user: dict | sqlite3.Row, code: str) -> bool:
+    if not user or not user["mfa_secret_encrypted"]:
+        return False
+    import pyotp
+    try:
+        secret = _mfa_fernet().decrypt(user["mfa_secret_encrypted"].encode("ascii")).decode("utf-8")
+        return pyotp.TOTP(secret).verify(str(code).strip(), valid_window=1)
+    except Exception:
+        return False
+
+
+def complete_totp_enrollment(user: dict | sqlite3.Row, code: str) -> sqlite3.Row:
+    require_role(user, "claimant", "reviewer", "admin")
+    current = get_user(user["user_id"])
+    if not current or not verify_totp(current, code):
+        raise ValueError("The MFA code is invalid or expired.")
+    with db() as conn:
+        conn.execute("UPDATE users SET mfa_enabled=1 WHERE user_id=?", (user["user_id"],))
+        conn.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), None, user["user_id"], "mfa_enabled", json.dumps({"user_id": user["user_id"]}), utc_now()))
+        return conn.execute("SELECT * FROM users WHERE user_id=?", (user["user_id"],)).fetchone()
+
+
+def disable_totp(user: dict | sqlite3.Row) -> sqlite3.Row:
+    current = get_user(user["user_id"])
+    require_role(current, "claimant", "reviewer", "admin")
+    with db() as conn:
+        conn.execute("UPDATE users SET mfa_enabled=0, mfa_secret_encrypted=NULL WHERE user_id=?", (user["user_id"],))
+        conn.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), None, user["user_id"], "mfa_disabled", json.dumps({"user_id": user["user_id"]}), utc_now()))
+        return conn.execute("SELECT * FROM users WHERE user_id=?", (user["user_id"],)).fetchone()
+
+
 def _token_hash(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def create_password_reset_request(email: str, expiry_hours: int = 1) -> dict[str, str | None]:
+    email = email.strip().lower()
+    token = secrets.token_urlsafe(32)
+    now = datetime.now(timezone.utc)
+    expires_at = (now + __import__("datetime").timedelta(hours=expiry_hours)).isoformat()
+    with db() as conn:
+        user = conn.execute("SELECT * FROM users WHERE email=?", (email,)).fetchone()
+        if user is None or not user["is_active"]:
+            # Keep the response non-disclosing. The local demo returns no token
+            # for unknown/inactive accounts, while the UI shows one generic message.
+            return {"email": email, "reset_token": None, "expires_at": None}
+        conn.execute("UPDATE password_reset_tokens SET used_at=COALESCE(used_at, ?) WHERE user_id=? AND used_at IS NULL", (utc_now(), user["user_id"]))
+        reset_id = str(uuid.uuid4())
+        conn.execute("INSERT INTO password_reset_tokens(reset_id,user_id,token_hash,expires_at,used_at,created_at) VALUES(?,?,?,?,?,?)", (reset_id, user["user_id"], _token_hash(token), expires_at, None, utc_now()))
+        conn.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), None, user["user_id"], "password_reset_requested", json.dumps({"reset_id": reset_id, "expires_at": expires_at}), utc_now()))
+    return {"email": email, "reset_token": token, "expires_at": expires_at}
+
+
+def complete_password_reset(token: str, password: str) -> sqlite3.Row:
+    if not token or len(token) < 20:
+        raise ValueError("The password-reset token is invalid or incomplete.")
+    password_hash = _hash_password(password)
+    now = datetime.now(timezone.utc)
+    with db() as conn:
+        reset = conn.execute("SELECT * FROM password_reset_tokens WHERE token_hash=?", (_token_hash(token),)).fetchone()
+        if reset is None or reset["used_at"] is not None:
+            raise ValueError("The password-reset token is invalid or has already been used.")
+        if datetime.fromisoformat(reset["expires_at"]) <= now:
+            raise ValueError("The password-reset token has expired. Request a new reset link.")
+        user = conn.execute("SELECT * FROM users WHERE user_id=?", (reset["user_id"],)).fetchone()
+        if user is None or not user["is_active"]:
+            raise ValueError("The account is unavailable.")
+        conn.execute("UPDATE users SET password_hash=?, password_set_at=? WHERE user_id=?", (password_hash, utc_now(), reset["user_id"]))
+        conn.execute("UPDATE password_reset_tokens SET used_at=? WHERE reset_id=?", (utc_now(), reset["reset_id"]))
+        conn.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), None, reset["user_id"], "password_reset_completed", json.dumps({"reset_id": reset["reset_id"]}), utc_now()))
+        return conn.execute("SELECT * FROM users WHERE user_id=?", (reset["user_id"],)).fetchone()
 
 
 def create_reviewer_invitation(actor: dict | sqlite3.Row, email: str, display_name: str, expiry_hours: int = 24) -> dict[str, Any]:
@@ -236,7 +338,18 @@ def init_db() -> None:
                 is_active INTEGER NOT NULL DEFAULT 1,
                 password_set_at TEXT,
                 disabled_at TEXT,
+                mfa_enabled INTEGER NOT NULL DEFAULT 0,
+                mfa_secret_encrypted TEXT,
                 created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS password_reset_tokens (
+                reset_id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                token_hash TEXT NOT NULL UNIQUE,
+                expires_at TEXT NOT NULL,
+                used_at TEXT,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(user_id)
             );
             CREATE TABLE IF NOT EXISTS reviewer_invitations (
                 invitation_id TEXT PRIMARY KEY,
@@ -350,7 +463,7 @@ def init_db() -> None:
                 conn.execute(f"ALTER TABLE claims ADD COLUMN {column} {definition}")
             except sqlite3.OperationalError:
                 pass
-        for column, definition in (("password_hash", "TEXT"), ("is_active", "INTEGER NOT NULL DEFAULT 1"), ("password_set_at", "TEXT"), ("disabled_at", "TEXT")):
+        for column, definition in (("password_hash", "TEXT"), ("is_active", "INTEGER NOT NULL DEFAULT 1"), ("password_set_at", "TEXT"), ("disabled_at", "TEXT"), ("mfa_enabled", "INTEGER NOT NULL DEFAULT 0"), ("mfa_secret_encrypted", "TEXT")):
             try:
                 conn.execute(f"ALTER TABLE users ADD COLUMN {column} {definition}")
             except sqlite3.OperationalError:
@@ -820,6 +933,40 @@ def main() -> None:
         st.caption("Final determination should be confirmed by an authorized reviewer.")
 
     if "user" not in st.session_state:
+        reset_token = st.query_params.get("reset_token")
+        if reset_token:
+            st.subheader("Reset password")
+            with st.form("password_reset_setup"):
+                reset_password = st.text_input("New password", type="password")
+                reset_confirm = st.text_input("Confirm new password", type="password")
+                reset_submit = st.form_submit_button("Set new password")
+            if reset_submit:
+                if reset_password != reset_confirm:
+                    st.error("Passwords do not match.")
+                else:
+                    try:
+                        complete_password_reset(reset_token, reset_password)
+                        st.query_params.clear()
+                        st.success("Password reset completed. Sign in with your new password.")
+                    except ValueError as exc:
+                        st.error(str(exc))
+            return
+        pending_mfa = st.session_state.get("pending_mfa_user")
+        if pending_mfa:
+            st.subheader("MFA verification")
+            st.caption("Enter the six-digit code from your authenticator app.")
+            with st.form("mfa_login"):
+                mfa_code = st.text_input("Authenticator code", max_chars=6)
+                mfa_submit = st.form_submit_button("Verify and sign in")
+            if mfa_submit:
+                current = get_user(pending_mfa["user_id"])
+                if current and verify_totp(current, mfa_code):
+                    st.session_state.user = dict(current)
+                    st.session_state.pop("pending_mfa_user", None)
+                    st.rerun()
+                else:
+                    st.error("Invalid or expired authenticator code.")
+            return
         setup_token = st.query_params.get("setup_token")
         if setup_token:
             st.subheader("Reviewer account setup")
@@ -841,16 +988,19 @@ def main() -> None:
             return
         st.subheader("Secure sign-in")
         st.caption("Claimant accounts can self-register. Reviewer and administrator accounts must be provisioned by an administrator or deployment operator.")
-        login_tab, register_tab = st.tabs(["Sign in", "Register claimant"])
+        login_tab, register_tab, reset_tab = st.tabs(["Sign in", "Register claimant", "Reset password"])
         with login_tab:
             with st.form("login"):
                 email = st.text_input("Email", key="login_email")
                 password = st.text_input("Password", type="password", key="login_password")
                 submitted = st.form_submit_button("Sign in")
             if submitted:
-                user_row = authenticate_user(email, password)
+                user_row = authenticate_password(email, password)
                 if user_row is None:
                     st.error("Invalid email or password.")
+                elif user_row["mfa_enabled"]:
+                    st.session_state.pending_mfa_user = {"user_id": user_row["user_id"]}
+                    st.rerun()
                 else:
                     st.session_state.user = dict(user_row)
                     st.rerun()
@@ -871,11 +1021,44 @@ def main() -> None:
                         st.rerun()
                     except (ValueError, PermissionError) as exc:
                         st.error(str(exc))
+        with reset_tab:
+            st.caption("For privacy, the response does not reveal whether an email exists. In this local demo, an active account produces a one-time reset link for controlled delivery.")
+            with st.form("password_reset_request"):
+                reset_email = st.text_input("Account email", key="reset_email")
+                reset_request = st.form_submit_button("Request password reset")
+            if reset_request:
+                request = create_password_reset_request(reset_email)
+                st.success("If an active account exists, reset instructions have been generated.")
+                if request["reset_token"]:
+                    st.code(f"{APP_BASE_URL}/?reset_token={request['reset_token']}", language="text")
+                    st.caption(f"Expires: {request['expires_at']}. In production this link must be delivered through a protected email or notification channel.")
         return
 
     user = st.session_state.user
     with st.sidebar:
-        st.write(f"Signed in as **{user['display_name']}**")
+        st.write(f"Signed in as **{user['display_name']}** ({user['role']})")
+        with st.expander("MFA security"):
+            if user["mfa_enabled"]:
+                st.success("TOTP MFA enabled")
+                if st.button("Disable MFA", key="disable_mfa"):
+                    st.session_state.user = dict(disable_totp(user))
+                    st.rerun()
+            else:
+                st.caption("Protect this account with an authenticator app.")
+                if st.button("Start TOTP enrollment", key="start_mfa"):
+                    st.session_state.mfa_enrollment = begin_totp_enrollment(user)
+                enrollment = st.session_state.get("mfa_enrollment")
+                if enrollment:
+                    st.code(enrollment["secret"], language="text")
+                    st.caption("Add this secret to an authenticator app, then enter the generated code.")
+                    mfa_confirm = st.text_input("First authenticator code", key="mfa_confirm_code", max_chars=6)
+                    if st.button("Enable MFA", key="enable_mfa"):
+                        try:
+                            st.session_state.user = dict(complete_totp_enrollment(user, mfa_confirm))
+                            st.session_state.pop("mfa_enrollment", None)
+                            st.rerun()
+                        except ValueError as exc:
+                            st.error(str(exc))
         if st.button("Log out"):
             del st.session_state.user
             st.rerun()

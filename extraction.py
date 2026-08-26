@@ -228,11 +228,12 @@ def _ocr_one_image(ocr, image_path: Path, document_id: str, source_name: str, pa
     if not text.strip():
         return None
     score = sum(confidences) / len(confidences) if confidences else 0.0
-    return _evidence(document_id, source_name, page, "paddleocr", text, score)
+    backend_name = "tesseract" if isinstance(ocr, _TesseractOCR) else "paddleocr"
+    return _evidence(document_id, source_name, page, backend_name, text, score)
 
 
 def extract_image_ocr(path: Path, document_id: str, source_name: str) -> tuple[list[Evidence], dict[str, str], int]:
-    """Run PaddleOCR lazily, rendering scanned PDF pages when necessary."""
+    """Run the configured OCR backend lazily, rendering scanned PDF pages when necessary."""
     ocr = _get_ocr()
     evidence: list[Evidence] = []
     raw_by_page: dict[str, str] = {}
@@ -288,6 +289,14 @@ def normalize_documents(documents: list[dict[str, Any]]) -> NormalizedClaim:
 
     def find(patterns: list[str], name: str, amount: bool = False) -> ExtractedField | None:
         raw, matched = _first_match(patterns, all_text)
+        if raw and not amount:
+            # OCR can merge adjacent visual lines. Never accept another labeled
+            # field as the value of the current field; leave it missing so rules
+            # route the claim to Manual Review instead of trusting contamination.
+            contamination = re.search(r"(?:patient|hospital|provider|facility|policy|claim|admission|discharge|diagnosis|total|amount)\s*(?:name|no|number|id|date)?\s*[:#-]", raw, flags=re.IGNORECASE)
+            if contamination:
+                raw = None
+                matched = None
         value = parse_amount(raw) if amount else raw
         ev = next((x for x in evidence if matched and matched.lower() in x.text.lower()), best)
         return _field(name, value, ev)

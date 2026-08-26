@@ -34,6 +34,7 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "ibm/granite4.1:8b")
 MAX_PAGES = int(os.getenv("MAX_DOCUMENT_PAGES", "10"))
 MAX_FILE_MB = int(os.getenv("MAX_FILE_MB", "15"))
 APP_ENV = os.getenv("APP_ENV", "development").lower()
+APP_BASE_URL = os.getenv("APP_BASE_URL", "http://localhost:8505").rstrip("/")
 # Reserved for a future signed-token/session layer. It is intentionally not treated as active security yet.
 AUTH_REQUIRED = os.getenv("AUTH_REQUIRED", "true").lower() == "true"
 STORAGE_DIR = Path(os.getenv("MEDIGUARD_STORAGE_DIR", str(DATA_DIR))).resolve()
@@ -97,7 +98,73 @@ def _claim_access(claim_id: str, user: dict | sqlite3.Row, write: bool = False) 
 def authenticate_user(email: str, password: str) -> sqlite3.Row | None:
     with db() as conn:
         user = conn.execute("SELECT * FROM users WHERE email=?", (email.strip().lower(),)).fetchone()
-    return user if user and _verify_password(password, user["password_hash"]) else None
+    return user if user and user["is_active"] and _verify_password(password, user["password_hash"]) else None
+
+
+def _token_hash(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def create_reviewer_invitation(actor: dict | sqlite3.Row, email: str, display_name: str, expiry_hours: int = 24) -> dict[str, Any]:
+    require_role(actor, "admin")
+    email = email.strip().lower()
+    if "@" not in email or not display_name.strip():
+        raise ValueError("A valid reviewer email and display name are required.")
+    user_id = hashlib.sha256(email.encode()).hexdigest()[:24]
+    now = datetime.now(timezone.utc)
+    expires_at = (now + __import__("datetime").timedelta(hours=expiry_hours)).isoformat()
+    token = secrets.token_urlsafe(32)
+    with db() as conn:
+        conn.execute("INSERT INTO users(user_id,email,display_name,role,password_hash,is_active,password_set_at,disabled_at,created_at) VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(email) DO UPDATE SET display_name=excluded.display_name, role='reviewer', password_hash=NULL, is_active=0, password_set_at=NULL, disabled_at=NULL", (user_id, email, display_name.strip(), "reviewer", None, 0, None, None, utc_now()))
+        conn.execute("UPDATE reviewer_invitations SET used_at=COALESCE(used_at, ?) WHERE user_id=? AND used_at IS NULL", (utc_now(), user_id))
+        invitation_id = str(uuid.uuid4())
+        conn.execute("INSERT INTO reviewer_invitations(invitation_id,user_id,token_hash,expires_at,used_at,created_by,created_at) VALUES(?,?,?,?,?,?,?)", (invitation_id, user_id, _token_hash(token), expires_at, None, actor["user_id"], utc_now()))
+        conn.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), None, actor["user_id"], "reviewer_invitation_created", json.dumps({"user_id": user_id, "email": email, "expires_at": expires_at}), utc_now()))
+    return {"invitation_id": invitation_id, "user_id": user_id, "email": email, "expires_at": expires_at, "setup_token": token}
+
+
+def complete_reviewer_setup(token: str, password: str) -> sqlite3.Row:
+    if not token or len(token) < 20:
+        raise ValueError("The setup token is invalid or incomplete.")
+    password_hash = _hash_password(password)
+    now = datetime.now(timezone.utc)
+    with db() as conn:
+        invitation = conn.execute("SELECT * FROM reviewer_invitations WHERE token_hash=?", (_token_hash(token),)).fetchone()
+        if invitation is None or invitation["used_at"] is not None:
+            raise ValueError("The setup token is invalid or has already been used.")
+        if datetime.fromisoformat(invitation["expires_at"]) <= now:
+            raise ValueError("The setup token has expired. Request a new invitation.")
+        user = conn.execute("SELECT * FROM users WHERE user_id=?", (invitation["user_id"],)).fetchone()
+        if user is None or user["role"] != "reviewer":
+            raise ValueError("The reviewer account is unavailable.")
+        conn.execute("UPDATE users SET password_hash=?, is_active=1, password_set_at=?, disabled_at=NULL WHERE user_id=?", (password_hash, utc_now(), invitation["user_id"]))
+        conn.execute("UPDATE reviewer_invitations SET used_at=? WHERE invitation_id=?", (utc_now(), invitation["invitation_id"]))
+        conn.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), None, invitation["user_id"], "reviewer_account_activated", json.dumps({"invitation_id": invitation["invitation_id"]}), utc_now()))
+        return conn.execute("SELECT * FROM users WHERE user_id=?", (invitation["user_id"],)).fetchone()
+
+
+def provision_reviewer(actor: dict | sqlite3.Row, email: str, display_name: str) -> dict[str, Any]:
+    return create_reviewer_invitation(actor, email, display_name)
+
+
+def set_user_role(actor: dict | sqlite3.Row, user_id: str, role: str) -> sqlite3.Row:
+    require_role(actor, "admin")
+    if role not in ALLOWED_ROLES or role == "admin":
+        raise ValueError("Only claimant and reviewer roles can be assigned here.")
+    with db() as conn:
+        conn.execute("UPDATE users SET role=? WHERE user_id=?", (role, user_id))
+        updated = conn.execute("SELECT * FROM users WHERE user_id=?", (user_id,)).fetchone()
+        if updated is None:
+            raise ValueError("User not found.")
+        conn.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), None, actor["user_id"], "user_role_changed", json.dumps({"user_id": user_id, "role": role}), utc_now()))
+        return updated
+
+
+def disable_user(actor: dict | sqlite3.Row, user_id: str) -> None:
+    require_role(actor, "admin")
+    with db() as conn:
+        conn.execute("UPDATE users SET is_active=0, disabled_at=? WHERE user_id=?", (utc_now(), user_id))
+        conn.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), None, actor["user_id"], "user_disabled", json.dumps({"user_id": user_id}), utc_now()))
 
 
 def register_user(email: str, display_name: str, password: str, role: str = "claimant") -> sqlite3.Row:
@@ -110,7 +177,7 @@ def register_user(email: str, display_name: str, password: str, role: str = "cla
     user_id = hashlib.sha256(email.encode()).hexdigest()[:24]
     with db() as conn:
         try:
-            conn.execute("INSERT INTO users(user_id,email,display_name,role,password_hash,created_at) VALUES(?,?,?,?,?,?)", (user_id, email, display_name.strip(), role, password_hash, utc_now()))
+            conn.execute("INSERT INTO users(user_id,email,display_name,role,password_hash,is_active,password_set_at,disabled_at,created_at) VALUES(?,?,?,?,?,?,?,?,?)", (user_id, email, display_name.strip(), role, password_hash, 1, utc_now(), None, utc_now()))
         except sqlite3.IntegrityError as exc:
             raise ValueError("An account with this email already exists.") from exc
         return conn.execute("SELECT * FROM users WHERE user_id=?", (user_id,)).fetchone()
@@ -147,14 +214,11 @@ def bootstrap_admin_from_env() -> None:
         conn.execute("INSERT INTO users(user_id,email,display_name,role,password_hash,created_at) VALUES(?,?,?,?,?,?) ON CONFLICT(email) DO UPDATE SET role='admin', password_hash=excluded.password_hash", (user_id, email, "Medi Gaurd Administrator", "admin", password_hash, utc_now()))
 
 
-def provision_user_role(actor: dict | sqlite3.Row, email: str, display_name: str, role: str) -> sqlite3.Row:
+def provision_user_role(actor: dict | sqlite3.Row, email: str, display_name: str, role: str) -> dict[str, Any]:
     require_role(actor, "admin")
-    if role not in ALLOWED_ROLES or role == "admin":
-        raise ValueError("Provisioning supports claimant or reviewer roles only.")
-    user_id = hashlib.sha256(email.strip().lower().encode()).hexdigest()[:24]
-    with db() as conn:
-        conn.execute("INSERT INTO users(user_id,email,display_name,role,password_hash,created_at) VALUES(?,?,?,?,?,?) ON CONFLICT(email) DO UPDATE SET display_name=excluded.display_name, role=excluded.role", (user_id, email.strip().lower(), display_name.strip(), role, None, utc_now()))
-        return conn.execute("SELECT * FROM users WHERE user_id=?", (user_id,)).fetchone()
+    if role != "reviewer":
+        raise ValueError("This setup flow provisions reviewer accounts only.")
+    return create_reviewer_invitation(actor, email, display_name)
 
 
 def init_db() -> None:
@@ -167,7 +231,20 @@ def init_db() -> None:
                 display_name TEXT NOT NULL,
                 role TEXT NOT NULL DEFAULT 'claimant',
                 password_hash TEXT,
+                is_active INTEGER NOT NULL DEFAULT 1,
+                password_set_at TEXT,
+                disabled_at TEXT,
                 created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS reviewer_invitations (
+                invitation_id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                token_hash TEXT NOT NULL UNIQUE,
+                expires_at TEXT NOT NULL,
+                used_at TEXT,
+                created_by TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(user_id)
             );
             CREATE TABLE IF NOT EXISTS claims (
                 claim_id TEXT PRIMARY KEY,
@@ -271,7 +348,7 @@ def init_db() -> None:
                 conn.execute(f"ALTER TABLE claims ADD COLUMN {column} {definition}")
             except sqlite3.OperationalError:
                 pass
-        for column, definition in (("password_hash", "TEXT"),):
+        for column, definition in (("password_hash", "TEXT"), ("is_active", "INTEGER NOT NULL DEFAULT 1"), ("password_set_at", "TEXT"), ("disabled_at", "TEXT")):
             try:
                 conn.execute(f"ALTER TABLE users ADD COLUMN {column} {definition}")
             except sqlite3.OperationalError:
@@ -651,6 +728,25 @@ def main() -> None:
         st.caption("Final determination should be confirmed by an authorized reviewer.")
 
     if "user" not in st.session_state:
+        setup_token = st.query_params.get("setup_token")
+        if setup_token:
+            st.subheader("Reviewer account setup")
+            st.caption("This one-time setup token expires after 24 hours and is invalidated after successful use.")
+            with st.form("reviewer_setup"):
+                setup_password = st.text_input("Create password", type="password")
+                setup_confirm = st.text_input("Confirm password", type="password")
+                setup_submit = st.form_submit_button("Activate reviewer account")
+            if setup_submit:
+                if setup_password != setup_confirm:
+                    st.error("Passwords do not match.")
+                else:
+                    try:
+                        complete_reviewer_setup(setup_token, setup_password)
+                        st.query_params.clear()
+                        st.success("Reviewer account activated. Sign in with your email and new password.")
+                    except ValueError as exc:
+                        st.error(str(exc))
+            return
         st.subheader("Secure sign-in")
         st.caption("Claimant accounts can self-register. Reviewer and administrator accounts must be provisioned by an administrator or deployment operator.")
         login_tab, register_tab = st.tabs(["Sign in", "Register claimant"])
@@ -711,6 +807,21 @@ def main() -> None:
             st.caption("Claims requiring human confirmation are listed here; automated recommendations never replace reviewer sign-off.")
             queue_rows = [{"claim_number": item["claim_number"], "patient": item["patient_name"], "status": item["status"].replace("_", " ").title(), "assigned_reviewer": item["assigned_reviewer_id"] or "Unassigned", "priority": item["review_priority"]} for item in queue]
             st.dataframe(queue_rows, width="stretch", hide_index=True)
+        if user["role"] == "admin":
+            with st.expander("Administrator: invite reviewer"):
+                st.caption("The setup token is shown only once in this session. Do not copy it into logs or source code.")
+                with st.form("admin_reviewer_invitation"):
+                    reviewer_email = st.text_input("Reviewer email")
+                    reviewer_name = st.text_input("Reviewer display name")
+                    invite_submit = st.form_submit_button("Create reviewer invitation")
+                if invite_submit:
+                    try:
+                        invitation = provision_user_role(user, reviewer_email, reviewer_name, "reviewer")
+                        st.success("Reviewer account created in inactive state.")
+                        st.code(f"{APP_BASE_URL}/?setup_token={invitation['setup_token']}", language="text")
+                        st.caption(f"Expires: {invitation['expires_at']}. Share this link securely and do not store the token.")
+                    except (ValueError, PermissionError) as exc:
+                        st.error(str(exc))
 
     with tabs[1]:
         st.subheader("Register a new claim")

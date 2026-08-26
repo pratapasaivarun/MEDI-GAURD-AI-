@@ -1,0 +1,92 @@
+{
+  "synthetic_only": true,
+  "fixtures": [
+    {
+      "file": "bill_selectable_text.pdf",
+      "type": "medical_bill",
+      "pages": 1,
+      "expected": {
+        "patient_name": "Alex Morgan",
+        "hospital_name": "North Star General Hospital",
+        "policy_number": "POL-SYN-1001",
+        "total_amount": 145000.0
+      }
+    },
+    {
+      "file": "bill_phone_photo.png",
+      "type": "medical_bill",
+      "pages": 1,
+      "expected": {
+        "patient_name": "Alex Morgan",
+        "hospital_name": "North Star General Hospital",
+        "policy_number": "POL-SYN-1001",
+        "total_amount": 145000.0
+      }
+    },
+    {
+      "file": "bill_low_light.jpg",
+      "type": "medical_bill",
+      "pages": 1,
+      "expected": {
+        "patient_name": "Alex Morgan",
+        "hospital_name": "North Star General Hospital",
+        "policy_number": "POL-SYN-1001",
+        "total_amount": 145000.0
+      },
+      "expected_behavior": "correct_or_manual_review"
+    },
+    {
+      "file": "bill_skewed_compressed.jpg",
+      "type": "medical_bill",
+      "pages": 1,
+      "expected": {
+        "patient_name": "Alex Morgan",
+        "hospital_name": "North Star General Hospital",
+        "policy_number": "POL-SYN-1001",
+        "total_amount": 145000.0
+      },
+      "expected_behavior": "correct_or_manual_review"
+    },
+    {
+      "file": "bill_multi_page.pdf",
+      "type": "medical_bill",
+      "pages": 2,
+      "expected": {
+        "patient_name": "Alex Morgan",
+        "hospital_name": "North Star General Hospital",
+        "policy_number": "POL-SYN-1001",
+        "total_amount": 145000.0
+      }
+    },
+    {
+      "file": "bill_scanned_image_only.pdf",
+      "type": "medical_bill",
+      "pages": 1,
+      "expected": {
+        "patient_name": "Alex Morgan",
+        "hospital_name": "North Star General Hospital",
+        "policy_number": "POL-SYN-1001",
+        "total_amount": 145000.0
+      },
+      "expected_behavior": "correct_or_manual_review"
+    },
+    {
+      "file": "policy_standard.pdf",
+      "type": "policy",
+      "pages": 1,
+      "expected_terms": [
+        "annual_limit",
+        "deductible",
+        "copay_percent",
+        "room_limit_per_day",
+        "waiting_period_months"
+      ]
+    },
+    {
+      "file": "policy_variant_wording.pdf",
+      "type": "policy",
+      "pages": 1,
+      "expected_behavior": "extract_or_manual_review"
+    }
+  ]
+}

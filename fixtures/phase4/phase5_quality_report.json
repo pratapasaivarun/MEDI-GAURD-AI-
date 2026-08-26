@@ -1,0 +1,353 @@
+{
+  "synthetic_only": true,
+  "fixtures": [
+    {
+      "file": "bill_selectable_text.pdf",
+      "pages": 1,
+      "exact_fields": 4,
+      "field_count": 4,
+      "review_fields": [],
+      "missing_fields": [],
+      "fields": {
+        "patient_name": {
+          "expected": "Alex Morgan",
+          "actual": "Alex Morgan",
+          "confidence": 100.0,
+          "needs_review": false,
+          "provenance": [
+            {
+              "source_name": "bill_selectable_text.pdf",
+              "page": 1,
+              "method": "pymupdf"
+            }
+          ]
+        },
+        "hospital_name": {
+          "expected": "North Star General Hospital",
+          "actual": "North Star General Hospital",
+          "confidence": 100.0,
+          "needs_review": false,
+          "provenance": [
+            {
+              "source_name": "bill_selectable_text.pdf",
+              "page": 1,
+              "method": "pymupdf"
+            }
+          ]
+        },
+        "policy_number": {
+          "expected": "POL-SYN-1001",
+          "actual": "POL-SYN-1001",
+          "confidence": 100.0,
+          "needs_review": false,
+          "provenance": [
+            {
+              "source_name": "bill_selectable_text.pdf",
+              "page": 1,
+              "method": "pymupdf"
+            }
+          ]
+        },
+        "total_amount": {
+          "expected": 145000.0,
+          "actual": 145000.0,
+          "confidence": 100.0,
+          "needs_review": false,
+          "provenance": [
+            {
+              "source_name": "bill_selectable_text.pdf",
+              "page": 1,
+              "method": "pymupdf"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "file": "bill_phone_photo.png",
+      "pages": 1,
+      "exact_fields": 4,
+      "field_count": 4,
+      "review_fields": [],
+      "missing_fields": [],
+      "fields": {
+        "patient_name": {
+          "expected": "Alex Morgan",
+          "actual": "Alex Morgan",
+          "confidence": 95.42619047619048,
+          "needs_review": false,
+          "provenance": [
+            {
+              "source_name": "bill_phone_photo.png",
+              "page": 1,
+              "method": "tesseract"
+            }
+          ]
+        },
+        "hospital_name": {
+          "expected": "North Star General Hospital",
+          "actual": "North Star General Hospital",
+          "confidence": 95.42619047619048,
+          "needs_review": false,
+          "provenance": [
+            {
+              "source_name": "bill_phone_photo.png",
+              "page": 1,
+              "method": "tesseract"
+            }
+          ]
+        },
+        "policy_number": {
+          "expected": "POL-SYN-1001",
+          "actual": "POL-SYN-1001",
+          "confidence": 95.42619047619048,
+          "needs_review": false,
+          "provenance": [
+            {
+              "source_name": "bill_phone_photo.png",
+              "page": 1,
+              "method": "tesseract"
+            }
+          ]
+        },
+        "total_amount": {
+          "expected": 145000.0,
+          "actual": 145000.0,
+          "confidence": 95.42619047619048,
+          "needs_review": false,
+          "provenance": [
+            {
+              "source_name": "bill_phone_photo.png",
+              "page": 1,
+              "method": "tesseract"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "file": "bill_low_light.jpg",
+      "pages": 1,
+      "exact_fields": 0,
+      "field_count": 4,
+      "review_fields": [],
+      "missing_fields": [
+        "patient_name",
+        "hospital_name",
+        "total_amount"
+      ],
+      "fields": {
+        "patient_name": {
+          "expected": "Alex Morgan",
+          "actual": null,
+          "confidence": null,
+          "needs_review": null,
+          "provenance": []
+        },
+        "hospital_name": {
+          "expected": "North Star General Hospital",
+          "actual": null,
+          "confidence": null,
+          "needs_review": null,
+          "provenance": []
+        },
+        "policy_number": {
+          "expected": "POL-SYN-1001",
+          "actual": null,
+          "confidence": null,
+          "needs_review": null,
+          "provenance": []
+        },
+        "total_amount": {
+          "expected": 145000.0,
+          "actual": null,
+          "confidence": null,
+          "needs_review": null,
+          "provenance": []
+        }
+      }
+    },
+    {
+      "file": "bill_skewed_compressed.jpg",
+      "pages": 1,
+      "exact_fields": 3,
+      "field_count": 4,
+      "review_fields": [],
+      "missing_fields": [
+        "hospital_name"
+      ],
+      "fields": {
+        "patient_name": {
+          "expected": "Alex Morgan",
+          "actual": "Alex Morgan",
+          "confidence": 93.63425925925925,
+          "needs_review": false,
+          "provenance": [
+            {
+              "source_name": "bill_skewed_compressed.jpg",
+              "page": 1,
+              "method": "tesseract"
+            }
+          ]
+        },
+        "hospital_name": {
+          "expected": "North Star General Hospital",
+          "actual": null,
+          "confidence": null,
+          "needs_review": null,
+          "provenance": []
+        },
+        "policy_number": {
+          "expected": "POL-SYN-1001",
+          "actual": "POL-SYN-1001",
+          "confidence": 93.63425925925925,
+          "needs_review": false,
+          "provenance": [
+            {
+              "source_name": "bill_skewed_compressed.jpg",
+              "page": 1,
+              "method": "tesseract"
+            }
+          ]
+        },
+        "total_amount": {
+          "expected": 145000.0,
+          "actual": 145000.0,
+          "confidence": 93.63425925925925,
+          "needs_review": false,
+          "provenance": [
+            {
+              "source_name": "bill_skewed_compressed.jpg",
+              "page": 1,
+              "method": "tesseract"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "file": "bill_multi_page.pdf",
+      "pages": 2,
+      "exact_fields": 4,
+      "field_count": 4,
+      "review_fields": [],
+      "missing_fields": [],
+      "fields": {
+        "patient_name": {
+          "expected": "Alex Morgan",
+          "actual": "Alex Morgan",
+          "confidence": 100.0,
+          "needs_review": false,
+          "provenance": [
+            {
+              "source_name": "bill_multi_page.pdf",
+              "page": 1,
+              "method": "pymupdf"
+            }
+          ]
+        },
+        "hospital_name": {
+          "expected": "North Star General Hospital",
+          "actual": "North Star General Hospital",
+          "confidence": 100.0,
+          "needs_review": false,
+          "provenance": [
+            {
+              "source_name": "bill_multi_page.pdf",
+              "page": 1,
+              "method": "pymupdf"
+            }
+          ]
+        },
+        "policy_number": {
+          "expected": "POL-SYN-1001",
+          "actual": "POL-SYN-1001",
+          "confidence": 100.0,
+          "needs_review": false,
+          "provenance": [
+            {
+              "source_name": "bill_multi_page.pdf",
+              "page": 1,
+              "method": "pymupdf"
+            }
+          ]
+        },
+        "total_amount": {
+          "expected": 145000.0,
+          "actual": 145000.0,
+          "confidence": 100.0,
+          "needs_review": false,
+          "provenance": [
+            {
+              "source_name": "bill_multi_page.pdf",
+              "page": 2,
+              "method": "pymupdf"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "file": "bill_scanned_image_only.pdf",
+      "pages": 1,
+      "exact_fields": 4,
+      "field_count": 4,
+      "review_fields": [],
+      "missing_fields": [],
+      "fields": {
+        "patient_name": {
+          "expected": "Alex Morgan",
+          "actual": "Alex Morgan",
+          "confidence": 95.11666666666666,
+          "needs_review": false,
+          "provenance": [
+            {
+              "source_name": "bill_scanned_image_only.pdf",
+              "page": 1,
+              "method": "tesseract"
+            }
+          ]
+        },
+        "hospital_name": {
+          "expected": "North Star General Hospital",
+          "actual": "North Star General Hospital",
+          "confidence": 95.11666666666666,
+          "needs_review": false,
+          "provenance": [
+            {
+              "source_name": "bill_scanned_image_only.pdf",
+              "page": 1,
+              "method": "tesseract"
+            }
+          ]
+        },
+        "policy_number": {
+          "expected": "POL-SYN-1001",
+          "actual": "POL-SYN-1001",
+          "confidence": 95.11666666666666,
+          "needs_review": false,
+          "provenance": [
+            {
+              "source_name": "bill_scanned_image_only.pdf",
+              "page": 1,
+              "method": "tesseract"
+            }
+          ]
+        },
+        "total_amount": {
+          "expected": 145000.0,
+          "actual": 145000.0,
+          "confidence": 95.11666666666666,
+          "needs_review": false,
+          "provenance": [
+            {
+              "source_name": "bill_scanned_image_only.pdf",
+              "page": 1,
+              "method": "tesseract"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

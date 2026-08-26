@@ -34,3 +34,13 @@ reports/
 artifacts/
 coverage.xml
 htmlcov/
+*_results.json
+*_metrics*.json
+*.pid
+sample_documents/
+sample_*.pdf
+sample_*.png
+sample_*.jpg
+
+# Local agent and audit workspace
+.agents/

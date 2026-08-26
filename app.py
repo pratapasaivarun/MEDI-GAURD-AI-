@@ -47,7 +47,7 @@ def utc_now() -> str:
 
 
 def db() -> sqlite3.Connection:
-    DATA_DIR.mkdir(exist_ok=True)
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
@@ -199,6 +199,8 @@ def validate_security_config() -> None:
     # SESSION_SECRET is not validated here because the current Streamlit app does
     # not sign sessions or tokens. A future token implementation must add its own
     # fail-closed validation before this setting is used.
+    if STORAGE_DIR == APP_DIR or any(part.lower() in {"public", "static"} for part in STORAGE_DIR.parts):
+        raise RuntimeError("MEDIGUARD_STORAGE_DIR must be a private directory outside public/static paths.")
     STORAGE_DIR.mkdir(parents=True, exist_ok=True)
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -440,6 +442,96 @@ def claim_documents(claim_id: str, user: dict | sqlite3.Row | None = None):
         _claim_access(claim_id, user)
     with db() as conn:
         return conn.execute("SELECT * FROM documents WHERE claim_id=? ORDER BY created_at", (claim_id,)).fetchall()
+
+
+def _secure_unlink(path: Path) -> None:
+    try:
+        path.unlink(missing_ok=True)
+    except OSError as exc:
+        raise RuntimeError("Unable to remove protected document storage.") from exc
+
+
+def read_document_bytes(document_id: str, actor: dict | sqlite3.Row) -> tuple[bytes, str, str]:
+    with db() as conn:
+        document = conn.execute("SELECT * FROM documents WHERE document_id=?", (document_id,)).fetchone()
+    if document is None:
+        raise PermissionError("Document not found or unavailable.")
+    path = secure_document_path(document, actor)
+    return path.read_bytes(), document["original_name"], document["document_type"]
+
+
+def delete_document(document_id: str, actor: dict | sqlite3.Row) -> None:
+    require_role(actor, "admin")
+    with db() as conn:
+        document = conn.execute("SELECT * FROM documents WHERE document_id=?", (document_id,)).fetchone()
+        if document is None:
+            raise ValueError("Document not found.")
+        path = secure_document_path(document, actor)
+        _secure_unlink(path)
+        conn.execute("DELETE FROM documents WHERE document_id=?", (document_id,))
+        conn.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), document["claim_id"], actor["user_id"], "document_deleted", json.dumps({"document_id": document_id, "original_name": document["original_name"]}), utc_now()))
+
+
+def purge_expired_documents(actor: dict | sqlite3.Row, retention_days: int) -> int:
+    require_role(actor, "admin")
+    if retention_days < 1:
+        raise ValueError("Retention must be at least one day.")
+    cutoff = datetime.now(timezone.utc) - __import__("datetime").timedelta(days=retention_days)
+    with db() as conn:
+        documents = conn.execute("SELECT * FROM documents WHERE created_at < ?", (cutoff.isoformat(),)).fetchall()
+    for document in documents:
+        delete_document(document["document_id"], actor)
+    return len(documents)
+
+
+def create_encrypted_backup(actor: dict | sqlite3.Row, destination: str | Path) -> Path:
+    require_role(actor, "admin")
+    backup_key = os.getenv("MEDIGUARD_BACKUP_KEY", "")
+    if len(backup_key) < 32:
+        raise RuntimeError("MEDIGUARD_BACKUP_KEY must be configured with at least 32 characters for encrypted backups.")
+    try:
+        from cryptography.fernet import Fernet
+    except ImportError as exc:
+        raise RuntimeError("Install cryptography before creating encrypted backups.") from exc
+    key = base64.urlsafe_b64encode(hashlib.sha256(backup_key.encode("utf-8")).digest())
+    destination = Path(destination).resolve()
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if destination.suffix != ".enc":
+        destination = destination.with_suffix(destination.suffix + ".enc")
+    import tempfile
+    with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as temp:
+        temp_path = Path(temp.name)
+    try:
+        source = sqlite3.connect(DB_PATH)
+        target = sqlite3.connect(temp_path)
+        with target:
+            source.backup(target)
+        target.close()
+        source.close()
+        encrypted = Fernet(key).encrypt(temp_path.read_bytes())
+        destination.write_bytes(encrypted)
+    finally:
+        temp_path.unlink(missing_ok=True)
+    with db() as conn:
+        conn.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), None, actor["user_id"], "encrypted_backup_created", json.dumps({"destination": str(destination.name)}), utc_now()))
+    return destination
+
+
+def restore_encrypted_backup(actor: dict | sqlite3.Row, source: str | Path, destination: str | Path | None = None) -> Path:
+    require_role(actor, "admin")
+    backup_key = os.getenv("MEDIGUARD_BACKUP_KEY", "")
+    if len(backup_key) < 32:
+        raise RuntimeError("MEDIGUARD_BACKUP_KEY must be configured with at least 32 characters for encrypted backups.")
+    from cryptography.fernet import Fernet, InvalidToken
+    key = base64.urlsafe_b64encode(hashlib.sha256(backup_key.encode("utf-8")).digest())
+    source = Path(source).resolve()
+    destination = Path(destination or (source.with_suffix(".restored.sqlite"))).resolve()
+    try:
+        plaintext = Fernet(key).decrypt(source.read_bytes())
+    except InvalidToken as exc:
+        raise ValueError("Encrypted backup authentication failed.") from exc
+    destination.write_bytes(plaintext)
+    return destination
 
 
 def reviewer_queue(user: dict | sqlite3.Row | None = None):

@@ -1,10 +1,9 @@
-streamlit>=1.40.0
+streamlit>=1.62.0
 requests>=2.32.0
 python-dotenv>=1.0.0
 pymupdf>=1.24.0
 pydantic>=2.8.0
-# PaddlePaddle 2.6.1 is unavailable for this Python 3.13 Windows environment.
-# Image OCR uses the stable Tesseract backend instead.
+# Tesseract is the sole OCR engine in this academic prototype; PaddleOCR is deferred.
 pytesseract>=0.3.13
 Pillow>=10.0.0
 langgraph>=0.2.0

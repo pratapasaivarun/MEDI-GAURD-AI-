@@ -1,0 +1,82 @@
+{
+  "TC001": {
+    "bill_file": "Bill001.pdf",
+    "policy_file": "Star_Health.pdf",
+    "decision": "Approved",
+    "reason": "Covered Treatment",
+    "appeal_required": false,
+    "appeal_template": null
+  },
+  "TC002": {
+    "bill_file": "Bill002.pdf",
+    "policy_file": "HDFC_ERGO.pdf",
+    "decision": "Rejected",
+    "reason": "Waiting Period",
+    "appeal_required": true,
+    "appeal_template": "Waiting_Period.docx"
+  },
+  "TC003": {
+    "bill_file": "Bill003.pdf",
+    "policy_file": "Care_Health.pdf",
+    "decision": "Partial",
+    "reason": "Room Rent Limit",
+    "appeal_required": true,
+    "appeal_template": "Room_Rent_Limit.docx"
+  },
+  "TC004": {
+    "bill_file": "Bill004.pdf",
+    "policy_file": "Niva_Bupa.pdf",
+    "decision": "Rejected",
+    "reason": "Exclusion Clause",
+    "appeal_required": true,
+    "appeal_template": "Exclusion_Clause.docx"
+  },
+  "TC005": {
+    "bill_file": "Bill005.pdf",
+    "policy_file": "ICICI_Lombard.pdf",
+    "decision": "Rejected",
+    "reason": "Missing Documents",
+    "appeal_required": true,
+    "appeal_template": "Missing_Documents.docx"
+  },
+  "TC006": {
+    "bill_file": "Bill006.pdf",
+    "policy_file": "Tata_AIG.pdf",
+    "decision": "Approved",
+    "reason": "Covered Treatment",
+    "appeal_required": false,
+    "appeal_template": null
+  },
+  "TC007": {
+    "bill_file": "Bill007.pdf",
+    "policy_file": "ACKO.pdf",
+    "decision": "Rejected",
+    "reason": "Medical Necessity",
+    "appeal_required": true,
+    "appeal_template": "Medical_Necessity.docx"
+  },
+  "TC008": {
+    "bill_file": "Bill008.pdf",
+    "policy_file": "Go_Digit.pdf",
+    "decision": "Partial",
+    "reason": "Partial Settlement",
+    "appeal_required": true,
+    "appeal_template": "Partial_Claim.docx"
+  },
+  "TC009": {
+    "bill_file": "Bill009.pdf",
+    "policy_file": "Bajaj_Allianz.pdf",
+    "decision": "Rejected",
+    "reason": "Pre-Authorization",
+    "appeal_required": true,
+    "appeal_template": "Pre_Authorization.docx"
+  },
+  "TC010": {
+    "bill_file": "Bill010.pdf",
+    "policy_file": "Reliance_General.pdf",
+    "decision": "Approved",
+    "reason": "Covered Treatment",
+    "appeal_required": false,
+    "appeal_template": null
+  }
+}

@@ -1,4 +1,4 @@
-"""Two-call LangGraph workflow for policy interpretation and claim decisions."""
+"""One-call LangGraph workflow: retrieval/routing are deterministic; only decision uses the LLM."""
 from __future__ import annotations
 
 import json
@@ -16,11 +16,12 @@ except ImportError:  # Keep the module importable until dependencies are install
     StateGraph = None
 
 OLLAMA_HOST = __import__("os").getenv("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
+# Granite is the installed CPU-only inference model for this project.
 OLLAMA_MODEL = __import__("os").getenv("OLLAMA_MODEL", "ibm/granite4.1:8b")
 OLLAMA_TIMEOUT = int(__import__("os").getenv("OLLAMA_TIMEOUT_SECONDS", "120"))
 OLLAMA_NUM_CTX = int(__import__("os").getenv("OLLAMA_NUM_CTX", "2048"))
 OLLAMA_NUM_THREAD = int(__import__("os").getenv("OLLAMA_NUM_THREAD", str(__import__("os").cpu_count() or 4)))
-POLICY_RESPONSE_SCHEMA = {"type": "object", "properties": {"findings": {"type": "array", "items": {"type": "object", "properties": {"clause_id": {"type": "string"}, "interpretation": {"type": "string"}, "applicability": {"type": "string"}, "citation": {"type": "string"}}, "required": ["clause_id", "interpretation", "applicability", "citation"]}}, "missing_evidence": {"type": "array", "items": {"type": "string"}}, "confidence": {"type": "number"}}, "required": ["findings", "missing_evidence", "confidence"]}
+OLLAMA_KEEP_ALIVE = __import__("os").getenv("OLLAMA_KEEP_ALIVE", "30m")
 DECISION_RESPONSE_SCHEMA = {"type": "object", "properties": {"status": {"type": "string", "enum": ["approved", "partially_approved", "rejected", "manual_review"]}, "reasons": {"type": "array", "items": {"type": "string"}}, "policy_citations": {"type": "array", "items": {"type": "string"}}, "confidence": {"type": "number"}, "reviewer_note": {"type": "string"}}, "required": ["status", "reasons", "policy_citations", "confidence", "reviewer_note"]}
 METRICS_PATH = Path(__import__("os").getenv("AGENT_METRICS_PATH", "data/agent_metrics.jsonl"))
 
@@ -29,7 +30,7 @@ def warm_ollama() -> None:
     """Preload Granite once before the first real agent call in a session."""
     response = requests.post(
         f"{OLLAMA_HOST}/api/generate",
-        json={"model": OLLAMA_MODEL, "prompt": "Return only OK.", "stream": False, "keep_alive": "10m", "options": {"num_predict": 4}},
+        json={"model": OLLAMA_MODEL, "prompt": "Return only OK.", "stream": False, "keep_alive": OLLAMA_KEEP_ALIVE, "options": {"num_predict": 4}},
         timeout=(5, OLLAMA_TIMEOUT),
     )
     response.raise_for_status()
@@ -94,7 +95,7 @@ def _ollama_json(system: str, prompt: str, list_key: str = "items", agent_name: 
         "model": OLLAMA_MODEL,
         "stream": False,
         "format": response_schema or "json",
-        "keep_alive": "10m",
+        "keep_alive": OLLAMA_KEEP_ALIVE,
         "options": {"temperature": 0.0, "num_predict": 192, "num_ctx": OLLAMA_NUM_CTX, "num_thread": OLLAMA_NUM_THREAD},
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
     }
@@ -158,38 +159,32 @@ def policy_agent_node(state: ClaimWorkflowState) -> ClaimWorkflowState:
     if progress:
         progress("Policy Agent: retrieving relevant policy evidence...")
     evidence = retrieve_policy_evidence(state.get("policy_text", ""), state.get("normalized_claim", {}), state.get("policy_id", ""), limit=2)
-    compact_claim = {key: value.get("value") for key, value in state.get("normalized_claim", {}).items() if isinstance(value, dict) and value.get("value") is not None and key in {"policy_number", "diagnosis", "total_amount"}}
-    compact_evidence = [{"clause_id": item.get("clause_id"), "page": item.get("page"), "text": str(item.get("text", ""))[:350]} for item in evidence]
-    prompt = json.dumps({"claim": compact_claim, "policy_evidence": compact_evidence}, ensure_ascii=False, separators=(",", ":"))
-    try:
-        findings = _ollama_json(
-            "You are the Medi Gaurd Policy Agent. Use only supplied evidence. Return compact JSON exactly with keys findings, missing_evidence, confidence. Include at most 2 findings. Each finding must have clause_id, interpretation (under 20 words), applicability (under 10 words), citation. Use short arrays and no extra keys.",
-            prompt,
-            list_key="findings",
-            agent_name="policy_agent",
-            response_schema=POLICY_RESPONSE_SCHEMA,
-        )
-    except (RuntimeError, requests.RequestException) as exc:
-        findings = {"findings": [], "missing_evidence": ["Policy Agent response was unavailable or invalid."], "confidence": 0, "_fallback": True, "_error": str(exc)}
-    findings["retrieved_evidence"] = evidence
+    # The Policy Agent is intentionally retrieval-only on CPU-only hardware.
+    # It passes source clauses to the Decision Agent without LLM interpretation.
+    findings = {
+        "findings": [{"clause_id": item.get("clause_id"), "citation": item.get("clause_id"), "page": item.get("page"), "text": str(item.get("text", ""))[:350]} for item in evidence],
+        "missing_evidence": [] if evidence else ["No policy evidence was retrieved."],
+        "confidence": 1.0 if evidence else 0.0,
+        "retrieved_evidence": evidence,
+    }
     if progress:
         progress("Policy Agent complete. Decision Agent: evaluating claim and rule results...")
-    return {**state, "policy_evidence": evidence, "policy_findings": findings, "llm_calls": state.get("llm_calls", 0) + 1}
+    return {**state, "policy_evidence": evidence, "policy_findings": findings}
 
 
 def decision_agent_node(state: ClaimWorkflowState) -> ClaimWorkflowState:
     progress = state.get("progress_callback")
-    if state.get("policy_findings", {}).get("_fallback"):
-        decision = {"status": "manual_review", "reasons": ["Policy Agent output was unavailable or invalid; an authorized reviewer must verify policy coverage."], "policy_citations": [], "confidence": 0, "reviewer_note": "Automatic decision was blocked because policy interpretation was not reliable.", "_fallback": True}
+    if not state.get("policy_evidence"):
+        decision = {"status": "manual_review", "reasons": ["No policy evidence was retrieved; an authorized reviewer must verify coverage."], "policy_citations": [], "confidence": 0, "reviewer_note": "Automatic decision was blocked because policy evidence was unavailable.", "_fallback": True}
         if progress:
-            progress("Policy Agent output was invalid. Safe Manual Review result created; Decision Agent was not called.")
+            progress("No policy evidence was retrieved. Safe Manual Review result created; Decision Agent was not called.")
         return {**state, "decision": decision}
     if progress:
         progress("Decision Agent: generating final structured decision...")
     normalized = state.get("normalized_claim", {})
     compact_claim = {key: value.get("value") for key, value in normalized.items() if isinstance(value, dict) and value.get("value") is not None and key in {"patient_name", "hospital_name", "policy_number", "diagnosis", "total_amount"}}
     policy_findings = state.get("policy_findings", {})
-    compact_policy = {"findings": policy_findings.get("findings", [])[:2], "missing_evidence": policy_findings.get("missing_evidence", [])[:3], "confidence": policy_findings.get("confidence")}
+    compact_policy = {"evidence": policy_findings.get("findings", [])[:2], "missing_evidence": policy_findings.get("missing_evidence", [])[:3]}
     rules = state.get("rule_results", {})
     compact_rules = {key: rules.get(key) for key in ("status", "covered_amount", "deductible", "copayment", "payable_amount", "warnings") if key in rules}
     prompt = json.dumps({"claim": compact_claim, "policy": compact_policy, "rules": compact_rules}, ensure_ascii=False, separators=(",", ":"))
@@ -204,10 +199,13 @@ def decision_agent_node(state: ClaimWorkflowState) -> ClaimWorkflowState:
     except (RuntimeError, requests.RequestException) as exc:
         decision = {"status": "manual_review", "reasons": ["Decision Agent response was unavailable or invalid."], "policy_citations": [], "confidence": 0, "reviewer_note": "An authorized reviewer must confirm the determination.", "_fallback": True, "_error": str(exc)}
     allowed = {"approved", "partially_approved", "rejected", "manual_review"}
-    if decision.get("status") not in allowed:
-        decision["status"] = state.get("rule_results", {}).get("status", "manual_review")
-    if state.get("rule_results", {}).get("status") == "manual_review":
-        decision["status"] = "manual_review"
+    rule_status = state.get("rule_results", {}).get("status", "manual_review")
+    # The LLM explains the deterministic result; it never adjudicates around
+    # coverage arithmetic, exclusions, or safety gates computed by rules.py.
+    decision["status"] = rule_status if rule_status in allowed else "manual_review"
+    evidence_ids = {str(item.get("clause_id")) for item in state.get("policy_evidence", [])}
+    citations = [str(item) for item in decision.get("policy_citations", []) if str(item) in evidence_ids]
+    decision["policy_citations"] = citations or sorted(evidence_ids)[:2]
     if progress:
         progress("Decision Agent complete. Rendering evidence-backed result...")
     return {**state, "decision": decision, "llm_calls": state.get("llm_calls", 0) + 1}

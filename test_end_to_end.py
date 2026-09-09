@@ -68,7 +68,7 @@ print('=== 7. Two-agent LangGraph workflow ===')
 workflow = run_claim_workflow(normalized, policy_doc['text'], rules, policy_id='POL-HEALTH-45821-e2e')
 decision = workflow.get('decision', {})
 print(json.dumps({'status': decision.get('status'), 'confidence': decision.get('confidence'), 'llm_calls': workflow.get('llm_calls'), 'evidence_count': len(workflow.get('policy_evidence', []))}, indent=2))
-assert workflow.get('llm_calls') == 2, workflow
+assert workflow.get('llm_calls') == 1, workflow
 assert decision.get('status') in {'approved', 'partially_approved', 'rejected', 'manual_review'}, decision
 
 print('E2E_TEST_OK')

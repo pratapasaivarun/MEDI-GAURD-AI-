@@ -1,0 +1,19 @@
+Sunrise Care Hospital
+MG Road, Pune, Maharashtra 411001
+Phone: (020) 555-0182
+MEDICAL BILL — SYNTHETIC TEST
+NOT A REAL MEDICAL BILL
+Statement Date: 08/23/2026
+Claim Number: CLM-DEMO-2026-001
+Patient Name: Riya Sharma
+Policy Number: POL-DEMO-2026-001
+Hospital: Sunrise Care Hospital
+Diagnosis: Acute appendicitis
+Admission Date: 08/20/2026
+Discharge Date: 08/23/2026
+Total Amount: INR 145000
+Diagnostic tests: INR 16000
+ITEMIZED CHARGES
+Room charges: INR 18000
+Doctor consultation: INR 12000
+Surgery a

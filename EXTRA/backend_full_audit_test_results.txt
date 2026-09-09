@@ -1,0 +1,134 @@
+=== test_auth_lifecycle.py: PASS ===
+AUTH_LIFECYCLE_OK
+
+=== test_core_advancements.py: PASS ===
+CORE_ADVANCEMENTS_OK
+
+=== test_dynamic_policy_terms.py: PASS ===
+warning: The `fitz` API is deprecated and will be removed in future. Use `import pymupdf` instead.
+TERMS= {"annual_limit": {"term": "annual_limit", "value": "500000", "confidence": 0.95, "source_text": "Sample Health Insurance Policy\nPolicy Number: POL-HEALTH-45821\nInsured Name: Jane Doe\nInsurer: Example Health Insurance Ltd.\nPolicy Effective Date: 2026-01-01\nPolicy Expiry Date: 2026-12-31\nCoverage Summary\nInpatient hospitalization is covered up to the annual policy limit.\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent of the eligible amount\nRoom and Board Limit: INR 5000 per day\nPre-existing condition waiting period: 24 months\nRequired Documents\nThe claimant should", "source_page": 1, "source_name": "sample_policy.pdf", "method": "deterministic_regex"}, "deductible": {"term": "deductible", "value": "10000", "confidence": 0.95, "source_text": "Sample Health Insurance Policy\nPolicy Number: POL-HEALTH-45821\nInsured Name: Jane Doe\nInsurer: Example Health Insurance Ltd.\nPolicy Effective Date: 2026-01-01\nPolicy Expiry Date: 2026-12-31\nCoverage Summary\nInpatient hospitalization is covered up to the annual policy limit.\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent of the eligible amount\nRoom and Board Limit: INR 5000 per day\nPre-existing condition waiting period: 24 months\nRequired Documents\nThe claimant should", "source_page": 1, "source_name": "sample_policy.pdf", "method": "deterministic_regex"}, "copay_percent": {"term": "copay_percent", "value": "10", "confidence": 0.95, "source_text": "Sample Health Insurance Policy\nPolicy Number: POL-HEALTH-45821\nInsured Name: Jane Doe\nInsurer: Example Health Insurance Ltd.\nPolicy Effective Date: 2026-01-01\nPolicy Expiry Date: 2026-12-31\nCoverage Summary\nInpatient hospitalization is covered up to the annual policy limit.\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent of the eligible amount\nRoom and Board Limit: INR 5000 per day\nPre-existing condition waiting period: 24 months\nRequired Documents\nThe claimant should", "source_page": 1, "source_name": "sample_policy.pdf", "method": "deterministic_regex"}, "room_limit_per_day": {"term": "room_limit_per_day", "value": "5000", "confidence": 0.95, "source_text": "Sample Health Insurance Policy\nPolicy Number: POL-HEALTH-45821\nInsured Name: Jane Doe\nInsurer: Example Health Insurance Ltd.\nPolicy Effective Date: 2026-01-01\nPolicy Expiry Date: 2026-12-31\nCoverage Summary\nInpatient hospitalization is covered up to the annual policy limit.\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent of the eligible amount\nRoom and Board Limit: INR 5000 per day\nPre-existing condition waiting period: 24 months\nRequired Documents\nThe claimant should", "source_page": 1, "source_name": "sample_policy.pdf", "method": "deterministic_regex"}, "waiting_period_months": {"term": "waiting_period_months", "value": 24, "confidence": 0.95, "source_text": "Sample Health Insurance Policy\nPolicy Number: POL-HEALTH-45821\nInsured Name: Jane Doe\nInsurer: Example Health Insurance Ltd.\nPolicy Effective Date: 2026-01-01\nPolicy Expiry Date: 2026-12-31\nCoverage Summary\nInpatient hospitalization is covered up to the annual policy limit.\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent of the eligible amount\nRoom and Board Limit: INR 5000 per day\nPre-existing condition waiting period: 24 months\nRequired Documents\nThe claimant should", "source_page": 1, "source_name": "sample_policy.pdf", "method": "deterministic_regex"}}
+RESULT= manual_review 121500.0 confidence= 0.95
+DYNAMIC_POLICY_TERMS_TEST_OK
+
+=== test_end_to_end.py: PASS ===
+=== 1. PDF extraction ===
+warning: The `fitz` API is deprecated and will be removed in future. Use `import pymupdf` instead.
+pages= 1 evidence= 1
+=== 2. Image extraction ===
+pages= 1 evidence= 1
+=== 3. Normalization ===
+{
+  "patient_name": "Jane Doe",
+  "hospital_name": "City Care Hospital",
+  "policy_number": "POL-HEALTH-45821",
+  "total_amount": 145000.0,
+  "missing_fields": [],
+  "review_fields": []
+}
+=== 4. Deterministic rules ===
+status= approved payable= 121500.0
+=== 5. ChromaDB policy index and retrieval ===
+indexed= 1 retrieved= 1
+=== 6. Ollama warm-up ===
+warmup_seconds= 23.86
+=== 7. Two-agent LangGraph workflow ===
+{
+  "status": "approved",
+  "confidence": 0.8,
+  "llm_calls": 2,
+  "evidence_count": 1
+}
+E2E_TEST_OK
+
+=== test_line_items.py: PASS ===
+LINE_ITEMS_OK
+
+=== test_normalization_policy_isolation.py: PASS ===
+warning: The `fitz` API is deprecated and will be removed in future. Use `import pymupdf` instead.
+NORMALIZATION_POLICY_ISOLATION_OK
+
+=== test_ocr_fallback.py: PASS ===
+pages= 1
+evidence_count= 1
+confidence= 95.34301587301587
+SAMPLE MEDICAL BILL - IMAGE OCR TEST
+Claim Number: CLM-2026-0001
+Patient Name: Jane Doe
+Hospital: City Care Hospital
+Policy Number: POL-HEALTH-45821
+Admission Date: 2026-08-20
+Discharge Date: 2026-08-23
+Diagnosis: Acute appendicitis
+Room charges: INR 15000
+Doctor consultation: INR 12000
+Surgery and procedure: INR 85000
+Medicines: INR 18000
+Diagnostic tests: INR 15000
+Total Amount: INR 145000
+Synthetic document for testing only.
+TESSERACT_IMAGE_OCR_TEST_OK
+
+=== test_ollama_warmup.py: PASS ===
+model= ibm/granite4.1:8b
+timeout_seconds= 120
+warmup_seconds= 19.95
+OLLAMA_WARMUP_TEST_OK
+
+=== test_phase1_decisions.py: PASS ===
+PHASE1_FIVE_DECISIONS_OK
+
+=== test_phase2_agent_failures.py: PASS ===
+PHASE2_AGENT_FAILURES_OK
+
+=== test_phase2_failure_paths.py: PASS ===
+PHASE2_FAILURE_PATHS_OK
+
+=== test_phase2_real_fixtures.py: PASS ===
+warning: The `fitz` API is deprecated and will be removed in future. Use `import pymupdf` instead.
+PHASE2_REAL_FIXTURES_OK
+
+=== test_phase4_fixture_matrix.py: PASS ===
+warning: The `fitz` API is deprecated and will be removed in future. Use `import pymupdf` instead.
+PHASE4_FIXTURE_MATRIX_OK 8 synthetic_only=True
+
+=== test_phase5_real_document_quality.py: PASS ===
+warning: The `fitz` API is deprecated and will be removed in future. Use `import pymupdf` instead.
+PHASE5_REAL_DOCUMENT_QUALITY_OK 6 synthetic_only=True
+bill_selectable_text.pdf exact=4/4 review=[] missing=[]
+bill_phone_photo.png exact=4/4 review=[] missing=[]
+bill_low_light.jpg exact=0/4 review=[] missing=['patient_name', 'hospital_name', 'total_amount']
+bill_skewed_compressed.jpg exact=3/4 review=[] missing=['hospital_name']
+bill_multi_page.pdf exact=4/4 review=[] missing=[]
+bill_scanned_image_only.pdf exact=4/4 review=[] missing=[]
+
+=== test_phase6_business_rules.py: PASS ===
+PHASE6_BUSINESS_RULES_OK
+
+=== test_phase7_data_security.py: PASS ===
+PHASE7_DATA_SECURITY_OK
+
+=== test_policy_and_rules.py: PASS ===
+POLICY_RULE_NEGATIVE_TEST_OK
+
+=== test_policy_controls_batch.py: PASS ===
+POLICY_CONTROLS_BATCH_OK
+
+=== test_reports.py: PASS ===
+REPORT_EXPORT_TEST_OK
+
+=== test_reviewer_controls.py: PASS ===
+REVIEWER_CONTROLS_OK
+
+=== test_reviewer_invitation.py: PASS ===
+REVIEWER_INVITATION_OK
+
+=== test_reviewer_workflow.py: PASS ===
+REVIEWER_WORKFLOW_TEST_OK
+
+=== test_security_access.py: PASS ===
+SECURITY_ACCESS_OK
+
+=== test_structured_adjudication.py: PASS ===
+STRUCTURED_ADJUDICATION_OK
+
+SUMMARY total=24 pass=24 fail=0 timeout=0

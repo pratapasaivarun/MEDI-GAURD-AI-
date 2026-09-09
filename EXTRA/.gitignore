@@ -1,0 +1,46 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+
+# Patient, policy, database, and generated data
+data/
+*.db
+*.sqlite
+*.sqlite3
+uploads/
+policies/
+chroma_index/
+
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Streamlit secrets and logs
+.streamlit/secrets.toml
+*.log
+*.err
+*.out
+
+# Generated reports and test artifacts
+reports/
+artifacts/
+coverage.xml
+htmlcov/
+*_results.json
+*_metrics*.json
+*.pid
+sample_documents/
+sample_*.pdf
+sample_*.png
+sample_*.jpg
+
+# Local agent and audit workspace
+.agents/

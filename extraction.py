@@ -1,8 +1,7 @@
-"""Document extraction and normalization for the Medi Gaurd MVP.
+"""Document extraction and normalization for the Medi Gaurd academic prototype.
 
-The pipeline is intentionally code-first: PyMuPDF and regular expressions handle
-common fields, while PaddleOCR is used only when a PDF has little/no text or when
-an image document is uploaded. Every field retains provenance and confidence.
+The pipeline is intentionally code-first: PyMuPDF and Tesseract OCR handle
+common fields. Every field retains provenance and confidence.
 """
 from __future__ import annotations
 
@@ -58,6 +57,9 @@ class NormalizedClaim:
     missing_fields: list[str] = field(default_factory=list)
     review_fields: list[str] = field(default_factory=list)
     raw_text_by_page: dict[str, str] = field(default_factory=dict)
+    duplicate_candidates: list[dict[str, Any]] = field(default_factory=list)
+    multiple_bill_count: int = 0
+    aggregation_requires_confirmation: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         result = asdict(self)
@@ -173,29 +175,12 @@ class _TesseractOCR:
 
 @lru_cache(maxsize=1)
 def _get_ocr():
-    backend = os.getenv("OCR_BACKEND", "tesseract").lower()
-    if backend == "tesseract":
-        return _TesseractOCR()
-    try:
-        from paddleocr import PaddleOCR
-    except ImportError as exc:
-        raise RuntimeError("PaddleOCR is unavailable. Set OCR_BACKEND=tesseract and install pytesseract/Tesseract-OCR.") from exc
-    language = os.getenv("OCR_LANG", "en")
-    try:
-        return PaddleOCR(lang=language, use_doc_orientation_classify=False, use_doc_unwarping=False, use_textline_orientation=True)
-    except Exception:
-        return PaddleOCR(use_angle_cls=True, lang=language)
+    """Return the prototype's sole supported OCR backend: Tesseract."""
+    return _TesseractOCR()
 
 
 def _ocr_one_image(ocr, image_path: Path, document_id: str, source_name: str, page: int) -> Evidence | None:
-    # PaddleOCR 3.x exposes both methods but its ocr() wrapper may pass the
-    # removed cls argument internally. Prefer predict() for current builds.
-    if hasattr(ocr, "predict"):
-        result = ocr.predict(str(image_path))
-    elif hasattr(ocr, "ocr"):
-        result = ocr.ocr(str(image_path))
-    else:
-        raise RuntimeError("Unsupported PaddleOCR API: expected predict() or ocr().")
+    result = ocr.predict(str(image_path))
 
     lines: list[str] = []
     confidences: list[float] = []
@@ -210,7 +195,6 @@ def _ocr_one_image(ocr, image_path: Path, document_id: str, source_name: str, pa
         except (TypeError, ValueError):
             confidences.append(0.0)
 
-    # PaddleOCR 2.x returns [[box, [text, score]], ...].
     for block in result or []:
         if isinstance(block, dict):
             texts = block.get("rec_texts") or block.get("text") or []
@@ -228,8 +212,7 @@ def _ocr_one_image(ocr, image_path: Path, document_id: str, source_name: str, pa
     if not text.strip():
         return None
     score = sum(confidences) / len(confidences) if confidences else 0.0
-    backend_name = "tesseract" if isinstance(ocr, _TesseractOCR) else "paddleocr"
-    return _evidence(document_id, source_name, page, backend_name, text, score)
+    return _evidence(document_id, source_name, page, "tesseract", text, score)
 
 
 def extract_image_ocr(path: Path, document_id: str, source_name: str) -> tuple[list[Evidence], dict[str, str], int]:
@@ -272,6 +255,58 @@ def extract_document(path: str | Path, document_id: str, source_name: str) -> tu
     return extract_image_ocr(file_path, document_id, source_name)
 
 
+def _infer_line_category(description: str) -> str:
+    value = description.lower()
+    if any(token in value for token in ("room", "icu", "bed", "accommodation")):
+        return "room"
+    if any(token in value for token in ("surgery", "procedure", "operation")):
+        return "surgery"
+    if any(token in value for token in ("medicine", "drug", "pharmacy")):
+        return "pharmacy"
+    if any(token in value for token in ("diagnostic", "test", "lab", "x-ray", "scan")):
+        return "diagnostics"
+    if any(token in value for token in ("doctor", "consultation", "physician")):
+        return "consultation"
+    return "other"
+
+
+def _extract_line_items(text: str, evidence: list[Evidence]) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    pattern = re.compile(r"^\s*([A-Za-z][A-Za-z /&()'_-]{2,80})\s*[:\-]\s*(?:INR|Rs\.?|₹|USD|\$)?\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)\s*$", re.IGNORECASE)
+    for line in text.splitlines():
+        match = pattern.match(line.strip())
+        if not match:
+            continue
+        description = re.sub(r"\s+", " ", match.group(1)).strip()
+        if re.search(r"^(total|grand total|amount payable|net payable|subtotal|discount|tax)\b", description, re.IGNORECASE):
+            continue
+        amount = parse_amount(match.group(2))
+        if amount is None or amount <= 0:
+            continue
+        source = next((item for item in evidence if line.strip().lower() in item.text.lower()), evidence[0] if evidence else None)
+        confidence = source.confidence if source else 0.0
+        items.append({"description": description, "amount": amount, "category": _infer_line_category(description), "date": None, "confidence": confidence, "needs_review": confidence < OCR_REVIEW_THRESHOLD, "evidence": [source.to_dict()] if source else []})
+    return items
+
+
+def detect_duplicate_charges(line_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    candidates: list[dict[str, Any]] = []
+    for index, left in enumerate(line_items):
+        for right in line_items[index + 1:]:
+            left_desc = re.sub(r"\W+", " ", str(left.get("description", "")).lower()).strip()
+            right_desc = re.sub(r"\W+", " ", str(right.get("description", "")).lower()).strip()
+            if left_desc and left_desc == right_desc and money_equal(left.get("amount"), right.get("amount")):
+                candidates.append({"left": left, "right": right, "reason": "same normalized description and amount"})
+    return candidates
+
+
+def money_equal(left: Any, right: Any) -> bool:
+    try:
+        return round(float(left), 2) == round(float(right), 2)
+    except (TypeError, ValueError):
+        return False
+
+
 def normalize_documents(documents: list[dict[str, Any]]) -> NormalizedClaim:
     claim = NormalizedClaim()
     typed_bill_documents = [doc for doc in documents if doc.get("document_type") == "medical_bill"]
@@ -301,14 +336,23 @@ def normalize_documents(documents: list[dict[str, Any]]) -> NormalizedClaim:
         ev = next((x for x in evidence if matched and matched.lower() in x.text.lower()), best)
         return _field(name, value, ev)
 
-    claim.patient_name = find([r"(?:patient|member|insured)\s*name\s*[:#-]\s*([^\n]+)", r"patient\s*[:#-]\s*([^\n]+)"], "patient_name")
-    claim.hospital_name = find([r"(?:hospital|provider|facility)\s*(?:name)?\s*[:#-]\s*([^\n]+)"], "hospital_name")
-    claim.policy_number = find([r"(?:policy|member)\s*(?:no|number|id)\s*[:#-]\s*([A-Z0-9/-]+)"], "policy_number")
-    claim.claim_number = find([r"claim\s*(?:no|number|id)\s*[:#-]\s*([A-Z0-9/-]+)"], "claim_number")
-    claim.admission_date = find([r"(?:admission|admit|date of admission)\s*[:#-]\s*([0-9]{1,4}[/-][0-9]{1,2}[/-][0-9]{1,4})"], "admission_date")
-    claim.discharge_date = find([r"(?:discharge|date of discharge)\s*[:#-]\s*([0-9]{1,4}[/-][0-9]{1,2}[/-][0-9]{1,4})"], "discharge_date")
-    claim.diagnosis = find([r"diagnosis\s*[:#-]\s*([^\n]+)"], "diagnosis")
+    claim.patient_name = find([r"(?:patient|member|insured)\s*name\s*(?:[:#-]\s*)?([^\n]+)", r"patient\s*(?:[:#-]\s*)?([^\n]+)"], "patient_name")
+    claim.hospital_name = find([
+        # Digital PDFs commonly place this compound label and its value on
+        # adjacent lines; match it before the looser hospital/provider rule.
+        r"hospital\s*/\s*provider\s*(?:[:#-]\s*)?([^\n]+)",
+        r"(?:hospital|provider|facility)\s*(?:name)?\s*(?:[:#-]\s*)?([^\n]+)",
+    ], "hospital_name")
+    claim.policy_number = find([r"(?:policy|member)\s*(?:no|number|id)\s*(?:[:#-]\s*)?([A-Z0-9/-]+)"], "policy_number")
+    claim.claim_number = find([r"claim\s*(?:no|number|id)\s*(?:[:#-]\s*)?([A-Z0-9/-]+)"], "claim_number")
+    claim.admission_date = find([r"(?:admission(?:\s+date)?|admit|date\s+of\s+admission)\s*(?:[:#-]\s*)?([0-9]{1,4}[/-][0-9]{1,2}[/-][0-9]{1,4})"], "admission_date")
+    claim.discharge_date = find([r"(?:discharge(?:\s+date)?|date of discharge)\s*(?:[:#-]\s*)?([0-9]{1,4}[/-][0-9]{1,2}[/-][0-9]{1,4})"], "discharge_date")
+    claim.diagnosis = find([r"diagnosis\s*(?:[:#-]\s*)?([^\n]+)"], "diagnosis")
     claim.total_amount = find([r"(?:grand total|total amount|net payable|amount payable|total)\s*(?:[:#-]\s*)?(?:rs\.?|inr|₹|\$)?\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)", r"(?:grand total|total amount|net payable|amount payable|total)\s*(?:[:#-]\s*)?([0-9][0-9,]*(?:\.[0-9]{1,2})?)\s*(?:rs\.?|inr|₹|\$)?"], "total_amount", amount=True)
+    claim.line_items = _extract_line_items(all_text, evidence)
+    claim.duplicate_candidates = detect_duplicate_charges(claim.line_items)
+    claim.multiple_bill_count = len(typed_bill_documents)
+    claim.aggregation_requires_confirmation = len(typed_bill_documents) > 1
     # Do not infer total_amount from the largest currency amount. Policy limits
     # and line items can be larger than the actual bill total; missing explicit
     # totals must remain Manual Review.

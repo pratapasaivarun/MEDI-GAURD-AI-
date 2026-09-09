@@ -1,0 +1,235 @@
+Add:         C7831   Secondary malignant neoplasm of larynx
+Add:         C7832   Secondary malignant neoplasm of pharynx
+Add:         C7983   Secondary malignant neoplasm of oral cavity
+Delete:      D691    Qualitative platelet defects
+Add:         D6911   Glanzmann thrombasthenia
+Add:         D6919   Other qualitative platelet defects
+Add:         E89830  Post bariatric hypoglycemia
+Add:         E89838  Other postprocedural hypoglycemia
+Add:         F64A    Gender identity disorder, in remission
+Delete:      I420    Dilated cardiomyopathy
+Add:         I4200   Dilated cardiomyopathy, unspecified
+Add:         I4201   Familial-genetic dilated cardiomyopathy
+Add:         I4209   Other dilated cardiomyopathy
+Delete:      I428    Other cardiomyopathies
+Add:         I4281   Arrhythmogenic cardiomyopathy
+Add:         I4289   Other cardiomyopathies not elsewhere classified
+Add:         I4722   Catecholaminergic polymorphic ventricular tachycardia [CPVT]
+Delete:      I498    Other specified cardiac arrhythmias
+Add:         I4981   Brugada syndrome
+Add:         I4982   Ventricular bigeminy
+Add:         I4989   Other specified cardiac arrhythmias not elsewhere classified
+Add:         J34830  Odontogenic sinusitis, maxillary sinus
+Add:         J34831  Odontogenic sinusitis, ethmoid sinus
+Add:         J34832  Odontogenic sinusitis, frontal sinus
+Add:         J34833  Odontogenic sinusitis, sphenoid sinus
+Add:         J34839  Odontogenic sinusitis, unspecified
+Add:         J4B     Pulmonary mycetoma
+Add:         K31B    Hypertrophic pyloric stenosis, in childhood
+Add:         K6A01   Prevesical abscess
+Add:         K6A09   Other pelvic abscess
+Add:         K6A8    Other diseases of the pelvis, not elsewhere classified
+Add:         K740A   Hepatic fibrosis, moderate fibrosis
+Add:         K7683   Intestinal failure-associated liver disease
+Revise from: L02232  Carbuncle of back [any part, except buttock]
+Revise to:   L02232  Carbuncle of back [any part, except buttock and flank]
+Add:         L02237  Carbuncle of flank
+Revise from: L03312  Cellulitis of back [any part except buttock]
+Revise to:   L03312  Cellulitis of back [any part except buttock and flank]
+Revise from: L03322  Acute lymphangitis of back [any part except buttock]
+Revise to:   L03322  Acute lymphangitis of back [any part except buttock and flank]
+Add:         M043    VEXAS syndrome
+Add:         M67A01  Plantar fasciitis, right foot
+Add:         M67A02  Plantar fasciitis, left foot
+Add:         M67A09  Plantar fasciitis, unspecified foot
+Delete:      M722    Plantar fascial fibromatosis
+Add:         M7220   Plantar fascial fibromatosis, unspecified foot
+Add:         M7221   Plantar fascial fibromatosis, right foot
+Add:         M7222   Plantar fascial fibromatosis, left foot
+Delete:      M868X1  Other osteomyelitis, shoulder
+Add:         M868X11 Other osteomyelitis, right shoulder
+Add:         M868X12 Other osteomyelitis, left shoulder
+Add:         M868X19 Other osteomyelitis, unspecified shoulder
+Delete:      M868X2  Other osteomyelitis, upper arm
+Add:         M868X21 Other osteomyelitis, right upper arm
+Add:         M868X22 Other osteomyelitis, left upper arm
+Add:         M868X29 Other osteomyelitis, unspecified upper arm
+Delete:      M868X3  Other osteomyelitis, forearm
+Add:         M868X31 Other osteomyelitis, right forearm
+Add:         M868X32 Other osteomyelitis, left forearm
+Add:         M868X39 Other osteomyelitis, unspecified forearm
+Delete:      M868X4  Other osteomyelitis, hand
+Add:         M868X41 Other osteomyelitis, right hand
+Add:         M868X42 Other osteomyelitis, left hand
+Add:         M868X49 Other osteomyelitis, unspecified hand
+Delete:      M868X5  Other osteomyelitis, thigh
+Add:         M868X51 Other osteomyelitis, right thigh
+Add:         M868X52 Other osteomyelitis, left thigh
+Add:         M868X59 Other osteomyelitis, unspecified thigh
+Delete:      M868X6  Other osteomyelitis, lower leg
+Add:         M868X61 Other osteomyelitis, right lower leg
+Add:         M868X62 Other osteomyelitis, left lower leg
+Add:         M868X69 Other osteomyelitis, unspecified lower leg
+Delete:      M868X7  Other osteomyelitis, ankle and foot
+Add:         M868X71 Other osteomyelitis, right ankle and foot
+Add:         M868X72 Other osteomyelitis, left ankle and foot
+Add:         M868X79 Other osteomyelitis, unspecified ankle and foot
+Delete:      M868X8  Other osteomyelitis, other site
+Add:         M868X80 Other osteomyelitis, skull
+Add:         M868X81 Other osteomyelitis, face and sinuses
+Add:         M868X89 Other osteomyelitis, other site
+Add:         N99860  Intraoperative and postprocedural nipple ischemia
+Add:         N99861  Intraoperative and postprocedural nipple necrosis
+Add:         O00121  Right interstitial ectopic pregnancy without intrauterine pregnancy
+Add:         O00122  Left interstitial ectopic pregnancy without intrauterine pregnancy
+Add:         O00129  Unspecified interstitial ectopic pregnancy without intrauterine pregnancy
+Add:         O00131  Right interstitial ectopic pregnancy with intrauterine pregnancy
+Add:         O00132  Left interstitial ectopic pregnancy with intrauterine pregnancy
+Add:         O00139  Unspecified interstitial ectopic pregnancy with intrauterine pregnancy
+Add:         O0031   Cesarean scar ectopic pregnancy without intrauterine pregnancy
+Add:         O0032   Cesarean scar ectopic pregnancy with intrauterine pregnancy
+Add:         O0041   Cervical ectopic pregnancy without intrauterine pregnancy
+Add:         O0042   Cervical ectopic pregnancy with intrauterine pregnancy
+Add:         O00511  Right cornual ectopic pregnancy without intrauterine pregnancy
+Add:         O00512  Left cornual ectopic pregnancy without intrauterine pregnancy
+Add:         O00519  Unspecified cornual ectopic pregnancy without intrauterine pregnancy
+Add:         O00521  Right cornual ectopic pregnancy with intrauterine pregnancy
+Add:         O00522  Left cornual ectopic pregnancy with intrauterine pregnancy
+Add:         O00529  Unspecified cornual ectopic pregnancy with intrauterine pregnancy
+Add:         O3140X0 Continuing pregnancy after vanishing twin syndrome of one fetus or more, unspecified trimester, not applicable or unspecified
+Add:         O3140X1 Continuing pregnancy after vanishing twin syndrome of one fetus or more, unspecified trimester, fetus 1
+Add:         O3140X2 Continuing pregnancy after vanishing twin syndrome of one fetus or more, unspecified trimester, fetus 2
+Add:         O3140X3 Continuing pregnancy after vanishing twin syndrome of one fetus or more, unspecified trimester, fetus 3
+Add:         O3140X4 Continuing pregnancy after vanishing twin syndrome of one fetus or more, unspecified trimester, fetus 4
+Add:         O3140X5 Continuing pregnancy after vanishing twin syndrome of one fetus or more, unspecified trimester, fetus 5
+Add:         O3140X9 Continuing pregnancy after vanishing twin syndrome of one fetus or more, unspecified trimester, other fetus
+Add:         O3141X0 Continuing pregnancy after vanishing twin syndrome of one fetus or more, first trimester, not applicable or unspecified
+Add:         O3141X1 Continuing pregnancy after vanishing twin syndrome of one fetus or more, first trimester, fetus 1
+Add:         O3141X2 Continuing pregnancy after vanishing twin syndrome of one fetus or more, first trimester, fetus 2
+Add:         O3141X3 Continuing pregnancy after vanishing twin syndrome of one fetus or more, first trimester, fetus 3
+Add:         O3141X4 Continuing pregnancy after vanishing twin syndrome of one fetus or more, first trimester, fetus 4
+Add:         O3141X5 Continuing pregnancy after vanishing twin syndrome of one fetus or more, first trimester, fetus 5
+Add:         O3141X9 Continuing pregnancy after vanishing twin syndrome of one fetus or more, first trimester, other fetus
+Add:         O3142X0 Continuing pregnancy after vanishing twin syndrome of one fetus or more, second trimester, not applicable or unspecified
+Add:         O3142X1 Continuing pregnancy after vanishing twin syndrome of one fetus or more, second trimester, fetus 1
+Add:         O3142X2 Continuing pregnancy after vanishing twin syndrome of one fetus or more, second trimester, fetus 2
+Add:         O3142X3 Continuing pregnancy after vanishing twin syndrome of one fetus or more, second trimester, fetus 3
+Add:         O3142X4 Continuing pregnancy after vanishing twin syndrome of one fetus or more, second trimester, fetus 4
+Add:         O3142X5 Continuing pregnancy after vanishing twin syndrome of one fetus or more, second trimester, fetus 5
+Add:         O3142X9 Continuing pregnancy after vanishing twin syndrome of one fetus or more, second trimester, other fetus
+Add:         O3143X0 Continuing pregnancy after vanishing twin syndrome of one fetus or more, third trimester, not applicable or unspecified
+Add:         O3143X1 Continuing pregnancy after vanishing twin syndrome of one fetus or more, third trimester, fetus 1
+Add:         O3143X2 Continuing pregnancy after vanishing twin syndrome of one fetus or more, third trimester, fetus 2
+Add:         O3143X3 Continuing pregnancy after vanishing twin syndrome of one fetus or more, third trimester, fetus 3
+Add:         O3143X4 Continuing pregnancy after vanishing twin syndrome of one fetus or more, third trimester, fetus 4
+Add:         O3143X5 Continuing pregnancy after vanishing twin syndrome of one fetus or more, third trimester, fetus 5
+Add:         O3143X9 Continuing pregnancy after vanishing twin syndrome of one fetus or more, third trimester, other fetus
+Add:         Q87A    Loeys-Dietz syndrome
+Add:         QA171   Lynch syndrome
+Add:         QA1790  Familial cancer syndrome with pathogenic BRCA1 mutation
+Add:         QA1791  Familial cancer syndrome with pathogenic BRCA2 mutation
+Add:         QA1792  Li Fraumeni syndrome
+Add:         QA1798  Other inherited neoplasm predisposition syndrome of multiple systems
+Add:         R7872   Abnormal gadolinium level in blood
+Delete:      S23420A Sprain of sternoclavicular (joint) (ligament), initial encounter
+Delete:      S23420D Sprain of sternoclavicular (joint) (ligament), subsequent encounter
+Delete:      S23420S Sprain of sternoclavicular (joint) (ligament), sequela
+Add:         T52811A Toxic effect of alkenes, accidental (unintentional), initial encounter
+Add:         T52811D Toxic effect of alkenes, accidental (unintentional), subsequent encounter
+Add:         T52811S Toxic effect of alkenes, accidental (unintentional), sequela
+Add:         T52812A Toxic effect of alkenes, intentional self-harm, initial encounter
+Add:         T52812D Toxic effect of alkenes, intentional self-harm, subsequent encounter
+Add:         T52812S Toxic effect of alkenes, intentional self-harm, sequela
+Add:         T52813A Toxic effect of alkenes, assault, initial encounter
+Add:         T52813D Toxic effect of alkenes, assault, subsequent encounter
+Add:         T52813S Toxic effect of alkenes, assault, sequela
+Add:         T52814A Toxic effect of alkenes, undetermined, initial encounter
+Add:         T52814D Toxic effect of alkenes, undetermined, subsequent encounter
+Add:         T52814S Toxic effect of alkenes, undetermined, sequela
+Add:         T52821A Toxic effect of cycloparaffins, accidental (unintentional), initial encounter
+Add:         T52821D Toxic effect of cycloparaffins, accidental (unintentional), subsequent encounter
+Add:         T52821S Toxic effect of cycloparaffins, accidental (unintentional), sequela
+Add:         T52822A Toxic effect of cycloparaffins, intentional self-harm, initial encounter
+Add:         T52822D Toxic effect of cycloparaffins, intentional self-harm, subsequent encounter
+Add:         T52822S Toxic effect of cycloparaffins, intentional self-harm, sequela
+Add:         T52823A Toxic effect of cycloparaffins, assault, initial encounter
+Add:         T52823D Toxic effect of cycloparaffins, assault, subsequent encounter
+Add:         T52823S Toxic effect of cycloparaffins, assault, sequela
+Add:         T52824A Toxic effect of cycloparaffins, undetermined, initial encounter
+Add:         T52824D Toxic effect of cycloparaffins, undetermined, subsequent encounter
+Add:         T52824S Toxic effect of cycloparaffins, undetermined, sequela
+Add:         T52891A Toxic effect of other organic solvents, accidental (unintentional), initial encounter
+Add:         T52891D Toxic effect of other organic solvents, accidental (unintentional), subsequent encounter
+Add:         T52891S Toxic effect of other organic solvents, accidental (unintentional), sequela
+Add:         T52892A Toxic effect of other organic solvents, intentional self-harm, initial encounter
+Add:         T52892D Toxic effect of other organic solvents, intentional self-harm, subsequent encounter
+Add:         T52892S Toxic effect of other organic solvents, intentional self-harm, sequela
+Add:         T52893A Toxic effect of other organic solvents, assault, initial encounter
+Add:         T52893D Toxic effect of other organic solvents, assault, subsequent encounter
+Add:         T52893S Toxic effect of other organic solvents, assault, sequela
+Add:         T52894A Toxic effect of other organic solvents, undetermined, initial encounter
+Add:         T52894D Toxic effect of other organic solvents, undetermined, subsequent encounter
+Add:         T52894S Toxic effect of other organic solvents, undetermined, sequela
+Delete:      T528X1A Toxic effect of other organic solvents, accidental (unintentional), initial encounter
+Delete:      T528X1D Toxic effect of other organic solvents, accidental (unintentional), subsequent encounter
+Delete:      T528X1S Toxic effect of other organic solvents, accidental (unintentional), sequela
+Delete:      T528X2A Toxic effect of other organic solvents, intentional self-harm, initial encounter
+Delete:      T528X2D Toxic effect of other organic solvents, intentional self-harm, subsequent encounter
+Delete:      T528X2S Toxic effect of other organic solvents, intentional self-harm, sequela
+Delete:      T528X3A Toxic effect of other organic solvents, assault, initial encounter
+Delete:      T528X3D Toxic effect of other organic solvents, assault, subsequent encounter
+Delete:      T528X3S Toxic effect of other organic solvents, assault, sequela
+Delete:      T528X4A Toxic effect of other organic solvents, undetermined, initial encounter
+Delete:      T528X4D Toxic effect of other organic solvents, undetermined, subsequent encounter
+Delete:      T528X4S Toxic effect of other organic solvents, undetermined, sequela
+Add:         T59821A Toxic effect of hexamethylene diisocyanate, accidental (unintentional), initial encounter
+Add:         T59821D Toxic effect of hexamethylene diisocyanate, accidental (unintentional), subsequent encounter
+Add:         T59821S Toxic effect of hexamethylene diisocyanate, accidental (unintentional), sequela
+Add:         T59822A Toxic effect of hexamethylene diisocyanate, intentional self-harm, initial encounter
+Add:         T59822D Toxic effect of hexamethylene diisocyanate, intentional self-harm, subsequent encounter
+Add:         T59822S Toxic effect of hexamethylene diisocyanate, intentional self-harm, sequela
+Add:         T59823A Toxic effect of hexamethylene diisocyanate, assault, initial encounter
+Add:         T59823D Toxic effect of hexamethylene diisocyanate, assault, subsequent encounter
+Add:         T59823S Toxic effect of hexamethylene diisocyanate, assault, sequela
+Add:         T59824A Toxic effect of hexamethylene diisocyanate, undetermined, initial encounter
+Add:         T59824D Toxic effect of hexamethylene diisocyanate, undetermined, subsequent encounter
+Add:         T59824S Toxic effect of hexamethylene diisocyanate, undetermined, sequela
+Add:         T65851A Toxic effect of medetomidine, accidental (unintentional), initial encounter
+Add:         T65851D Toxic effect of medetomidine, accidental (unintentional), subsequent encounter
+Add:         T65851S Toxic effect of medetomidine, accidental (unintentional), sequela
+Add:         T65852A Toxic effect of medetomidine, intentional self-harm, initial encounter
+Add:         T65852D Toxic effect of medetomidine, intentional self-harm, subsequent encounter
+Add:         T65852S Toxic effect of medetomidine, intentional self-harm, sequela
+Add:         T65853A Toxic effect of medetomidine, assault, initial encounter
+Add:         T65853D Toxic effect of medetomidine, assault, subsequent encounter
+Add:         T65853S Toxic effect of medetomidine, assault, sequela
+Add:         T65854A Toxic effect of medetomidine, undetermined, initial encounter
+Add:         T65854D Toxic effect of medetomidine, undetermined, subsequent encounter
+Add:         T65854S Toxic effect of medetomidine, undetermined, sequela
+Revise from: Z2914   Encounter for prophylactic rabies immune globin
+Revise to:   Z2914   Encounter for prophylactic rabies immune globulin
+Delete:      Z681    Body mass index [BMI] 19.9 or less, adult
+Add:         Z6818   Body mass index [BMI] 18.4 or less, adult
+Add:         Z6819   Body mass index [BMI] 18.5-19.9, adult
+Add:         Z77013  Contact with and (suspected) exposure to gadolinium
+Add:         Z7732   Contact with and (suspected) exposure to burn pits in war theater
+Add:         Z7733   Contact with and (suspected) exposure to Agent Orange
+Add:         Z7740   Contact with and (suspected) exposure to unspecified blast overpressure
+Add:         Z7741   Contact with and (suspected) exposure to low-level blast overpressure
+Add:         Z7742   Contact with and (suspected) exposure to high-level blast overpressure
+Add:         Z7749   Contact with and (suspected) exposure to other blast overpressure
+Add:         Z8617   Personal history of Clostridioides difficile infection
+Delete:      Z87890  Personal history of sex reassignment
+Add:         Z878901 Personal history of social gender transition
+Add:         Z878902 Personal history of medical gender transition
+Add:         Z878903 Personal history of surgical gender transition
+Add:         Z878904 Personal history of intersex surgery
+Add:         Z878909 Personal history of unspecified gender transition
+Add:         Z87893  Personal history of gender detransition
+
+Codes
+  74719 codes in icd10cm_order_2026.txt
+  74879 codes in icd10cm_order_2027.txt
+    190 additions
+     30 deletions
+      4 revisions

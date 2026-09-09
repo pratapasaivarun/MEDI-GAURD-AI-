@@ -1,0 +1,90 @@
+Generative AI
+│
+├── Foundations
+│   ├── What is Generative AI?
+│   ├── History
+│   ├── Applications
+│   └── Ethics & Responsible AI
+│
+├── Deep Learning Fundamentals
+│   ├── Neural Networks
+│   ├── Transformers
+│   ├── Attention Mechanism
+│   └── Self-Attention
+│
+├── Large Language Models (LLMs)
+│   ├── GPT
+│   ├── Gemini
+│   ├── Claude
+│   ├── Llama
+│   └── Mistral
+│
+├── Prompt Engineering
+│   ├── Zero-Shot
+│   ├── One-Shot
+│   ├── Few-Shot
+│   ├── Chain of Thought
+│   └── Role Prompting
+│
+├── Retrieval Systems
+│   ├── RAG
+│   ├── Hybrid Search
+│   ├── Semantic Search
+│   └── Knowledge Retrieval
+│
+├── Embeddings
+│   ├── Text Embeddings
+│   ├── Image Embeddings
+│   └── Similarity Search
+│
+├── Vector Databases
+│   ├── ChromaDB
+│   ├── Pinecone
+│   ├── FAISS
+│   ├── Weaviate
+│   └── Milvus
+│
+├── Fine-Tuning
+│   ├── Full Fine-Tuning
+│   ├── PEFT
+│   ├── LoRA
+│   └── QLoRA
+│
+├── LangChain Ecosystem
+│   ├── Chains
+│   ├── Agents
+│   ├── Memory
+│   ├── Tools
+│   └── Retrievers
+│
+├── AI Agents
+│   ├── Single Agent
+│   ├── Multi-Agent Systems
+│   ├── Tool Calling
+│   └── Autonomous Agents
+│
+├── Multimodal AI
+│   ├── Text
+│   ├── Images
+│   ├── Audio
+│   ├── Video
+│   └── Vision-Language Models
+│
+├── Generative Models
+│   ├── GANs
+│   ├── VAEs
+│   ├── Diffusion Models
+│   └── Transformers
+│
+├── Model Deployment
+│   ├── APIs
+│   ├── Hugging Face
+│   ├── Ollama
+│   ├── Docker
+│   └── Cloud Deployment
+│
+└── Evaluation
+    ├── BLEU
+    ├── ROUGE
+    ├── Perplexity
+    └── Human Evaluation

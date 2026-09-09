@@ -19,10 +19,9 @@ load_dotenv()
 
 from extraction import run_extraction
 from rules import evaluate_claim
-from agents import run_claim_workflow, warm_ollama
+from agents import _ollama_json, retrieve_policy_evidence, run_claim_workflow, warm_ollama
 from policy_index import index_policy_documents
 from extraction import extract_document
-from policy_compare import compare_policy_text
 from policy_terms import extract_policy_terms, terms_from_json
 from reports import build_decision_report, build_appeal_letter
 
@@ -30,14 +29,14 @@ APP_DIR = Path(__file__).parent
 DATA_DIR = APP_DIR / "data"
 DB_PATH = Path(os.getenv("MEDIGUARD_DB_PATH", str(DATA_DIR / "mediguard.db"))).resolve()
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
+# Granite is installed locally and is the project's sole configured model.
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "ibm/granite4.1:8b")
 MAX_PAGES = int(os.getenv("MAX_DOCUMENT_PAGES", "10"))
 MAX_FILE_MB = int(os.getenv("MAX_FILE_MB", "15"))
 APP_ENV = os.getenv("APP_ENV", "development").lower()
 APP_BASE_URL = os.getenv("APP_BASE_URL", "http://localhost:8505").rstrip("/")
-MFA_ENCRYPTION_KEY = os.getenv("MEDIGUARD_MFA_KEY", os.getenv("MEDIGUARD_BACKUP_KEY", ""))
-# Reserved for a future signed-token/session layer. It is intentionally not treated as active security yet.
-AUTH_REQUIRED = os.getenv("AUTH_REQUIRED", "true").lower() == "true"
+# The academic prototype uses a local demo identity; production authentication is deferred.
+CORE_DEMO_MODE = os.getenv("MEDIGUARD_CORE_DEMO", "true").lower() == "true"
 STORAGE_DIR = Path(os.getenv("MEDIGUARD_STORAGE_DIR", str(DATA_DIR))).resolve()
 UPLOAD_DIR = STORAGE_DIR / "uploads"
 ALLOWED_ROLES = {"claimant", "reviewer", "admin"}
@@ -100,69 +99,6 @@ def authenticate_password(email: str, password: str) -> sqlite3.Row | None:
     with db() as conn:
         user = conn.execute("SELECT * FROM users WHERE email=?", (email.strip().lower(),)).fetchone()
     return user if user and user["is_active"] and _verify_password(password, user["password_hash"]) else None
-
-
-def _mfa_fernet():
-    encryption_key = os.getenv("MEDIGUARD_MFA_KEY") or os.getenv("MEDIGUARD_BACKUP_KEY") or MFA_ENCRYPTION_KEY
-    if len(encryption_key) < 32:
-        raise RuntimeError("MEDIGUARD_MFA_KEY or MEDIGUARD_BACKUP_KEY must be configured with at least 32 characters before MFA can be enabled.")
-    from cryptography.fernet import Fernet
-    key = base64.urlsafe_b64encode(hashlib.sha256(encryption_key.encode("utf-8")).digest())
-    return Fernet(key)
-
-
-def authenticate_user(email: str, password: str, totp_code: str | None = None) -> sqlite3.Row | None:
-    user = authenticate_password(email, password)
-    if user is None:
-        return None
-    if user["mfa_enabled"]:
-        if not totp_code or not verify_totp(user, totp_code):
-            return None
-    return user
-
-
-def begin_totp_enrollment(user: dict | sqlite3.Row) -> dict[str, str]:
-    if not user or not user["is_active"]:
-        raise PermissionError("Active authentication is required to enable MFA.")
-    import pyotp
-    secret = pyotp.random_base32()
-    encrypted = _mfa_fernet().encrypt(secret.encode("utf-8")).decode("ascii")
-    with db() as conn:
-        conn.execute("UPDATE users SET mfa_secret_encrypted=?, mfa_enabled=0 WHERE user_id=?", (encrypted, user["user_id"]))
-        conn.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), None, user["user_id"], "mfa_enrollment_started", json.dumps({"user_id": user["user_id"]}), utc_now()))
-    uri = pyotp.TOTP(secret).provisioning_uri(name=user["email"], issuer_name="Medi Gaurd AI")
-    return {"secret": secret, "otpauth_uri": uri}
-
-
-def verify_totp(user: dict | sqlite3.Row, code: str) -> bool:
-    if not user or not user["mfa_secret_encrypted"]:
-        return False
-    import pyotp
-    try:
-        secret = _mfa_fernet().decrypt(user["mfa_secret_encrypted"].encode("ascii")).decode("utf-8")
-        return pyotp.TOTP(secret).verify(str(code).strip(), valid_window=1)
-    except Exception:
-        return False
-
-
-def complete_totp_enrollment(user: dict | sqlite3.Row, code: str) -> sqlite3.Row:
-    require_role(user, "claimant", "reviewer", "admin")
-    current = get_user(user["user_id"])
-    if not current or not verify_totp(current, code):
-        raise ValueError("The MFA code is invalid or expired.")
-    with db() as conn:
-        conn.execute("UPDATE users SET mfa_enabled=1 WHERE user_id=?", (user["user_id"],))
-        conn.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), None, user["user_id"], "mfa_enabled", json.dumps({"user_id": user["user_id"]}), utc_now()))
-        return conn.execute("SELECT * FROM users WHERE user_id=?", (user["user_id"],)).fetchone()
-
-
-def disable_totp(user: dict | sqlite3.Row) -> sqlite3.Row:
-    current = get_user(user["user_id"])
-    require_role(current, "claimant", "reviewer", "admin")
-    with db() as conn:
-        conn.execute("UPDATE users SET mfa_enabled=0, mfa_secret_encrypted=NULL WHERE user_id=?", (user["user_id"],))
-        conn.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), None, user["user_id"], "mfa_disabled", json.dumps({"user_id": user["user_id"]}), utc_now()))
-        return conn.execute("SELECT * FROM users WHERE user_id=?", (user["user_id"],)).fetchone()
 
 
 def _token_hash(token: str) -> str:
@@ -370,6 +306,7 @@ def init_db() -> None:
                 policy_number TEXT,
                 incident_date TEXT,
                 status TEXT NOT NULL DEFAULT 'draft',
+                adjudication_context_json TEXT,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,
                 FOREIGN KEY(user_id) REFERENCES users(user_id)
@@ -458,7 +395,7 @@ def init_db() -> None:
                 conn.execute(f"ALTER TABLE documents ADD COLUMN {column} {definition}")
             except sqlite3.OperationalError:
                 pass
-        for column, definition in (("assigned_reviewer_id", "TEXT"), ("review_priority", "INTEGER NOT NULL DEFAULT 0")):
+        for column, definition in (("assigned_reviewer_id", "TEXT"), ("review_priority", "INTEGER NOT NULL DEFAULT 0"), ("adjudication_context_json", "TEXT")):
             try:
                 conn.execute(f"ALTER TABLE claims ADD COLUMN {column} {definition}")
             except sqlite3.OperationalError:
@@ -550,6 +487,36 @@ def user_claims(user_id: str, user: dict | sqlite3.Row | None = None):
         return conn.execute("SELECT * FROM claims WHERE user_id=? ORDER BY created_at DESC", (user_id,)).fetchall()
 
 
+def load_adjudication_context(claim_id: str, user: dict | sqlite3.Row) -> dict[str, Any]:
+    claim = _claim_access(claim_id, user)
+    try:
+        payload = json.loads(claim["adjudication_context_json"] or "{}")
+    except (TypeError, json.JSONDecodeError):
+        payload = {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def save_adjudication_context(claim_id: str, actor: dict | sqlite3.Row, context: dict[str, Any]) -> None:
+    _claim_access(claim_id, actor, write=True)
+    allowed = {"network_status", "preauthorization_status", "preauthorization_reference", "waiting_period_status", "source", "trusted", "aggregation_confirmed"}
+    clean = {key: context.get(key) for key in allowed if key in context}
+    if clean.get("network_status") not in {None, "in_network", "out_of_network", "unknown"}:
+        raise ValueError("Invalid network status.")
+    if clean.get("preauthorization_status") not in {None, "confirmed", "not_confirmed", "unknown"}:
+        raise ValueError("Invalid pre-authorization status.")
+    if clean.get("waiting_period_status") not in {None, "satisfied", "not_satisfied", "unknown"}:
+        raise ValueError("Invalid waiting-period status.")
+    if actor["role"] not in {"reviewer", "admin"}:
+        clean["trusted"] = False
+        clean["aggregation_confirmed"] = False
+        clean["source"] = "claimant_asserted"
+    elif clean.get("trusted") is True:
+        clean["source"] = "reviewer_confirmed" if actor["role"] == "reviewer" else "admin_confirmed"
+    with db() as conn:
+        conn.execute("UPDATE claims SET adjudication_context_json=?, updated_at=? WHERE claim_id=?", (json.dumps(clean), utc_now(), claim_id))
+        conn.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), claim_id, actor["user_id"], "adjudication_context_updated", json.dumps(clean), utc_now()))
+
+
 def claim_documents(claim_id: str, user: dict | sqlite3.Row | None = None):
     if user is not None:
         _claim_access(claim_id, user)
@@ -595,56 +562,6 @@ def purge_expired_documents(actor: dict | sqlite3.Row, retention_days: int) -> i
     for document in documents:
         delete_document(document["document_id"], actor)
     return len(documents)
-
-
-def create_encrypted_backup(actor: dict | sqlite3.Row, destination: str | Path) -> Path:
-    require_role(actor, "admin")
-    backup_key = os.getenv("MEDIGUARD_BACKUP_KEY", "")
-    if len(backup_key) < 32:
-        raise RuntimeError("MEDIGUARD_BACKUP_KEY must be configured with at least 32 characters for encrypted backups.")
-    try:
-        from cryptography.fernet import Fernet
-    except ImportError as exc:
-        raise RuntimeError("Install cryptography before creating encrypted backups.") from exc
-    key = base64.urlsafe_b64encode(hashlib.sha256(backup_key.encode("utf-8")).digest())
-    destination = Path(destination).resolve()
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    if destination.suffix != ".enc":
-        destination = destination.with_suffix(destination.suffix + ".enc")
-    import tempfile
-    with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as temp:
-        temp_path = Path(temp.name)
-    try:
-        source = sqlite3.connect(DB_PATH)
-        target = sqlite3.connect(temp_path)
-        with target:
-            source.backup(target)
-        target.close()
-        source.close()
-        encrypted = Fernet(key).encrypt(temp_path.read_bytes())
-        destination.write_bytes(encrypted)
-    finally:
-        temp_path.unlink(missing_ok=True)
-    with db() as conn:
-        conn.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), None, actor["user_id"], "encrypted_backup_created", json.dumps({"destination": str(destination.name)}), utc_now()))
-    return destination
-
-
-def restore_encrypted_backup(actor: dict | sqlite3.Row, source: str | Path, destination: str | Path | None = None) -> Path:
-    require_role(actor, "admin")
-    backup_key = os.getenv("MEDIGUARD_BACKUP_KEY", "")
-    if len(backup_key) < 32:
-        raise RuntimeError("MEDIGUARD_BACKUP_KEY must be configured with at least 32 characters for encrypted backups.")
-    from cryptography.fernet import Fernet, InvalidToken
-    key = base64.urlsafe_b64encode(hashlib.sha256(backup_key.encode("utf-8")).digest())
-    source = Path(source).resolve()
-    destination = Path(destination or (source.with_suffix(".restored.sqlite"))).resolve()
-    try:
-        plaintext = Fernet(key).decrypt(source.read_bytes())
-    except InvalidToken as exc:
-        raise ValueError("Encrypted backup authentication failed.") from exc
-    destination.write_bytes(plaintext)
-    return destination
 
 
 def reviewer_queue(user: dict | sqlite3.Row | None = None):
@@ -772,11 +689,39 @@ def process_claim_documents(claim_id: str, user_id: str) -> dict:
             with db() as conn:
                 conn.execute("UPDATE documents SET processing_status=?, extraction_error=? WHERE document_id=?", ("needs_review", str(exc), doc["document_id"]))
     normalized = run_extraction(payloads)
+    # Quality gate: an extraction error or missing line-item structure must not
+    # silently continue into financial adjudication.
+    extraction_failures = len(documents) - len(payloads)
+    if extraction_failures:
+        normalized.setdefault("review_fields", []).append("document_extraction")
+    bill_payloads = [payload for payload in payloads if payload.get("document_type") == "medical_bill"]
+    if bill_payloads and normalized.get("total_amount") and not normalized.get("line_items"):
+        normalized.setdefault("review_fields", []).append("line_items")
     policy_payloads = [payload for payload, doc in zip(payloads, documents) if doc["document_type"] == "policy"]
     if policy_payloads:
         policy_id = ((normalized.get("policy_number") or {}).get("value") or claim_id)
         try:
             normalized["policy_index"] = index_policy_documents(policy_payloads, str(policy_id))
+            # Core MVP behavior: a policy uploaded with a claim is automatically
+            # registered as the active edition for that matching policy number.
+            # The advanced Policy Management page remains deferred.
+            extracted_terms = extract_policy_terms([item for payload in policy_payloads for item in payload.get("evidence", [])])
+            policy_number = str(((normalized.get("policy_number") or {}).get("value") or "")).strip()
+            if policy_number:
+                policy_text = "\\n".join(payload.get("text", "") for payload in policy_payloads)
+                with db() as conn:
+                    existing = conn.execute("SELECT version_id FROM policy_versions WHERE policy_number=? AND status='active' AND content_text=? LIMIT 1", (policy_number, policy_text)).fetchone()
+                    if existing:
+                        normalized["active_policy_version_id"] = existing["version_id"]
+                    else:
+                        conn.execute("UPDATE policy_versions SET status='archived' WHERE policy_number=?", (policy_number,))
+                        version_id = str(uuid.uuid4())
+                        conn.execute("INSERT INTO policy_versions(version_id,policy_number,version_label,insurer_name,effective_date,status,source_name,stored_path,content_text,indexed_chunks,created_at,policy_terms_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", (version_id, policy_number, "Claim-uploaded policy", "Not specified", "", "active", policy_payloads[0].get("source_name", "policy"), "", policy_text, int(normalized["policy_index"].get("chunks_indexed", 0)), utc_now(), json.dumps(extracted_terms["terms_json"])))
+                        normalized["active_policy_version_id"] = version_id
+                # Retrieval runs with the active edition ID, so store this
+                # claim-uploaded policy under that same ID as well.
+                index_policy_documents(policy_payloads, normalized["active_policy_version_id"])
+                normalized["policy_terms"] = extracted_terms
         except Exception as exc:
             normalized["policy_index_error"] = str(exc)
     with db() as conn:
@@ -807,10 +752,89 @@ def _extract_one(doc):
     return extract_document(candidate, doc["document_id"], doc["original_name"])
 
 
+def _derived_claim_context(claim_id: str, user_id: str, normalized: dict) -> dict[str, Any]:
+    user = get_user(user_id)
+    context = load_adjudication_context(claim_id, user)
+    line_items = normalized.get("line_items") or []
+    room_items = [item for item in line_items if item.get("category") == "room"]
+    non_room_total = sum(float(item.get("amount", 0) or 0) for item in line_items if item.get("category") != "room")
+    if room_items:
+        context.setdefault("room_charge", sum(float(item.get("amount", 0) or 0) for item in room_items))
+        admission = (normalized.get("admission_date") or {}).get("value")
+        discharge = (normalized.get("discharge_date") or {}).get("value")
+        if admission and discharge:
+            try:
+                start = datetime.fromisoformat(str(admission))
+                end = datetime.fromisoformat(str(discharge))
+                context.setdefault("room_days", max(1, (end - start).days + 1))
+            except ValueError:
+                pass
+        if non_room_total > 0:
+            context.setdefault("room_linked_charges", non_room_total)
+    context["duplicate_suspected"] = bool(normalized.get("duplicate_candidates"))
+    context["multiple_bills"] = int(normalized.get("multiple_bill_count") or 0) > 1
+    context["aggregation_confirmed"] = bool(context.get("aggregation_confirmed"))
+    context["diagnosis"] = ((normalized.get("diagnosis") or {}).get("value") or context.get("diagnosis", ""))
+    context["in_network"] = True if context.get("network_status") == "in_network" and context.get("trusted") else False if context.get("network_status") == "out_of_network" and context.get("trusted") else None
+    context["preauthorization_obtained"] = True if context.get("preauthorization_status") == "confirmed" and context.get("trusted") else False if context.get("preauthorization_status") == "not_confirmed" and context.get("trusted") else None
+    context["waiting_period_satisfied"] = True if context.get("waiting_period_status") == "satisfied" and context.get("trusted") else False if context.get("waiting_period_status") == "not_satisfied" and context.get("trusted") else None
+    return context
+
+
+def _reconcile_result(result: dict[str, Any], billed_amount: Any) -> dict[str, Any]:
+    """Fail closed when the persisted financial result does not reconcile."""
+    billed = float(billed_amount or 0)
+    covered = float(result.get("covered_amount", 0) or 0)
+    deductible = float(result.get("deductible", 0) or 0)
+    copayment = float(result.get("copayment", 0) or 0)
+    payable = float(result.get("payable_amount", 0) or 0)
+    expected = max(0.0, round(covered - deductible - copayment, 2))
+    errors = []
+    if billed < 0 or covered < 0 or deductible < 0 or copayment < 0 or payable < 0:
+        errors.append("Negative financial amount detected.")
+    if covered > billed + 0.01:
+        errors.append("Covered amount exceeds billed amount.")
+    if deductible > covered + 0.01 or copayment > max(0.0, covered - deductible) + 0.01:
+        errors.append("Deductible or copayment exceeds the eligible amount.")
+    if abs(payable - expected) > 0.01:
+        errors.append("Payable amount does not reconcile with covered amount, deductible, and copayment.")
+    claimant_responsibility = round(max(0.0, billed - payable), 2)
+    deductible_amount = round(max(0.0, deductible), 2)
+    copayment_amount = round(max(0.0, copayment), 2)
+    excluded_amount = round(max(0.0, claimant_responsibility - deductible_amount - copayment_amount), 2)
+    result["claimant_responsibility"] = claimant_responsibility
+    result["claimant_result"] = {"amount_billed": round(billed, 2), "amount_covered": round(payable, 2), "amount_not_covered": claimant_responsibility, "amount_excluded_or_limited": excluded_amount, "deductible": deductible_amount, "copayment": copayment_amount, "amount_claimant_pays": claimant_responsibility, "status": result.get("status", "manual_review"), "reason": (result.get("warnings") or ["See reviewer analysis."])[0]}
+    if errors:
+        result["status"] = "manual_review"
+        result.setdefault("warnings", []).extend(["calculation_reconciliation_failed", *errors])
+    result["claimant_result"]["status"] = result.get("status", "manual_review")
+    return result
+
+
+def _policy_mismatch(claim_id: str, normalized: dict) -> tuple[str | None, str | None]:
+    with db() as conn:
+        claim = conn.execute("SELECT policy_number FROM claims WHERE claim_id=?", (claim_id,)).fetchone()
+    claim_number = str(claim["policy_number"]).strip() if claim and claim["policy_number"] else None
+    extracted_number = ((normalized.get("policy_number") or {}).get("value"))
+    extracted_number = str(extracted_number).strip() if extracted_number else None
+    if claim_number and extracted_number and claim_number.casefold() != extracted_number.casefold():
+        return None, f"Claim policy number {claim_number} does not match extracted policy number {extracted_number}."
+    return extracted_number or claim_number, None
+
+
 def evaluate_saved_claim(claim_id: str, user_id: str, normalized: dict) -> dict:
     user = get_user(user_id)
     _claim_access(claim_id, user, write=True)
     total = (normalized.get("total_amount") or {}).get("value")
+    policy_number, mismatch = _policy_mismatch(claim_id, normalized)
+    if mismatch:
+        result = {"status": "manual_review", "rule_version": "policy-match-required", "results": [], "covered_amount": 0.0, "deductible": 0.0, "copayment": 0.0, "payable_amount": 0.0, "warnings": [mismatch], "policy_terms_missing": ["matching_policy"], "policy_terms": {}}
+        result["policy_source"] = "none"
+        result = _reconcile_result(result, total)
+        with db() as conn:
+            conn.execute("INSERT INTO rule_evaluations VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), claim_id, result["rule_version"], result["status"], json.dumps(result), utc_now()))
+            conn.execute("UPDATE claims SET status=?, updated_at=? WHERE claim_id=?", (result["status"], utc_now(), claim_id))
+        return result
     active_policy = active_policy_for_claim(claim_id, normalized)
     if active_policy and active_policy["policy_terms_json"]:
         terms_payload = json.loads(active_policy["policy_terms_json"])
@@ -821,11 +845,12 @@ def evaluate_saved_claim(claim_id: str, user_id: str, normalized: dict) -> dict:
         else:
             # Do not pass the newer keyword here: this keeps the Streamlit app
             # compatible with an already-running process that has an older rules.py.
-            result = evaluate_claim(total, terms=terms, review_fields=normalized.get("review_fields"), missing_fields=normalized.get("missing_fields"))
+            result = evaluate_claim(total, terms=terms, review_fields=normalized.get("review_fields"), missing_fields=normalized.get("missing_fields"), claim_context=_derived_claim_context(claim_id, user_id, normalized))
         result["policy_terms_confidence"] = confidence
     else:
         result = {"status": "manual_review", "rule_version": "policy-terms-required", "results": [], "covered_amount": 0.0, "deductible": 0.0, "copayment": 0.0, "payable_amount": 0.0, "warnings": ["No active policy terms are available. Ingest a policy edition in Policy management first."], "policy_terms_missing": ["active_policy_terms"], "policy_terms": {}}
     result["policy_source"] = f"{active_policy['policy_number']} — {active_policy['version_label']}" if active_policy else "none"
+    result = _reconcile_result(result, total)
     with db() as conn:
         conn.execute("INSERT INTO rule_evaluations VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), claim_id, result["rule_version"], result["status"], json.dumps(result), utc_now()))
         conn.execute("UPDATE claims SET status=?, updated_at=? WHERE claim_id=?", (result["status"], utc_now(), claim_id))
@@ -916,457 +941,606 @@ def ollama_status() -> tuple[bool, str]:
         return False, f"Ollama unavailable: {exc}"
 
 
-def main() -> None:
-    st.set_page_config(page_title="Medi Gaurd AI", page_icon="MG", layout="wide")
-    init_db()
-    validate_security_config()
-    bootstrap_admin_from_env()
-    st.title("Medi Gaurd AI")
-    st.caption("Medical bill and insurance claim verification — MVP foundation")
+def _status_badge(status: str) -> str:
+    return status.replace('_', ' ').title()
 
-    with st.sidebar:
-        st.header("Local configuration")
-        connected, message = ollama_status()
-        (st.success if connected else st.warning)(message)
-        st.code(f"Model: {OLLAMA_MODEL}\nHost: {OLLAMA_HOST}")
-        st.divider()
-        st.caption("Final determination should be confirmed by an authorized reviewer.")
 
-    if "user" not in st.session_state:
-        reset_token = st.query_params.get("reset_token")
-        if reset_token:
-            st.subheader("Reset password")
-            with st.form("password_reset_setup"):
-                reset_password = st.text_input("New password", type="password")
-                reset_confirm = st.text_input("Confirm new password", type="password")
-                reset_submit = st.form_submit_button("Set new password")
-            if reset_submit:
-                if reset_password != reset_confirm:
-                    st.error("Passwords do not match.")
-                else:
-                    try:
-                        complete_password_reset(reset_token, reset_password)
-                        st.query_params.clear()
-                        st.success("Password reset completed. Sign in with your new password.")
-                    except ValueError as exc:
-                        st.error(str(exc))
-            return
-        pending_mfa = st.session_state.get("pending_mfa_user")
-        if pending_mfa:
-            st.subheader("MFA verification")
-            st.caption("Enter the six-digit code from your authenticator app.")
-            with st.form("mfa_login"):
-                mfa_code = st.text_input("Authenticator code", max_chars=6)
-                mfa_submit = st.form_submit_button("Verify and sign in")
-            if mfa_submit:
-                current = get_user(pending_mfa["user_id"])
-                if current and verify_totp(current, mfa_code):
-                    st.session_state.user = dict(current)
-                    st.session_state.pop("pending_mfa_user", None)
-                    st.rerun()
-                else:
-                    st.error("Invalid or expired authenticator code.")
-            return
-        setup_token = st.query_params.get("setup_token")
-        if setup_token:
-            st.subheader("Reviewer account setup")
-            st.caption("This one-time setup token expires after 24 hours and is invalidated after successful use.")
-            with st.form("reviewer_setup"):
-                setup_password = st.text_input("Create password", type="password")
-                setup_confirm = st.text_input("Confirm password", type="password")
-                setup_submit = st.form_submit_button("Activate reviewer account")
-            if setup_submit:
-                if setup_password != setup_confirm:
-                    st.error("Passwords do not match.")
-                else:
-                    try:
-                        complete_reviewer_setup(setup_token, setup_password)
-                        st.query_params.clear()
-                        st.success("Reviewer account activated. Sign in with your email and new password.")
-                    except ValueError as exc:
-                        st.error(str(exc))
-            return
-        st.subheader("Secure sign-in")
-        st.caption("Claimant accounts can self-register. Reviewer and administrator accounts must be provisioned by an administrator or deployment operator.")
-        login_tab, register_tab, reset_tab = st.tabs(["Sign in", "Register claimant", "Reset password"])
+
+def _status_badge(status: str) -> str:
+    return status.replace('_', ' ').title()
+
+
+def _status_color(status: str) -> str:
+    return {
+        'approved': '#168a57', 'partially_approved': '#b77908',
+        'manual_review': '#b77908', 'rejected': '#c23b3b',
+        'ready_for_review': '#b77908', 'extracted': '#2f6fb0',
+        'draft': '#667085',
+    }.get(status, '#667085')
+
+
+def _brand_header() -> None:
+    st.markdown('''
+    <div class="mg-brand-head">
+      <div class="mg-shield">✚</div>
+      <div><div class="mg-brand-name">Medi Gaurd AI</div>
+      <div class="mg-brand-sub">AI-Powered Medical Insurance Claim Adjudication</div></div>
+    </div>''', unsafe_allow_html=True)
+
+
+def _core_demo_user() -> dict[str, Any]:
+    """Create or load a local admin-shaped actor for the temporary core demo."""
+    demo_email = "demo@mediguard.local"
+    demo_id = hashlib.sha256(demo_email.encode("utf-8")).hexdigest()[:24]
+    with db() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO users(user_id,email,display_name,role,is_active,created_at) VALUES(?,?,?,?,?,?)",
+            (demo_id, demo_email, "Demo Reviewer", "admin", 1, utc_now()),
+        )
+        conn.execute("UPDATE users SET display_name=?, role='admin', is_active=1 WHERE user_id=?", ("Demo Reviewer", demo_id))
+        row = conn.execute("SELECT * FROM users WHERE user_id=?", (demo_id,)).fetchone()
+    return dict(row)
+
+
+def _render_login() -> None:
+    left, right = st.columns([1.05, 1.35], gap='large')
+    with left:
+        st.markdown('''<div class="mg-landing">
+        <div class="mg-shield large">✚</div><h1>Medi Gaurd AI</h1>
+        <p class="mg-tagline">AI-Powered Medical Insurance<br/>Claim Adjudication</p>
+        <p class="mg-promise">Faster. Transparent. Accurate.</p>
+        <div class="mg-illustration">▣<br/><span>✓  ✓  ✓</span><br/>▱  🛡</div>
+        </div>''', unsafe_allow_html=True)
+    with right:
+        st.markdown('<div class="mg-auth-title">Welcome back</div><div class="mg-auth-copy">Sign in to continue to your account</div>', unsafe_allow_html=True)
+        login_tab, register_tab, reset_tab = st.tabs(['Sign in', 'Create account', 'Reset password'])
         with login_tab:
-            with st.form("login"):
-                email = st.text_input("Email", key="login_email")
-                password = st.text_input("Password", type="password", key="login_password")
-                submitted = st.form_submit_button("Sign in")
+            with st.form('login'):
+                email = st.text_input('Email', placeholder='you@example.com')
+                password = st.text_input('Password', type='password')
+                st.checkbox('Remember me', value=True)
+                submitted = st.form_submit_button('Sign in', type='primary')
             if submitted:
                 user_row = authenticate_password(email, password)
                 if user_row is None:
-                    st.error("Invalid email or password.")
-                elif user_row["mfa_enabled"]:
-                    st.session_state.pending_mfa_user = {"user_id": user_row["user_id"]}
+                    st.error("That email or password doesn't match our records.")
+                elif user_row['mfa_enabled']:
+                    st.session_state.pending_mfa_user = {'user_id': user_row['user_id']}
                     st.rerun()
                 else:
                     st.session_state.user = dict(user_row)
+                    st.session_state.page = 'Dashboard'
                     st.rerun()
         with register_tab:
-            with st.form("register"):
-                reg_email = st.text_input("Email", key="register_email")
-                reg_name = st.text_input("Display name", key="register_name")
-                reg_password = st.text_input("Password", type="password", key="register_password")
-                reg_confirm = st.text_input("Confirm password", type="password", key="register_confirm")
-                registered = st.form_submit_button("Create claimant account")
-            if registered:
-                if reg_password != reg_confirm:
-                    st.error("Passwords do not match.")
-                else:
-                    try:
-                        st.session_state.user = dict(register_user(reg_email, reg_name, reg_password))
-                        st.success("Account created.")
-                        st.rerun()
-                    except (ValueError, PermissionError) as exc:
-                        st.error(str(exc))
+            with st.form('register'):
+                name = st.text_input('Full name')
+                email = st.text_input('Email', key='reg_email')
+                p1 = st.text_input('Password', type='password')
+                p2 = st.text_input('Confirm password', type='password')
+                st.caption('Use at least 10 characters. New self-registered accounts are Claimants.')
+                submitted = st.form_submit_button('Create account', type='primary')
+            if submitted:
+                try:
+                    if p1 != p2: raise ValueError('Passwords do not match.')
+                    st.session_state.user = dict(register_user(email, name, p1))
+                    st.session_state.page = 'Dashboard'; st.rerun()
+                except (ValueError, PermissionError) as exc: st.error(str(exc))
         with reset_tab:
-            st.caption("For privacy, the response does not reveal whether an email exists. In this local demo, an active account produces a one-time reset link for controlled delivery.")
-            with st.form("password_reset_request"):
-                reset_email = st.text_input("Account email", key="reset_email")
-                reset_request = st.form_submit_button("Request password reset")
-            if reset_request:
-                request = create_password_reset_request(reset_email)
-                st.success("If an active account exists, reset instructions have been generated.")
-                if request["reset_token"]:
-                    st.code(f"{APP_BASE_URL}/?reset_token={request['reset_token']}", language="text")
-                    st.caption(f"Expires: {request['expires_at']}. In production this link must be delivered through a protected email or notification channel.")
-        return
+            st.caption('For privacy, this response does not reveal whether an email exists.')
+            with st.form('reset_request'):
+                email = st.text_input('Account email', key='reset_email')
+                submitted = st.form_submit_button('Send reset link', type='primary')
+            if submitted:
+                request = create_password_reset_request(email)
+                st.success('If an active account exists, reset instructions have been generated.')
+                if request['reset_token']: st.code(f"{APP_BASE_URL}/?reset_token={request['reset_token']}")
 
-    user = st.session_state.user
+
+def _render_sidebar(user: dict) -> str:
     with st.sidebar:
-        st.write(f"Signed in as **{user['display_name']}** ({user['role']})")
-        with st.expander("MFA security"):
-            if user["mfa_enabled"]:
-                st.success("TOTP MFA enabled")
-                if st.button("Disable MFA", key="disable_mfa"):
-                    st.session_state.user = dict(disable_totp(user))
-                    st.rerun()
-            else:
-                st.caption("Protect this account with an authenticator app.")
-                if st.button("Start TOTP enrollment", key="start_mfa"):
-                    st.session_state.mfa_enrollment = begin_totp_enrollment(user)
-                enrollment = st.session_state.get("mfa_enrollment")
-                if enrollment:
-                    st.code(enrollment["secret"], language="text")
-                    st.caption("Add this secret to an authenticator app, then enter the generated code.")
-                    mfa_confirm = st.text_input("First authenticator code", key="mfa_confirm_code", max_chars=6)
-                    if st.button("Enable MFA", key="enable_mfa"):
-                        try:
-                            st.session_state.user = dict(complete_totp_enrollment(user, mfa_confirm))
-                            st.session_state.pop("mfa_enrollment", None)
-                            st.rerun()
-                        except ValueError as exc:
-                            st.error(str(exc))
-        if st.button("Log out"):
-            del st.session_state.user
-            st.rerun()
-
-    tabs = st.tabs(["Dashboard", "Register claim", "Claim review", "Policy management"])
-    with tabs[0]:
-        st.subheader("Your claims")
-        claims = user_claims(user["user_id"])
-        if not claims:
-            st.info("No claims yet. Register your first claim to begin.")
-        for claim in claims:
-            with st.container(border=True):
-                col1, col2, col3 = st.columns([2, 3, 1])
-                col1.write(f"**{claim['claim_number']}**")
-                col2.write(f"Patient: {claim['patient_name']}  ")
-                col2.caption(f"Documents: {len(claim_documents(claim['claim_id']))}")
-                col3.metric("Status", claim["status"].replace("_", " ").title())
-        queue = reviewer_queue(user) if user["role"] in {"reviewer", "admin"} else []
-        if queue:
-            st.subheader("Reviewer queue")
-            st.caption("Claims requiring human confirmation are listed here; automated recommendations never replace reviewer sign-off.")
-            queue_rows = [{"claim_number": item["claim_number"], "patient": item["patient_name"], "status": item["status"].replace("_", " ").title(), "assigned_reviewer": item["assigned_reviewer_id"] or "Unassigned", "priority": item["review_priority"]} for item in queue]
-            st.dataframe(queue_rows, width="stretch", hide_index=True)
-        if user["role"] == "admin":
-            with st.expander("Administrator: invite reviewer"):
-                st.caption("The setup token is shown only once in this session. Do not copy it into logs or source code.")
-                with st.form("admin_reviewer_invitation"):
-                    reviewer_email = st.text_input("Reviewer email")
-                    reviewer_name = st.text_input("Reviewer display name")
-                    invite_submit = st.form_submit_button("Create reviewer invitation")
-                if invite_submit:
-                    try:
-                        invitation = provision_user_role(user, reviewer_email, reviewer_name, "reviewer")
-                        st.success("Reviewer account created in inactive state.")
-                        st.code(f"{APP_BASE_URL}/?setup_token={invitation['setup_token']}", language="text")
-                        st.caption(f"Expires: {invitation['expires_at']}. Share this link securely and do not store the token.")
-                    except (ValueError, PermissionError) as exc:
-                        st.error(str(exc))
-
-    with tabs[1]:
-        st.subheader("Register a new claim")
-        with st.form("claim_form"):
-            claim_number = st.text_input("Claim number", placeholder="CLM-2026-0001")
-            patient = st.text_input("Patient name")
-            hospital = st.text_input("Hospital / provider")
-            policy = st.text_input("Policy number")
-            incident_date = st.date_input("Admission or service date")
-            create = st.form_submit_button("Create claim")
-        if create:
-            if not claim_number or not patient:
-                st.error("Claim number and patient name are required.")
-            else:
-                claim_id = create_claim(user["user_id"], claim_number, patient, hospital, policy, str(incident_date))
-                st.session_state.active_claim = claim_id
-                st.success(f"Claim {claim_number} created. Continue in the Claim review tab.")
-
-    with tabs[2]:
-        st.subheader("Upload claim documents")
-        claims = user_claims(user["user_id"], user)
-        if not claims:
-            st.info("Create a claim first or wait for a claim to be assigned.")
+        _brand_header()
+        st.markdown('<div class="mg-nav-label">WORKSPACE</div>', unsafe_allow_html=True)
+        if user['role'] == 'claimant':
+            pages = ['Dashboard', 'Register claim', 'Submit documents', 'Claim result']
         else:
-            options = {f"{c['claim_number']} — {c['patient_name']}": c["claim_id"] for c in claims}
-            default = list(options.values()).index(st.session_state.get("active_claim")) if st.session_state.get("active_claim") in options.values() else 0
-            selected_label = st.selectbox("Select claim", list(options), index=default)
-            claim_id = options[selected_label]
-            selected_claim = next((item for item in claims if item["claim_id"] == claim_id), None)
-            file_types = ["pdf", "png", "jpg", "jpeg"]
-            st.info("Upload each document category separately so the system can distinguish policy evidence from medical bills.")
-            policy_files = st.file_uploader("Insurance policy files", type=file_types, accept_multiple_files=True, key="claim_policy_files")
-            bill_files = st.file_uploader("Medical bill files", type=file_types, accept_multiple_files=True, key="claim_bill_files")
-            other_files = st.file_uploader("Other claim documents", type=file_types, accept_multiple_files=True, key="claim_other_files")
-            if st.button("Save uploaded documents", type="primary"):
-                all_files = [(item, "policy") for item in (policy_files or [])] + [(item, "medical_bill") for item in (bill_files or [])] + [(item, "other") for item in (other_files or [])]
-                if not all_files:
-                    st.warning("Select at least one policy, medical-bill, or other document.")
-                else:
-                    try:
-                        for uploaded, document_type in all_files:
-                            save_document(claim_id, user, uploaded, document_type)
-                        st.success(f"Saved {len(all_files)} document(s) with their correct document types.")
-                    except ValueError as exc:
-                        st.error(str(exc))
-            docs = claim_documents(claim_id)
-            if docs:
-                st.write("**Saved documents**")
-                st.dataframe([dict(d) for d in docs], width="stretch", hide_index=True)
-                extraction_errors = [f"{doc['original_name']}: {doc['extraction_error']}" for doc in docs if doc['extraction_error']]
-                if extraction_errors:
-                    st.error("Extraction errors:\n" + "\n".join(extraction_errors))
-                if st.button("Extract and normalize documents", type="primary"):
-                    with st.spinner("Extracting text and normalizing claim data..."):
-                        try:
-                            normalized = process_claim_documents(claim_id, user["user_id"])
-                            st.session_state[f"normalized_{claim_id}"] = normalized
-                            st.success("Extraction complete. Review the flagged fields before analysis.")
-                        except Exception as exc:
-                            st.error(f"Extraction failed: {exc}")
-                normalized = st.session_state.get(f"normalized_{claim_id}")
-                if normalized:
-                    st.subheader("Normalized claim data")
-                    if normalized["missing_fields"]:
-                        st.warning("Missing required fields: " + ", ".join(normalized["missing_fields"]))
-                    if normalized["review_fields"]:
-                        st.warning("Needs review: " + ", ".join(normalized["review_fields"]))
-                    if normalized.get("policy_index"):
-                        st.success(f"Indexed {normalized['policy_index']['chunks_indexed']} policy clause(s) in persistent ChromaDB.")
-                    if normalized.get("policy_index_error"):
-                        st.warning("Policy indexing unavailable: " + normalized["policy_index_error"])
-                    fields = []
-                    for key in ("patient_name", "hospital_name", "policy_number", "claim_number", "admission_date", "discharge_date", "diagnosis", "total_amount"):
-                        item = normalized.get(key)
-                        if item:
-                            fields.append({"field": key, "value": item["value"], "confidence": item["confidence"], "needs_review": item["needs_review"], "source": item["evidence"][0]["source_name"] if item["evidence"] else ""})
-                    st.dataframe(fields, width="stretch", hide_index=True)
-                    with st.expander("Reviewer field corrections and evidence confirmation"):
-                        st.caption("Use this only when an authorized reviewer has checked the source document. Corrections are audited separately from the automated recommendation.")
-                        edit_values = {}
-                        for field_name, label in (("patient_name", "Patient name"), ("hospital_name", "Hospital / provider"), ("policy_number", "Policy number"), ("diagnosis", "Diagnosis")):
-                            current = (normalized.get(field_name) or {}).get("value", selected_claim[field_name] if selected_claim is not None and field_name in selected_claim.keys() else "")
-                            edit_values[field_name] = st.text_input(label, value=str(current or ""), key=f"edit_{field_name}_{claim_id}", disabled=user["role"] not in {"reviewer", "admin"})
-                        evidence_confirmed = st.checkbox("I confirmed the corrected fields against the uploaded evidence.", key=f"evidence_confirmed_{claim_id}", disabled=user["role"] not in {"reviewer", "admin"})
-                        if st.button("Save field corrections", key=f"save_edits_{claim_id}", disabled=user["role"] not in {"reviewer", "admin"}):
-                            if not evidence_confirmed:
-                                st.warning("Confirm the source evidence before saving field corrections.")
-                            else:
-                                try:
-                                    save_claim_field_edits(claim_id, user["user_id"], edit_values)
-                                    confirmations = [{"field_name": name, "document_id": ((normalized.get(name) or {}).get("evidence") or [{}])[0].get("document_id"), "page_number": ((normalized.get(name) or {}).get("evidence") or [{}])[0].get("page")} for name in edit_values]
-                                    confirm_evidence(claim_id, user["user_id"], confirmations)
-                                except PermissionError as exc:
-                                    st.error(str(exc))
-                                    confirmations = []
-                                for name, value in edit_values.items():
-                                    if normalized.get(name) is not None:
-                                        normalized[name]["value"] = value
-                                st.session_state[f"normalized_{claim_id}"] = normalized
-                                st.success("Reviewer corrections and evidence confirmations saved.")
-                    with st.expander("Raw normalized JSON"):
-                        st.json(normalized)
-                    if st.button("Run deterministic coverage rules", type="primary"):
-                        with st.spinner("Calculating deductible, copayment, and policy limits..."):
-                            rules = evaluate_saved_claim(claim_id, user["user_id"], normalized)
-                            st.session_state[f"rules_{claim_id}"] = rules
-                    rules = st.session_state.get(f"rules_{claim_id}")
-                    if rules:
-                        st.subheader("Deterministic rule result")
-                        status = rules["status"].replace("_", " ").title()
-                        if status == "Approved":
-                            st.success(status)
-                        elif status == "Manual Review":
-                            st.warning(status)
-                        else:
-                            st.info(status)
-                        metrics = st.columns(4)
-                        metrics[0].metric("Covered amount", f"INR {rules['covered_amount']:,.2f}")
-                        metrics[1].metric("Deductible", f"INR {rules['deductible']:,.2f}")
-                        metrics[2].metric("Copayment", f"INR {rules['copayment']:,.2f}")
-                        metrics[3].metric("Payable amount", f"INR {rules['payable_amount']:,.2f}")
-                        if rules["warnings"]:
-                            st.warning("; ".join(rules["warnings"]))
-                        st.dataframe(rules["results"], width="stretch", hide_index=True)
-                        st.caption("Rules are deterministic and versioned. Final determination should be confirmed by an authorized reviewer.")
-                        if st.button("Run Policy Agent + Decision Agent", type="primary"):
-                            status_box = st.status("Starting agent workflow...", expanded=True)
-                            started = time.perf_counter()
-                            def show_agent_progress(message: str) -> None:
-                                status_box.update(label=message, state="running")
-                                status_box.write(message)
-                            try:
-                                status_box.write("Preparing active policy evidence and deterministic results...")
-                                workflow = run_agents_for_claim(claim_id, user["user_id"], normalized, rules, progress_callback=show_agent_progress)
-                                elapsed = time.perf_counter() - started
-                                workflow["elapsed_seconds"] = round(elapsed, 2)
-                                st.session_state[f"workflow_{claim_id}"] = workflow
-                                status_box.update(label=f"Agent workflow complete in {elapsed:.1f}s", state="complete", expanded=False)
-                                st.success(f"Policy Agent and Decision Agent completed in {elapsed:.1f} seconds using {workflow.get('llm_calls', 0)} LLM calls.")
-                            except Exception as exc:
-                                elapsed = time.perf_counter() - started
-                                status_box.update(label=f"Agent workflow failed after {elapsed:.1f}s", state="error", expanded=True)
-                                st.error(f"Agent workflow failed after {elapsed:.1f}s: {exc}")
-                        workflow = st.session_state.get(f"workflow_{claim_id}")
-                        if workflow:
-                            findings = workflow.get("policy_findings", {})
-                            decision = workflow.get("decision", {})
-                            st.subheader("Agent decision")
-                            decision_status = decision.get("status", "manual_review").replace("_", " ").title()
-                            if decision_status == "Approved":
-                                st.success(decision_status)
-                            elif decision_status == "Manual Review":
-                                st.warning(decision_status)
-                            else:
-                                st.info(decision_status)
-                            st.write("**Reasons**")
-                            for reason in decision.get("reasons", []):
-                                st.write(f"- {reason}")
-                            st.write("**Policy evidence**")
-                            evidence = findings.get("retrieved_evidence", [])
-                            st.dataframe(evidence, width="stretch", hide_index=True)
-                            st.caption(f"Policy source: {workflow.get('policy_source', 'claim-uploaded policy')} · Agent calls used: {workflow.get('llm_calls', 0)} · Elapsed: {workflow.get('elapsed_seconds', 'n/a')}s. Final determination should be confirmed by an authorized reviewer.")
-                            with st.expander("Agent workflow JSON"):
-                                st.json({"policy_findings": findings, "decision": decision})
-                            st.subheader("Authorized reviewer sign-off")
-                            st.caption("The agent result is a recommendation. An authorized reviewer must confirm the final determination.")
-                            review_status_options = ["approved", "partially_approved", "rejected", "manual_review"]
-                            recommendation = decision.get("status", "manual_review")
-                            default_review_index = review_status_options.index(recommendation) if recommendation in review_status_options else 3
-                            final_status = st.selectbox("Final determination", review_status_options, index=default_review_index, format_func=lambda value: value.replace("_", " ").title(), key=f"review_status_{claim_id}")
-                            review_comments = st.text_area("Reviewer comments", key=f"review_comments_{claim_id}", placeholder="Record the evidence checked and reason for confirmation or change.")
-                            if st.button("Save reviewer decision", type="primary", key=f"save_review_{claim_id}", disabled=user["role"] not in {"reviewer", "admin"}):
-                                if not review_comments.strip():
-                                    st.warning("Reviewer comments are required before sign-off.")
-                                else:
-                                    try:
-                                        save_reviewer_decision(claim_id, user["user_id"], recommendation, final_status, review_comments)
-                                        st.success("Reviewer decision saved and claim status updated.")
-                                    except (PermissionError, ValueError) as exc:
-                                        st.error(str(exc))
-                            saved_review = latest_reviewer_decision(claim_id)
-                            if saved_review:
-                                st.info(f"Latest reviewer decision: {saved_review['final_status'].replace('_', ' ').title()} · saved {saved_review['created_at']}")
-                            if selected_claim is not None:
-                                report_bytes = build_decision_report(dict(selected_claim), normalized, rules, workflow)
-                                appeal_text = build_appeal_letter(dict(selected_claim), rules, workflow)
-                                export_col1, export_col2, export_col3 = st.columns(3)
-                                export_col1.download_button("Download PDF report", data=report_bytes, file_name=f"{selected_claim['claim_number']}_decision_report.pdf", mime="application/pdf", key=f"report_{claim_id}")
-                                export_col2.download_button("Download appeal draft", data=appeal_text, file_name=f"{selected_claim['claim_number']}_appeal.txt", mime="text/plain", key=f"appeal_{claim_id}")
-                                export_col3.download_button("Download result JSON", data=json.dumps({"normalized": normalized, "rules": rules, "workflow": workflow}, indent=2, default=str), file_name=f"{selected_claim['claim_number']}_result.json", mime="application/json", key=f"json_{claim_id}")
+            pages = ['Dashboard', 'Claim review', 'Policy management']
+            if user['role'] == 'admin':
+                pages.append('Admin panel')
+        current = st.session_state.get('page', 'Dashboard')
+        if current not in pages: current = 'Dashboard'
+        labels = {
+            'Dashboard': ':material/dashboard: Dashboard',
+            'Register claim': ':material/add_circle: Register claim',
+            'Submit documents': ':material/upload_file: Submit documents',
+            'Claim review': ':material/fact_check: Claim review',
+            'Claim result': ':material/task_alt: Claim result',
+            'Policy management': ':material/policy: Policy management',
+            'Admin panel': ':material/admin_panel_settings: Admin panel',
+        }
+        page = st.radio('Workspace', pages, index=pages.index(current), format_func=lambda x: labels[x], label_visibility='collapsed')
+        st.markdown('<div class="mg-sidebar-spacer"></div>', unsafe_allow_html=True)
+        st.markdown('<div class="mg-nav-label">ACCOUNT</div>', unsafe_allow_html=True)
+        st.caption(f"Signed in as {user['display_name']}")
+        st.caption(f"Role: {user['role'].title()}")
+        if st.button('↪  Sign out'):
+            st.session_state.clear(); st.rerun()
+        st.markdown('<div class="mg-sidebar-foot">Final determination must be confirmed by an authorized reviewer.</div>', unsafe_allow_html=True)
+    st.session_state.page = page
+    return page
 
 
-    with tabs[3]:
-        st.subheader("Policy management")
-        st.caption("Ingest policy editions once, keep historical versions, and compare changes before using an active edition for claim analysis.")
-        with st.form("policy_ingestion_form"):
-            policy_file = st.file_uploader("Policy PDF or policy photo", type=["pdf", "png", "jpg", "jpeg"], key="policy_management_file")
-            policy_number = st.text_input("Policy number", placeholder="POL-HEALTH-45821")
-            version_label = st.text_input("Version label", placeholder="2026 Edition")
-            insurer = st.text_input("Insurer", placeholder="Example Health Insurance Ltd.")
-            effective_date = st.date_input("Effective date")
-            ingest = st.form_submit_button("Ingest policy edition", type="primary")
-        if ingest:
-            if not policy_file or not policy_number or not version_label:
-                st.error("Policy file, policy number, and version label are required.")
+def _claimant_result_for_claim(claim_id: str, user: dict) -> dict[str, Any] | None:
+    """Return only claimant-safe amounts and explanation; hide raw agent/reviewer data."""
+    rules = st.session_state.get(f"rules_{claim_id}")
+    workflow = st.session_state.get(f"workflow_{claim_id}") or {}
+    if not rules:
+        with db() as conn:
+            row = conn.execute("SELECT result_json FROM rule_evaluations WHERE claim_id=? ORDER BY created_at DESC LIMIT 1", (claim_id,)).fetchone()
+        if row:
+            try:
+                rules = json.loads(row["result_json"])
+            except (TypeError, json.JSONDecodeError):
+                rules = None
+    if not rules and not workflow:
+        return None
+    decision = workflow.get("decision") or {}
+    status = decision.get("status") or ((rules or {}).get("status", "manual_review"))
+    claimant = (rules or {}).get("claimant_result") or {}
+    billed = float(claimant.get("amount_billed", 0) or 0)
+    covered = float(claimant.get("amount_covered", (rules or {}).get("payable_amount", 0)) or 0)
+    responsibility = float(claimant.get("amount_claimant_pays", max(0, billed - covered)) or 0)
+    deductible = float(claimant.get("deductible", (rules or {}).get("deductible", 0)) or 0)
+    copayment = float(claimant.get("copayment", (rules or {}).get("copayment", 0)) or 0)
+    excluded_or_limited = float(claimant.get("amount_excluded_or_limited", 0) or 0)
+    not_paid = float(claimant.get("amount_not_covered", responsibility) or 0)
+    reasons = decision.get("reasons") or (rules or {}).get("warnings") or []
+    reason = str(reasons[0]) if reasons else "Your claim has been processed and the result is ready to review."
+    return {
+        "status": status,
+        "amount_billed": billed,
+        "amount_covered": covered,
+        "amount_claimant_pays": responsibility,
+        "amount_not_covered": not_paid,
+        "deductible": deductible,
+        "copayment": copayment,
+        "amount_excluded_or_limited": excluded_or_limited,
+        "reason": reason,
+        "requires_human_review": status == "manual_review",
+        "rules": rules or {},
+    }
+
+
+def _render_claimant_result(user: dict) -> None:
+    claims = user_claims(user["user_id"], user)
+    st.markdown('<div class="mg-eyebrow">CLAIMS / RESULT</div><h1>Your Claim Result</h1><p class="mg-subtitle">A simple summary of what the policy review found.</p>', unsafe_allow_html=True)
+    if not claims:
+        st.info("You do not have a claim yet.")
+        if st.button("Register a claim", type="primary"):
+            st.session_state.page = "Register claim"; st.rerun()
+        return
+    options = {f"{c['claim_number']} · {c['patient_name']}": c['claim_id'] for c in claims}
+    default = next((i for i, value in enumerate(options.values()) if value == st.session_state.get("active_claim")), 0)
+    selected = st.selectbox("Choose a claim", list(options), index=default, key="claimant_result_selector")
+    claim_id = options[selected]
+    st.session_state.active_claim = claim_id
+    claim = next(c for c in claims if c["claim_id"] == claim_id)
+    result = _claimant_result_for_claim(claim_id, user)
+    st.markdown(f"<div class='mg-context'><b>{claim['claim_number']}</b> · {claim['patient_name']} · {claim['policy_number'] or 'Policy number pending'} <span class='mg-pill' style='color:{_status_color((result or {}).get('status', claim['status']))}'>{_status_badge((result or {}).get('status', claim['status']))}</span></div>", unsafe_allow_html=True)
+    if not result:
+        st.info("Your documents have not been analyzed yet.")
+        if st.button("Continue claim review", type="primary"):
+            st.session_state.page = "Claim review"; st.rerun()
+        return
+    status = result["status"]
+    if status == "manual_review":
+        st.warning("Your claim is under review. Some information must be confirmed before a final result can be issued.")
+    elif status == "approved":
+        st.success("Your claim has been approved based on the current policy information.")
+    elif status == "partially_approved":
+        st.warning("Your claim is partially covered. Some charges were limited or excluded under the policy.")
+    elif status == "rejected":
+        st.error("Your claim is not covered under the current policy result.")
+    a, b, c = st.columns(3)
+    with a: st.metric("Total bill", f"INR {result['amount_billed']:,.2f}")
+    with b: st.metric("Covered by insurance", f"INR {result['amount_covered']:,.2f}")
+    with c: st.metric("Total claimant responsibility", f"INR {result['amount_claimant_pays']:,.2f}")
+    d, e, f = st.columns(3)
+    with d: st.metric("Excluded / policy-limited", f"INR {result['amount_excluded_or_limited']:,.2f}")
+    with e: st.metric("Deductible", f"INR {result.get('deductible', 0):,.2f}")
+    with f: st.metric("Copayment", f"INR {result.get('copayment', 0):,.2f}")
+    with st.container(border=True):
+        st.markdown("### What this means")
+        st.write(result["reason"])
+        st.write(
+            f"The claimant responsibility of INR {result['amount_claimant_pays']:,.2f} includes "
+            f"INR {result['deductible']:,.2f} deductible and INR {result['copayment']:,.2f} copayment. "
+            f"INR {result['amount_excluded_or_limited']:,.2f} is excluded or limited by the policy."
+        )
+        st.caption("Reviewer note: deductible and copayment are policy cost-sharing amounts, not rejected charges. Excluded or policy-limited amounts are charges the policy does not pay.")
+        if result["requires_human_review"]:
+            st.caption("This is not a final determination. An authorized reviewer must confirm the result.")
+        else:
+            st.caption("This is decision-support information. Final determination should be confirmed by an authorized reviewer.")
+    rules = result.get("rules", {})
+    with st.expander("View amount breakdown", expanded=True):
+        st.write(f"Covered amount before deductions: INR {float(rules.get('covered_amount', 0) or 0):,.2f}")
+        st.write(f"Deductible: INR {float(result.get('deductible', 0) or 0):,.2f}")
+        st.write(f"Copayment: INR {float(result.get('copayment', 0) or 0):,.2f}")
+        st.write(f"Excluded or policy-limited amount: INR {float(result.get('amount_excluded_or_limited', 0) or 0):,.2f}")
+        st.caption("Claimant responsibility equals deductible, copayment, and any excluded or policy-limited amount.")
+        adjustments = []
+        for item in rules.get("results", []):
+            if item.get("status") in {"partial", "fail"}:
+                adjustments.append({"Policy check": str(item.get("rule_id", "")).replace("_", " ").title(), "Effect": item.get("calculation", "Policy adjustment applied"), "Amount affected": item.get("amount")})
+        if adjustments:
+            st.markdown("#### Items or rules affecting coverage")
+            st.dataframe(adjustments, hide_index=True)
+        warnings = rules.get("warnings") or []
+        if warnings:
+            st.write("Policy notes: " + "; ".join(str(item) for item in warnings))
+    workflow = st.session_state.get(f"workflow_{claim_id}") or {}
+    normalized = st.session_state.get(f"normalized_{claim_id}") or {}
+    with st.container(horizontal=True):
+        st.download_button(
+            "Download decision report",
+            data=build_decision_report(dict(claim), normalized, rules, workflow),
+            file_name=f"{claim['claim_number']}-decision-report.pdf",
+            mime="application/pdf",
+            icon=":material/download:",
+        )
+        st.download_button(
+            "Download appeal letter",
+            data=build_appeal_letter(dict(claim), rules, workflow),
+            file_name=f"{claim['claim_number']}-appeal-letter.txt",
+            mime="text/plain",
+            icon=":material/description:",
+        )
+    _render_claim_assistant(claim_id, normalized, result, workflow)
+    if st.button("Back to dashboard"):
+        st.session_state.page = "Dashboard"; st.rerun()
+
+
+def _render_claim_assistant(claim_id: str, normalized: dict[str, Any], result: dict[str, Any], workflow: dict[str, Any]) -> None:
+    """A claimant-facing, evidence-bounded question interface for one claim."""
+    st.subheader('Ask about this claim', anchor=False)
+    st.caption('Answers use only the documents and decision data for this claim. They are decision support, not a final coverage determination.')
+    history_key = f'claim_questions_{claim_id}'
+    st.session_state.setdefault(history_key, [])
+    for message in st.session_state[history_key]:
+        with st.chat_message(message['role']):
+            st.write(message['content'])
+    question = st.chat_input('Ask why a charge was covered, what you pay, or what happens next', key=f'claim_question_input_{claim_id}')
+    if not question:
+        return
+    st.session_state[history_key].append({'role': 'user', 'content': question})
+    with st.chat_message('user'):
+        st.write(question)
+    with st.chat_message('assistant', avatar=':material/psychology:'):
+        try:
+            evidence = workflow.get('policy_evidence') or retrieve_policy_evidence(saved_policy_text(claim_id), normalized, limit=3)
+            snippets = '\n'.join(f"- {str(item.get('text', ''))[:500]}" for item in evidence)
+            if not snippets:
+                raise ValueError('No policy evidence is available for this claim.')
+            answer = _ollama_json(
+                'You are a medical-insurance claim assistant. Answer only from the supplied claim result and policy evidence. Be concise, use plain language, do not invent coverage, and recommend manual review when evidence is insufficient.',
+                f"Question: {question}\n\nClaim result: {json.dumps(result, ensure_ascii=False)}\n\nPolicy evidence:\n{snippets}",
+                agent_name='claimant_assistant',
+                response_schema={'type': 'object', 'properties': {'answer': {'type': 'string'}}, 'required': ['answer']},
+            ).get('answer', '')
+            if not answer:
+                raise ValueError('The assistant did not return an answer.')
+        except Exception:
+            answer = 'I cannot verify that from the available claim evidence. Please request a manual review so an authorized reviewer can confirm it.'
+        st.write(answer)
+    st.session_state[history_key].append({'role': 'assistant', 'content': answer})
+
+
+def _render_dashboard(user: dict) -> None:
+    claims = user_claims(user['user_id'], user)
+    review_count = sum(1 for c in claims if c['status'] in {'manual_review','ready_for_review','partially_approved'})
+    approved = sum(1 for c in claims if c['status'] == 'approved')
+    st.markdown(f'<div class="mg-eyebrow">DASHBOARD</div><h1>Welcome back, {user["display_name"]}!</h1><p class="mg-subtitle">Here’s what’s happening with your claims.</p>', unsafe_allow_html=True)
+    a,b,c = st.columns(3)
+    with a: st.metric('Total Claims', len(claims))
+    with b: st.metric('Needing Action', review_count)
+    with c: st.metric('Approved Claims', approved)
+    with st.container(border=True):
+        st.markdown('<div class="mg-section-title">Your Claims</div>', unsafe_allow_html=True)
+        if not claims:
+            st.info("You haven't registered a claim yet. Register your first claim to get started.")
+            if st.button('Register a claim', type='primary'): st.session_state.page = 'Register claim'; st.rerun()
+        else:
+            cols = st.columns(2)
+            for i, claim in enumerate(claims[:8]):
+                with cols[i % 2]:
+                    with st.container(border=True):
+                        st.markdown(f"**{claim['claim_number']}**  <span class='mg-pill' style='color:{_status_color(claim['status'])}'>{_status_badge(claim['status'])}</span>", unsafe_allow_html=True)
+                        st.caption(f"{claim['patient_name']} · {claim['hospital_name'] or 'Provider not entered'}")
+                        x,y = st.columns([3,1])
+                        claim_total = claim['total_amount'] if 'total_amount' in claim.keys() else None
+                        x.write(f"INR {float(claim_total or 0):,.2f}" if claim_total else 'Amount pending')
+                        if y.button('Open', key=f"open_{claim['claim_id']}"):
+                            st.session_state.active_claim = claim['claim_id']
+                            st.session_state.page = 'Submit documents' if user['role'] == 'claimant' else 'Claim review'
+                            st.rerun()
+    if user['role'] in {'reviewer','admin'}:
+        queue = reviewer_queue(user)
+        with st.container(border=True):
+            st.markdown('<div class="mg-section-title">Review queue</div>', unsafe_allow_html=True)
+            if queue:
+                st.dataframe([{'Claim': c['claim_number'], 'Patient': c['patient_name'], 'Status': _status_badge(c['status']), 'Priority': c['review_priority'] if 'review_priority' in c.keys() else 0} for c in queue], hide_index=True)
+            else: st.info('No claims are waiting for review.')
+
+
+def _render_register(user: dict) -> None:
+    st.markdown('<div class="mg-eyebrow">CLAIMS</div><h1>Register a New Claim</h1><p class="mg-subtitle">Enter claim and patient details to get started.</p>', unsafe_allow_html=True)
+    with st.container(border=True):
+        left,right = st.columns(2, gap='large')
+        with left:
+            st.markdown('### Claim Details')
+            claim_number = st.text_input('Claim number', placeholder='CLM-2026-0001')
+            patient = st.text_input('Patient name', placeholder='Full name')
+            policy = st.text_input('Policy number', placeholder='POL-DEMO-2026-001', help='Enter exactly as shown on your policy document.')
+        with right:
+            st.markdown('### Service Details')
+            hospital = st.text_input('Hospital / provider', placeholder='Hospital name')
+            incident_date = st.date_input('Admission or service date')
+            st.selectbox('Claim type', ['Hospitalization', 'Day care', 'Outpatient'])
+        st.divider()
+        if st.button('Register & continue to documents', type='primary'):
+            if not claim_number.strip() or not patient.strip(): st.error('Claim number and patient name are required.')
+            else:
+                claim_id = create_claim(user['user_id'], claim_number, patient, hospital, policy, str(incident_date))
+                st.session_state.active_claim = claim_id
+                st.session_state.page = 'Submit documents' if user['role'] == 'claimant' else 'Claim review'
+                st.success('Claim registered. Continue to upload documents.')
+                st.rerun()
+
+
+def _render_claim_submission(user: dict) -> None:
+    """Claimant-only submission flow; internal extraction and rules remain hidden."""
+    require_role(user, 'claimant')
+    claims = user_claims(user['user_id'], user)
+    st.markdown('<div class="mg-eyebrow">CLAIMS / SUBMISSION</div><h1>Submit claim documents</h1><p class="mg-subtitle">Upload your bill and policy. We will check the claim and show a clear result.</p>', unsafe_allow_html=True)
+    if not claims:
+        st.info('Register a claim first, then return here to add documents.')
+        if st.button('Register a claim', type='primary', icon=':material/add_circle:'):
+            st.session_state.page = 'Register claim'; st.rerun()
+        return
+    options = {f"{claim['claim_number']} · {claim['patient_name']}": claim['claim_id'] for claim in claims}
+    selected = st.selectbox('Choose a claim', list(options), key='claimant_submission_selector')
+    claim_id = options[selected]
+    st.session_state.active_claim = claim_id
+    with st.container(border=True):
+        st.subheader('Upload documents')
+        policy_files = st.file_uploader('Insurance policy', type=['pdf', 'png', 'jpg', 'jpeg'], accept_multiple_files=True, key=f'claimant_policy_{claim_id}')
+        bill_files = st.file_uploader('Medical bill and supporting documents', type=['pdf', 'png', 'jpg', 'jpeg'], accept_multiple_files=True, key=f'claimant_bill_{claim_id}')
+        if st.button('Save documents', type='primary', icon=':material/save:'):
+            files = [(file, 'policy') for file in (policy_files or [])] + [(file, 'medical_bill') for file in (bill_files or [])]
+            if not files:
+                st.warning('Upload at least one medical bill or policy document.')
             else:
                 try:
-                    result = ingest_policy_version(policy_file, policy_number, version_label, insurer, str(effective_date), user=user)
-                    if result["policy_terms"].get("validation_errors"):
-                        st.warning("Policy indexed, but term validation requires review: " + "; ".join(result["policy_terms"]["validation_errors"]))
-                    elif result["policy_terms"].get("missing_terms"):
-                        st.warning("Policy indexed with missing terms: " + ", ".join(result["policy_terms"]["missing_terms"]))
+                    for uploaded, kind in files:
+                        save_document(claim_id, user, uploaded, kind)
+                    st.success('Documents saved. Submit them when you are ready for assessment.')
+                except (ValueError, PermissionError) as exc:
+                    st.error(str(exc))
+    documents = claim_documents(claim_id, user)
+    if documents:
+        st.caption(f'{len(documents)} document(s) ready for assessment.')
+        if st.button('Submit claim for assessment', type='primary', icon=':material/send:'):
+            with st.status('Checking your documents and policy…', expanded=True) as status:
+                try:
+                    normalized = process_claim_documents(claim_id, user['user_id'])
+                    rules = evaluate_saved_claim(claim_id, user['user_id'], normalized)
+                    st.session_state[f'normalized_{claim_id}'] = normalized
+                    st.session_state[f'rules_{claim_id}'] = rules
+                    if rules['status'] == 'manual_review':
+                        status.update(label='Your claim needs a manual review.', state='complete')
                     else:
-                        st.success(f"Policy edition indexed successfully: {result['chunks_indexed']} ChromaDB chunk(s).")
+                        workflow = run_agents_for_claim(claim_id, user['user_id'], normalized, rules, progress_callback=status.write)
+                        st.session_state[f'workflow_{claim_id}'] = workflow
+                        status.update(label='Assessment complete.', state='complete')
+                    st.session_state.page = 'Claim result'
                     st.rerun()
                 except Exception as exc:
-                    st.error(f"Policy ingestion failed: {exc}")
+                    status.update(label='Assessment needs attention.', state='error')
+                    st.error('We could not complete the assessment. Your claim has been kept for review. ' + str(exc))
+    else:
+        st.info('Upload a policy and a medical bill to begin.')
 
-        versions = policy_versions()
-        if not versions:
-            st.info("No policy editions have been ingested yet.")
+
+def _render_claim_review(user: dict) -> None:
+    require_role(user, 'reviewer', 'admin')
+    claims = user_claims(user['user_id'], user)
+    st.markdown('<div class="mg-eyebrow">CLAIMS / REVIEW</div><h1>Claim Review</h1>', unsafe_allow_html=True)
+    if not claims:
+        st.info('No claims yet. Register a claim to start the workflow.'); return
+    options = {f"{c['claim_number']} · {c['patient_name']}": c['claim_id'] for c in claims}
+    labels = list(options); default = next((i for i,v in enumerate(options.values()) if v == st.session_state.get('active_claim')), 0)
+    selected = st.selectbox('Selected claim', labels, index=default); claim_id = options[selected]; st.session_state.active_claim = claim_id
+    selected_claim = next(c for c in claims if c['claim_id'] == claim_id)
+    st.markdown(f"<div class='mg-context'><b>{selected_claim['claim_number']}</b> · {selected_claim['patient_name']} <span class='mg-pill' style='color:{_status_color(selected_claim['status'])}'>{_status_badge(selected_claim['status'])}</span></div>", unsafe_allow_html=True)
+    tabs = st.tabs(['① Select claim', '② Upload documents', '③ Extract & normalize', '④ Analyze claim'])
+    with tabs[1]:
+        st.markdown('### Upload Documents')
+        pcol,bcol = st.columns(2)
+        with pcol: policy_files = st.file_uploader('Policy documents', type=['pdf','png','jpg','jpeg'], accept_multiple_files=True, key=f'pol_{claim_id}')
+        with bcol: bill_files = st.file_uploader('Medical bill / supporting documents', type=['pdf','png','jpg','jpeg'], accept_multiple_files=True, key=f'bill_{claim_id}')
+        if st.button('Save uploaded documents', type='primary'):
+            files = [(f,'policy') for f in (policy_files or [])] + [(f,'medical_bill') for f in (bill_files or [])]
+            if not files: st.warning('Upload at least one policy or medical bill.')
+            else:
+                try:
+                    for uploaded, kind in files: save_document(claim_id, user, uploaded, kind)
+                    st.success(f'Saved {len(files)} document(s).'); st.rerun()
+                except (ValueError, PermissionError) as exc: st.error(str(exc))
+        docs = claim_documents(claim_id, user)
+        if docs: st.dataframe([{'File':d['original_name'],'Type':d['document_type'].replace('_',' ').title(),'Status':d['processing_status']} for d in docs], hide_index=True)
+        else: st.info('Your saved documents will appear here.')
+    docs = claim_documents(claim_id, user)
+    with tabs[2]:
+        normalized = st.session_state.get(f'normalized_{claim_id}')
+        if st.button('Run extraction', type='primary'):
+            with st.status('Reading documents and normalizing fields...', expanded=True) as status:
+                try:
+                    normalized = process_claim_documents(claim_id, user['user_id']); st.session_state[f'normalized_{claim_id}'] = normalized; status.update(label='Extraction complete', state='complete')
+                except Exception as exc: status.update(label='Extraction failed', state='error'); st.error(str(exc))
+        if normalized:
+            missing = normalized.get('missing_fields',[]) + normalized.get('review_fields',[])
+            if missing: st.warning('Some fields need your input before analysis: ' + ', '.join(missing))
+            fields=[]
+            for key in ('patient_name','hospital_name','policy_number','claim_number','admission_date','discharge_date','diagnosis','total_amount'):
+                item=normalized.get(key)
+                if item: fields.append({'Field':key.replace('_',' ').title(),'Value':item['value'],'Confidence':round(float(item['confidence']),1),'Review':'Yes' if item['needs_review'] else 'No'})
+            a,b,c = st.columns(3); a.metric('Fields extracted', len(fields)); b.metric('Missing / review', len(missing)); c.metric('Line items', len(normalized.get('line_items',[])))
+            with st.expander('Extracted summary', expanded=True): st.dataframe(fields, hide_index=True)
+            with st.expander(f"Line items ({len(normalized.get('line_items',[]))}"): st.dataframe([{k:i.get(k) for k in ('description','amount','category','confidence','needs_review')} for i in normalized.get('line_items',[])], hide_index=True)
+            with st.expander('Field-by-field evidence'): st.json(normalized)
+        else: st.info('Run extraction after saving documents.')
+    with tabs[3]:
+        normalized = st.session_state.get(f'normalized_{claim_id}')
+        rules = st.session_state.get(f'rules_{claim_id}')
+        if not normalized: st.warning('Complete extraction before analysis.'); return
+        if st.button('Run deterministic coverage rules', type='primary'):
+            with st.status('Applying policy rules...', expanded=True) as status:
+                try: rules=evaluate_saved_claim(claim_id,user['user_id'],normalized); st.session_state[f'rules_{claim_id}']=rules; status.update(label='Rules complete',state='complete')
+                except Exception as exc: status.update(label='Rules failed',state='error'); st.error(str(exc))
+        if rules:
+            st.markdown(f"### Deterministic result <span class='mg-pill' style='color:{_status_color(rules['status'])}'>{_status_badge(rules['status'])}</span>", unsafe_allow_html=True)
+            a,b,c,d=st.columns(4); a.metric('Covered',f"INR {rules.get('covered_amount',0):,.2f}"); b.metric('Deductible',f"INR {rules.get('deductible',0):,.2f}"); c.metric('Copayment',f"INR {rules.get('copayment',0):,.2f}"); d.metric('Payable',f"INR {rules.get('payable_amount',0):,.2f}")
+            if rules.get('warnings'): st.warning('; '.join(rules['warnings']))
+            with st.expander('Why this result? Rule trace', expanded=True): st.dataframe(rules.get('results',[]), hide_index=True)
+            workflow=st.session_state.get(f'workflow_{claim_id}')
+            if st.button('Run Policy Agent + Decision Agent', type='primary'):
+                with st.status('Retrieving policy evidence...', expanded=True) as status:
+                    try:
+                        started=time.perf_counter(); workflow=run_agents_for_claim(claim_id,user['user_id'],normalized,rules,progress_callback=lambda msg: status.write(msg)); workflow['elapsed_seconds']=round(time.perf_counter()-started,2); st.session_state[f'workflow_{claim_id}']=workflow; status.update(label='Two-agent analysis complete',state='complete')
+                    except Exception as exc: status.update(label='Agent workflow failed',state='error'); st.error(str(exc))
+            if workflow:
+                decision=workflow.get('decision',{}); st.markdown(f"### Recommendation <span class='mg-pill' style='color:{_status_color(decision.get('status','manual_review'))}'>{_status_badge(decision.get('status','manual_review'))}</span>", unsafe_allow_html=True)
+                for reason in decision.get('reasons',[]): st.write(f'• {reason}')
+                st.caption(f"Policy source: {workflow.get('policy_source','none')} · LLM calls: {workflow.get('llm_calls',0)} · Time: {workflow.get('elapsed_seconds','n/a')}s")
+                with st.expander('Policy evidence and agent reasoning'): st.json({'decision':decision,'policy_findings':workflow.get('policy_findings',{})})
+                if user['role'] in {'reviewer','admin'}:
+                    with st.container(border=True):
+                        st.markdown('### Reviewer Sign-off')
+                        final=st.selectbox('Final determination',['approved','partially_approved','rejected','manual_review'],format_func=_status_badge,key=f'final_{claim_id}')
+                        comments=st.text_area('Reviewer comments',key=f'comments_{claim_id}')
+                        if st.button('Confirm sign-off',key=f'save_final_{claim_id}',type='primary'):
+                            if not comments.strip(): st.warning('Reviewer comments are required.')
+                            else: save_reviewer_decision(claim_id,user['user_id'],decision.get('status','manual_review'),final,comments); st.success('Reviewer decision saved and audited.')
+        else: st.info('Run deterministic rules before starting the agents.')
+    st.caption('Decision support only. Final determination must be confirmed by an authorized reviewer.')
+
+
+def _render_policy_management(user: dict) -> None:
+    if user['role'] not in {'reviewer','admin'}: st.info('Policy Management is available to Reviewers and Administrators.'); return
+    st.markdown('<div class="mg-eyebrow">POLICY & RULES</div><h1>Policy Management</h1><p class="mg-subtitle">Ingest, manage and compare policy editions.</p>', unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown('### Ingest New Policy Edition')
+        with st.form('policy_ingestion_form'):
+            policy_file=st.file_uploader('Policy document',type=['pdf','png','jpg','jpeg']); a,b,c=st.columns(3)
+            with a: policy_number=st.text_input('Policy number',placeholder='POL-DEMO-2026-001'); version_label=st.text_input('Version label',placeholder='2026 Edition')
+            with b: insurer=st.text_input('Insurer',placeholder='Example Health Insurance Ltd.'); effective_date=st.date_input('Effective date')
+            with c: st.info('The active edition supplies authoritative rule terms.'); submitted=st.form_submit_button('Ingest & activate edition',type='primary')
+        if submitted:
+            try:
+                if not policy_file or not policy_number.strip() or not version_label.strip(): raise ValueError('Policy file, policy number and version label are required.')
+                result=ingest_policy_version(policy_file,policy_number,version_label,insurer,str(effective_date),user=user); st.success(f"Active edition created with {result['chunks_indexed']} evidence chunks."); st.rerun()
+            except Exception as exc: st.error(f'Policy ingestion failed: {exc}')
+    versions=policy_versions()
+    with st.container(border=True):
+        st.markdown('### Policy Editions')
+        if not versions: st.info('No policy editions have been ingested yet.')
         else:
-            st.write("**Stored policy editions**")
-            rows = []
-            for version in versions:
-                try:
-                    stored_terms = json.loads(version["policy_terms_json"] or "{}")
-                except (TypeError, json.JSONDecodeError):
-                    stored_terms = {}
-                rows.append({"version_id": version["version_id"], "policy_number": version["policy_number"], "version": version["version_label"], "insurer": version["insurer_name"], "effective_date": version["effective_date"], "status": version["status"], "chunks": version["indexed_chunks"], "terms": ", ".join(stored_terms) or "Needs review"})
-            st.dataframe(rows, width="stretch", hide_index=True)
-            active_versions = [version for version in versions if version["status"] == "active"]
-            for active in active_versions:
-                try:
-                    active_terms = json.loads(active["policy_terms_json"] or "{}")
-                except (TypeError, json.JSONDecodeError):
-                    active_terms = {}
-                st.caption(f"Active edition: {active['policy_number']} — {active['version_label']} · extracted terms: {', '.join(active_terms) or 'none; rules will require Manual Review'}")
-            if active_versions:
-                archive_options = {f"{version['policy_number']} — {version['version_label']}": version["version_id"] for version in active_versions}
-                archive_label = st.selectbox("Archive an active edition", ["Select an edition"] + list(archive_options), key="archive_policy_select")
-                if archive_label != "Select an edition" and st.button("Archive selected edition"):
-                    archive_policy_version(archive_options[archive_label], user=user)
-                    st.success("Policy edition archived.")
-                    st.rerun()
-
-            if len(versions) >= 2:
-                st.subheader("Compare policy editions")
-                compare_options = {f"{version['policy_number']} — {version['version_label']} ({version['effective_date']})": version for version in versions}
-                selected = st.multiselect("Select two editions", list(compare_options), max_selections=2, key="compare_policy_versions")
-                if len(selected) == 2 and st.button("Compare selected editions"):
-                    older = compare_options[selected[0]]
-                    newer = compare_options[selected[1]]
-                    from policy_compare import compare_policy_text
-                    comparison = compare_policy_text(older["content_text"], newer["content_text"])
-                    st.metric("Text similarity", f"{comparison['similarity_percent']}%")
-                    st.write(f"Added clauses: {comparison['added_count']} · Removed clauses: {comparison['removed_count']}")
-                    if comparison["changed_terms"]:
-                        st.write("**Changed terms**")
-                        st.dataframe(comparison["changed_terms"], width="stretch", hide_index=True)
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.write("**Added**")
-                        st.write("\\n".join(comparison["added"]) or "None")
-                    with col2:
-                        st.write("**Removed**")
-                        st.write("\\n".join(comparison["removed"]) or "None")
-                    with st.expander("Unified diff"):
-                        st.code("\\n".join(comparison["unified_diff"]) or "No textual differences")
+            rows=[]
+            for v in versions:
+                try: terms=json.loads(v['policy_terms_json'] or '{}')
+                except (TypeError,json.JSONDecodeError): terms={}
+                rows.append({'Policy Number':v['policy_number'],'Version':v['version_label'],'Effective Date':v['effective_date'],'Status':v['status'].title(),'Indexed Chunks':v['indexed_chunks'],'Extracted Terms':len(terms)})
+            st.dataframe(rows,hide_index=True)
+            active=[v for v in versions if v['status']=='active']
+            if active and user['role']=='admin':
+                chosen=st.selectbox('Archive an active edition',['Select an edition']+[f"{v['policy_number']} — {v['version_label']}" for v in active])
+                if chosen!='Select an edition' and st.button('Archive edition'): archive_policy_version(next(v['version_id'] for v in active if f"{v['policy_number']} — {v['version_label']}"==chosen),user=user); st.success('Edition archived.'); st.rerun()
 
 
-if __name__ == "__main__":
+def _render_admin_panel(user: dict) -> None:
+    require_role(user,'admin')
+    st.markdown('<div class="mg-eyebrow">ADMINISTRATION</div><h1>Admin Panel</h1><p class="mg-subtitle">Manage reviewer access and user accounts.</p>', unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown('### Reviewer Invitations')
+        with st.form('invite_reviewer'):
+            a,b=st.columns([1,1]); name=a.text_input('Name'); email=b.text_input('Email address'); sent=st.form_submit_button('Send invite',type='primary')
+        if sent:
+            try:
+                invite=create_reviewer_invitation(user,email,name); st.success('Invitation created.'); st.code(f"{APP_BASE_URL}/?setup_token={invite['setup_token']}")
+            except Exception as exc: st.error(str(exc))
+    with st.container(border=True):
+        st.markdown('### Users')
+        with db() as conn: users=conn.execute('SELECT user_id,email,display_name,role,is_active,created_at FROM users ORDER BY created_at DESC').fetchall()
+        st.dataframe([{'Name':u['display_name'],'Email':u['email'],'Role':u['role'].title(),'Status':'Active' if u['is_active'] else 'Inactive','Created':u['created_at']} for u in users],hide_index=True)
+        st.info('User and invitation activity is logged for security and cannot be silently deleted.')
+
+
+def main() -> None:
+    st.set_page_config(page_title='Medi Gaurd AI', page_icon='🛡️', layout='wide', initial_sidebar_state='expanded')
+    st.markdown('''<style>
+    :root{--navy:#06285b;--navy2:#0b3b78;--blue:#1167dc;--bg:#f4f8fd;--border:#dce6f1;--text:#12213d}
+    .stApp{background:var(--bg);color:var(--text)} .block-container{max-width:1440px;padding:1.7rem 2.4rem 3rem}
+    [data-testid="stSidebar"]{background:linear-gradient(180deg,var(--navy),#071c42);border:0} [data-testid="stSidebar"] *{color:#f6f9ff!important}
+    [data-testid="stSidebar"] .stRadio label{padding:.55rem .75rem;border-radius:8px;font-weight:600} [data-testid="stSidebar"] .stRadio label:hover{background:#114a98}
+    .mg-brand-head{display:flex;gap:.65rem;align-items:center;padding:.2rem 0 1.5rem}.mg-brand-name{font-weight:800;font-size:1.22rem}.mg-brand-sub{font-size:.63rem;opacity:.78;line-height:1.25}.mg-shield{width:2.05rem;height:2.05rem;border:2px solid #fff;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff}.mg-shield.large{width:4rem;height:4rem;border:3px solid #1467d6;color:#1467d6;font-size:2rem;margin:auto}
+    .mg-nav-label,.mg-eyebrow{font-size:.7rem;letter-spacing:.13em;font-weight:800;color:#7b8ca5!important}.mg-sidebar-spacer{height:36vh}.mg-sidebar-foot{font-size:.68rem;opacity:.72;border-top:1px solid #2c5284;padding-top:1rem;margin-top:1rem}
+    h1{letter-spacing:-.04em;color:var(--text)} .mg-eyebrow{color:#2f6fb0!important;margin-bottom:.25rem}.mg-subtitle{color:#63728a;font-size:1.02rem;margin-top:-.8rem;margin-bottom:1.4rem}.mg-section-title{font-size:1.08rem;font-weight:800;margin-bottom:1rem}.mg-auth-title{font-size:1.7rem;font-weight:800;margin-top:5vh}.mg-auth-copy{color:#68758b;margin-bottom:1.4rem}.mg-landing{background:#eaf3ff;border-radius:16px;padding:4rem 2rem 2.2rem;text-align:center;margin-top:2rem;min-height:550px}.mg-landing h1{color:#123d78;font-size:2.25rem}.mg-tagline{font-weight:650;line-height:1.55}.mg-promise{font-size:1.1rem;font-weight:700;margin:2rem 0;color:#1b4c8d}.mg-illustration{font-size:7rem;color:#2771d7;line-height:1.05;opacity:.78}.mg-illustration span{font-size:1.5rem;letter-spacing:1rem}.stButton>button{border-radius:8px;min-height:2.55rem;font-weight:700}.stButton>button[kind="primary"]{background:var(--blue);border-color:var(--blue)} [data-testid="stMetric"]{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;box-shadow:0 2px 8px #193b6510}.stMetric label{color:#66758c}.stMetric [data-testid="stMetricValue"]{color:var(--text);font-weight:800}.stTextInput input,.stTextArea textarea,.stDateInput input,.stSelectbox div[data-baseweb="select"]>div{border-radius:8px;border-color:#cbd8e8;background:#fff}.stForm,.st-key-policy_ingestion_form{border:0}.mg-context{background:#fff;border:1px solid var(--border);border-radius:10px;padding:.85rem 1rem;margin:1rem 0}.mg-pill{font-size:.75rem;font-weight:800;margin-left:.5rem}.mg-section-title+div{margin-top:.2rem}
+
+/* Reference-inspired Medi Gaurd AI theme */
+:root { color-scheme: dark; }
+.stApp { background: #0b0d12; color: #f4f4f5; }
+[data-testid="stAppViewContainer"] { background: #0b0d12; }
+[data-testid="stHeader"] { background: #0b0d12; }
+[data-testid="stSidebar"] { background: #252631; border-right: 1px solid #363746; }
+[data-testid="stSidebarContent"] { padding: 1.4rem 1.35rem; }
+[data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 { color: #f6f7fb; }
+.block-container { max-width: 1220px; padding: 3.3rem 3.2rem 4rem; }
+h1, h2, h3 { color: #f7f7f8; letter-spacing: -.02em; }
+h1 { font-size: 2.15rem; margin-bottom: .2rem; }
+h2 { font-size: 1.45rem; margin-top: 1.6rem; }
+p, label, [data-testid="stMarkdownContainer"] { color: #d7d8df; }
+hr { border-color: #2f313c; }
+.stTextInput, .stDateInput, .stSelectbox, .stFileUploader { margin-bottom: .45rem; }
+.stTextInput input, .stDateInput input, [data-baseweb="select"] > div, [data-testid="stFileUploaderDropzone"] { background: #252631 !important; border: 1px solid #343642 !important; color: #f4f4f5 !important; border-radius: 7px !important; }
+.stTextInput input:focus, .stDateInput input:focus { border-color: #d73550 !important; box-shadow: 0 0 0 1px #d73550 !important; }
+.stButton > button { background: #101217; color: #f4f4f5; border: 1px solid #5b5d68; border-radius: 7px; padding: .45rem 1rem; font-weight: 600; }
+.stButton > button:hover { border-color: #d73550; color: #ff6680; }
+[data-testid="stMetric"] { background: #171920; border: 1px solid #30323d; border-radius: 10px; padding: 1rem; }
+[data-testid="stMetricLabel"] { color: #aeb0ba; }
+[data-testid="stMetricValue"] { color: #ffffff; }
+[data-testid="stExpander"] { background: #14161c; border: 1px solid #30323d; border-radius: 9px; }
+.mg-context, .mg-card, .mg-panel { background: #14161c !important; border: 1px solid #30323d !important; border-radius: 9px !important; }
+.mg-pill { color: #ff536d !important; }
+.mg-sidebar-foot { color: #aeb0ba !important; border-top-color: #444653 !important; }
+[data-testid="stTabs"] button[aria-selected="true"] { color: #ff536d !important; border-bottom-color: #ff536d !important; }
+[data-testid="stDataFrame"] { border: 1px solid #30323d; border-radius: 8px; }
+
+</style>''', unsafe_allow_html=True)
+    init_db(); validate_security_config(); bootstrap_admin_from_env()
+    if CORE_DEMO_MODE and 'user' not in st.session_state:
+        st.session_state.user = _core_demo_user()
+        st.session_state.page = 'Dashboard'
+    if 'user' not in st.session_state:
+        _render_login(); return
+    user=st.session_state.user; page=_render_sidebar(user)
+    if page=='Dashboard': _render_dashboard(user)
+    elif page=='Register claim': _render_register(user)
+    elif page=='Submit documents': _render_claim_submission(user)
+    elif page=='Claim review': _render_claim_review(user)
+    elif page=='Claim result': _render_claimant_result(user)
+    elif page=='Policy management': _render_policy_management(user)
+    elif page=='Admin panel': _render_admin_panel(user)
+
+
+if __name__ == '__main__':
     main()

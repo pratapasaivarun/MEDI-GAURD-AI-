@@ -1,0 +1,835 @@
+[
+  {
+    "example": 1,
+    "title": "Straightforward approval",
+    "bill_fields": {
+      "patient_name": {
+        "value": "Alex Morgan",
+        "confidence": 95.43,
+        "needs_review": false,
+        "evidence": [
+          {
+            "document_id": "example-1-bill",
+            "source_name": "bill_phone_photo.png",
+            "page": 1,
+            "method": "tesseract",
+            "text": "MEDICAL BILL - SYNTHETIC FIXTURE\nClaim Number: CLM-SYN-1001\nPatient Name: Alex Morgan\nHospital: North Star General Hospital\nPolicy Number: POL-SYN-1001\nAdmission Date: 2026-07-10\nDischarge Date: 2026-07-13\nDiagnosis: Acute appendicitis\nRoom charges: INR 18000\nDoctor consultation: INR 12000\nSurgery and procedure: INR 85000\nMedicines: INR 14000\nDiagnostic tests: INR 16000\nTotal Amount: INR 145000",
+            "confidence": 95.42619047619048
+          }
+        ]
+      },
+      "hospital_name": {
+        "value": "North Star General Hospital",
+        "confidence": 95.43,
+        "needs_review": false,
+        "evidence": [
+          {
+            "document_id": "example-1-bill",
+            "source_name": "bill_phone_photo.png",
+            "page": 1,
+            "method": "tesseract",
+            "text": "MEDICAL BILL - SYNTHETIC FIXTURE\nClaim Number: CLM-SYN-1001\nPatient Name: Alex Morgan\nHospital: North Star General Hospital\nPolicy Number: POL-SYN-1001\nAdmission Date: 2026-07-10\nDischarge Date: 2026-07-13\nDiagnosis: Acute appendicitis\nRoom charges: INR 18000\nDoctor consultation: INR 12000\nSurgery and procedure: INR 85000\nMedicines: INR 14000\nDiagnostic tests: INR 16000\nTotal Amount: INR 145000",
+            "confidence": 95.42619047619048
+          }
+        ]
+      },
+      "policy_number": {
+        "value": "POL-SYN-1001",
+        "confidence": 95.43,
+        "needs_review": false,
+        "evidence": [
+          {
+            "document_id": "example-1-bill",
+            "source_name": "bill_phone_photo.png",
+            "page": 1,
+            "method": "tesseract",
+            "text": "MEDICAL BILL - SYNTHETIC FIXTURE\nClaim Number: CLM-SYN-1001\nPatient Name: Alex Morgan\nHospital: North Star General Hospital\nPolicy Number: POL-SYN-1001\nAdmission Date: 2026-07-10\nDischarge Date: 2026-07-13\nDiagnosis: Acute appendicitis\nRoom charges: INR 18000\nDoctor consultation: INR 12000\nSurgery and procedure: INR 85000\nMedicines: INR 14000\nDiagnostic tests: INR 16000\nTotal Amount: INR 145000",
+            "confidence": 95.42619047619048
+          }
+        ]
+      },
+      "claim_number": {
+        "value": "CLM-SYN-1001",
+        "confidence": 95.43,
+        "needs_review": false,
+        "evidence": [
+          {
+            "document_id": "example-1-bill",
+            "source_name": "bill_phone_photo.png",
+            "page": 1,
+            "method": "tesseract",
+            "text": "MEDICAL BILL - SYNTHETIC FIXTURE\nClaim Number: CLM-SYN-1001\nPatient Name: Alex Morgan\nHospital: North Star General Hospital\nPolicy Number: POL-SYN-1001\nAdmission Date: 2026-07-10\nDischarge Date: 2026-07-13\nDiagnosis: Acute appendicitis\nRoom charges: INR 18000\nDoctor consultation: INR 12000\nSurgery and procedure: INR 85000\nMedicines: INR 14000\nDiagnostic tests: INR 16000\nTotal Amount: INR 145000",
+            "confidence": 95.42619047619048
+          }
+        ]
+      },
+      "admission_date": null,
+      "discharge_date": null,
+      "diagnosis": {
+        "value": "Acute appendicitis",
+        "confidence": 95.43,
+        "needs_review": false,
+        "evidence": [
+          {
+            "document_id": "example-1-bill",
+            "source_name": "bill_phone_photo.png",
+            "page": 1,
+            "method": "tesseract",
+            "text": "MEDICAL BILL - SYNTHETIC FIXTURE\nClaim Number: CLM-SYN-1001\nPatient Name: Alex Morgan\nHospital: North Star General Hospital\nPolicy Number: POL-SYN-1001\nAdmission Date: 2026-07-10\nDischarge Date: 2026-07-13\nDiagnosis: Acute appendicitis\nRoom charges: INR 18000\nDoctor consultation: INR 12000\nSurgery and procedure: INR 85000\nMedicines: INR 14000\nDiagnostic tests: INR 16000\nTotal Amount: INR 145000",
+            "confidence": 95.42619047619048
+          }
+        ]
+      },
+      "total_amount": {
+        "value": 145000.0,
+        "confidence": 95.43,
+        "needs_review": false,
+        "evidence": [
+          {
+            "document_id": "example-1-bill",
+            "source_name": "bill_phone_photo.png",
+            "page": 1,
+            "method": "tesseract",
+            "text": "MEDICAL BILL - SYNTHETIC FIXTURE\nClaim Number: CLM-SYN-1001\nPatient Name: Alex Morgan\nHospital: North Star General Hospital\nPolicy Number: POL-SYN-1001\nAdmission Date: 2026-07-10\nDischarge Date: 2026-07-13\nDiagnosis: Acute appendicitis\nRoom charges: INR 18000\nDoctor consultation: INR 12000\nSurgery and procedure: INR 85000\nMedicines: INR 14000\nDiagnostic tests: INR 16000\nTotal Amount: INR 145000",
+            "confidence": 95.42619047619048
+          }
+        ]
+      }
+    },
+    "policy_terms": {
+      "annual_limit": {
+        "term": "annual_limit",
+        "value": "500000",
+        "confidence": 0.95,
+        "source_text": "SYNTHETIC HEALTH POLICY\nPolicy Number: POL-SYN-1001\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent\nRoom and Board Limit: INR 5000 per day\nWaiting period: 12 months\nNetwork hospital required.\nPre-authorization required for surgery.\nRequired documents: discharge summary and itemized bill.\nExclusion: cosmetic surgery.",
+        "source_page": 1,
+        "source_name": "policy_standard.pdf",
+        "method": "deterministic_regex"
+      },
+      "deductible": {
+        "term": "deductible",
+        "value": "10000",
+        "confidence": 0.95,
+        "source_text": "SYNTHETIC HEALTH POLICY\nPolicy Number: POL-SYN-1001\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent\nRoom and Board Limit: INR 5000 per day\nWaiting period: 12 months\nNetwork hospital required.\nPre-authorization required for surgery.\nRequired documents: discharge summary and itemized bill.\nExclusion: cosmetic surgery.",
+        "source_page": 1,
+        "source_name": "policy_standard.pdf",
+        "method": "deterministic_regex"
+      },
+      "copay_percent": {
+        "term": "copay_percent",
+        "value": "10",
+        "confidence": 0.95,
+        "source_text": "SYNTHETIC HEALTH POLICY\nPolicy Number: POL-SYN-1001\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent\nRoom and Board Limit: INR 5000 per day\nWaiting period: 12 months\nNetwork hospital required.\nPre-authorization required for surgery.\nRequired documents: discharge summary and itemized bill.\nExclusion: cosmetic surgery.",
+        "source_page": 1,
+        "source_name": "policy_standard.pdf",
+        "method": "deterministic_regex"
+      },
+      "room_limit_per_day": {
+        "term": "room_limit_per_day",
+        "value": "5000",
+        "confidence": 0.95,
+        "source_text": "SYNTHETIC HEALTH POLICY\nPolicy Number: POL-SYN-1001\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent\nRoom and Board Limit: INR 5000 per day\nWaiting period: 12 months\nNetwork hospital required.\nPre-authorization required for surgery.\nRequired documents: discharge summary and itemized bill.\nExclusion: cosmetic surgery.",
+        "source_page": 1,
+        "source_name": "policy_standard.pdf",
+        "method": "deterministic_regex"
+      },
+      "waiting_period_months": {
+        "term": "waiting_period_months",
+        "value": 12,
+        "confidence": 0.95,
+        "source_text": "SYNTHETIC HEALTH POLICY\nPolicy Number: POL-SYN-1001\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent\nRoom and Board Limit: INR 5000 per day\nWaiting period: 12 months\nNetwork hospital required.\nPre-authorization required for surgery.\nRequired documents: discharge summary and itemized bill.\nExclusion: cosmetic surgery.",
+        "source_page": 1,
+        "source_name": "policy_standard.pdf",
+        "method": "deterministic_regex"
+      },
+      "preauthorization_required": {
+        "term": "preauthorization_required",
+        "value": true,
+        "confidence": 0.9,
+        "source_text": "pre-authorization requirement detected",
+        "source_page": null,
+        "source_name": "policy_standard.pdf",
+        "method": "deterministic_regex"
+      },
+      "exclusions": {
+        "term": "exclusions",
+        "value": [
+          "SYNTHETIC HEALTH POLICY\nPolicy Number: POL-SYN-1001\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent\nRoom and Board Limit: INR 5000 per day\nWaiting period: 12 months\nNetwork hospital required.\nPre-authorization required for surgery.\nRequired documents: discharge summary and itemized bill.\nExclusion: cosmetic surgery."
+        ],
+        "confidence": 0.85,
+        "source_text": "SYNTHETIC HEALTH POLICY\nPolicy Number: POL-SYN-1001\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent\nRoom and Board Limit: INR 5000 per day\nWaiting period: 12 months\nNetwork hospital required.\nPre-authorization required for surgery.\nRequired documents: discharge summary and itemized bill.\nExclusion: cosmetic surgery.",
+        "source_page": 1,
+        "source_name": "policy_standard.pdf",
+        "method": "deterministic_keyword"
+      }
+    },
+    "context": {
+      "diagnosis": "acute appendicitis",
+      "waiting_period_satisfied": true,
+      "in_network": true,
+      "preauthorization_obtained": true
+    },
+    "rule_trace": [
+      {
+        "rule": "amount_present",
+        "outcome": "pass",
+        "why": "A positive bill total is available."
+      },
+      {
+        "rule": "annual_limit",
+        "outcome": "pass",
+        "why": "The bill total is within the extracted annual limit."
+      },
+      {
+        "rule": "exclusion",
+        "outcome": "pass",
+        "why": "No extracted exclusion phrase matched the diagnosis."
+      },
+      {
+        "rule": "waiting_period",
+        "outcome": "pass",
+        "why": "Waiting-period satisfaction is explicitly confirmed."
+      },
+      {
+        "rule": "pre_authorization",
+        "outcome": "pass",
+        "why": "Required authorization is explicitly confirmed."
+      },
+      {
+        "rule": "sub_limit",
+        "outcome": "pass",
+        "why": "No applicable extracted sub-limit was supplied."
+      },
+      {
+        "rule": "room_limit",
+        "outcome": "pass",
+        "why": "No room-charge context was supplied."
+      },
+      {
+        "rule": "duplicate_charges",
+        "outcome": "pass",
+        "why": "No duplicate suspicion was supplied."
+      },
+      {
+        "rule": "multiple_bill_aggregation",
+        "outcome": "pass",
+        "why": "No unconfirmed multi-bill aggregation."
+      }
+    ],
+    "engine_status": "approved",
+    "covered_amount": 145000.0,
+    "deductible": 10000.0,
+    "copayment": 13500.0,
+    "payable_amount": 121500.0,
+    "warnings": [],
+    "calculations": [
+      {
+        "rule_id": "policy_limit",
+        "rule_version": "mvp-1.0",
+        "status": "pass",
+        "inputs": {
+          "billed_amount": 145000.0,
+          "annual_limit": 500000.0
+        },
+        "calculation": "min(145000.00, 500000) = 145000.00",
+        "amount": 145000.0,
+        "warnings": []
+      },
+      {
+        "rule_id": "deductible",
+        "rule_version": "mvp-1.0",
+        "status": "pass",
+        "inputs": {
+          "eligible_before_deductible": 145000.0,
+          "deductible": 10000.0
+        },
+        "calculation": "145000.00 - 10000 = 135000.00",
+        "amount": 10000.0,
+        "warnings": []
+      },
+      {
+        "rule_id": "copayment",
+        "rule_version": "mvp-1.0",
+        "status": "pass",
+        "inputs": {
+          "after_deductible": 135000.0,
+          "copay_percent": 10.0
+        },
+        "calculation": "135000.00 \u00d7 10% = 13500.00",
+        "amount": 13500.0,
+        "warnings": []
+      },
+      {
+        "rule_id": "payable_amount",
+        "rule_version": "mvp-1.0",
+        "status": "pass",
+        "inputs": {
+          "eligible_after_deductible": 135000.0,
+          "copayment": 13500.0
+        },
+        "calculation": "135000.00 - 13500.00 = 121500.00",
+        "amount": 121500.0,
+        "warnings": []
+      }
+    ]
+  },
+  {
+    "example": 2,
+    "title": "Partial approval from proportional room-charge limit",
+    "bill_fields": {
+      "patient_name": {
+        "value": "Alex Morgan",
+        "confidence": 100.0,
+        "needs_review": false,
+        "evidence": [
+          {
+            "document_id": "example-2-bill",
+            "source_name": "bill_selectable_text.pdf",
+            "page": 1,
+            "method": "pymupdf",
+            "text": "MEDICAL BILL - SYNTHETIC FIXTURE\nClaim Number: CLM-SYN-1001\nPatient Name: Alex Morgan\nHospital: North Star General Hospital\nPolicy Number: POL-SYN-1001\nAdmission Date: 2026-07-10\nDischarge Date: 2026-07-13\nDiagnosis: Acute appendicitis\nRoom charges: INR 18000\nDoctor consultation: INR 12000\nSurgery and procedure: INR 85000\nMedicines: INR 14000\nDiagnostic tests: INR 16000\nTotal Amount: INR 145000",
+            "confidence": 100.0
+          }
+        ]
+      },
+      "hospital_name": {
+        "value": "North Star General Hospital",
+        "confidence": 100.0,
+        "needs_review": false,
+        "evidence": [
+          {
+            "document_id": "example-2-bill",
+            "source_name": "bill_selectable_text.pdf",
+            "page": 1,
+            "method": "pymupdf",
+            "text": "MEDICAL BILL - SYNTHETIC FIXTURE\nClaim Number: CLM-SYN-1001\nPatient Name: Alex Morgan\nHospital: North Star General Hospital\nPolicy Number: POL-SYN-1001\nAdmission Date: 2026-07-10\nDischarge Date: 2026-07-13\nDiagnosis: Acute appendicitis\nRoom charges: INR 18000\nDoctor consultation: INR 12000\nSurgery and procedure: INR 85000\nMedicines: INR 14000\nDiagnostic tests: INR 16000\nTotal Amount: INR 145000",
+            "confidence": 100.0
+          }
+        ]
+      },
+      "policy_number": {
+        "value": "POL-SYN-1001",
+        "confidence": 100.0,
+        "needs_review": false,
+        "evidence": [
+          {
+            "document_id": "example-2-bill",
+            "source_name": "bill_selectable_text.pdf",
+            "page": 1,
+            "method": "pymupdf",
+            "text": "MEDICAL BILL - SYNTHETIC FIXTURE\nClaim Number: CLM-SYN-1001\nPatient Name: Alex Morgan\nHospital: North Star General Hospital\nPolicy Number: POL-SYN-1001\nAdmission Date: 2026-07-10\nDischarge Date: 2026-07-13\nDiagnosis: Acute appendicitis\nRoom charges: INR 18000\nDoctor consultation: INR 12000\nSurgery and procedure: INR 85000\nMedicines: INR 14000\nDiagnostic tests: INR 16000\nTotal Amount: INR 145000",
+            "confidence": 100.0
+          }
+        ]
+      },
+      "claim_number": {
+        "value": "CLM-SYN-1001",
+        "confidence": 100.0,
+        "needs_review": false,
+        "evidence": [
+          {
+            "document_id": "example-2-bill",
+            "source_name": "bill_selectable_text.pdf",
+            "page": 1,
+            "method": "pymupdf",
+            "text": "MEDICAL BILL - SYNTHETIC FIXTURE\nClaim Number: CLM-SYN-1001\nPatient Name: Alex Morgan\nHospital: North Star General Hospital\nPolicy Number: POL-SYN-1001\nAdmission Date: 2026-07-10\nDischarge Date: 2026-07-13\nDiagnosis: Acute appendicitis\nRoom charges: INR 18000\nDoctor consultation: INR 12000\nSurgery and procedure: INR 85000\nMedicines: INR 14000\nDiagnostic tests: INR 16000\nTotal Amount: INR 145000",
+            "confidence": 100.0
+          }
+        ]
+      },
+      "admission_date": null,
+      "discharge_date": null,
+      "diagnosis": {
+        "value": "Acute appendicitis",
+        "confidence": 100.0,
+        "needs_review": false,
+        "evidence": [
+          {
+            "document_id": "example-2-bill",
+            "source_name": "bill_selectable_text.pdf",
+            "page": 1,
+            "method": "pymupdf",
+            "text": "MEDICAL BILL - SYNTHETIC FIXTURE\nClaim Number: CLM-SYN-1001\nPatient Name: Alex Morgan\nHospital: North Star General Hospital\nPolicy Number: POL-SYN-1001\nAdmission Date: 2026-07-10\nDischarge Date: 2026-07-13\nDiagnosis: Acute appendicitis\nRoom charges: INR 18000\nDoctor consultation: INR 12000\nSurgery and procedure: INR 85000\nMedicines: INR 14000\nDiagnostic tests: INR 16000\nTotal Amount: INR 145000",
+            "confidence": 100.0
+          }
+        ]
+      },
+      "total_amount": {
+        "value": 145000.0,
+        "confidence": 100.0,
+        "needs_review": false,
+        "evidence": [
+          {
+            "document_id": "example-2-bill",
+            "source_name": "bill_selectable_text.pdf",
+            "page": 1,
+            "method": "pymupdf",
+            "text": "MEDICAL BILL - SYNTHETIC FIXTURE\nClaim Number: CLM-SYN-1001\nPatient Name: Alex Morgan\nHospital: North Star General Hospital\nPolicy Number: POL-SYN-1001\nAdmission Date: 2026-07-10\nDischarge Date: 2026-07-13\nDiagnosis: Acute appendicitis\nRoom charges: INR 18000\nDoctor consultation: INR 12000\nSurgery and procedure: INR 85000\nMedicines: INR 14000\nDiagnostic tests: INR 16000\nTotal Amount: INR 145000",
+            "confidence": 100.0
+          }
+        ]
+      }
+    },
+    "policy_terms": {
+      "annual_limit": {
+        "term": "annual_limit",
+        "value": "500000",
+        "confidence": 0.95,
+        "source_text": "SYNTHETIC HEALTH POLICY\nPolicy Number: POL-SYN-1001\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent\nRoom and Board Limit: INR 5000 per day\nWaiting period: 12 months\nNetwork hospital required.\nPre-authorization required for surgery.\nRequired documents: discharge summary and itemized bill.\nExclusion: cosmetic surgery.",
+        "source_page": 1,
+        "source_name": "policy_standard.pdf",
+        "method": "deterministic_regex"
+      },
+      "deductible": {
+        "term": "deductible",
+        "value": "10000",
+        "confidence": 0.95,
+        "source_text": "SYNTHETIC HEALTH POLICY\nPolicy Number: POL-SYN-1001\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent\nRoom and Board Limit: INR 5000 per day\nWaiting period: 12 months\nNetwork hospital required.\nPre-authorization required for surgery.\nRequired documents: discharge summary and itemized bill.\nExclusion: cosmetic surgery.",
+        "source_page": 1,
+        "source_name": "policy_standard.pdf",
+        "method": "deterministic_regex"
+      },
+      "copay_percent": {
+        "term": "copay_percent",
+        "value": "10",
+        "confidence": 0.95,
+        "source_text": "SYNTHETIC HEALTH POLICY\nPolicy Number: POL-SYN-1001\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent\nRoom and Board Limit: INR 5000 per day\nWaiting period: 12 months\nNetwork hospital required.\nPre-authorization required for surgery.\nRequired documents: discharge summary and itemized bill.\nExclusion: cosmetic surgery.",
+        "source_page": 1,
+        "source_name": "policy_standard.pdf",
+        "method": "deterministic_regex"
+      },
+      "room_limit_per_day": {
+        "term": "room_limit_per_day",
+        "value": "5000",
+        "confidence": 0.95,
+        "source_text": "SYNTHETIC HEALTH POLICY\nPolicy Number: POL-SYN-1001\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent\nRoom and Board Limit: INR 5000 per day\nWaiting period: 12 months\nNetwork hospital required.\nPre-authorization required for surgery.\nRequired documents: discharge summary and itemized bill.\nExclusion: cosmetic surgery.",
+        "source_page": 1,
+        "source_name": "policy_standard.pdf",
+        "method": "deterministic_regex"
+      },
+      "waiting_period_months": {
+        "term": "waiting_period_months",
+        "value": 12,
+        "confidence": 0.95,
+        "source_text": "SYNTHETIC HEALTH POLICY\nPolicy Number: POL-SYN-1001\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent\nRoom and Board Limit: INR 5000 per day\nWaiting period: 12 months\nNetwork hospital required.\nPre-authorization required for surgery.\nRequired documents: discharge summary and itemized bill.\nExclusion: cosmetic surgery.",
+        "source_page": 1,
+        "source_name": "policy_standard.pdf",
+        "method": "deterministic_regex"
+      },
+      "preauthorization_required": {
+        "term": "preauthorization_required",
+        "value": true,
+        "confidence": 0.9,
+        "source_text": "pre-authorization requirement detected",
+        "source_page": null,
+        "source_name": "policy_standard.pdf",
+        "method": "deterministic_regex"
+      },
+      "exclusions": {
+        "term": "exclusions",
+        "value": [
+          "SYNTHETIC HEALTH POLICY\nPolicy Number: POL-SYN-1001\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent\nRoom and Board Limit: INR 5000 per day\nWaiting period: 12 months\nNetwork hospital required.\nPre-authorization required for surgery.\nRequired documents: discharge summary and itemized bill.\nExclusion: cosmetic surgery."
+        ],
+        "confidence": 0.85,
+        "source_text": "SYNTHETIC HEALTH POLICY\nPolicy Number: POL-SYN-1001\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent\nRoom and Board Limit: INR 5000 per day\nWaiting period: 12 months\nNetwork hospital required.\nPre-authorization required for surgery.\nRequired documents: discharge summary and itemized bill.\nExclusion: cosmetic surgery.",
+        "source_page": 1,
+        "source_name": "policy_standard.pdf",
+        "method": "deterministic_keyword"
+      }
+    },
+    "context": {
+      "diagnosis": "acute appendicitis",
+      "waiting_period_satisfied": true,
+      "in_network": true,
+      "preauthorization_obtained": true,
+      "room_charge": 40000,
+      "room_days": 5,
+      "room_linked_charges": 80000
+    },
+    "rule_trace": [
+      {
+        "rule": "amount_present",
+        "outcome": "pass",
+        "why": "A positive bill total is available."
+      },
+      {
+        "rule": "annual_limit",
+        "outcome": "pass",
+        "why": "The bill total is within the extracted annual limit."
+      },
+      {
+        "rule": "exclusion",
+        "outcome": "pass",
+        "why": "No extracted exclusion phrase matched the diagnosis."
+      },
+      {
+        "rule": "waiting_period",
+        "outcome": "pass",
+        "why": "Waiting-period satisfaction is explicitly confirmed."
+      },
+      {
+        "rule": "pre_authorization",
+        "outcome": "pass",
+        "why": "Required authorization is explicitly confirmed."
+      },
+      {
+        "rule": "sub_limit",
+        "outcome": "pass",
+        "why": "No applicable extracted sub-limit was supplied."
+      },
+      {
+        "rule": "room_limit",
+        "outcome": "partial",
+        "why": "Room charge exceeds the daily cap and linked charges are proportionally reduced."
+      },
+      {
+        "rule": "duplicate_charges",
+        "outcome": "pass",
+        "why": "No duplicate suspicion was supplied."
+      },
+      {
+        "rule": "multiple_bill_aggregation",
+        "outcome": "pass",
+        "why": "No unconfirmed multi-bill aggregation."
+      }
+    ],
+    "engine_status": "partially_approved",
+    "covered_amount": 100000.0,
+    "deductible": 10000.0,
+    "copayment": 9000.0,
+    "payable_amount": 81000.0,
+    "warnings": [
+      "room_limit_proportional_applied"
+    ],
+    "calculations": [
+      {
+        "rule_id": "policy_limit",
+        "rule_version": "mvp-1.0",
+        "status": "pass",
+        "inputs": {
+          "billed_amount": 145000.0,
+          "annual_limit": 500000.0
+        },
+        "calculation": "min(145000.00, 500000) = 145000.00",
+        "amount": 145000.0,
+        "warnings": []
+      },
+      {
+        "rule_id": "room_limit",
+        "rule_version": "mvp-1.0",
+        "status": "partial",
+        "inputs": {
+          "room_charge": 40000.0,
+          "room_days": 5,
+          "allowed_room_charge": 25000.0,
+          "linked_charges": 80000.0,
+          "proportional_factor": 0.625
+        },
+        "calculation": "room and linked charges reduced by factor 0.625",
+        "amount": 45000.0,
+        "warnings": [
+          "room_limit_exceeded",
+          "proportional_reduction"
+        ]
+      },
+      {
+        "rule_id": "deductible",
+        "rule_version": "mvp-1.0",
+        "status": "pass",
+        "inputs": {
+          "eligible_before_deductible": 100000.0,
+          "deductible": 10000.0
+        },
+        "calculation": "100000.00 - 10000 = 90000.00",
+        "amount": 10000.0,
+        "warnings": []
+      },
+      {
+        "rule_id": "copayment",
+        "rule_version": "mvp-1.0",
+        "status": "pass",
+        "inputs": {
+          "after_deductible": 90000.0,
+          "copay_percent": 10.0
+        },
+        "calculation": "90000.00 \u00d7 10% = 9000.00",
+        "amount": 9000.0,
+        "warnings": []
+      },
+      {
+        "rule_id": "payable_amount",
+        "rule_version": "mvp-1.0",
+        "status": "pass",
+        "inputs": {
+          "eligible_after_deductible": 90000.0,
+          "copayment": 9000.0
+        },
+        "calculation": "90000.00 - 9000.00 = 81000.00",
+        "amount": 81000.0,
+        "warnings": []
+      }
+    ]
+  },
+  {
+    "example": 3,
+    "title": "Manual Review from OCR contamination, missing hospital, and missing pre-authorization",
+    "bill_fields": {
+      "patient_name": {
+        "value": "Alex Morgan",
+        "confidence": 93.63,
+        "needs_review": false,
+        "evidence": [
+          {
+            "document_id": "example-3-bill",
+            "source_name": "bill_skewed_compressed.jpg",
+            "page": 1,
+            "method": "tesseract",
+            "text": "SYNTHETIC FIXTURE\nMEDICAL BILL -\nClaim Number: CLM-SYN-1001\nPatient Name: Alex Morgan\nNorth Star General Hospital\nHospital:\nPolicy Number: POL-SYN-1001\nAdmission Date: 2026-07-10\nDischarge Date: 2026-07-13\nDiagnosis: Acute appendicitis\nRoom charges: INR 18000\nconsultation: INR 12000\nDoctor\nand procedure: INR 85000\nSurgery\nMedicines: INR 44000\nDiagnostic tests: INR 16000\nTotal Amount: INR 145000",
+            "confidence": 93.63425925925925
+          }
+        ]
+      },
+      "hospital_name": null,
+      "policy_number": {
+        "value": "POL-SYN-1001",
+        "confidence": 93.63,
+        "needs_review": false,
+        "evidence": [
+          {
+            "document_id": "example-3-bill",
+            "source_name": "bill_skewed_compressed.jpg",
+            "page": 1,
+            "method": "tesseract",
+            "text": "SYNTHETIC FIXTURE\nMEDICAL BILL -\nClaim Number: CLM-SYN-1001\nPatient Name: Alex Morgan\nNorth Star General Hospital\nHospital:\nPolicy Number: POL-SYN-1001\nAdmission Date: 2026-07-10\nDischarge Date: 2026-07-13\nDiagnosis: Acute appendicitis\nRoom charges: INR 18000\nconsultation: INR 12000\nDoctor\nand procedure: INR 85000\nSurgery\nMedicines: INR 44000\nDiagnostic tests: INR 16000\nTotal Amount: INR 145000",
+            "confidence": 93.63425925925925
+          }
+        ]
+      },
+      "claim_number": {
+        "value": "CLM-SYN-1001",
+        "confidence": 93.63,
+        "needs_review": false,
+        "evidence": [
+          {
+            "document_id": "example-3-bill",
+            "source_name": "bill_skewed_compressed.jpg",
+            "page": 1,
+            "method": "tesseract",
+            "text": "SYNTHETIC FIXTURE\nMEDICAL BILL -\nClaim Number: CLM-SYN-1001\nPatient Name: Alex Morgan\nNorth Star General Hospital\nHospital:\nPolicy Number: POL-SYN-1001\nAdmission Date: 2026-07-10\nDischarge Date: 2026-07-13\nDiagnosis: Acute appendicitis\nRoom charges: INR 18000\nconsultation: INR 12000\nDoctor\nand procedure: INR 85000\nSurgery\nMedicines: INR 44000\nDiagnostic tests: INR 16000\nTotal Amount: INR 145000",
+            "confidence": 93.63425925925925
+          }
+        ]
+      },
+      "admission_date": null,
+      "discharge_date": null,
+      "diagnosis": {
+        "value": "Acute appendicitis",
+        "confidence": 93.63,
+        "needs_review": false,
+        "evidence": [
+          {
+            "document_id": "example-3-bill",
+            "source_name": "bill_skewed_compressed.jpg",
+            "page": 1,
+            "method": "tesseract",
+            "text": "SYNTHETIC FIXTURE\nMEDICAL BILL -\nClaim Number: CLM-SYN-1001\nPatient Name: Alex Morgan\nNorth Star General Hospital\nHospital:\nPolicy Number: POL-SYN-1001\nAdmission Date: 2026-07-10\nDischarge Date: 2026-07-13\nDiagnosis: Acute appendicitis\nRoom charges: INR 18000\nconsultation: INR 12000\nDoctor\nand procedure: INR 85000\nSurgery\nMedicines: INR 44000\nDiagnostic tests: INR 16000\nTotal Amount: INR 145000",
+            "confidence": 93.63425925925925
+          }
+        ]
+      },
+      "total_amount": {
+        "value": 145000.0,
+        "confidence": 93.63,
+        "needs_review": false,
+        "evidence": [
+          {
+            "document_id": "example-3-bill",
+            "source_name": "bill_skewed_compressed.jpg",
+            "page": 1,
+            "method": "tesseract",
+            "text": "SYNTHETIC FIXTURE\nMEDICAL BILL -\nClaim Number: CLM-SYN-1001\nPatient Name: Alex Morgan\nNorth Star General Hospital\nHospital:\nPolicy Number: POL-SYN-1001\nAdmission Date: 2026-07-10\nDischarge Date: 2026-07-13\nDiagnosis: Acute appendicitis\nRoom charges: INR 18000\nconsultation: INR 12000\nDoctor\nand procedure: INR 85000\nSurgery\nMedicines: INR 44000\nDiagnostic tests: INR 16000\nTotal Amount: INR 145000",
+            "confidence": 93.63425925925925
+          }
+        ]
+      }
+    },
+    "policy_terms": {
+      "annual_limit": {
+        "term": "annual_limit",
+        "value": "500000",
+        "confidence": 0.95,
+        "source_text": "SYNTHETIC HEALTH POLICY\nPolicy Number: POL-SYN-1001\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent\nRoom and Board Limit: INR 5000 per day\nWaiting period: 12 months\nNetwork hospital required.\nPre-authorization required for surgery.\nRequired documents: discharge summary and itemized bill.\nExclusion: cosmetic surgery.",
+        "source_page": 1,
+        "source_name": "policy_standard.pdf",
+        "method": "deterministic_regex"
+      },
+      "deductible": {
+        "term": "deductible",
+        "value": "10000",
+        "confidence": 0.95,
+        "source_text": "SYNTHETIC HEALTH POLICY\nPolicy Number: POL-SYN-1001\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent\nRoom and Board Limit: INR 5000 per day\nWaiting period: 12 months\nNetwork hospital required.\nPre-authorization required for surgery.\nRequired documents: discharge summary and itemized bill.\nExclusion: cosmetic surgery.",
+        "source_page": 1,
+        "source_name": "policy_standard.pdf",
+        "method": "deterministic_regex"
+      },
+      "copay_percent": {
+        "term": "copay_percent",
+        "value": "10",
+        "confidence": 0.95,
+        "source_text": "SYNTHETIC HEALTH POLICY\nPolicy Number: POL-SYN-1001\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent\nRoom and Board Limit: INR 5000 per day\nWaiting period: 12 months\nNetwork hospital required.\nPre-authorization required for surgery.\nRequired documents: discharge summary and itemized bill.\nExclusion: cosmetic surgery.",
+        "source_page": 1,
+        "source_name": "policy_standard.pdf",
+        "method": "deterministic_regex"
+      },
+      "room_limit_per_day": {
+        "term": "room_limit_per_day",
+        "value": "5000",
+        "confidence": 0.95,
+        "source_text": "SYNTHETIC HEALTH POLICY\nPolicy Number: POL-SYN-1001\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent\nRoom and Board Limit: INR 5000 per day\nWaiting period: 12 months\nNetwork hospital required.\nPre-authorization required for surgery.\nRequired documents: discharge summary and itemized bill.\nExclusion: cosmetic surgery.",
+        "source_page": 1,
+        "source_name": "policy_standard.pdf",
+        "method": "deterministic_regex"
+      },
+      "waiting_period_months": {
+        "term": "waiting_period_months",
+        "value": 12,
+        "confidence": 0.95,
+        "source_text": "SYNTHETIC HEALTH POLICY\nPolicy Number: POL-SYN-1001\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent\nRoom and Board Limit: INR 5000 per day\nWaiting period: 12 months\nNetwork hospital required.\nPre-authorization required for surgery.\nRequired documents: discharge summary and itemized bill.\nExclusion: cosmetic surgery.",
+        "source_page": 1,
+        "source_name": "policy_standard.pdf",
+        "method": "deterministic_regex"
+      },
+      "preauthorization_required": {
+        "term": "preauthorization_required",
+        "value": true,
+        "confidence": 0.9,
+        "source_text": "pre-authorization requirement detected",
+        "source_page": null,
+        "source_name": "policy_standard.pdf",
+        "method": "deterministic_regex"
+      },
+      "exclusions": {
+        "term": "exclusions",
+        "value": [
+          "SYNTHETIC HEALTH POLICY\nPolicy Number: POL-SYN-1001\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent\nRoom and Board Limit: INR 5000 per day\nWaiting period: 12 months\nNetwork hospital required.\nPre-authorization required for surgery.\nRequired documents: discharge summary and itemized bill.\nExclusion: cosmetic surgery."
+        ],
+        "confidence": 0.85,
+        "source_text": "SYNTHETIC HEALTH POLICY\nPolicy Number: POL-SYN-1001\nAnnual Policy Limit: INR 500000\nDeductible: INR 10000\nCopayment: 10 percent\nRoom and Board Limit: INR 5000 per day\nWaiting period: 12 months\nNetwork hospital required.\nPre-authorization required for surgery.\nRequired documents: discharge summary and itemized bill.\nExclusion: cosmetic surgery.",
+        "source_page": 1,
+        "source_name": "policy_standard.pdf",
+        "method": "deterministic_keyword"
+      }
+    },
+    "context": {
+      "diagnosis": "acute appendicitis",
+      "waiting_period_satisfied": true,
+      "in_network": true
+    },
+    "rule_trace": [
+      {
+        "rule": "amount_present",
+        "outcome": "pass",
+        "why": "A positive bill total is available."
+      },
+      {
+        "rule": "annual_limit",
+        "outcome": "pass",
+        "why": "The bill total is within the extracted annual limit."
+      },
+      {
+        "rule": "exclusion",
+        "outcome": "pass",
+        "why": "No extracted exclusion phrase matched the diagnosis."
+      },
+      {
+        "rule": "waiting_period",
+        "outcome": "pass",
+        "why": "Waiting-period satisfaction is explicitly confirmed."
+      },
+      {
+        "rule": "pre_authorization",
+        "outcome": "uncertain",
+        "why": "Required authorization is missing; no automatic rejection is made."
+      },
+      {
+        "rule": "sub_limit",
+        "outcome": "pass",
+        "why": "No applicable extracted sub-limit was supplied."
+      },
+      {
+        "rule": "room_limit",
+        "outcome": "pass",
+        "why": "No room-charge context was supplied."
+      },
+      {
+        "rule": "duplicate_charges",
+        "outcome": "pass",
+        "why": "No duplicate suspicion was supplied."
+      },
+      {
+        "rule": "multiple_bill_aggregation",
+        "outcome": "pass",
+        "why": "No unconfirmed multi-bill aggregation."
+      }
+    ],
+    "engine_status": "manual_review",
+    "covered_amount": 145000.0,
+    "deductible": 10000.0,
+    "copayment": 13500.0,
+    "payable_amount": 121500.0,
+    "warnings": [
+      "Missing required fields: hospital_name",
+      "Policy requires pre-authorization confirmation."
+    ],
+    "calculations": [
+      {
+        "rule_id": "policy_limit",
+        "rule_version": "mvp-1.0",
+        "status": "pass",
+        "inputs": {
+          "billed_amount": 145000.0,
+          "annual_limit": 500000.0
+        },
+        "calculation": "min(145000.00, 500000) = 145000.00",
+        "amount": 145000.0,
+        "warnings": []
+      },
+      {
+        "rule_id": "deductible",
+        "rule_version": "mvp-1.0",
+        "status": "pass",
+        "inputs": {
+          "eligible_before_deductible": 145000.0,
+          "deductible": 10000.0
+        },
+        "calculation": "145000.00 - 10000 = 135000.00",
+        "amount": 10000.0,
+        "warnings": []
+      },
+      {
+        "rule_id": "copayment",
+        "rule_version": "mvp-1.0",
+        "status": "pass",
+        "inputs": {
+          "after_deductible": 135000.0,
+          "copay_percent": 10.0
+        },
+        "calculation": "135000.00 \u00d7 10% = 13500.00",
+        "amount": 13500.0,
+        "warnings": []
+      },
+      {
+        "rule_id": "payable_amount",
+        "rule_version": "mvp-1.0",
+        "status": "pass",
+        "inputs": {
+          "eligible_after_deductible": 135000.0,
+          "copayment": 13500.0
+        },
+        "calculation": "135000.00 - 13500.00 = 121500.00",
+        "amount": 121500.0,
+        "warnings": []
+      }
+    ]
+  }
+]

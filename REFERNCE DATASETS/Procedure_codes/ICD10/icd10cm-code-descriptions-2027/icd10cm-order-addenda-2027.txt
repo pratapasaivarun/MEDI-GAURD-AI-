@@ -1,0 +1,319 @@
+Add:         1 C7831   Secondary malignant neoplasm of larynx                       Secondary malignant neoplasm of larynx
+Add:         1 C7832   Secondary malignant neoplasm of pharynx                      Secondary malignant neoplasm of pharynx
+Add:         1 C7983   Secondary malignant neoplasm of oral cavity                  Secondary malignant neoplasm of oral cavity
+Delete:      1 D691    Qualitative platelet defects                                 Qualitative platelet defects
+Add:         0 D691    Qualitative platelet defects                                 Qualitative platelet defects
+Add:         1 D6911   Glanzmann thrombasthenia                                     Glanzmann thrombasthenia
+Add:         1 D6919   Other qualitative platelet defects                           Other qualitative platelet defects
+Add:         0 E8983   Postprocedural hypoglycemia following a procedure            Postprocedural hypoglycemia following a procedure
+Add:         1 E89830  Post bariatric hypoglycemia                                  Post bariatric hypoglycemia
+Add:         1 E89838  Other postprocedural hypoglycemia                            Other postprocedural hypoglycemia
+Add:         1 F64A    Gender identity disorder, in remission                       Gender identity disorder, in remission
+Delete:      1 I420    Dilated cardiomyopathy                                       Dilated cardiomyopathy
+Add:         0 I420    Dilated cardiomyopathy                                       Dilated cardiomyopathy
+Add:         1 I4200   Dilated cardiomyopathy, unspecified                          Dilated cardiomyopathy, unspecified
+Add:         1 I4201   Familial-genetic dilated cardiomyopathy                      Familial-genetic dilated cardiomyopathy
+Add:         1 I4209   Other dilated cardiomyopathy                                 Other dilated cardiomyopathy
+Delete:      1 I428    Other cardiomyopathies                                       Other cardiomyopathies
+Add:         0 I428    Other cardiomyopathies                                       Other cardiomyopathies
+Add:         1 I4281   Arrhythmogenic cardiomyopathy                                Arrhythmogenic cardiomyopathy
+Add:         1 I4289   Other cardiomyopathies not elsewhere classified              Other cardiomyopathies not elsewhere classified
+Add:         1 I4722   Catecholaminergic polymorphic ventricular tachycardia [CPVT] Catecholaminergic polymorphic ventricular tachycardia [CPVT]
+Delete:      1 I498    Other specified cardiac arrhythmias                          Other specified cardiac arrhythmias
+Add:         0 I498    Other specified cardiac arrhythmias                          Other specified cardiac arrhythmias
+Add:         1 I4981   Brugada syndrome                                             Brugada syndrome
+Add:         1 I4982   Ventricular bigeminy                                         Ventricular bigeminy
+Add:         1 I4989   Other specified cardiac arrhythmias not elsewhere classified Other specified cardiac arrhythmias not elsewhere classified
+Add:         0 J3483   Odontogenic sinusitis                                        Odontogenic sinusitis
+Add:         1 J34830  Odontogenic sinusitis, maxillary sinus                       Odontogenic sinusitis, maxillary sinus
+Add:         1 J34831  Odontogenic sinusitis, ethmoid sinus                         Odontogenic sinusitis, ethmoid sinus
+Add:         1 J34832  Odontogenic sinusitis, frontal sinus                         Odontogenic sinusitis, frontal sinus
+Add:         1 J34833  Odontogenic sinusitis, sphenoid sinus                        Odontogenic sinusitis, sphenoid sinus
+Add:         1 J34839  Odontogenic sinusitis, unspecified                           Odontogenic sinusitis, unspecified
+Add:         1 J4B     Pulmonary mycetoma                                           Pulmonary mycetoma
+Add:         1 K31B    Hypertrophic pyloric stenosis, in childhood                  Hypertrophic pyloric stenosis, in childhood
+Add:         0 K6A     Diseases of the pelvis, not elsewhere classified             Diseases of the pelvis, not elsewhere classified
+Add:         0 K6A0    Pelvic abscess                                               Pelvic abscess
+Add:         1 K6A01   Prevesical abscess                                           Prevesical abscess
+Add:         1 K6A09   Other pelvic abscess                                         Other pelvic abscess
+Add:         1 K6A8    Other diseases of the pelvis, not elsewhere classified       Other diseases of the pelvis, not elsewhere classified
+Add:         1 K740A   Hepatic fibrosis, moderate fibrosis                          Hepatic fibrosis, moderate fibrosis
+Add:         1 K7683   Intestinal failure-associated liver disease                  Intestinal failure-associated liver disease
+Revise from: 1 L02232  Carbuncle of back [any part, except buttock]                 Carbuncle of back [any part, except buttock]
+Revise to:   1 L02232  Carbuncle of back [any part, except buttock and flank]       Carbuncle of back [any part, except buttock and flank]
+Add:         1 L02237  Carbuncle of flank                                           Carbuncle of flank
+Revise from: 1 L03312  Cellulitis of back [any part except buttock]                 Cellulitis of back [any part except buttock]
+Revise to:   1 L03312  Cellulitis of back [any part except buttock and flank]       Cellulitis of back [any part except buttock and flank]
+Revise from: 1 L03322  Acute lymphangitis of back [any part except buttock]         Acute lymphangitis of back [any part except buttock]
+Revise to:   1 L03322  Acute lymphangitis of back                                   Acute lymphangitis of back [any part except buttock and flank]
+Add:         1 M043    VEXAS syndrome                                               VEXAS syndrome
+Add:         0 M67A    Plantar fasciitis                                            Plantar fasciitis
+Add:         0 M67A0   Plantar fasciitis, foot                                      Plantar fasciitis, foot
+Add:         1 M67A01  Plantar fasciitis, right foot                                Plantar fasciitis, right foot
+Add:         1 M67A02  Plantar fasciitis, left foot                                 Plantar fasciitis, left foot
+Add:         1 M67A09  Plantar fasciitis, unspecified foot                          Plantar fasciitis, unspecified foot
+Delete:      1 M722    Plantar fascial fibromatosis                                 Plantar fascial fibromatosis
+Add:         0 M722    Plantar fascial fibromatosis                                 Plantar fascial fibromatosis
+Add:         1 M7220   Plantar fascial fibromatosis, unspecified foot               Plantar fascial fibromatosis, unspecified foot
+Add:         1 M7221   Plantar fascial fibromatosis, right foot                     Plantar fascial fibromatosis, right foot
+Add:         1 M7222   Plantar fascial fibromatosis, left foot                      Plantar fascial fibromatosis, left foot
+Delete:      1 M868X1  Other osteomyelitis, shoulder                                Other osteomyelitis, shoulder
+Add:         0 M868X1  Other osteomyelitis, shoulder                                Other osteomyelitis, shoulder
+Add:         1 M868X11 Other osteomyelitis, right shoulder                          Other osteomyelitis, right shoulder
+Add:         1 M868X12 Other osteomyelitis, left shoulder                           Other osteomyelitis, left shoulder
+Add:         1 M868X19 Other osteomyelitis, unspecified shoulder                    Other osteomyelitis, unspecified shoulder
+Delete:      1 M868X2  Other osteomyelitis, upper arm                               Other osteomyelitis, upper arm
+Add:         0 M868X2  Other osteomyelitis, upper arm                               Other osteomyelitis, upper arm
+Add:         1 M868X21 Other osteomyelitis, right upper arm                         Other osteomyelitis, right upper arm
+Add:         1 M868X22 Other osteomyelitis, left upper arm                          Other osteomyelitis, left upper arm
+Add:         1 M868X29 Other osteomyelitis, unspecified upper arm                   Other osteomyelitis, unspecified upper arm
+Delete:      1 M868X3  Other osteomyelitis, forearm                                 Other osteomyelitis, forearm
+Add:         0 M868X3  Other osteomyelitis, forearm                                 Other osteomyelitis, forearm
+Add:         1 M868X31 Other osteomyelitis, right forearm                           Other osteomyelitis, right forearm
+Add:         1 M868X32 Other osteomyelitis, left forearm                            Other osteomyelitis, left forearm
+Add:         1 M868X39 Other osteomyelitis, unspecified forearm                     Other osteomyelitis, unspecified forearm
+Delete:      1 M868X4  Other osteomyelitis, hand                                    Other osteomyelitis, hand
+Add:         0 M868X4  Other osteomyelitis, hand                                    Other osteomyelitis, hand
+Add:         1 M868X41 Other osteomyelitis, right hand                              Other osteomyelitis, right hand
+Add:         1 M868X42 Other osteomyelitis, left hand                               Other osteomyelitis, left hand
+Add:         1 M868X49 Other osteomyelitis, unspecified hand                        Other osteomyelitis, unspecified hand
+Delete:      1 M868X5  Other osteomyelitis, thigh                                   Other osteomyelitis, thigh
+Add:         0 M868X5  Other osteomyelitis, thigh                                   Other osteomyelitis, thigh
+Add:         1 M868X51 Other osteomyelitis, right thigh                             Other osteomyelitis, right thigh
+Add:         1 M868X52 Other osteomyelitis, left thigh                              Other osteomyelitis, left thigh
+Add:         1 M868X59 Other osteomyelitis, unspecified thigh                       Other osteomyelitis, unspecified thigh
+Delete:      1 M868X6  Other osteomyelitis, lower leg                               Other osteomyelitis, lower leg
+Add:         0 M868X6  Other osteomyelitis, lower leg                               Other osteomyelitis, lower leg
+Add:         1 M868X61 Other osteomyelitis, right lower leg                         Other osteomyelitis, right lower leg
+Add:         1 M868X62 Other osteomyelitis, left lower leg                          Other osteomyelitis, left lower leg
+Add:         1 M868X69 Other osteomyelitis, unspecified lower leg                   Other osteomyelitis, unspecified lower leg
+Delete:      1 M868X7  Other osteomyelitis, ankle and foot                          Other osteomyelitis, ankle and foot
+Add:         0 M868X7  Other osteomyelitis, ankle and foot                          Other osteomyelitis, ankle and foot
+Add:         1 M868X71 Other osteomyelitis, right ankle and foot                    Other osteomyelitis, right ankle and foot
+Add:         1 M868X72 Other osteomyelitis, left ankle and foot                     Other osteomyelitis, left ankle and foot
+Add:         1 M868X79 Other osteomyelitis, unspecified ankle and foot              Other osteomyelitis, unspecified ankle and foot
+Delete:      1 M868X8  Other osteomyelitis, other site                              Other osteomyelitis, other site
+Add:         0 M868X8  Other osteomyelitis, other site                              Other osteomyelitis, other site
+Add:         1 M868X80 Other osteomyelitis, skull                                   Other osteomyelitis, skull
+Add:         1 M868X81 Other osteomyelitis, face and sinuses                        Other osteomyelitis, face and sinuses
+Add:         1 M868X89 Other osteomyelitis, other site                              Other osteomyelitis, other site
+Add:         0 N9986   Intraop and postproc complications and disorders of breast   Intraoperative and postprocedural complications and disorders of breast
+Add:         1 N99860  Intraoperative and postprocedural nipple ischemia            Intraoperative and postprocedural nipple ischemia
+Add:         1 N99861  Intraoperative and postprocedural nipple necrosis            Intraoperative and postprocedural nipple necrosis
+Add:         0 O0012   Interstit ectopic pregnancy without intrauterine pregnancy   Interstitial ectopic pregnancy without intrauterine pregnancy
+Add:         1 O00121  Right interstit ectopic pregnancy without uterin pregnancy   Right interstitial ectopic pregnancy without intrauterine pregnancy
+Add:         1 O00122  Left interstit ectopic pregnancy without uterin pregnancy    Left interstitial ectopic pregnancy without intrauterine pregnancy
+Add:         1 O00129  Unsp interstit ectopic pregnancy without uterin pregnancy    Unspecified interstitial ectopic pregnancy without intrauterine pregnancy
+Add:         0 O0013   Interstitial ectopic pregnancy with intrauterine pregnancy   Interstitial ectopic pregnancy with intrauterine pregnancy
+Add:         1 O00131  Right interstit ectopic pregnancy with uterin pregnancy      Right interstitial ectopic pregnancy with intrauterine pregnancy
+Add:         1 O00132  Left interstit ectopic pregnancy with intrauterine pregnancy Left interstitial ectopic pregnancy with intrauterine pregnancy
+Add:         1 O00139  Unsp interstit ectopic pregnancy with uterin pregnancy       Unspecified interstitial ectopic pregnancy with intrauterine pregnancy
+Add:         0 O003    Cesarean scar ectopic pregnancy                              Cesarean scar ectopic pregnancy
+Add:         1 O0031   Cesarean scar ectopic pregnancy without uterin pregnancy     Cesarean scar ectopic pregnancy without intrauterine pregnancy
+Add:         1 O0032   Cesarean scar ectopic pregnancy with intrauterine pregnancy  Cesarean scar ectopic pregnancy with intrauterine pregnancy
+Add:         0 O004    Cervical ectopic pregnancy                                   Cervical ectopic pregnancy
+Add:         1 O0041   Cervical ectopic pregnancy without intrauterine pregnancy    Cervical ectopic pregnancy without intrauterine pregnancy
+Add:         1 O0042   Cervical ectopic pregnancy with intrauterine pregnancy       Cervical ectopic pregnancy with intrauterine pregnancy
+Add:         0 O005    Cornual ectopic pregnancy                                    Cornual ectopic pregnancy
+Add:         0 O0051   Cornual ectopic pregnancy without intrauterine pregnancy     Cornual ectopic pregnancy without intrauterine pregnancy
+Add:         1 O00511  Right cornual ectopic pregnancy without uterin pregnancy     Right cornual ectopic pregnancy without intrauterine pregnancy
+Add:         1 O00512  Left cornual ectopic pregnancy without uterin pregnancy      Left cornual ectopic pregnancy without intrauterine pregnancy
+Add:         1 O00519  Unsp cornual ectopic pregnancy without uterin pregnancy      Unspecified cornual ectopic pregnancy without intrauterine pregnancy
+Add:         0 O0052   Cornual ectopic pregnancy with intrauterine pregnancy        Cornual ectopic pregnancy with intrauterine pregnancy
+Add:         1 O00521  Right cornual ectopic pregnancy with intrauterine pregnancy  Right cornual ectopic pregnancy with intrauterine pregnancy
+Add:         1 O00522  Left cornual ectopic pregnancy with intrauterine pregnancy   Left cornual ectopic pregnancy with intrauterine pregnancy
+Add:         1 O00529  Unspecified cornual ectopic pregnancy with uterin pregnancy  Unspecified cornual ectopic pregnancy with intrauterine pregnancy
+Add:         0 O314    Cont preg after vanishing twin syndrome of one fetus or more Continuing pregnancy after vanishing twin syndrome of one fetus or more
+Add:         0 O3140   Cont preg aft vanishing twin syn one fts or more, unsp tri   Continuing pregnancy after vanishing twin syndrome of one fetus or more, unspecified trimester
+Add:         1 O3140X0 Cont preg aft vanishing twin syn 1 fts or more,unsp tri,unsp Continuing pregnancy after vanishing twin syndrome of one fetus or more, unspecified trimester, not applicable or unspecified
+Add:         1 O3140X1 Cont preg aft vanishing twin syn 1 fts or more,unsp tri,fts1 Continuing pregnancy after vanishing twin syndrome of one fetus or more, unspecified trimester, fetus 1
+Add:         1 O3140X2 Cont preg aft vanishing twin syn 1 fts or more,unsp tri,fts2 Continuing pregnancy after vanishing twin syndrome of one fetus or more, unspecified trimester, fetus 2
+Add:         1 O3140X3 Cont preg aft vanishing twin syn 1 fts or more,unsp tri,fts3 Continuing pregnancy after vanishing twin syndrome of one fetus or more, unspecified trimester, fetus 3
+Add:         1 O3140X4 Cont preg aft vanishing twin syn 1 fts or more,unsp tri,fts4 Continuing pregnancy after vanishing twin syndrome of one fetus or more, unspecified trimester, fetus 4
+Add:         1 O3140X5 Cont preg aft vanishing twin syn 1 fts or more,unsp tri,fts5 Continuing pregnancy after vanishing twin syndrome of one fetus or more, unspecified trimester, fetus 5
+Add:         1 O3140X9 Cont preg aft vanishing twin syn 1 fts or more,unsp tri,oth  Continuing pregnancy after vanishing twin syndrome of one fetus or more, unspecified trimester, other fetus
+Add:         0 O3141   Cont preg aft vanishing twin syn of one fts or more, 1st tri Continuing pregnancy after vanishing twin syndrome of one fetus or more, first trimester
+Add:         1 O3141X0 Cont preg aft vanishing twin syn 1 fts or more,1st tri,unsp  Continuing pregnancy after vanishing twin syndrome of one fetus or more, first trimester, not applicable or unspecified
+Add:         1 O3141X1 Cont preg aft vanishing twin syn 1 fts or more,1st tri,fts1  Continuing pregnancy after vanishing twin syndrome of one fetus or more, first trimester, fetus 1
+Add:         1 O3141X2 Cont preg aft vanishing twin syn 1 fts or more,1st tri,fts2  Continuing pregnancy after vanishing twin syndrome of one fetus or more, first trimester, fetus 2
+Add:         1 O3141X3 Cont preg aft vanishing twin syn 1 fts or more,1st tri,fts3  Continuing pregnancy after vanishing twin syndrome of one fetus or more, first trimester, fetus 3
+Add:         1 O3141X4 Cont preg aft vanishing twin syn 1 fts or more,1st tri,fts4  Continuing pregnancy after vanishing twin syndrome of one fetus or more, first trimester, fetus 4
+Add:         1 O3141X5 Cont preg aft vanishing twin syn 1 fts or more,1st tri,fts5  Continuing pregnancy after vanishing twin syndrome of one fetus or more, first trimester, fetus 5
+Add:         1 O3141X9 Cont preg aft vanishing twin syn 1 fts or more, 1st tri, oth Continuing pregnancy after vanishing twin syndrome of one fetus or more, first trimester, other fetus
+Add:         0 O3142   Cont preg aft vanishing twin syn of one fts or more, 2nd tri Continuing pregnancy after vanishing twin syndrome of one fetus or more, second trimester
+Add:         1 O3142X0 Cont preg aft vanishing twin syn 1 fts or more,2nd tri,unsp  Continuing pregnancy after vanishing twin syndrome of one fetus or more, second trimester, not applicable or unspecified
+Add:         1 O3142X1 Cont preg aft vanishing twin syn 1 fts or more,2nd tri,fts1  Continuing pregnancy after vanishing twin syndrome of one fetus or more, second trimester, fetus 1
+Add:         1 O3142X2 Cont preg aft vanishing twin syn 1 fts or more,2nd tri,fts2  Continuing pregnancy after vanishing twin syndrome of one fetus or more, second trimester, fetus 2
+Add:         1 O3142X3 Cont preg aft vanishing twin syn 1 fts or more,2nd tri,fts3  Continuing pregnancy after vanishing twin syndrome of one fetus or more, second trimester, fetus 3
+Add:         1 O3142X4 Cont preg aft vanishing twin syn 1 fts or more,2nd tri,fts4  Continuing pregnancy after vanishing twin syndrome of one fetus or more, second trimester, fetus 4
+Add:         1 O3142X5 Cont preg aft vanishing twin syn 1 fts or more,2nd tri,fts5  Continuing pregnancy after vanishing twin syndrome of one fetus or more, second trimester, fetus 5
+Add:         1 O3142X9 Cont preg aft vanishing twin syn 1 fts or more, 2nd tri, oth Continuing pregnancy after vanishing twin syndrome of one fetus or more, second trimester, other fetus
+Add:         0 O3143   Cont preg aft vanishing twin syn of one fts or more, 3rd tri Continuing pregnancy after vanishing twin syndrome of one fetus or more, third trimester
+Add:         1 O3143X0 Cont preg aft vanishing twin syn 1 fts or more,3rd tri,unsp  Continuing pregnancy after vanishing twin syndrome of one fetus or more, third trimester, not applicable or unspecified
+Add:         1 O3143X1 Cont preg aft vanishing twin syn 1 fts or more,3rd tri,fts1  Continuing pregnancy after vanishing twin syndrome of one fetus or more, third trimester, fetus 1
+Add:         1 O3143X2 Cont preg aft vanishing twin syn 1 fts or more,3rd tri,fts2  Continuing pregnancy after vanishing twin syndrome of one fetus or more, third trimester, fetus 2
+Add:         1 O3143X3 Cont preg aft vanishing twin syn 1 fts or more,3rd tri,fts3  Continuing pregnancy after vanishing twin syndrome of one fetus or more, third trimester, fetus 3
+Add:         1 O3143X4 Cont preg aft vanishing twin syn 1 fts or more,3rd tri,fts4  Continuing pregnancy after vanishing twin syndrome of one fetus or more, third trimester, fetus 4
+Add:         1 O3143X5 Cont preg aft vanishing twin syn 1 fts or more,3rd tri,fts5  Continuing pregnancy after vanishing twin syndrome of one fetus or more, third trimester, fetus 5
+Add:         1 O3143X9 Cont preg aft vanishing twin syn 1 fts or more, 3rd tri, oth Continuing pregnancy after vanishing twin syndrome of one fetus or more, third trimester, other fetus
+Add:         1 Q87A    Loeys-Dietz syndrome                                         Loeys-Dietz syndrome
+Add:         0 QA1     Genetic disorders associated with neoplasms, NEC             Genetic disorders associated with neoplasms, not elsewhere classified
+Add:         0 QA17    Inherited neoplasm predisposition synd w mult systems, NEC   Inherited neoplasm predisposition syndromes involving multiple systems, not elsewhere classified
+Add:         1 QA171   Lynch syndrome                                               Lynch syndrome
+Add:         0 QA179   Other inherited neoplm predisposition synd of mult systems   Other inherited neoplasm predisposition syndrome of multiple systems
+Add:         1 QA1790  Familial cancer syndrome with pathogenic BRCA1 mutation      Familial cancer syndrome with pathogenic BRCA1 mutation
+Add:         1 QA1791  Familial cancer syndrome with pathogenic BRCA2 mutation      Familial cancer syndrome with pathogenic BRCA2 mutation
+Add:         1 QA1792  Li Fraumeni syndrome                                         Li Fraumeni syndrome
+Add:         1 QA1798  Other inherited neoplm predisposition synd of mult systems   Other inherited neoplasm predisposition syndrome of multiple systems
+Add:         1 R7872   Abnormal gadolinium level in blood                           Abnormal gadolinium level in blood
+Delete:      0 S23420  Sprain of sternoclavicular (joint) (ligament)                Sprain of sternoclavicular (joint) (ligament)
+Delete:      1 S23420A Sprain of sternoclavicular (joint) (ligament), init encntr   Sprain of sternoclavicular (joint) (ligament), initial encounter
+Delete:      1 S23420D Sprain of sternoclavicular (joint) (ligament), subs encntr   Sprain of sternoclavicular (joint) (ligament), subsequent encounter
+Delete:      1 S23420S Sprain of sternoclavicular (joint) (ligament), sequela       Sprain of sternoclavicular (joint) (ligament), sequela
+Add:         0 T5281   Toxic effects of alkenes                                     Toxic effects of alkenes
+Add:         0 T52811  Toxic effect of alkenes, accidental (unintentional)          Toxic effect of alkenes, accidental (unintentional)
+Add:         1 T52811A Toxic effect of alkenes, accidental (unintentional), init    Toxic effect of alkenes, accidental (unintentional), initial encounter
+Add:         1 T52811D Toxic effect of alkenes, accidental (unintentional), subs    Toxic effect of alkenes, accidental (unintentional), subsequent encounter
+Add:         1 T52811S Toxic effect of alkenes, accidental (unintentional), sequela Toxic effect of alkenes, accidental (unintentional), sequela
+Add:         0 T52812  Toxic effect of alkenes, intentional self-harm               Toxic effect of alkenes, intentional self-harm
+Add:         1 T52812A Toxic effect of alkenes, self-harm, initial encounter        Toxic effect of alkenes, intentional self-harm, initial encounter
+Add:         1 T52812D Toxic effect of alkenes, self-harm, subsequent encounter     Toxic effect of alkenes, intentional self-harm, subsequent encounter
+Add:         1 T52812S Toxic effect of alkenes, intentional self-harm, sequela      Toxic effect of alkenes, intentional self-harm, sequela
+Add:         0 T52813  Toxic effect of alkenes, assault                             Toxic effect of alkenes, assault
+Add:         1 T52813A Toxic effect of alkenes, assault, initial encounter          Toxic effect of alkenes, assault, initial encounter
+Add:         1 T52813D Toxic effect of alkenes, assault, subsequent encounter       Toxic effect of alkenes, assault, subsequent encounter
+Add:         1 T52813S Toxic effect of alkenes, assault, sequela                    Toxic effect of alkenes, assault, sequela
+Add:         0 T52814  Toxic effect of alkenes, undetermined                        Toxic effect of alkenes, undetermined
+Add:         1 T52814A Toxic effect of alkenes, undetermined, initial encounter     Toxic effect of alkenes, undetermined, initial encounter
+Add:         1 T52814D Toxic effect of alkenes, undetermined, subsequent encounter  Toxic effect of alkenes, undetermined, subsequent encounter
+Add:         1 T52814S Toxic effect of alkenes, undetermined, sequela               Toxic effect of alkenes, undetermined, sequela
+Add:         0 T5282   Toxic effects of cycloparaffins                              Toxic effects of cycloparaffins
+Add:         0 T52821  Toxic effect of cycloparaffins, accidental (unintentional)   Toxic effect of cycloparaffins, accidental (unintentional)
+Add:         1 T52821A Toxic effect of cycloparaffins, accidental, init             Toxic effect of cycloparaffins, accidental (unintentional), initial encounter
+Add:         1 T52821D Toxic effect of cycloparaffins, accidental, subs             Toxic effect of cycloparaffins, accidental (unintentional), subsequent encounter
+Add:         1 T52821S Toxic effect of cycloparaffins, accidental, sequela          Toxic effect of cycloparaffins, accidental (unintentional), sequela
+Add:         0 T52822  Toxic effect of cycloparaffins, intentional self-harm        Toxic effect of cycloparaffins, intentional self-harm
+Add:         1 T52822A Toxic effect of cycloparaffins, self-harm, initial encounter Toxic effect of cycloparaffins, intentional self-harm, initial encounter
+Add:         1 T52822D Toxic effect of cycloparaffins, self-harm, subs              Toxic effect of cycloparaffins, intentional self-harm, subsequent encounter
+Add:         1 T52822S Toxic effect of cycloparaffins, self-harm, sequela           Toxic effect of cycloparaffins, intentional self-harm, sequela
+Add:         0 T52823  Toxic effect of cycloparaffins, assault                      Toxic effect of cycloparaffins, assault
+Add:         1 T52823A Toxic effect of cycloparaffins, assault, initial encounter   Toxic effect of cycloparaffins, assault, initial encounter
+Add:         1 T52823D Toxic effect of cycloparaffins, assault, subs                Toxic effect of cycloparaffins, assault, subsequent encounter
+Add:         1 T52823S Toxic effect of cycloparaffins, assault, sequela             Toxic effect of cycloparaffins, assault, sequela
+Add:         0 T52824  Toxic effect of cycloparaffins, undetermined                 Toxic effect of cycloparaffins, undetermined
+Add:         1 T52824A Toxic effect of cycloparaffins, undetermined, init           Toxic effect of cycloparaffins, undetermined, initial encounter
+Add:         1 T52824D Toxic effect of cycloparaffins, undetermined, subs           Toxic effect of cycloparaffins, undetermined, subsequent encounter
+Add:         1 T52824S Toxic effect of cycloparaffins, undetermined, sequela        Toxic effect of cycloparaffins, undetermined, sequela
+Add:         0 T5289   Toxic effects of other organic solvents                      Toxic effects of other organic solvents
+Add:         0 T52891  Toxic effect of other organic solvents, accidental           Toxic effect of other organic solvents, accidental (unintentional)
+Add:         1 T52891A Toxic effect of other organic solvents, accidental, init     Toxic effect of other organic solvents, accidental (unintentional), initial encounter
+Add:         1 T52891D Toxic effect of other organic solvents, accidental, subs     Toxic effect of other organic solvents, accidental (unintentional), subsequent encounter
+Add:         1 T52891S Toxic effect of other organic solvents, accidental, sequela  Toxic effect of other organic solvents, accidental (unintentional), sequela
+Add:         0 T52892  Toxic effect of other organic solvents, self-harm            Toxic effect of other organic solvents, intentional self-harm
+Add:         1 T52892A Toxic effect of other organic solvents, self-harm, init      Toxic effect of other organic solvents, intentional self-harm, initial encounter
+Add:         1 T52892D Toxic effect of other organic solvents, self-harm, subs      Toxic effect of other organic solvents, intentional self-harm, subsequent encounter
+Add:         1 T52892S Toxic effect of other organic solvents, self-harm, sequela   Toxic effect of other organic solvents, intentional self-harm, sequela
+Add:         0 T52893  Toxic effect of other organic solvents, assault              Toxic effect of other organic solvents, assault
+Add:         1 T52893A Toxic effect of other organic solvents, assault, init        Toxic effect of other organic solvents, assault, initial encounter
+Add:         1 T52893D Toxic effect of other organic solvents, assault, subs        Toxic effect of other organic solvents, assault, subsequent encounter
+Add:         1 T52893S Toxic effect of other organic solvents, assault, sequela     Toxic effect of other organic solvents, assault, sequela
+Add:         0 T52894  Toxic effect of other organic solvents, undetermined         Toxic effect of other organic solvents, undetermined
+Add:         1 T52894A Toxic effect of other organic solvents, undetermined, init   Toxic effect of other organic solvents, undetermined, initial encounter
+Add:         1 T52894D Toxic effect of other organic solvents, undetermined, subs   Toxic effect of other organic solvents, undetermined, subsequent encounter
+Add:         1 T52894S Toxic effect of other organic solvents, undet, sequela       Toxic effect of other organic solvents, undetermined, sequela
+Delete:      0 T528X   Toxic effects of other organic solvents                      Toxic effects of other organic solvents
+Delete:      0 T528X1  Toxic effect of organic solvents, accidental (unintentional) Toxic effect of other organic solvents, accidental (unintentional)
+Delete:      1 T528X1A Toxic effect of organic solvents, accidental, init           Toxic effect of other organic solvents, accidental (unintentional), initial encounter
+Delete:      1 T528X1D Toxic effect of organic solvents, accidental, subs           Toxic effect of other organic solvents, accidental (unintentional), subsequent encounter
+Delete:      1 T528X1S Toxic effect of organic solvents, accidental, sequela        Toxic effect of other organic solvents, accidental (unintentional), sequela
+Delete:      0 T528X2  Toxic effect of oth organic solvents, intentional self-harm  Toxic effect of other organic solvents, intentional self-harm
+Delete:      1 T528X2A Toxic effect of organic solvents, self-harm, init            Toxic effect of other organic solvents, intentional self-harm, initial encounter
+Delete:      1 T528X2D Toxic effect of organic solvents, self-harm, subs            Toxic effect of other organic solvents, intentional self-harm, subsequent encounter
+Delete:      1 T528X2S Toxic effect of organic solvents, self-harm, sequela         Toxic effect of other organic solvents, intentional self-harm, sequela
+Delete:      0 T528X3  Toxic effect of other organic solvents, assault              Toxic effect of other organic solvents, assault
+Delete:      1 T528X3A Toxic effect of other organic solvents, assault, init encntr Toxic effect of other organic solvents, assault, initial encounter
+Delete:      1 T528X3D Toxic effect of other organic solvents, assault, subs encntr Toxic effect of other organic solvents, assault, subsequent encounter
+Delete:      1 T528X3S Toxic effect of other organic solvents, assault, sequela     Toxic effect of other organic solvents, assault, sequela
+Delete:      0 T528X4  Toxic effect of other organic solvents, undetermined         Toxic effect of other organic solvents, undetermined
+Delete:      1 T528X4A Toxic effect of oth organic solvents, undetermined, init     Toxic effect of other organic solvents, undetermined, initial encounter
+Delete:      1 T528X4D Toxic effect of oth organic solvents, undetermined, subs     Toxic effect of other organic solvents, undetermined, subsequent encounter
+Delete:      1 T528X4S Toxic effect of oth organic solvents, undetermined, sequela  Toxic effect of other organic solvents, undetermined, sequela
+Add:         0 T5982   Toxic effects of hexamethylene diisocyanate                  Toxic effects of hexamethylene diisocyanate
+Add:         0 T59821  Toxic effect of hexamethylene diisocyanate, accidental       Toxic effect of hexamethylene diisocyanate, accidental (unintentional)
+Add:         1 T59821A Toxic effect of hexamethylene diisocyanate, acc, init        Toxic effect of hexamethylene diisocyanate, accidental (unintentional), initial encounter
+Add:         1 T59821D Toxic effect of hexamethylene diisocyanate, acc, subs        Toxic effect of hexamethylene diisocyanate, accidental (unintentional), subsequent encounter
+Add:         1 T59821S Toxic effect of hexamethylene diisocyanate, acc, sequela     Toxic effect of hexamethylene diisocyanate, accidental (unintentional), sequela
+Add:         0 T59822  Toxic effect of hexamethylene diisocyanate, self-harm        Toxic effect of hexamethylene diisocyanate, intentional self-harm
+Add:         1 T59822A Toxic effect of hexamethylene diisocyanate, self-harm, init  Toxic effect of hexamethylene diisocyanate, intentional self-harm, initial encounter
+Add:         1 T59822D Toxic effect of hexamethylene diisocyanate, self-harm, subs  Toxic effect of hexamethylene diisocyanate, intentional self-harm, subsequent encounter
+Add:         1 T59822S Toxic effect of hexamethylene diisocyanate, slf-hrm, sequela Toxic effect of hexamethylene diisocyanate, intentional self-harm, sequela
+Add:         0 T59823  Toxic effect of hexamethylene diisocyanate, assault          Toxic effect of hexamethylene diisocyanate, assault
+Add:         1 T59823A Toxic effect of hexamethylene diisocyanate, assault, init    Toxic effect of hexamethylene diisocyanate, assault, initial encounter
+Add:         1 T59823D Toxic effect of hexamethylene diisocyanate, assault, subs    Toxic effect of hexamethylene diisocyanate, assault, subsequent encounter
+Add:         1 T59823S Toxic effect of hexamethylene diisocyanate, assault, sequela Toxic effect of hexamethylene diisocyanate, assault, sequela
+Add:         0 T59824  Toxic effect of hexamethylene diisocyanate, undetermined     Toxic effect of hexamethylene diisocyanate, undetermined
+Add:         1 T59824A Toxic effect of hexamethylene diisocyanate, undet, init      Toxic effect of hexamethylene diisocyanate, undetermined, initial encounter
+Add:         1 T59824D Toxic effect of hexamethylene diisocyanate, undet, subs      Toxic effect of hexamethylene diisocyanate, undetermined, subsequent encounter
+Add:         1 T59824S Toxic effect of hexamethylene diisocyanate, undet, sequela   Toxic effect of hexamethylene diisocyanate, undetermined, sequela
+Add:         0 T6585   Toxic effect of medetomidine                                 Toxic effect of medetomidine
+Add:         0 T65851  Toxic effect of medetomidine, accidental (unintentional)     Toxic effect of medetomidine, accidental (unintentional)
+Add:         1 T65851A Toxic effect of medetomidine, accidental, init               Toxic effect of medetomidine, accidental (unintentional), initial encounter
+Add:         1 T65851D Toxic effect of medetomidine, accidental, subs               Toxic effect of medetomidine, accidental (unintentional), subsequent encounter
+Add:         1 T65851S Toxic effect of medetomidine, accidental, sequela            Toxic effect of medetomidine, accidental (unintentional), sequela
+Add:         0 T65852  Toxic effect of medetomidine, intentional self-harm          Toxic effect of medetomidine, intentional self-harm
+Add:         1 T65852A Toxic effect of medetomidine, self-harm, initial encounter   Toxic effect of medetomidine, intentional self-harm, initial encounter
+Add:         1 T65852D Toxic effect of medetomidine, self-harm, subs                Toxic effect of medetomidine, intentional self-harm, subsequent encounter
+Add:         1 T65852S Toxic effect of medetomidine, intentional self-harm, sequela Toxic effect of medetomidine, intentional self-harm, sequela
+Add:         0 T65853  Toxic effect of medetomidine, assault                        Toxic effect of medetomidine, assault
+Add:         1 T65853A Toxic effect of medetomidine, assault, initial encounter     Toxic effect of medetomidine, assault, initial encounter
+Add:         1 T65853D Toxic effect of medetomidine, assault, subsequent encounter  Toxic effect of medetomidine, assault, subsequent encounter
+Add:         1 T65853S Toxic effect of medetomidine, assault, sequela               Toxic effect of medetomidine, assault, sequela
+Add:         0 T65854  Toxic effect of medetomidine, undetermined                   Toxic effect of medetomidine, undetermined
+Add:         1 T65854A Toxic effect of medetomidine, undetermined, init             Toxic effect of medetomidine, undetermined, initial encounter
+Add:         1 T65854D Toxic effect of medetomidine, undetermined, subs             Toxic effect of medetomidine, undetermined, subsequent encounter
+Add:         1 T65854S Toxic effect of medetomidine, undetermined, sequela          Toxic effect of medetomidine, undetermined, sequela
+Revise from: 1 Z2914   Encounter for prophylactic rabies immune globin              Encounter for prophylactic rabies immune globin
+Revise to:   1 Z2914   Encounter for prophylactic rabies immune globulin            Encounter for prophylactic rabies immune globulin
+Delete:      1 Z681    Body mass index [BMI] 19.9 or less, adult                    Body mass index [BMI] 19.9 or less, adult
+Add:         0 Z681    Body mass index [BMI] 19.9 or less, adult                    Body mass index [BMI] 19.9 or less, adult
+Add:         1 Z6818   Body mass index [BMI] 18.4 or less, adult                    Body mass index [BMI] 18.4 or less, adult
+Add:         1 Z6819   Body mass index [BMI] 18.5-19.9, adult                       Body mass index [BMI] 18.5-19.9, adult
+Add:         1 Z77013  Contact with and (suspected) exposure to gadolinium          Contact with and (suspected) exposure to gadolinium
+Add:         1 Z7732   Contact with and exposure to burn pits in war theater        Contact with and (suspected) exposure to burn pits in war theater
+Add:         1 Z7733   Contact with and (suspected) exposure to Agent Orange        Contact with and (suspected) exposure to Agent Orange
+Add:         0 Z774    Contact with and (suspected) exposure to blast overpressure  Contact with and (suspected) exposure to blast overpressure
+Add:         1 Z7740   Contact with and exposure to unspecified blast overpressure  Contact with and (suspected) exposure to unspecified blast overpressure
+Add:         1 Z7741   Contact with and exposure to low-level blast overpressure    Contact with and (suspected) exposure to low-level blast overpressure
+Add:         1 Z7742   Contact with and exposure to high-level blast overpressure   Contact with and (suspected) exposure to high-level blast overpressure
+Add:         1 Z7749   Contact with and exposure to other blast overpressure        Contact with and (suspected) exposure to other blast overpressure
+Add:         1 Z8617   Personal history of Clostridioides difficile infection       Personal history of Clostridioides difficile infection
+Delete:      1 Z87890  Personal history of sex reassignment                         Personal history of sex reassignment
+Add:         0 Z87890  Personal history of sex reassignment                         Personal history of sex reassignment
+Add:         1 Z878901 Personal history of social gender transition                 Personal history of social gender transition
+Add:         1 Z878902 Personal history of medical gender transition                Personal history of medical gender transition
+Add:         1 Z878903 Personal history of surgical gender transition               Personal history of surgical gender transition
+Add:         1 Z878904 Personal history of intersex surgery                         Personal history of intersex surgery
+Add:         1 Z878909 Personal history of unspecified gender transition            Personal history of unspecified gender transition
+Add:         1 Z87893  Personal history of gender detransition                      Personal history of gender detransition
+
+Headers
+  23467 headers in icd10cm_order_2026.txt
+  23524 headers in icd10cm_order_2027.txt
+     63 additions
+      6 deletions
+      0 revisions
+of which
+      0 revisions to both long and short titles
+      0 revisions to long title only
+      0 revisions to short title only
+
+Codes
+  74719 codes in icd10cm_order_2026.txt
+  74879 codes in icd10cm_order_2027.txt
+    190 additions
+     30 deletions
+      4 revisions
+of which
+      4 revisions to both long and short titles
+      0 revisions to long title only
+      0 revisions to short title only

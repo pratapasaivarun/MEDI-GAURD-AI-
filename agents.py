@@ -30,7 +30,7 @@ def warm_ollama() -> None:
     """Preload Granite once before the first real agent call in a session."""
     response = requests.post(
         f"{OLLAMA_HOST}/api/generate",
-        json={"model": OLLAMA_MODEL, "prompt": "Return only OK.", "stream": False, "keep_alive": OLLAMA_KEEP_ALIVE, "options": {"num_predict": 4}},
+        json={"model": OLLAMA_MODEL, "prompt": "Return only OK.", "stream": False, "keep_alive": OLLAMA_KEEP_ALIVE, "options": {"num_predict": 4, "num_ctx": OLLAMA_NUM_CTX, "num_thread": OLLAMA_NUM_THREAD}},
         timeout=(5, OLLAMA_TIMEOUT),
     )
     response.raise_for_status()
@@ -202,9 +202,9 @@ def decision_agent_node(state: ClaimWorkflowState) -> ClaimWorkflowState:
     rule_status = state.get("rule_results", {}).get("status", "manual_review")
     # The LLM explains the deterministic result; it never adjudicates around
     # coverage arithmetic, exclusions, or safety gates computed by rules.py.
-    decision["status"] = rule_status if rule_status in allowed else "manual_review"
+    decision["status"] = "manual_review" if decision.get("_fallback") else (rule_status if rule_status in allowed else "manual_review")
     evidence_ids = {str(item.get("clause_id")) for item in state.get("policy_evidence", [])}
-    citations = [str(item) for item in decision.get("policy_citations", []) if str(item) in evidence_ids]
+    citations = [str(item) for item in (decision.get("policy_citations") or []) if str(item) in evidence_ids]
     decision["policy_citations"] = citations or sorted(evidence_ids)[:2]
     if progress:
         progress("Decision Agent complete. Rendering evidence-backed result...")

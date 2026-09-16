@@ -64,7 +64,7 @@ def extract_policy_terms(source: Any) -> dict[str, Any]:
     terms["annual_limit"] = _find(rows, [rf"annual\s+(?:policy\s+)?limit\s*[:\-]?\s*{_MONEY}"], "annual_limit", _number)
     terms["deductible"] = _find(rows, [rf"deductible\s*[:\-]?\s*{_MONEY}"], "deductible", _number)
     terms["copay_percent"] = _find(rows, [r"copay(?:ment)?\s*[:\-]?\s*([0-9]+(?:\.\d+)?)\s*(?:%|percent)"], "copay_percent", Decimal)
-    terms["room_limit_per_day"] = _find(rows, [rf"room\s+(?:and\s+board\s+)?limit\s*[:\-]?\s*{_MONEY}\s*(?:per\s*day)?"], "room_limit_per_day", _number)
+    terms["room_limit_per_day"] = _find(rows, [rf"room\s+(?:and\s+board\s+)?limit\s*(?:per\s*day)?\s*[:\-]?\s*{_MONEY}\s*(?:per\s*day)?"], "room_limit_per_day", _number)
     terms["waiting_period_months"] = _find(rows, [r"waiting\s+period\s*[:\-]?\s*([0-9]+)\s*months?"], "waiting_period_months", int)
     # Capture simple category-specific limits such as "Surgery sub-limit: INR 100000".
     sub_limit_rows = []

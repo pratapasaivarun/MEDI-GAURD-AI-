@@ -221,13 +221,6 @@ def register_user(email: str, display_name: str, password: str, role: str = "cla
         return conn.execute("SELECT * FROM users WHERE user_id=?", (user_id,)).fetchone()
 
 
-def get_or_create_user(email: str, display_name: str) -> sqlite3.Row:
-    user_id = hashlib.sha256(email.lower().encode()).hexdigest()[:24]
-    with db() as conn:
-        conn.execute("INSERT OR IGNORE INTO users(user_id,email,display_name,role,password_hash,created_at) VALUES(?,?,?,?,?,?)", (user_id, email.lower(), display_name.strip() or email.split("@")[0], "claimant", _hash_password(secrets.token_urlsafe(24)), utc_now()))
-        return conn.execute("SELECT * FROM users WHERE user_id=?", (user_id,)).fetchone()
-
-
 def get_user(user_id: str) -> sqlite3.Row | None:
     with db() as conn:
         return conn.execute("SELECT * FROM users WHERE user_id=?", (user_id,)).fetchone()
@@ -459,13 +452,20 @@ def save_document(claim_id: str, user: dict | sqlite3.Row, uploaded_file, docume
     _claim_access(claim_id, user, write=True)
     user_id = user["user_id"]
     content, safe_name = _validated_upload(uploaded_file)
+    digest = hashlib.sha256(content).hexdigest()
+    with db() as conn:
+        duplicate = conn.execute(
+            "SELECT document_id FROM documents WHERE claim_id=? AND document_type=? AND sha256=? LIMIT 1",
+            (claim_id, document_type, digest),
+        ).fetchone()
+    if duplicate:
+        raise ValueError(f"This {document_type.replace('_', ' ')} is already attached to the claim.")
     document_id = str(uuid.uuid4())
     claim_dir = UPLOAD_DIR / claim_id
     claim_dir.mkdir(parents=True, exist_ok=True)
     safe_name = safe_name.replace(" ", "_")
     target = claim_dir / f"{document_id}_{safe_name}"
     target.write_bytes(content)
-    digest = hashlib.sha256(content).hexdigest()
     with db() as conn:
         conn.execute(
             "INSERT INTO documents(document_id,claim_id,original_name,stored_path,document_type,size_bytes,sha256,page_count,processing_status,extracted_json,extraction_error,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -697,7 +697,7 @@ def process_claim_documents(claim_id: str, user_id: str) -> dict:
     bill_payloads = [payload for payload in payloads if payload.get("document_type") == "medical_bill"]
     if bill_payloads and normalized.get("total_amount") and not normalized.get("line_items"):
         normalized.setdefault("review_fields", []).append("line_items")
-    policy_payloads = [payload for payload, doc in zip(payloads, documents) if doc["document_type"] == "policy"]
+    policy_payloads = [payload for payload in payloads if payload["document_type"] == "policy"]
     if policy_payloads:
         policy_id = ((normalized.get("policy_number") or {}).get("value") or claim_id)
         try:
@@ -899,8 +899,12 @@ def run_agents_for_claim(claim_id: str, user_id: str, normalized: dict, rules: d
     if not policy_text.strip():
         raise ValueError("No usable policy evidence found. Ingest an active edition in Policy management or upload and extract a policy document in Claim review.")
     if not st.session_state.get("ollama_warmed"):
-        warm_ollama()
-        st.session_state["ollama_warmed"] = True
+        try:
+            warm_ollama()
+            st.session_state["ollama_warmed"] = True
+        except requests.RequestException:
+            # Let the workflow persist its manual-review fallback if inference fails.
+            pass
     workflow = run_claim_workflow(normalized, policy_text, rules, policy_id=policy_id, progress_callback=progress_callback)
     workflow["policy_source"] = policy_source
     decision = workflow.get("decision", {})
@@ -935,15 +939,10 @@ def ollama_status() -> tuple[bool, str]:
             models = [m.get("name") for m in response.json().get("models", [])]
             if OLLAMA_MODEL in models:
                 return True, f"Connected — {OLLAMA_MODEL} available"
-            return True, f"Connected — configured model not found locally ({OLLAMA_MODEL})"
+            return False, f"Connected — configured model not found locally ({OLLAMA_MODEL})"
         return False, f"Ollama returned HTTP {response.status_code}"
     except requests.RequestException as exc:
         return False, f"Ollama unavailable: {exc}"
-
-
-def _status_badge(status: str) -> str:
-    return status.replace('_', ' ').title()
-
 
 
 def _status_badge(status: str) -> str:
@@ -962,38 +961,112 @@ def _status_color(status: str) -> str:
 def _brand_header() -> None:
     st.markdown('''
     <div class="mg-brand-head">
-      <div class="mg-shield">✚</div>
+      <div class="mg-logo-mark" aria-label="Medi Gaurd AI logo">
+        <svg viewBox="0 0 64 64" role="img" aria-hidden="true"><path d="M32 5 54 13v16c0 14.5-9.4 25.2-22 30C19.4 54.2 10 43.5 10 29V13L32 5Z" fill="currentColor"/><path d="M32 16v30M20 31h24" stroke="#073b3a" stroke-width="5" stroke-linecap="round"/><path d="M22 42c3.1 4.2 8.4 6.9 10 7.5 1.6-.6 6.9-3.3 10-7.5" fill="none" stroke="#073b3a" stroke-width="3" stroke-linecap="round"/></svg>
+      </div>
       <div><div class="mg-brand-name">Medi Gaurd AI</div>
-      <div class="mg-brand-sub">AI-Powered Medical Insurance Claim Adjudication</div></div>
+      <div class="mg-brand-sub">Evidence-led claim decisions</div></div>
     </div>''', unsafe_allow_html=True)
 
 
+def _page_header(eyebrow: str, title: str, subtitle: str, icon: str) -> None:
+    """Use one consistent, lightweight page hierarchy across the prototype UI."""
+    st.markdown(
+        f'''<div class="mg-page-header">
+        <div class="mg-header-icon">{icon}</div>
+        <div><div class="mg-eyebrow">{eyebrow}</div><h1>{title}</h1>
+        <p class="mg-subtitle">{subtitle}</p></div></div>''',
+        unsafe_allow_html=True,
+    )
+
+
 def _core_demo_user() -> dict[str, Any]:
-    """Create or load a local admin-shaped actor for the temporary core demo."""
+    """Create the password-protected local admin used by the synthetic demo."""
     demo_email = "demo@mediguard.local"
+    demo_password = os.getenv("DEMO_ADMIN_PASSWORD", "Mediguard@2026")
     demo_id = hashlib.sha256(demo_email.encode("utf-8")).hexdigest()[:24]
     with db() as conn:
         conn.execute(
-            "INSERT OR IGNORE INTO users(user_id,email,display_name,role,is_active,created_at) VALUES(?,?,?,?,?,?)",
-            (demo_id, demo_email, "Demo Reviewer", "admin", 1, utc_now()),
+            "INSERT INTO users(user_id,email,display_name,role,password_hash,is_active,password_set_at,created_at) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(email) DO UPDATE SET display_name=excluded.display_name, role='admin', password_hash=excluded.password_hash, is_active=1, password_set_at=excluded.password_set_at",
+            (demo_id, demo_email, "Demo Reviewer", "admin", _hash_password(demo_password), 1, utc_now(), utc_now()),
         )
-        conn.execute("UPDATE users SET display_name=?, role='admin', is_active=1 WHERE user_id=?", ("Demo Reviewer", demo_id))
         row = conn.execute("SELECT * FROM users WHERE user_id=?", (demo_id,)).fetchone()
     return dict(row)
 
 
+def _render_welcome() -> None:
+    """Opening screen only; it does not alter login or claim workflow state."""
+    st.markdown('''<div class="mg-opening">
+      <div class="mg-opening-orb orb-one"></div><div class="mg-opening-orb orb-two"></div>
+      <div class="mg-opening-logo"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 5 54 13v16c0 14.5-9.4 25.2-22 30C19.4 54.2 10 43.5 10 29V13L32 5Z" fill="currentColor"/><path d="M32 16v30M20 31h24" stroke="#073b3a" stroke-width="5" stroke-linecap="round"/><path d="M22 42c3.1 4.2 8.4 6.9 10 7.5 1.6-.6 6.9-3.3 10-7.5" fill="none" stroke="#073b3a" stroke-width="3" stroke-linecap="round"/></svg></div>
+      <div class="mg-opening-brand">MEDI GAURD AI</div>
+      <h1>Healthcare claims,<br><em>made understandable.</em></h1>
+      <p>Upload documents, understand coverage, and make every decision with evidence you can review.</p>
+      <div class="mg-opening-chips"><span>🩺 Care-first</span><span>📄 Evidence-led</span><span>🔐 Privacy-aware</span></div>
+    </div>''', unsafe_allow_html=True)
+    st.markdown('<div class="mg-role-label">CHOOSE YOUR WORKSPACE</div>', unsafe_allow_html=True)
+    entry = st.radio(
+        'Choose your workspace',
+        ['User / claimant', 'Admin / reviewer'],
+        horizontal=True,
+        label_visibility='collapsed',
+        format_func=lambda role: '👤 User — sign in or create account' if role == 'User / claimant' else '🛡️ Admin — secure sign in',
+    )
+    _, action, _ = st.columns([1, 1, 1])
+    with action:
+        label = 'Continue as user' if entry == 'User / claimant' else 'Continue as admin'
+        if st.button(label, type='primary', icon=':material/arrow_forward:', use_container_width=True):
+            st.session_state.entry_role = 'claimant' if entry == 'User / claimant' else 'staff'
+            st.session_state.welcome_seen = True
+            st.rerun()
+    st.caption('Built for clearer conversations between patients, providers, and reviewers.')
+
+
 def _render_login() -> None:
-    left, right = st.columns([1.05, 1.35], gap='large')
+    reset_token = st.query_params.get('reset_token')
+    setup_token = st.query_params.get('setup_token')
+    if reset_token or setup_token:
+        st.subheader('Reset password' if reset_token else 'Set up reviewer account')
+        with st.form('complete_account_setup'):
+            password = st.text_input('New password', type='password')
+            confirmation = st.text_input('Confirm new password', type='password')
+            submitted = st.form_submit_button('Save password', type='primary')
+        if submitted:
+            try:
+                if password != confirmation:
+                    raise ValueError('Passwords do not match.')
+                if reset_token:
+                    complete_password_reset(reset_token, password)
+                else:
+                    complete_reviewer_setup(setup_token, password)
+                st.query_params.clear()
+                st.success('Password saved. You can now sign in.')
+            except ValueError as exc:
+                st.error(str(exc))
+        if st.button('Back to sign in'):
+            st.query_params.clear()
+            st.rerun()
+        return
+    staff_portal = st.session_state.get('entry_role') == 'staff'
+    left, right = st.columns([1.1, 1], gap='large')
     with left:
         st.markdown('''<div class="mg-landing">
-        <div class="mg-shield large">✚</div><h1>Medi Gaurd AI</h1>
-        <p class="mg-tagline">AI-Powered Medical Insurance<br/>Claim Adjudication</p>
-        <p class="mg-promise">Faster. Transparent. Accurate.</p>
-        <div class="mg-illustration">▣<br/><span>✓  ✓  ✓</span><br/>▱  🛡</div>
+        <div class="mg-landing-badge">✨ Evidence-first claim support</div>
+        <div class="mg-landing-art" aria-hidden="true"><span>🩺</span><span>📄</span><span>🛡️</span><span>💚</span></div>
+        <div class="mg-shield large">M</div><h1>Clarity for every claim.</h1>
+        <p class="mg-tagline">Bring your bill and policy together in one guided, evidence-led review.</p>
+        <div class="mg-landing-points"><span>📄 Extract</span><span>🔎 Verify</span><span>✓ Decide</span></div>
+        <p class="mg-promise">Transparent calculations. Human confirmation.</p>
         </div>''', unsafe_allow_html=True)
     with right:
-        st.markdown('<div class="mg-auth-title">Welcome back</div><div class="mg-auth-copy">Sign in to continue to your account</div>', unsafe_allow_html=True)
-        login_tab, register_tab, reset_tab = st.tabs(['Sign in', 'Create account', 'Reset password'])
+        portal_title = 'Admin sign in' if staff_portal else 'Welcome back'
+        portal_copy = 'Use your authorized administrator or reviewer credentials.' if staff_portal else 'Sign in to continue your claim review.'
+        portal_label = 'ADMINISTRATOR PORTAL' if staff_portal else 'USER WORKSPACE'
+        st.markdown(f'<div class="mg-auth-kicker">{portal_label}</div><div class="mg-auth-title">{portal_title}</div><div class="mg-auth-copy">{portal_copy}</div>', unsafe_allow_html=True)
+        if staff_portal:
+            login_tab, reset_tab = st.tabs(['Secure sign in', 'Reset password'])
+        else:
+            login_tab, register_tab, reset_tab = st.tabs(['Sign in', 'Create account', 'Reset password'])
         with login_tab:
             with st.form('login'):
                 email = st.text_input('Email', placeholder='you@example.com')
@@ -1004,6 +1077,10 @@ def _render_login() -> None:
                 user_row = authenticate_password(email, password)
                 if user_row is None:
                     st.error("That email or password doesn't match our records.")
+                elif staff_portal and user_row['role'] not in {'admin', 'reviewer'}:
+                    st.error('These credentials are for a user account. Select the User workspace to continue.')
+                elif not staff_portal and user_row['role'] != 'claimant':
+                    st.error('These credentials are for an administrator or reviewer. Select the Admin workspace to continue.')
                 elif user_row['mfa_enabled']:
                     st.session_state.pending_mfa_user = {'user_id': user_row['user_id']}
                     st.rerun()
@@ -1011,20 +1088,21 @@ def _render_login() -> None:
                     st.session_state.user = dict(user_row)
                     st.session_state.page = 'Dashboard'
                     st.rerun()
-        with register_tab:
-            with st.form('register'):
-                name = st.text_input('Full name')
-                email = st.text_input('Email', key='reg_email')
-                p1 = st.text_input('Password', type='password')
-                p2 = st.text_input('Confirm password', type='password')
-                st.caption('Use at least 10 characters. New self-registered accounts are Claimants.')
-                submitted = st.form_submit_button('Create account', type='primary')
-            if submitted:
-                try:
-                    if p1 != p2: raise ValueError('Passwords do not match.')
-                    st.session_state.user = dict(register_user(email, name, p1))
-                    st.session_state.page = 'Dashboard'; st.rerun()
-                except (ValueError, PermissionError) as exc: st.error(str(exc))
+        if not staff_portal:
+            with register_tab:
+                with st.form('register'):
+                    name = st.text_input('Full name')
+                    email = st.text_input('Email', key='reg_email')
+                    p1 = st.text_input('Password', type='password')
+                    p2 = st.text_input('Confirm password', type='password')
+                    st.caption('Use at least 10 characters. New self-registered accounts are Claimants.')
+                    submitted = st.form_submit_button('Create account', type='primary')
+                if submitted:
+                    try:
+                        if p1 != p2: raise ValueError('Passwords do not match.')
+                        st.session_state.user = dict(register_user(email, name, p1))
+                        st.session_state.page = 'Dashboard'; st.rerun()
+                    except (ValueError, PermissionError) as exc: st.error(str(exc))
         with reset_tab:
             st.caption('For privacy, this response does not reveal whether an email exists.')
             with st.form('reset_request'):
@@ -1034,6 +1112,10 @@ def _render_login() -> None:
                 request = create_password_reset_request(email)
                 st.success('If an active account exists, reset instructions have been generated.')
                 if request['reset_token']: st.code(f"{APP_BASE_URL}/?reset_token={request['reset_token']}")
+        if st.button('← Choose a different workspace', key='change_workspace'):
+            st.session_state.pop('entry_role', None)
+            st.session_state.welcome_seen = False
+            st.rerun()
 
 
 def _render_sidebar(user: dict) -> str:
@@ -1044,7 +1126,9 @@ def _render_sidebar(user: dict) -> str:
             pages = ['Dashboard', 'Register claim', 'Submit documents', 'Claim result']
         else:
             pages = ['Dashboard', 'Claim review', 'Policy management']
+            pages.insert(2, 'Claim result')
             if user['role'] == 'admin':
+                pages.insert(1, 'Register claim')
                 pages.append('Admin panel')
         current = st.session_state.get('page', 'Dashboard')
         if current not in pages: current = 'Dashboard'
@@ -1071,6 +1155,7 @@ def _render_sidebar(user: dict) -> str:
 
 def _claimant_result_for_claim(claim_id: str, user: dict) -> dict[str, Any] | None:
     """Return only claimant-safe amounts and explanation; hide raw agent/reviewer data."""
+    claim = _claim_access(claim_id, user)
     rules = st.session_state.get(f"rules_{claim_id}")
     workflow = st.session_state.get(f"workflow_{claim_id}") or {}
     if not rules:
@@ -1084,7 +1169,7 @@ def _claimant_result_for_claim(claim_id: str, user: dict) -> dict[str, Any] | No
     if not rules and not workflow:
         return None
     decision = workflow.get("decision") or {}
-    status = decision.get("status") or ((rules or {}).get("status", "manual_review"))
+    status = claim["status"] if claim["status"] in {"approved", "partially_approved", "rejected", "manual_review"} else (decision.get("status") or ((rules or {}).get("status", "manual_review")))
     claimant = (rules or {}).get("claimant_result") or {}
     billed = float(claimant.get("amount_billed", 0) or 0)
     covered = float(claimant.get("amount_covered", (rules or {}).get("payable_amount", 0)) or 0)
@@ -1112,7 +1197,7 @@ def _claimant_result_for_claim(claim_id: str, user: dict) -> dict[str, Any] | No
 
 def _render_claimant_result(user: dict) -> None:
     claims = user_claims(user["user_id"], user)
-    st.markdown('<div class="mg-eyebrow">CLAIMS / RESULT</div><h1>Your Claim Result</h1><p class="mg-subtitle">A simple summary of what the policy review found.</p>', unsafe_allow_html=True)
+    _page_header('CLAIM OUTCOME', 'Your claim result', 'A simple view of the policy review, your estimated responsibility, and next steps.', '✓')
     if not claims:
         st.info("You do not have a claim yet.")
         if st.button("Register a claim", type="primary"):
@@ -1125,11 +1210,11 @@ def _render_claimant_result(user: dict) -> None:
     st.session_state.active_claim = claim_id
     claim = next(c for c in claims if c["claim_id"] == claim_id)
     result = _claimant_result_for_claim(claim_id, user)
-    st.markdown(f"<div class='mg-context'><b>{claim['claim_number']}</b> · {claim['patient_name']} · {claim['policy_number'] or 'Policy number pending'} <span class='mg-pill' style='color:{_status_color((result or {}).get('status', claim['status']))}'>{_status_badge((result or {}).get('status', claim['status']))}</span></div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='mg-context'><div><b>{claim['claim_number']}</b><div class='mg-card-copy'>{claim['patient_name']} · {claim['policy_number'] or 'Policy number pending'}</div></div><span class='mg-pill mg-pill-{(result or {}).get('status', claim['status'])}'>{_status_badge((result or {}).get('status', claim['status']))}</span></div>", unsafe_allow_html=True)
     if not result:
         st.info("Your documents have not been analyzed yet.")
         if st.button("Continue claim review", type="primary"):
-            st.session_state.page = "Claim review"; st.rerun()
+            st.session_state.page = "Submit documents" if user['role'] == 'claimant' else "Claim review"; st.rerun()
         return
     status = result["status"]
     if status == "manual_review":
@@ -1140,23 +1225,23 @@ def _render_claimant_result(user: dict) -> None:
         st.warning("Your claim is partially covered. Some charges were limited or excluded under the policy.")
     elif status == "rejected":
         st.error("Your claim is not covered under the current policy result.")
-    a, b, c = st.columns(3)
-    with a: st.metric("Total bill", f"INR {result['amount_billed']:,.2f}")
-    with b: st.metric("Covered by insurance", f"INR {result['amount_covered']:,.2f}")
-    with c: st.metric("Total claimant responsibility", f"INR {result['amount_claimant_pays']:,.2f}")
-    d, e, f = st.columns(3)
-    with d: st.metric("Excluded / policy-limited", f"INR {result['amount_excluded_or_limited']:,.2f}")
-    with e: st.metric("Deductible", f"INR {result.get('deductible', 0):,.2f}")
-    with f: st.metric("Copayment", f"INR {result.get('copayment', 0):,.2f}")
+    with st.container(horizontal=True, horizontal_alignment='left'):
+        st.metric("Total bill", f"INR {result['amount_billed']:,.2f}", border=True)
+        st.metric("Covered by insurance", f"INR {result['amount_covered']:,.2f}", border=True)
+        st.metric("Your responsibility", f"INR {result['amount_claimant_pays']:,.2f}", border=True)
+    with st.container(horizontal=True, horizontal_alignment='left'):
+        st.metric("Excluded / policy-limited", f"INR {result['amount_excluded_or_limited']:,.2f}", border=True)
+        st.metric("Deductible", f"INR {result.get('deductible', 0):,.2f}", border=True)
+        st.metric("Copayment", f"INR {result.get('copayment', 0):,.2f}", border=True)
     with st.container(border=True):
-        st.markdown("### What this means")
+        st.markdown("### What this means for you")
         st.write(result["reason"])
         st.write(
             f"The claimant responsibility of INR {result['amount_claimant_pays']:,.2f} includes "
             f"INR {result['deductible']:,.2f} deductible and INR {result['copayment']:,.2f} copayment. "
             f"INR {result['amount_excluded_or_limited']:,.2f} is excluded or limited by the policy."
         )
-        st.caption("Reviewer note: deductible and copayment are policy cost-sharing amounts, not rejected charges. Excluded or policy-limited amounts are charges the policy does not pay.")
+        st.caption("Deductible and copayment are policy cost-sharing amounts, not rejected charges. Excluded or policy-limited amounts are charges the policy does not pay.")
         if result["requires_human_review"]:
             st.caption("This is not a final determination. An authorized reviewer must confirm the result.")
         else:
@@ -1177,8 +1262,11 @@ def _render_claimant_result(user: dict) -> None:
             st.dataframe(adjustments, hide_index=True)
         warnings = rules.get("warnings") or []
         if warnings:
-            st.write("Policy notes: " + "; ".join(str(item) for item in warnings))
+            st.write("Why review is needed: " + "; ".join(str(item) for item in warnings))
     workflow = st.session_state.get(f"workflow_{claim_id}") or {}
+    # Persisted claim status includes agent failures and reviewer sign-off, even
+    # after a new browser session loses its cached workflow.
+    workflow = {**workflow, "decision": {**workflow.get("decision", {}), "status": result["status"]}}
     normalized = st.session_state.get(f"normalized_{claim_id}") or {}
     with st.container(horizontal=True):
         st.download_button(
@@ -1202,15 +1290,23 @@ def _render_claimant_result(user: dict) -> None:
 
 def _render_claim_assistant(claim_id: str, normalized: dict[str, Any], result: dict[str, Any], workflow: dict[str, Any]) -> None:
     """A claimant-facing, evidence-bounded question interface for one claim."""
-    st.subheader('Ask about this claim', anchor=False)
-    st.caption('Answers use only the documents and decision data for this claim. They are decision support, not a final coverage determination.')
+    with st.container(border=True):
+        st.subheader('💬 Ask about this claim', anchor=False)
+        st.caption('Ask in plain language. Answers are grounded only in this claim’s documents and decision data. ✨')
+        _render_claim_assistant_chat(claim_id, normalized, result, workflow)
+
+
+def _render_claim_assistant_chat(claim_id: str, normalized: dict[str, Any], result: dict[str, Any], workflow: dict[str, Any]) -> None:
+    """The interactive portion is kept separate to retain the result card structure."""
     history_key = f'claim_questions_{claim_id}'
     st.session_state.setdefault(history_key, [])
     for message in st.session_state[history_key]:
         with st.chat_message(message['role']):
             st.write(message['content'])
-    question = st.chat_input('Ask why a charge was covered, what you pay, or what happens next', key=f'claim_question_input_{claim_id}')
-    if not question:
+    with st.form(f'claim_question_form_{claim_id}', border=False):
+        question = st.text_input('Your question', placeholder='Why is my claim under review?', key=f'claim_question_input_{claim_id}')
+        asked = st.form_submit_button('Ask AI assistant', type='primary', icon=':material/send:')
+    if not asked or not question.strip():
         return
     st.session_state[history_key].append({'role': 'user', 'content': question})
     with st.chat_message('user'):
@@ -1239,25 +1335,26 @@ def _render_dashboard(user: dict) -> None:
     claims = user_claims(user['user_id'], user)
     review_count = sum(1 for c in claims if c['status'] in {'manual_review','ready_for_review','partially_approved'})
     approved = sum(1 for c in claims if c['status'] == 'approved')
-    st.markdown(f'<div class="mg-eyebrow">DASHBOARD</div><h1>Welcome back, {user["display_name"]}!</h1><p class="mg-subtitle">Here’s what’s happening with your claims.</p>', unsafe_allow_html=True)
-    a,b,c = st.columns(3)
-    with a: st.metric('Total Claims', len(claims))
-    with b: st.metric('Needing Action', review_count)
-    with c: st.metric('Approved Claims', approved)
+    _page_header('OVERVIEW', f'Welcome back, {user["display_name"]}', 'See the status of every claim, then move directly to the next step.', '◈')
+    st.markdown('<div class="mg-welcome-note"><span>👋</span><div><b>Your claims, made clearer.</b><small>Track progress, review evidence, and take the next step with confidence.</small></div><span class="mg-welcome-spark">✦</span></div>', unsafe_allow_html=True)
+    with st.container(horizontal=True, horizontal_alignment='left'):
+        st.metric('Total claims', len(claims), border=True)
+        st.metric('Needs attention', review_count, border=True)
+        st.metric('Approved claims', approved, border=True)
     with st.container(border=True):
-        st.markdown('<div class="mg-section-title">Your Claims</div>', unsafe_allow_html=True)
+        st.markdown('<div class="mg-section-title">Your claims</div><p class="mg-card-copy">Open a claim to continue the guided review.</p>', unsafe_allow_html=True)
         if not claims:
             st.info("You haven't registered a claim yet. Register your first claim to get started.")
             if st.button('Register a claim', type='primary'): st.session_state.page = 'Register claim'; st.rerun()
         else:
-            cols = st.columns(2)
+            cols = st.columns(2, gap='medium')
             for i, claim in enumerate(claims[:8]):
                 with cols[i % 2]:
                     with st.container(border=True):
-                        st.markdown(f"**{claim['claim_number']}**  <span class='mg-pill' style='color:{_status_color(claim['status'])}'>{_status_badge(claim['status'])}</span>", unsafe_allow_html=True)
-                        st.caption(f"{claim['patient_name']} · {claim['hospital_name'] or 'Provider not entered'}")
+                        st.markdown(f"<div class='mg-claim-row'><div><b>{claim['claim_number']}</b><div class='mg-card-copy'>{claim['patient_name']} · {claim['hospital_name'] or 'Provider pending'}</div></div><span class='mg-pill mg-pill-{claim['status']}'>{_status_badge(claim['status'])}</span></div>", unsafe_allow_html=True)
                         x,y = st.columns([3,1])
-                        claim_total = claim['total_amount'] if 'total_amount' in claim.keys() else None
+                        saved_result = _claimant_result_for_claim(claim['claim_id'], user)
+                        claim_total = saved_result['amount_billed'] if saved_result else None
                         x.write(f"INR {float(claim_total or 0):,.2f}" if claim_total else 'Amount pending')
                         if y.button('Open', key=f"open_{claim['claim_id']}"):
                             st.session_state.active_claim = claim['claim_id']
@@ -1266,15 +1363,16 @@ def _render_dashboard(user: dict) -> None:
     if user['role'] in {'reviewer','admin'}:
         queue = reviewer_queue(user)
         with st.container(border=True):
-            st.markdown('<div class="mg-section-title">Review queue</div>', unsafe_allow_html=True)
+            st.markdown('<div class="mg-section-title">Review queue</div><p class="mg-card-copy">Claims awaiting an authorized review.</p>', unsafe_allow_html=True)
             if queue:
                 st.dataframe([{'Claim': c['claim_number'], 'Patient': c['patient_name'], 'Status': _status_badge(c['status']), 'Priority': c['review_priority'] if 'review_priority' in c.keys() else 0} for c in queue], hide_index=True)
             else: st.info('No claims are waiting for review.')
 
 
 def _render_register(user: dict) -> None:
-    st.markdown('<div class="mg-eyebrow">CLAIMS</div><h1>Register a New Claim</h1><p class="mg-subtitle">Enter claim and patient details to get started.</p>', unsafe_allow_html=True)
+    _page_header('NEW CLAIM', 'Register a claim', 'Start with the essentials. You can attach the bill and policy in the next step.', '+')
     with st.container(border=True):
+        st.markdown('<div class="mg-section-title">📝 Claim details</div><p class="mg-card-copy">Fields marked by the workflow are checked against uploaded documents later.</p>', unsafe_allow_html=True)
         left,right = st.columns(2, gap='large')
         with left:
             st.markdown('### Claim Details')
@@ -1285,9 +1383,9 @@ def _render_register(user: dict) -> None:
             st.markdown('### Service Details')
             hospital = st.text_input('Hospital / provider', placeholder='Hospital name')
             incident_date = st.date_input('Admission or service date')
-            st.selectbox('Claim type', ['Hospitalization', 'Day care', 'Outpatient'])
+            st.caption('Prototype workflow: inpatient hospitalization claims.')
         st.divider()
-        if st.button('Register & continue to documents', type='primary'):
+        if st.button('Save claim and continue', type='primary', icon=':material/arrow_forward:'):
             if not claim_number.strip() or not patient.strip(): st.error('Claim number and patient name are required.')
             else:
                 claim_id = create_claim(user['user_id'], claim_number, patient, hospital, policy, str(incident_date))
@@ -1301,20 +1399,25 @@ def _render_claim_submission(user: dict) -> None:
     """Claimant-only submission flow; internal extraction and rules remain hidden."""
     require_role(user, 'claimant')
     claims = user_claims(user['user_id'], user)
-    st.markdown('<div class="mg-eyebrow">CLAIMS / SUBMISSION</div><h1>Submit claim documents</h1><p class="mg-subtitle">Upload your bill and policy. We will check the claim and show a clear result.</p>', unsafe_allow_html=True)
+    _page_header('DOCUMENTS', 'Submit claim documents', 'Add the policy and bill. We will extract the key details and show a clear result.', '↑')
     if not claims:
         st.info('Register a claim first, then return here to add documents.')
         if st.button('Register a claim', type='primary', icon=':material/add_circle:'):
             st.session_state.page = 'Register claim'; st.rerun()
         return
     options = {f"{claim['claim_number']} · {claim['patient_name']}": claim['claim_id'] for claim in claims}
-    selected = st.selectbox('Choose a claim', list(options), key='claimant_submission_selector')
+    labels = list(options)
+    default = next((i for i, value in enumerate(options.values()) if value == st.session_state.get('active_claim')), 0)
+    selected = st.selectbox('Choose a claim', labels, index=default, key='claimant_submission_selector')
     claim_id = options[selected]
     st.session_state.active_claim = claim_id
     with st.container(border=True):
-        st.subheader('Upload documents')
-        policy_files = st.file_uploader('Insurance policy', type=['pdf', 'png', 'jpg', 'jpeg'], accept_multiple_files=True, key=f'claimant_policy_{claim_id}')
-        bill_files = st.file_uploader('Medical bill and supporting documents', type=['pdf', 'png', 'jpg', 'jpeg'], accept_multiple_files=True, key=f'claimant_bill_{claim_id}')
+        st.markdown('<div class="mg-section-title">📎 1. Add your documents</div><p class="mg-card-copy">PDF, PNG, or JPG up to the configured size limit. Upload at least one policy and one bill.</p>', unsafe_allow_html=True)
+        upload_columns = st.columns(2, gap='medium')
+        with upload_columns[0]:
+            policy_files = st.file_uploader('Insurance policy', type=['pdf', 'png', 'jpg', 'jpeg'], accept_multiple_files=True, key=f'claimant_policy_{claim_id}')
+        with upload_columns[1]:
+            bill_files = st.file_uploader('Medical bill and supporting documents', type=['pdf', 'png', 'jpg', 'jpeg'], accept_multiple_files=True, key=f'claimant_bill_{claim_id}')
         if st.button('Save documents', type='primary', icon=':material/save:'):
             files = [(file, 'policy') for file in (policy_files or [])] + [(file, 'medical_bill') for file in (bill_files or [])]
             if not files:
@@ -1354,17 +1457,25 @@ def _render_claim_submission(user: dict) -> None:
 def _render_claim_review(user: dict) -> None:
     require_role(user, 'reviewer', 'admin')
     claims = user_claims(user['user_id'], user)
-    st.markdown('<div class="mg-eyebrow">CLAIMS / REVIEW</div><h1>Claim Review</h1>', unsafe_allow_html=True)
+    _page_header('REVIEW WORKSPACE', 'Claim review', 'Move from documents to evidence, calculations, and an authorized decision in four clear steps.', '◫')
     if not claims:
         st.info('No claims yet. Register a claim to start the workflow.'); return
     options = {f"{c['claim_number']} · {c['patient_name']}": c['claim_id'] for c in claims}
     labels = list(options); default = next((i for i,v in enumerate(options.values()) if v == st.session_state.get('active_claim')), 0)
     selected = st.selectbox('Selected claim', labels, index=default); claim_id = options[selected]; st.session_state.active_claim = claim_id
     selected_claim = next(c for c in claims if c['claim_id'] == claim_id)
-    st.markdown(f"<div class='mg-context'><b>{selected_claim['claim_number']}</b> · {selected_claim['patient_name']} <span class='mg-pill' style='color:{_status_color(selected_claim['status'])}'>{_status_badge(selected_claim['status'])}</span></div>", unsafe_allow_html=True)
-    tabs = st.tabs(['① Select claim', '② Upload documents', '③ Extract & normalize', '④ Analyze claim'])
+    st.markdown(f"<div class='mg-context'><div><b>{selected_claim['claim_number']}</b><div class='mg-card-copy'>{selected_claim['patient_name']} · {selected_claim['hospital_name'] or 'Provider pending'}</div></div><span class='mg-pill mg-pill-{selected_claim['status']}'>{_status_badge(selected_claim['status'])}</span></div>", unsafe_allow_html=True)
+    tabs = st.tabs(['1 · Choose claim', '2 · Add documents', '3 · Check extraction', '4 · Calculate & review'])
+    with tabs[0]:
+        st.markdown('### Your review path')
+        path_columns = st.columns(4, gap='small')
+        for column, icon, title, detail in zip(path_columns, [':material/folder_open:', ':material/upload_file:', ':material/document_scanner:', ':material/calculate:'], ['Choose', 'Add', 'Check', 'Decide'], ['Select the claim above.', 'Upload bill and policy.', 'Confirm extracted fields.', 'Run rules and sign off.']):
+            with column:
+                with st.container(border=True):
+                    st.markdown(f'{icon}\n\n**{title}**\n\n{detail}')
     with tabs[1]:
-        st.markdown('### Upload Documents')
+        st.markdown('### Add source documents')
+        st.caption('Keep policy and bill separate so the evidence trail stays clear.')
         pcol,bcol = st.columns(2)
         with pcol: policy_files = st.file_uploader('Policy documents', type=['pdf','png','jpg','jpeg'], accept_multiple_files=True, key=f'pol_{claim_id}')
         with bcol: bill_files = st.file_uploader('Medical bill / supporting documents', type=['pdf','png','jpg','jpeg'], accept_multiple_files=True, key=f'bill_{claim_id}')
@@ -1377,7 +1488,7 @@ def _render_claim_review(user: dict) -> None:
                     st.success(f'Saved {len(files)} document(s).'); st.rerun()
                 except (ValueError, PermissionError) as exc: st.error(str(exc))
         docs = claim_documents(claim_id, user)
-        if docs: st.dataframe([{'File':d['original_name'],'Type':d['document_type'].replace('_',' ').title(),'Status':d['processing_status']} for d in docs], hide_index=True)
+        if docs: st.dataframe([{'File':d['original_name'],'Type':d['document_type'].replace('_',' ').title(),'Status':_status_badge(d['processing_status'])} for d in docs], hide_index=True)
         else: st.info('Your saved documents will appear here.')
     docs = claim_documents(claim_id, user)
     with tabs[2]:
@@ -1393,8 +1504,11 @@ def _render_claim_review(user: dict) -> None:
             fields=[]
             for key in ('patient_name','hospital_name','policy_number','claim_number','admission_date','discharge_date','diagnosis','total_amount'):
                 item=normalized.get(key)
-                if item: fields.append({'Field':key.replace('_',' ').title(),'Value':item['value'],'Confidence':round(float(item['confidence']),1),'Review':'Yes' if item['needs_review'] else 'No'})
-            a,b,c = st.columns(3); a.metric('Fields extracted', len(fields)); b.metric('Missing / review', len(missing)); c.metric('Line items', len(normalized.get('line_items',[])))
+                if item: fields.append({'Field':key.replace('_',' ').title(),'Value':str(item['value']),'Confidence':round(float(item['confidence']),1),'Review':'Yes' if item['needs_review'] else 'No'})
+            with st.container(horizontal=True, horizontal_alignment='left'):
+                st.metric('Fields extracted', len(fields), border=True)
+                st.metric('Needs review', len(missing), border=True)
+                st.metric('Line items', len(normalized.get('line_items',[])), border=True)
             with st.expander('Extracted summary', expanded=True): st.dataframe(fields, hide_index=True)
             with st.expander(f"Line items ({len(normalized.get('line_items',[]))}"): st.dataframe([{k:i.get(k) for k in ('description','amount','category','confidence','needs_review')} for i in normalized.get('line_items',[])], hide_index=True)
             with st.expander('Field-by-field evidence'): st.json(normalized)
@@ -1408,18 +1522,23 @@ def _render_claim_review(user: dict) -> None:
                 try: rules=evaluate_saved_claim(claim_id,user['user_id'],normalized); st.session_state[f'rules_{claim_id}']=rules; status.update(label='Rules complete',state='complete')
                 except Exception as exc: status.update(label='Rules failed',state='error'); st.error(str(exc))
         if rules:
-            st.markdown(f"### Deterministic result <span class='mg-pill' style='color:{_status_color(rules['status'])}'>{_status_badge(rules['status'])}</span>", unsafe_allow_html=True)
-            a,b,c,d=st.columns(4); a.metric('Covered',f"INR {rules.get('covered_amount',0):,.2f}"); b.metric('Deductible',f"INR {rules.get('deductible',0):,.2f}"); c.metric('Copayment',f"INR {rules.get('copayment',0):,.2f}"); d.metric('Payable',f"INR {rules.get('payable_amount',0):,.2f}")
+            st.markdown(f"<div class='mg-section-title'>Deterministic result <span class='mg-pill mg-pill-{rules['status']}'>{_status_badge(rules['status'])}</span></div>", unsafe_allow_html=True)
+            with st.container(horizontal=True, horizontal_alignment='left'):
+                st.metric('Covered',f"INR {rules.get('covered_amount',0):,.2f}", border=True)
+                st.metric('Deductible',f"INR {rules.get('deductible',0):,.2f}", border=True)
+                st.metric('Copayment',f"INR {rules.get('copayment',0):,.2f}", border=True)
+                st.metric('Payable',f"INR {rules.get('payable_amount',0):,.2f}", border=True)
             if rules.get('warnings'): st.warning('; '.join(rules['warnings']))
             with st.expander('Why this result? Rule trace', expanded=True): st.dataframe(rules.get('results',[]), hide_index=True)
             workflow=st.session_state.get(f'workflow_{claim_id}')
             if st.button('Run Policy Agent + Decision Agent', type='primary'):
                 with st.status('Retrieving policy evidence...', expanded=True) as status:
+                    st.caption('Local AI processing can take 1–2 minutes on CPU. Keep this page open while it completes.')
                     try:
                         started=time.perf_counter(); workflow=run_agents_for_claim(claim_id,user['user_id'],normalized,rules,progress_callback=lambda msg: status.write(msg)); workflow['elapsed_seconds']=round(time.perf_counter()-started,2); st.session_state[f'workflow_{claim_id}']=workflow; status.update(label='Two-agent analysis complete',state='complete')
                     except Exception as exc: status.update(label='Agent workflow failed',state='error'); st.error(str(exc))
             if workflow:
-                decision=workflow.get('decision',{}); st.markdown(f"### Recommendation <span class='mg-pill' style='color:{_status_color(decision.get('status','manual_review'))}'>{_status_badge(decision.get('status','manual_review'))}</span>", unsafe_allow_html=True)
+                decision=workflow.get('decision',{}); st.markdown(f"<div class='mg-section-title'>Evidence-based recommendation <span class='mg-pill mg-pill-{decision.get('status','manual_review')}'>{_status_badge(decision.get('status','manual_review'))}</span></div>", unsafe_allow_html=True)
                 for reason in decision.get('reasons',[]): st.write(f'• {reason}')
                 st.caption(f"Policy source: {workflow.get('policy_source','none')} · LLM calls: {workflow.get('llm_calls',0)} · Time: {workflow.get('elapsed_seconds','n/a')}s")
                 with st.expander('Policy evidence and agent reasoning'): st.json({'decision':decision,'policy_findings':workflow.get('policy_findings',{})})
@@ -1437,7 +1556,7 @@ def _render_claim_review(user: dict) -> None:
 
 def _render_policy_management(user: dict) -> None:
     if user['role'] not in {'reviewer','admin'}: st.info('Policy Management is available to Reviewers and Administrators.'); return
-    st.markdown('<div class="mg-eyebrow">POLICY & RULES</div><h1>Policy Management</h1><p class="mg-subtitle">Ingest, manage and compare policy editions.</p>', unsafe_allow_html=True)
+    _page_header('POLICY LIBRARY', 'Policy management', 'Ingest the active policy edition that supplies evidence and deterministic coverage terms.', '≡')
     with st.container(border=True):
         st.markdown('### Ingest New Policy Edition')
         with st.form('policy_ingestion_form'):
@@ -1469,7 +1588,7 @@ def _render_policy_management(user: dict) -> None:
 
 def _render_admin_panel(user: dict) -> None:
     require_role(user,'admin')
-    st.markdown('<div class="mg-eyebrow">ADMINISTRATION</div><h1>Admin Panel</h1><p class="mg-subtitle">Manage reviewer access and user accounts.</p>', unsafe_allow_html=True)
+    _page_header('ADMINISTRATION', 'Team access', 'Manage reviewer access and view the accounts available in this local prototype.', '◉')
     with st.container(border=True):
         st.markdown('### Reviewer Invitations')
         with st.form('invite_reviewer'):
@@ -1488,48 +1607,55 @@ def _render_admin_panel(user: dict) -> None:
 def main() -> None:
     st.set_page_config(page_title='Medi Gaurd AI', page_icon='🛡️', layout='wide', initial_sidebar_state='expanded')
     st.markdown('''<style>
-    :root{--navy:#06285b;--navy2:#0b3b78;--blue:#1167dc;--bg:#f4f8fd;--border:#dce6f1;--text:#12213d}
-    .stApp{background:var(--bg);color:var(--text)} .block-container{max-width:1440px;padding:1.7rem 2.4rem 3rem}
-    [data-testid="stSidebar"]{background:linear-gradient(180deg,var(--navy),#071c42);border:0} [data-testid="stSidebar"] *{color:#f6f9ff!important}
-    [data-testid="stSidebar"] .stRadio label{padding:.55rem .75rem;border-radius:8px;font-weight:600} [data-testid="stSidebar"] .stRadio label:hover{background:#114a98}
-    .mg-brand-head{display:flex;gap:.65rem;align-items:center;padding:.2rem 0 1.5rem}.mg-brand-name{font-weight:800;font-size:1.22rem}.mg-brand-sub{font-size:.63rem;opacity:.78;line-height:1.25}.mg-shield{width:2.05rem;height:2.05rem;border:2px solid #fff;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff}.mg-shield.large{width:4rem;height:4rem;border:3px solid #1467d6;color:#1467d6;font-size:2rem;margin:auto}
-    .mg-nav-label,.mg-eyebrow{font-size:.7rem;letter-spacing:.13em;font-weight:800;color:#7b8ca5!important}.mg-sidebar-spacer{height:36vh}.mg-sidebar-foot{font-size:.68rem;opacity:.72;border-top:1px solid #2c5284;padding-top:1rem;margin-top:1rem}
-    h1{letter-spacing:-.04em;color:var(--text)} .mg-eyebrow{color:#2f6fb0!important;margin-bottom:.25rem}.mg-subtitle{color:#63728a;font-size:1.02rem;margin-top:-.8rem;margin-bottom:1.4rem}.mg-section-title{font-size:1.08rem;font-weight:800;margin-bottom:1rem}.mg-auth-title{font-size:1.7rem;font-weight:800;margin-top:5vh}.mg-auth-copy{color:#68758b;margin-bottom:1.4rem}.mg-landing{background:#eaf3ff;border-radius:16px;padding:4rem 2rem 2.2rem;text-align:center;margin-top:2rem;min-height:550px}.mg-landing h1{color:#123d78;font-size:2.25rem}.mg-tagline{font-weight:650;line-height:1.55}.mg-promise{font-size:1.1rem;font-weight:700;margin:2rem 0;color:#1b4c8d}.mg-illustration{font-size:7rem;color:#2771d7;line-height:1.05;opacity:.78}.mg-illustration span{font-size:1.5rem;letter-spacing:1rem}.stButton>button{border-radius:8px;min-height:2.55rem;font-weight:700}.stButton>button[kind="primary"]{background:var(--blue);border-color:var(--blue)} [data-testid="stMetric"]{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;box-shadow:0 2px 8px #193b6510}.stMetric label{color:#66758c}.stMetric [data-testid="stMetricValue"]{color:var(--text);font-weight:800}.stTextInput input,.stTextArea textarea,.stDateInput input,.stSelectbox div[data-baseweb="select"]>div{border-radius:8px;border-color:#cbd8e8;background:#fff}.stForm,.st-key-policy_ingestion_form{border:0}.mg-context{background:#fff;border:1px solid var(--border);border-radius:10px;padding:.85rem 1rem;margin:1rem 0}.mg-pill{font-size:.75rem;font-weight:800;margin-left:.5rem}.mg-section-title+div{margin-top:.2rem}
-
-/* Reference-inspired Medi Gaurd AI theme */
-:root { color-scheme: dark; }
-.stApp { background: #0b0d12; color: #f4f4f5; }
-[data-testid="stAppViewContainer"] { background: #0b0d12; }
-[data-testid="stHeader"] { background: #0b0d12; }
-[data-testid="stSidebar"] { background: #252631; border-right: 1px solid #363746; }
-[data-testid="stSidebarContent"] { padding: 1.4rem 1.35rem; }
-[data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 { color: #f6f7fb; }
-.block-container { max-width: 1220px; padding: 3.3rem 3.2rem 4rem; }
-h1, h2, h3 { color: #f7f7f8; letter-spacing: -.02em; }
-h1 { font-size: 2.15rem; margin-bottom: .2rem; }
-h2 { font-size: 1.45rem; margin-top: 1.6rem; }
-p, label, [data-testid="stMarkdownContainer"] { color: #d7d8df; }
-hr { border-color: #2f313c; }
-.stTextInput, .stDateInput, .stSelectbox, .stFileUploader { margin-bottom: .45rem; }
-.stTextInput input, .stDateInput input, [data-baseweb="select"] > div, [data-testid="stFileUploaderDropzone"] { background: #252631 !important; border: 1px solid #343642 !important; color: #f4f4f5 !important; border-radius: 7px !important; }
-.stTextInput input:focus, .stDateInput input:focus { border-color: #d73550 !important; box-shadow: 0 0 0 1px #d73550 !important; }
-.stButton > button { background: #101217; color: #f4f4f5; border: 1px solid #5b5d68; border-radius: 7px; padding: .45rem 1rem; font-weight: 600; }
-.stButton > button:hover { border-color: #d73550; color: #ff6680; }
-[data-testid="stMetric"] { background: #171920; border: 1px solid #30323d; border-radius: 10px; padding: 1rem; }
-[data-testid="stMetricLabel"] { color: #aeb0ba; }
-[data-testid="stMetricValue"] { color: #ffffff; }
-[data-testid="stExpander"] { background: #14161c; border: 1px solid #30323d; border-radius: 9px; }
-.mg-context, .mg-card, .mg-panel { background: #14161c !important; border: 1px solid #30323d !important; border-radius: 9px !important; }
-.mg-pill { color: #ff536d !important; }
-.mg-sidebar-foot { color: #aeb0ba !important; border-top-color: #444653 !important; }
-[data-testid="stTabs"] button[aria-selected="true"] { color: #ff536d !important; border-bottom-color: #ff536d !important; }
-[data-testid="stDataFrame"] { border: 1px solid #30323d; border-radius: 8px; }
-
-</style>''', unsafe_allow_html=True)
+    :root { --ink:#102a2b; --muted:#5d7474; --teal:#0f766e; --teal-dark:#073b3a; --mint:#dff6f1; --line:#cfe1df; --paper:#ffffff; --canvas:#f4f8f8; }
+    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] { background:var(--canvas); color:var(--ink); }
+    .block-container { max-width:1280px; padding:2.4rem 3rem 4rem; }
+    [data-testid="stSidebar"] { background:linear-gradient(180deg,#073b3a 0%,#0b504e 100%); }
+    [data-testid="stSidebarContent"] { padding:1.6rem 1.05rem; }
+    [data-testid="stSidebar"] * { color:#effffd!important; }
+    [data-testid="stSidebar"] .stRadio label { padding:.68rem .78rem; border-radius:12px; margin:.13rem 0; font-size:.9rem; transition:background .18s ease; }
+    [data-testid="stSidebar"] .stRadio label:hover { background:rgba(255,255,255,.1); }
+    [data-testid="stSidebar"] .stRadio label:has(input:checked) { background:rgba(94,234,212,.18); box-shadow:inset 3px 0 #5eead4; }
+    .mg-brand-head { display:flex; gap:.72rem; align-items:center; padding:.15rem .35rem 1.65rem; }
+    .mg-brand-name { font-size:1.08rem; font-weight:800; letter-spacing:-.02em; }
+    .mg-brand-sub { font-size:.69rem; opacity:.78; margin-top:.12rem; }
+    .mg-logo-mark { width:2.35rem; height:2.35rem; display:grid; place-items:center; color:#5eead4!important; filter:drop-shadow(0 8px 18px rgba(0,0,0,.22)); }.mg-logo-mark svg { width:100%; height:100%; }
+    .mg-shield { width:2.3rem; height:2.3rem; display:grid; place-items:center; border-radius:13px; background:#5eead4; color:#073b3a!important; font-weight:800; box-shadow:0 8px 24px rgba(0,0,0,.18); }
+    .mg-nav-label, .mg-eyebrow, .mg-auth-kicker { font-size:.68rem; letter-spacing:.14em; font-weight:800; color:var(--teal); }
+    .mg-nav-label { color:#9fe9dc!important; opacity:.78; padding:.25rem .35rem; }
+    .mg-sidebar-spacer { height:24vh; }.mg-sidebar-foot { font-size:.7rem; opacity:.78; border-top:1px solid rgba(255,255,255,.18); padding:1rem .35rem 0; margin-top:1rem; }
+    .mg-page-header { display:flex; gap:1rem; align-items:flex-start; margin:.15rem 0 2rem; }
+    .mg-header-icon { width:3rem; height:3rem; display:grid; place-items:center; flex:0 0 auto; border-radius:15px; color:#0f766e; background:var(--mint); font-size:1.3rem; }
+    h1 { color:var(--ink); letter-spacing:-.045em; margin:0 0 .18rem!important; } h2,h3 { color:var(--ink); }
+    .mg-subtitle { color:var(--muted); font-size:1rem; margin:0; max-width:760px; line-height:1.55; }
+    .mg-section-title { color:var(--ink); font-size:1.12rem; font-weight:800; letter-spacing:-.015em; margin-bottom:.25rem; }.mg-card-copy { color:var(--muted); font-size:.84rem; line-height:1.45; margin:.15rem 0 .8rem; }
+    [data-testid="stMetric"], [data-testid="stVerticalBlockBorderWrapper"] { background:var(--paper); border-color:var(--line)!important; border-radius:16px!important; box-shadow:0 10px 28px rgba(18,71,68,.045); }
+    [data-testid="stMetric"] { min-width:190px; padding:1.05rem 1.15rem; } [data-testid="stMetricLabel"] { color:var(--muted); font-size:.8rem; } [data-testid="stMetricValue"] { color:var(--ink); font-weight:800; }
+    .mg-context { display:flex; justify-content:space-between; align-items:center; gap:1rem; background:linear-gradient(100deg,#fff,#f8fcfb); border:1px solid var(--line); border-radius:15px; padding:.9rem 1rem; margin:1rem 0 1.4rem; }
+    .mg-claim-row { display:flex; justify-content:space-between; align-items:flex-start; gap:.6rem; }
+    .mg-pill { display:inline-flex; align-items:center; border-radius:999px; padding:.28rem .58rem; font-size:.71rem; font-weight:800; white-space:nowrap; }
+    .mg-pill-approved { color:#167052; background:#dcfce7; }.mg-pill-partially_approved,.mg-pill-manual_review,.mg-pill-ready_for_review { color:#9a5d00; background:#fef3c7; }.mg-pill-rejected { color:#b42318; background:#fee4e2; }.mg-pill-extracted { color:#1d4ed8; background:#dbeafe; }.mg-pill-draft { color:#475569; background:#e2e8f0; }
+    .stButton>button { min-height:2.65rem; padding:.55rem 1rem; border-radius:12px; font-weight:700; transition:transform .16s ease, box-shadow .16s ease; }.stButton>button:hover { transform:translateY(-1px); box-shadow:0 8px 16px rgba(15,118,110,.12); }
+    .stButton>button[kind="primary"] { background:var(--teal); border-color:var(--teal); }.stButton>button[kind="primary"]:hover { background:#0b625c; border-color:#0b625c; }
+    [data-testid="stTabs"] [role="tab"] { font-weight:700; color:var(--muted); padding:.8rem 1rem; } [data-testid="stTabs"] [aria-selected="true"] { color:var(--teal)!important; border-bottom-color:var(--teal)!important; }
+    [data-testid="stExpander"] { border:1px solid var(--line); border-radius:14px; background:#fff; overflow:hidden; }
+    [data-testid="stFileUploaderDropzone"] { background:#f9fdfc; border:1.5px dashed #8bc5bb; border-radius:14px; padding:1.25rem; }
+    .stTextInput input,.stTextArea textarea,.stDateInput input,[data-baseweb="select"]>div { background:#fff!important; border-color:#bcd7d2!important; border-radius:11px!important; }
+    .stTextInput input:focus,.stTextArea textarea:focus,.stDateInput input:focus { border-color:var(--teal)!important; box-shadow:0 0 0 3px rgba(15,118,110,.12)!important; }
+    [data-testid="stDataFrame"] { border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+    .mg-landing { position:relative; overflow:hidden; min-height:540px; border-radius:24px; padding:3.2rem 2.5rem; background:radial-gradient(circle at 80% 20%,#b9f3e7 0,transparent 28%),linear-gradient(145deg,#073b3a,#0f766e); color:#effffd; box-shadow:0 20px 48px rgba(7,59,58,.2); }.mg-landing h1 { color:#fff; margin-top:2.2rem!important; font-size:3rem; max-width:460px; }.mg-landing-badge { display:inline-block; padding:.42rem .7rem; border-radius:999px; background:rgba(255,255,255,.12); font-size:.78rem; }.mg-landing-art { position:absolute; right:1.3rem; bottom:1.4rem; width:155px; height:145px; pointer-events:none; }.mg-landing-art span { position:absolute; display:grid; place-items:center; width:58px; height:58px; border-radius:19px; background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.18); box-shadow:0 12px 26px rgba(0,0,0,.13); font-size:1.65rem; animation:mg-float 4.6s ease-in-out infinite; }.mg-landing-art span:nth-child(1){top:6px;left:15px}.mg-landing-art span:nth-child(2){top:44px;right:4px;animation-delay:-1.1s}.mg-landing-art span:nth-child(3){bottom:0;left:0;animation-delay:-2.3s}.mg-landing-art span:nth-child(4){bottom:3px;right:36px;animation-delay:-3.2s}.mg-landing .large { margin:2.5rem 0 0; width:3.5rem; height:3.5rem; font-size:1.45rem; background:#fff; }.mg-tagline { max-width:390px; line-height:1.65; color:#d9fbf5; font-size:1.02rem; }.mg-landing-points { display:flex; gap:.55rem; flex-wrap:wrap; margin:2.1rem 0 1.5rem; }.mg-landing-points span { padding:.42rem .6rem; border:1px solid rgba(255,255,255,.18); border-radius:10px; font-size:.77rem; }.mg-promise { color:#bdf4e9; font-weight:700; }
+    .mg-welcome-note { display:flex; align-items:center; gap:.65rem; max-width:675px; padding:.7rem .9rem; margin:-.8rem 0 1.3rem; border:1px solid #c8e8e1; border-radius:14px; background:linear-gradient(90deg,#edfcf8,#f8fffd); color:#245b58; }.mg-welcome-note>span:first-child { display:grid; place-items:center; width:2rem; height:2rem; border-radius:10px; background:#d5f7ef; font-size:1.05rem; }.mg-welcome-note b { display:block; font-size:.83rem; }.mg-welcome-note small { display:block; margin-top:.12rem; color:var(--muted); font-size:.76rem; }.mg-welcome-spark { margin-left:auto; color:#0f766e; font-size:1.15rem; animation:mg-pulse 2.4s ease-in-out infinite; }
+    @keyframes mg-float { 0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-7px) rotate(3deg)} } @keyframes mg-pulse { 0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.24);opacity:1} }
+    .mg-auth-title { color:var(--ink); font-size:2rem; font-weight:800; letter-spacing:-.04em; margin-top:2.6rem; }.mg-auth-copy { color:var(--muted); margin:.45rem 0 1.5rem; }
+    .mg-opening { position:relative; overflow:hidden; max-width:930px; min-height:570px; margin:3vh auto 0; padding:5.2rem 8%; border-radius:30px; background:radial-gradient(circle at 80% 18%,rgba(130,246,221,.29),transparent 20%),radial-gradient(circle at 12% 90%,rgba(35,149,142,.25),transparent 26%),linear-gradient(140deg,#073b3a,#0c5d59); color:#effffd; box-shadow:0 26px 70px rgba(7,59,58,.22); text-align:center; }.mg-opening-logo { position:relative; z-index:1; display:grid; place-items:center; width:86px; height:86px; margin:0 auto 1.35rem; border-radius:27px; background:#5eead4; color:#0b4d4a; box-shadow:0 13px 32px rgba(0,0,0,.2); }.mg-opening-logo svg { width:66px; height:66px; }.mg-opening-brand { position:relative; z-index:1; color:#a8f1e3; font-size:.73rem; letter-spacing:.2em; font-weight:800; }.mg-opening h1 { position:relative; z-index:1; max-width:720px; margin:1.1rem auto .85rem!important; color:#fff; font-size:clamp(2.7rem,6vw,5rem); line-height:1.02; }.mg-opening h1 em { font-style:normal; color:#7ae6d3; }.mg-opening p { position:relative; z-index:1; max-width:560px; margin:0 auto; color:#d9fbf5; font-size:1.08rem; line-height:1.65; }.mg-opening-chips { position:relative; z-index:1; display:flex; justify-content:center; gap:.55rem; flex-wrap:wrap; margin-top:2.15rem; }.mg-opening-chips span { padding:.52rem .76rem; border:1px solid rgba(255,255,255,.18); border-radius:999px; background:rgba(255,255,255,.09); font-size:.8rem; }.mg-opening-orb { position:absolute; border-radius:999px; background:rgba(111,234,210,.12); filter:blur(1px); }.orb-one { width:280px; height:280px; right:-95px; top:-80px; }.orb-two { width:180px; height:180px; left:-50px; bottom:-70px; }.mg-role-label { margin:1.25rem auto .35rem; color:#0f766e; text-align:center; font-size:.7rem; font-weight:800; letter-spacing:.14em; }.mg-role-label + div [role="radiogroup"] { justify-content:center; gap:.5rem; }.mg-role-label + div [role="radio"] { border:1px solid #bcded7; border-radius:12px; padding:.6rem .75rem; background:#fff; font-weight:700; }.mg-role-label + div [role="radio"]:has(input:checked) { border-color:#0f766e; background:#eafaf6; color:#0b625c; }.mg-opening + div .stButton { max-width:250px; margin:1.35rem auto .35rem; }.mg-opening + div .stButton button { min-height:3.2rem; font-size:1rem; }
+    @media(max-width:800px) { .block-container{padding:1.25rem 1rem 3rem}.mg-page-header{margin-bottom:1.3rem}.mg-header-icon{width:2.5rem;height:2.5rem}.mg-landing{min-height:auto;padding:2.2rem 1.5rem}.mg-landing h1{font-size:2.3rem}.mg-landing-art{opacity:.54;transform:scale(.82);transform-origin:bottom right}.mg-welcome-note small{font-size:.7rem}.mg-opening{min-height:500px;margin:1vh auto 0;padding:4rem 1.35rem;border-radius:22px}.mg-opening p{font-size:.98rem}.mg-sidebar-spacer{height:12vh;} }
+    </style>''', unsafe_allow_html=True)
     init_db(); validate_security_config(); bootstrap_admin_from_env()
-    if CORE_DEMO_MODE and 'user' not in st.session_state:
-        st.session_state.user = _core_demo_user()
-        st.session_state.page = 'Dashboard'
+    if not st.session_state.get('welcome_seen') and not (st.query_params.get('reset_token') or st.query_params.get('setup_token')):
+        _render_welcome()
+        return
+    if CORE_DEMO_MODE:
+        _core_demo_user()
     if 'user' not in st.session_state:
         _render_login(); return
     user=st.session_state.user; page=_render_sidebar(user)

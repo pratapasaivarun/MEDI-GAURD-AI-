@@ -33,8 +33,8 @@ class Upload:
 app.init_db()
 user = app.get_or_create_user("academic-demo@local.test", "Academic demo")
 claim_id = app.create_claim(user["user_id"], "CLM-DEMO-APPROVED-001", "Jane Doe", "City Care Hospital", "POL-DEMO-APPROVED-2026", "2026-09-08")
-app.save_document(claim_id, user, Upload(ROOT / "sample_documents" / "demo_1_medical_bill_CLM-DEMO-APPROVED-001.pdf"), "medical_bill")
-app.save_document(claim_id, user, Upload(ROOT / "sample_documents" / "demo_1_policy_POL-DEMO-APPROVED-2026.pdf"), "policy")
+app.save_document(claim_id, user, Upload(ROOT / "demo_assets" / "approved_bill.pdf"), "medical_bill")
+app.save_document(claim_id, user, Upload(ROOT / "demo_assets" / "approved_policy.pdf"), "policy")
 
 started = time.perf_counter()
 normalized = app.process_claim_documents(claim_id, user["user_id"])
@@ -47,6 +47,7 @@ assert workflow["decision"]["status"] in {"approved", "partially_approved", "rej
 evidence = workflow.get("policy_evidence", [])
 assert evidence and all(item.get("text") for item in evidence), workflow
 assert workflow.get("llm_calls") == 1, workflow
+assert not workflow["decision"].get("_fallback"), workflow
 
 claim = dict(app._claim_access(claim_id, user))
 report = build_decision_report(claim, normalized, rules, workflow)

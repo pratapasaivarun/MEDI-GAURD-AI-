@@ -34,6 +34,8 @@ reports/
 artifacts/
 coverage.xml
 htmlcov/
+backend_full_audit_test_results.txt
+REPOSITORY_AUDIT_REPORT.txt
 *_results.json
 *_metrics*.json
 *.pid
@@ -44,3 +46,9 @@ sample_*.jpg
 
 # Local agent and audit workspace
 .agents/
+
+# Archived, source-reference, and trial material kept outside the publishable project
+EXTRA/
+REFERNCE DATASETS/
+sample_documents/
+project_snapshot*.zip

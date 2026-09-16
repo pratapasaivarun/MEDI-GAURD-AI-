@@ -1,0 +1,7 @@
+# Keep generated demonstration documents and images out of text diffs.
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.docx binary
+*.xlsx binary

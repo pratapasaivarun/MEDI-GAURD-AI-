@@ -7,7 +7,7 @@ import os
 import sqlite3
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from extraction import run_extraction
+from extraction import check_submission_deadline, run_extraction
 from rules import evaluate_claim
 from agents import _ollama_json, recommend_next_steps, retrieve_policy_evidence, run_claim_workflow, warm_ollama
 from policy_index import index_policy_documents
@@ -1302,6 +1302,14 @@ def _render_claimant_result(user: dict) -> None:
         if warnings:
             st.write("Calculation notes: " + "; ".join(_claim_warning_message(item) for item in warnings))
     billing_anomalies = normalized.get("billing_anomalies") or {}
+    bill_date_value = (normalized.get("bill_date") or {}).get("value")
+    try:
+        bill_date = date.fromisoformat(str(bill_date_value).replace("/", "-")) if bill_date_value else None
+    except ValueError:
+        bill_date = None
+    submission_deadline = check_submission_deadline(bill_date)
+    if submission_deadline:
+        st.warning(submission_deadline["warning"])
     duplicate_flags = billing_anomalies.get("duplicates") or normalized.get("duplicate_candidates") or []
     outlier_flags = billing_anomalies.get("price_outliers") or []
     if duplicate_flags or outlier_flags:
@@ -1352,7 +1360,7 @@ def _render_claimant_result(user: dict) -> None:
             )
     recommendations = recommend_next_steps(
         workflow.get("decision") or {},
-        {**rules, "billing_anomalies": billing_anomalies},
+        {**rules, "billing_anomalies": billing_anomalies, "submission_deadline": submission_deadline or {}},
     )
     if recommendations:
         with st.container(border=True):

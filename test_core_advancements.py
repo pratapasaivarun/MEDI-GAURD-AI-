@@ -6,6 +6,7 @@ from unittest.mock import patch
 import agents
 import extraction
 import fitz
+from datetime import date, timedelta
 from reports import build_decision_report
 
 app.init_db()
@@ -114,6 +115,9 @@ clean_claim = extraction.normalize_documents([{
     "evidence": [],
 }])
 assert clean_claim.billing_anomalies == {"duplicates": [], "price_outliers": []}
+assert extraction.check_submission_deadline(date.today() - timedelta(days=35))["days_elapsed"] == 35
+assert extraction.check_submission_deadline(date.today() - timedelta(days=5)) is None
+assert extraction.check_submission_deadline(None) is None
 
 # Out-of-range or covered-item indices returned by the LLM are never exposed.
 with patch.object(agents, "_ollama_json", return_value={"status": "approved", "reasons": ["Rule result explained."], "policy_citations": ["policy-clause-1"], "confidence": 0.9, "reviewer_note": "Review complete.", "line_item_notes": [{"item_index": 99, "note": "Invented item."}, {"item_index": 2, "note": "Covered item note."}, {"item_index": 1, "note": "Valid item note."}]}), patch.object(agents, "_record_metrics") as metrics:

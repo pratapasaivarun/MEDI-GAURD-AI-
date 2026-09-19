@@ -91,6 +91,9 @@ def recommend_next_steps(decision: dict[str, Any], rules: dict[str, Any]) -> lis
     contestable_items = [item for item in actionable_items if str(item.get("applied_rule") or "") in contestable_rules]
 
     def finalize(recommendations: list[str]) -> list[str]:
+        deadline = rules.get("submission_deadline") or {}
+        if deadline.get("warning"):
+            recommendations = recommendations[:2] + [str(deadline["warning"])]
         citations = decision.get("policy_citations") or []
         if status in {"rejected", "partially_approved"} and citations and (status == "rejected" or actionable_items):
             recommendations.append(ESCALATION_GUIDANCE)

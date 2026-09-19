@@ -9,6 +9,7 @@ import os
 import re
 import tempfile
 from difflib import SequenceMatcher
+from datetime import date
 from functools import lru_cache
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -17,6 +18,7 @@ from typing import Any
 
 
 OCR_REVIEW_THRESHOLD = 70.0
+SUBMISSION_DEADLINE_DAYS = 30
 
 
 @dataclass
@@ -52,6 +54,7 @@ class NormalizedClaim:
     claim_number: ExtractedField | None = None
     admission_date: ExtractedField | None = None
     discharge_date: ExtractedField | None = None
+    bill_date: ExtractedField | None = None
     diagnosis: ExtractedField | None = None
     total_amount: ExtractedField | None = None
     line_items: list[ExtractedField] = field(default_factory=list)
@@ -105,6 +108,22 @@ def parse_amount(raw: str | None) -> float | None:
         return float(cleaned)
     except ValueError:
         return None
+
+
+def check_submission_deadline(bill_date: date | None, deadline_days: int = SUBMISSION_DEADLINE_DAYS) -> dict[str, Any] | None:
+    """Return a claimant warning when a bill is close to or past submission deadline."""
+    if not isinstance(bill_date, date):
+        return None
+    days_elapsed = (date.today() - bill_date).days
+    if days_elapsed < 0 or days_elapsed < deadline_days - 7:
+        return None
+    remaining = deadline_days - days_elapsed
+    warning = (
+        f"Claim submission deadline has passed by {abs(remaining)} day(s)."
+        if remaining < 0
+        else f"Claim submission deadline is in {remaining} day(s)."
+    )
+    return {"days_elapsed": days_elapsed, "warning": warning}
 
 
 def extract_pdf_text(path: Path, document_id: str, source_name: str) -> tuple[list[Evidence], dict[str, str], int]:
@@ -390,6 +409,7 @@ def normalize_documents(documents: list[dict[str, Any]]) -> NormalizedClaim:
     claim.claim_number = find([r"claim\s*(?:no|number|id)\s*(?:[:#-]\s*)?([A-Z0-9/-]+)"], "claim_number")
     claim.admission_date = find([r"(?:admission(?:\s+date)?|admit|date\s+of\s+admission)\s*(?:[:#-]\s*)?([0-9]{1,4}[/-][0-9]{1,2}[/-][0-9]{1,4})"], "admission_date")
     claim.discharge_date = find([r"(?:discharge(?:\s+date)?|date of discharge)\s*(?:[:#-]\s*)?([0-9]{1,4}[/-][0-9]{1,2}[/-][0-9]{1,4})"], "discharge_date")
+    claim.bill_date = find([r"(?:bill|invoice)\s*date\s*(?:[:#-]\s*)?([0-9]{1,4}[/-][0-9]{1,2}[/-][0-9]{1,4})"], "bill_date")
     claim.diagnosis = find([r"diagnosis\s*(?:[:#-]\s*)?([^\n]+)"], "diagnosis")
     claim.total_amount = find([r"(?:grand total|total amount|net payable|amount payable|total)\s*(?:[:#-]\s*)?(?:rs\.?|inr|₹|\$)?\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)", r"(?:grand total|total amount|net payable|amount payable|total)\s*(?:[:#-]\s*)?([0-9][0-9,]*(?:\.[0-9]{1,2})?)\s*(?:rs\.?|inr|₹|\$)?"], "total_amount", amount=True)
     claim.line_items = _extract_line_items(all_text, evidence)
@@ -407,7 +427,7 @@ def normalize_documents(documents: list[dict[str, Any]]) -> NormalizedClaim:
     for required in ("patient_name", "hospital_name", "total_amount"):
         if getattr(claim, required) is None:
             claim.missing_fields.append(required)
-    for name in ("patient_name", "hospital_name", "policy_number", "claim_number", "admission_date", "discharge_date", "diagnosis", "total_amount"):
+    for name in ("patient_name", "hospital_name", "policy_number", "claim_number", "admission_date", "discharge_date", "bill_date", "diagnosis", "total_amount"):
         item = getattr(claim, name)
         if item and item.needs_review:
             claim.review_fields.append(name)

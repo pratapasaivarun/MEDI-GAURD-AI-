@@ -239,23 +239,47 @@ def retrieve_policy_evidence(policy_text: str, normalized_claim: dict[str, Any],
     query_terms.update({"coverage", "deductible", "copayment", "limit", "required", "documents", "waiting"})
     query_terms.update(term for term in query.lower().split() if len(term) > 2)
     chunks = re.split(r"(?<=[.!?])\s+|\n+", policy_text or "")
-    scored: list[tuple[int, str]] = []
+    scored: list[tuple[int, int, str]] = []
     for index, chunk in enumerate(chunks, start=1):
         clean = chunk.strip()
         if not clean:
             continue
         score = sum(1 for term in query_terms if term and term in clean.lower())
         if score:
-            scored.append((score, clean))
+            scored.append((score, index, clean))
     scored.sort(key=lambda item: item[0], reverse=True)
-    return [{"clause_id": f"policy-clause-{index}", "page": 1, "text": text, "relevance_score": score} for index, (score, text) in enumerate(scored[:limit], start=1)]
+    return [{"clause_id": f"policy-clause-{source_index}", "page": 1, "text": text, "relevance_score": score} for score, source_index, text in scored[:limit]]
 
 
 def policy_agent_node(state: ClaimWorkflowState) -> ClaimWorkflowState:
     progress = state.get("progress_callback")
     if progress:
         progress("Policy Agent: retrieving relevant policy evidence...")
-    evidence = retrieve_policy_evidence(state.get("policy_text", ""), state.get("normalized_claim", {}), state.get("policy_id", ""), limit=2)
+    policy_text = state.get("policy_text", "")
+    normalized_claim = state.get("normalized_claim", {})
+    policy_id = state.get("policy_id", "")
+    rules = state.get("rule_results", {})
+    # Appeal-worthy rows need the clause which actually produced their result,
+    # not merely the most common claim-level terms such as deductible.
+    rule_queries: list[str] = []
+    for item in rules.get("line_item_results") or []:
+        if not isinstance(item, dict) or item.get("status") not in {"excluded", "partial"}:
+            continue
+        description = str(item.get("description") or item.get("category") or "").strip()
+        applied_rule = str(item.get("applied_rule") or "").replace("_", " ")
+        if description or applied_rule:
+            rule_queries.append(f"{description} {applied_rule}".strip())
+
+    evidence: list[dict[str, Any]] = []
+    seen_evidence: set[tuple[str, str]] = set()
+    for query in rule_queries + [""]:
+        candidates = retrieve_policy_evidence(policy_text, normalized_claim, policy_id, limit=2, query=query)
+        for candidate in candidates:
+            key = (str(candidate.get("clause_id") or ""), str(candidate.get("text") or ""))
+            if key not in seen_evidence:
+                seen_evidence.add(key)
+                evidence.append(candidate)
+    evidence = evidence[:6]
     # The Policy Agent is intentionally retrieval-only on CPU-only hardware.
     # It passes source clauses to the Decision Agent without LLM interpretation.
     findings = {

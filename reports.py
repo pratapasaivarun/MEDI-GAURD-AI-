@@ -290,7 +290,7 @@ def _appeal_rule_copy(applied_rule: Any) -> str:
     }.get(str(applied_rule), f"affected by the {str(applied_rule or 'policy').replace('_', ' ')} rule")
 
 
-def _policy_clause_texts(workflow: dict[str, Any], citations: list[Any]) -> list[tuple[str, str]]:
+def _policy_clause_texts(workflow: dict[str, Any], citations: list[Any], appeal_items: list[tuple[int, dict[str, Any]]] | None = None) -> list[tuple[str, str]]:
     """Resolve grounded citation IDs to the retained policy finding text."""
     finding_by_id = {
         str(finding.get("clause_id")): str(finding.get("text") or "").replace("\n", " ").strip()
@@ -302,6 +302,23 @@ def _policy_clause_texts(workflow: dict[str, Any], citations: list[Any]) -> list
         clause_id = str(citation or "").strip()
         if clause_id and clause_id in finding_by_id:
             clauses.append((clause_id, finding_by_id[clause_id]))
+    # Prefer retained clauses that directly describe the rule behind an
+    # appeal-worthy item. The LLM citations remain the fallback source.
+    preferred_terms: list[str] = []
+    for _, item in appeal_items or []:
+        rule = str(item.get("applied_rule") or "").replace("_", " ").lower()
+        category = str(item.get("category") or "").lower()
+        if rule:
+            preferred_terms.append(rule)
+        if category:
+            preferred_terms.append(category)
+    preferred = [
+        (clause_id, text)
+        for clause_id, text in finding_by_id.items()
+        if any(term in text.lower() for term in preferred_terms)
+    ]
+    if preferred:
+        clauses = preferred
     return clauses
 
 
@@ -347,7 +364,7 @@ def build_appeal_letter(claim: dict[str, Any], rules: dict[str, Any], workflow: 
         for note in item_notes
     )
     citations = list(decision.get("policy_citations") or [])
-    clauses = _policy_clause_texts(workflow, citations)
+    clauses = _policy_clause_texts(workflow, citations, appeal_items)
     clause_paragraph = "The decision did not retain a policy clause excerpt for these charges."
     if clauses:
         evidence_intro = "The item-level decision notes refer to the following retained policy clauses:" if has_item_specific_note else "The decision cites the following retained policy clauses:"

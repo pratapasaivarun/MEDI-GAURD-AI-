@@ -26,6 +26,11 @@ DECISION_RESPONSE_SCHEMA = {"type": "object", "properties": {"status": {"type": 
 METRICS_PATH = Path(__import__("os").getenv("AGENT_METRICS_PATH", "data/agent_metrics.jsonl"))
 ESCALATION_GUIDANCE = "If your appeal is not resolved within 30 days, you can escalate to your Insurance Ombudsman or file a grievance on IRDAI's Bima Bharosa portal (https://bimabharosa.irdai.gov.in)."
 
+def confidence_label(score: float) -> str:
+    if score > 0.8: return "High confidence"
+    if score >= 0.5: return "Medium confidence — recommend human review"
+    return "Low confidence — please review manually"
+
 
 def warm_ollama() -> None:
     """Preload Granite once before the first real agent call in a session."""

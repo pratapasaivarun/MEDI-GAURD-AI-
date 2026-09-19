@@ -19,7 +19,7 @@ load_dotenv()
 
 from extraction import check_submission_deadline, run_extraction
 from rules import evaluate_claim
-from agents import _ollama_json, recommend_next_steps, retrieve_policy_evidence, run_claim_workflow, warm_ollama
+from agents import _ollama_json, confidence_label, recommend_next_steps, retrieve_policy_evidence, run_claim_workflow, warm_ollama
 from policy_index import index_policy_documents
 from extraction import extract_document
 from policy_terms import extract_policy_terms, terms_from_json
@@ -1389,6 +1389,9 @@ def _render_claimant_result(user: dict) -> None:
                     st.info(recommendation, icon=":material/account_balance:")
                 else:
                     st.write(f":material/arrow_forward: {recommendation}")
+            confidence = (workflow.get("decision") or {}).get("confidence")
+            if confidence is not None:
+                st.caption(f"Decision confidence: {float(confidence):.2f} ({confidence_label(float(confidence))})")
             st.caption("This is decision-support information, not legal or insurance advice.")
     with st.container(border=True):
         st.markdown("### Download your claim documents")

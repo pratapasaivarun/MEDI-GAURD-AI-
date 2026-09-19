@@ -13,7 +13,7 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
-from agents import recommend_next_steps
+from agents import confidence_label, recommend_next_steps
 
 
 TEAL = colors.HexColor("#0F766E")
@@ -222,6 +222,8 @@ def build_decision_report(claim: dict[str, Any], normalized: dict[str, Any], rul
         ),
     ]
     line_item_results = rules.get("line_item_results") or []
+    if decision.get("confidence") is not None:
+        story.append(Paragraph(f"Decision confidence: {float(decision['confidence']):.2f} ({confidence_label(float(decision['confidence']))})", styles["small"]))
     if line_item_results:
         story.extend([
             Paragraph("Item-wise verification", styles["heading"]),

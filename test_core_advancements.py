@@ -118,6 +118,9 @@ assert clean_claim.billing_anomalies == {"duplicates": [], "price_outliers": []}
 assert extraction.check_submission_deadline(date.today() - timedelta(days=35))["days_elapsed"] == 35
 assert extraction.check_submission_deadline(date.today() - timedelta(days=5)) is None
 assert extraction.check_submission_deadline(None) is None
+assert agents.confidence_label(0.9) == "High confidence"
+assert agents.confidence_label(0.65) == "Medium confidence — recommend human review"
+assert agents.confidence_label(0.3) == "Low confidence — please review manually"
 history_user = app.get_or_create_user("history@local.test", "History")
 past_claim = app.create_claim(history_user["user_id"], "HIST-1", "History", "Hospital", "POL-HISTORY", "2026-01-10")
 with app.db() as conn:

@@ -172,6 +172,31 @@ def _line_item_table(line_item_results: list[dict[str, Any]], normalized: dict[s
     return table
 
 
+def _billing_review_flags(billing_anomalies: dict[str, Any], styles: dict[str, ParagraphStyle]) -> list[Paragraph]:
+    """Render retained duplicate and price-outlier findings for the PDF."""
+    flags: list[Paragraph] = []
+    for candidate in billing_anomalies.get("duplicates") or []:
+        if not isinstance(candidate, dict):
+            continue
+        left = candidate.get("left") or {}
+        right = candidate.get("right") or {}
+        flags.append(Paragraph(
+            f"<b>Possible duplicate:</b> {escape(str(left.get('description') or 'Line item'))} and "
+            f"{escape(str(right.get('description') or 'line item'))}. {escape(str(candidate.get('reason') or 'Review these charges.'))}",
+            styles["body"],
+        ))
+    for outlier in billing_anomalies.get("price_outliers") or []:
+        if not isinstance(outlier, dict):
+            continue
+        item = outlier.get("item") or {}
+        flags.append(Paragraph(
+            f"<b>Price outlier:</b> {escape(str(item.get('description') or 'Line item'))}. "
+            f"{escape(str(outlier.get('reason') or 'Review this charge.'))}",
+            styles["body"],
+        ))
+    return flags
+
+
 def _claim_total(normalized: dict[str, Any], rules: dict[str, Any]) -> float:
     return float(_value(normalized.get("total_amount")) or rules.get("amount_billed") or rules.get("covered_amount") or 0)
 
@@ -229,7 +254,12 @@ def build_decision_report(claim: dict[str, Any], normalized: dict[str, Any], rul
             Paragraph("Item-wise verification", styles["heading"]),
             _line_item_table(line_item_results, normalized, decision, styles),
         ])
-    recommendation_rules = {**rules, "billing_anomalies": normalized.get("billing_anomalies") or {}}
+    billing_anomalies = normalized.get("billing_anomalies") or {}
+    billing_flags = _billing_review_flags(billing_anomalies, styles)
+    if billing_flags:
+        story.append(Paragraph("Billing review flags", styles["heading"]))
+        story.extend(billing_flags)
+    recommendation_rules = {**rules, "billing_anomalies": billing_anomalies}
     recommendations = recommend_next_steps(decision, recommendation_rules)
     if recommendations:
         story.append(Paragraph("Recommended next steps", styles["heading"]))

@@ -105,7 +105,9 @@ def recommend_next_steps(decision: dict[str, Any], rules: dict[str, Any]) -> lis
             recommendations.append(ESCALATION_GUIDANCE)
         if rules.get("history_flags"):
             recommendations.append("This looks similar to a past rejected claim — consider reviewing why before resubmitting, or gathering additional documentation this time.")
-        return recommendations[:3]
+        # Every entry is deterministic, short, and actionable. Do not silently
+        # discard deadline, escalation, or claim-history guidance.
+        return recommendations
 
     if status == "manual_review":
         missing_fields = _missing_fields_from_warnings(warnings)

@@ -84,6 +84,8 @@ def recommend_next_steps(decision: dict[str, Any], rules: dict[str, Any]) -> lis
         item for item in line_items
         if isinstance(item, dict) and item.get("status") in {"excluded", "partial", "needs_review"}
     ]
+    contestable_rules = {"sub_limit", "waiting_period", "ambiguous_match", "exclusion_ambiguous"}
+    contestable_items = [item for item in actionable_items if str(item.get("applied_rule") or "") in contestable_rules]
 
     if status == "manual_review":
         missing_fields = _missing_fields_from_warnings(warnings)
@@ -96,10 +98,10 @@ def recommend_next_steps(decision: dict[str, Any], rules: dict[str, Any]) -> lis
 
     if status == "rejected":
         citations = decision.get("policy_citations") or []
-        if citations:
+        if citations and contestable_items:
             citation = str(citations[0])
-            if actionable_items:
-                description = str(actionable_items[0].get("description") or "this item")
+            if contestable_items:
+                description = str(contestable_items[0].get("description") or "this item")
                 return [f"{description} was not covered. You can appeal this decision citing policy clause {citation}."]
             return [f"You can appeal this decision citing policy clause {citation}."]
         if actionable_items:
@@ -118,7 +120,8 @@ def recommend_next_steps(decision: dict[str, Any], rules: dict[str, Any]) -> lis
         item_copy = ""
         if actionable_items:
             item_copy = f" This includes the non-covered or limited item: {str(actionable_items[0].get('description') or 'a claim item')}."
-        return [f"You are responsible for INR {responsibility:,.2f}; no action needed unless you wish to appeal the non-covered items.{item_copy}"]
+        appeal_copy = " You can appeal the affected item if you believe the policy was applied incorrectly." if contestable_items else " No action is needed unless you need a written explanation of the non-covered items."
+        return [f"You are responsible for INR {responsibility:,.2f}.{appeal_copy}{item_copy}"]
 
     if status == "approved":
         return ["No action needed — reimbursement is being processed."]

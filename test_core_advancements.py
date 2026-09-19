@@ -67,9 +67,14 @@ partial_next_steps = agents.recommend_next_steps(
 assert "INR 40,500.00" in partial_next_steps[0] and "Cosmetic procedure" in partial_next_steps[0]
 rejected_next_steps = agents.recommend_next_steps(
     {"status": "rejected", "policy_citations": ["policy-clause-1"]},
+    {"line_item_results": [{**items[1], "applied_rule": "sub_limit"}], "warnings": []},
+)
+assert "Surgery" in rejected_next_steps[0] and "policy-clause-1" in rejected_next_steps[0]
+hard_exclusion_next_steps = agents.recommend_next_steps(
+    {"status": "rejected", "policy_citations": ["policy-clause-1"]},
     {"line_item_results": [items[0]], "warnings": []},
 )
-assert "Cosmetic procedure" in rejected_next_steps[0] and "policy-clause-1" in rejected_next_steps[0]
+assert "appeal" not in hard_exclusion_next_steps[0].lower() and "written review" in hard_exclusion_next_steps[0]
 manual_next_steps = agents.recommend_next_steps(
     {"status": "manual_review"},
     {"line_item_results": [], "warnings": ["Missing required fields: discharge_summary, admission_date"]},

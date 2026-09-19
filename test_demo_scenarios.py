@@ -24,7 +24,9 @@ user = app.get_or_create_user('scenarios@local.test', 'Synthetic scenarios')
 results = []
 for number, label, patient, expected in [(1, 'APPROVED', 'Ananya Rao', 'approved'), (2, 'PARTIAL', 'Rahul Verma', 'partially_approved'), (1, 'MANUAL', 'Ananya Rao', 'manual_review')]:
     source_label = 'APPROVED' if number == 1 else 'PARTIAL'
-    policy = f'POL-DEMO-{source_label}-2026'
+    # The approved bill uses an alphanumeric fixture policy identifier so the
+    # line-item extractor cannot mistake a trailing identifier segment for a charge.
+    policy = 'POLDEMOAPPROVEDX' if source_label == 'APPROVED' else f'POL-DEMO-{source_label}-2026'
     registered_policy = 'POL-MISMATCH-DEMO' if label == 'MANUAL' else policy
     claim = app.create_claim(user['user_id'], f'DEMO-{label}', patient, 'Demo Hospital', registered_policy, '2026-08-20')
     files = {

@@ -1,6 +1,7 @@
 from __future__ import annotations
 import app
 import json
+import uuid
 from unittest.mock import patch
 
 import agents
@@ -124,7 +125,7 @@ assert agents.confidence_label(0.3) == "Low confidence — please review manuall
 history_user = app.get_or_create_user("history@local.test", "History")
 past_claim = app.create_claim(history_user["user_id"], "HIST-1", "History", "Hospital", "POL-HISTORY", "2026-01-10")
 with app.db() as conn:
-    conn.execute("INSERT INTO rule_evaluations VALUES (?,?,?,?,?,?)", ("history-rule", past_claim, "test", "rejected", json.dumps({"line_item_results": [{"description": "cosmetic surgery", "status": "excluded", "applied_rule": "exclusion"}]}), app.utc_now()))
+    conn.execute("INSERT INTO rule_evaluations VALUES (?,?,?,?,?,?)", (f"history-rule-{uuid.uuid4()}", past_claim, "test", "rejected", json.dumps({"line_item_results": [{"description": "cosmetic surgery", "status": "excluded", "applied_rule": "exclusion"}]}), app.utc_now()))
 history_flags = app.check_similar_past_rejections(history_user["user_id"], [{"description": "Cosmetic surgery", "status": "excluded", "applied_rule": "exclusion"}], "POL-HISTORY")
 assert len(history_flags) == 1 and "2026-01-10" in history_flags[0]["note"]
 assert app.check_similar_past_rejections(history_user["user_id"], [{"description": "Cosmetic surgery", "status": "excluded", "applied_rule": "exclusion"}], "OTHER-POLICY") == []

@@ -13,6 +13,8 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
+from agents import recommend_next_steps
+
 
 TEAL = colors.HexColor("#0F766E")
 INK = colors.HexColor("#102A2B")
@@ -225,6 +227,13 @@ def build_decision_report(claim: dict[str, Any], normalized: dict[str, Any], rul
             Paragraph("Item-wise verification", styles["heading"]),
             _line_item_table(line_item_results, normalized, decision, styles),
         ])
+    recommendation_rules = {**rules, "billing_anomalies": normalized.get("billing_anomalies") or {}}
+    recommendations = recommend_next_steps(decision, recommendation_rules)
+    if recommendations:
+        story.append(Paragraph("Recommended next steps", styles["heading"]))
+        for recommendation in recommendations:
+            story.append(Paragraph(f"- {recommendation}", styles["body"]))
+        story.append(Paragraph("This is decision-support information, not legal or insurance advice.", styles["small"]))
     reasons = decision.get("reasons") or rules.get("warnings") or []
     story.append(Paragraph("Explanation and next steps", styles["heading"]))
     if reasons:

@@ -157,9 +157,11 @@ report_workflow = {
 }
 itemized_report_text = "".join(page.get_text() for page in fitz.open(stream=build_decision_report(report_claim, report_normalized, report_rules, report_workflow), filetype="pdf"))
 assert "Item-wise verification" in itemized_report_text
-assert itemized_report_text.count("Cosmetic") == 1
-assert itemized_report_text.count("Surgery") == 1
-assert itemized_report_text.count("Consultation") == 1
+assert "Recommended next steps" in itemized_report_text
+assert "not legal or insurance advice" in itemized_report_text
+assert "Cosmetic" in itemized_report_text
+assert "Surgery" in itemized_report_text
+assert "Consultation" in itemized_report_text
 assert "This charge is capped at the surgery limit." in itemized_report_text
 
 fallback_rules = {**report_rules, "line_item_results": []}

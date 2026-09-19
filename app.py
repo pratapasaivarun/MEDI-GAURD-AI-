@@ -1344,6 +1344,7 @@ def _render_claimant_result(user: dict) -> None:
             st.markdown("### Recommended next steps")
             for recommendation in recommendations:
                 st.write(f":material/arrow_forward: {recommendation}")
+            st.caption("This is decision-support information, not legal or insurance advice.")
     with st.container(border=True):
         st.markdown("### Download your claim documents")
         st.caption("Use the decision report to understand the calculation. Use the appeal-letter draft when you need to request a formal review.")

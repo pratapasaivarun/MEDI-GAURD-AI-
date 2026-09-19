@@ -22,6 +22,7 @@ OLLAMA_TIMEOUT = int(__import__("os").getenv("OLLAMA_TIMEOUT_SECONDS", "120"))
 OLLAMA_NUM_CTX = int(__import__("os").getenv("OLLAMA_NUM_CTX", "2048"))
 OLLAMA_NUM_THREAD = int(__import__("os").getenv("OLLAMA_NUM_THREAD", str(__import__("os").cpu_count() or 4)))
 OLLAMA_KEEP_ALIVE = __import__("os").getenv("OLLAMA_KEEP_ALIVE", "30m")
+OLLAMA_NUM_PREDICT = int(__import__("os").getenv("OLLAMA_NUM_PREDICT", "320"))
 DECISION_RESPONSE_SCHEMA = {"type": "object", "properties": {"status": {"type": "string", "enum": ["approved", "partially_approved", "rejected", "manual_review"]}, "reasons": {"type": "array", "items": {"type": "string"}}, "policy_citations": {"type": "array", "items": {"type": "string"}}, "confidence": {"type": "number"}, "reviewer_note": {"type": "string"}, "line_item_notes": {"type": "array", "default": [], "items": {"type": "object", "properties": {"item_index": {"type": "integer"}, "note": {"type": "string"}}, "required": ["item_index", "note"]}}}, "required": ["status", "reasons", "policy_citations", "confidence", "reviewer_note"]}
 METRICS_PATH = Path(__import__("os").getenv("AGENT_METRICS_PATH", "data/agent_metrics.jsonl"))
 ESCALATION_GUIDANCE = "If your appeal is not resolved within 30 days, you can escalate to your Insurance Ombudsman or file a grievance on IRDAI's Bima Bharosa portal (https://bimabharosa.irdai.gov.in)."
@@ -187,7 +188,10 @@ def _ollama_json(system: str, prompt: str, list_key: str = "items", agent_name: 
         "stream": False,
         "format": response_schema or "json",
         "keep_alive": OLLAMA_KEEP_ALIVE,
-        "options": {"temperature": 0.0, "num_predict": 192, "num_ctx": OLLAMA_NUM_CTX, "num_thread": OLLAMA_NUM_THREAD},
+        # A mixed claim can require several grounded item notes. 192 tokens
+        # truncated valid JSON at the configured generation boundary, so leave
+        # sufficient room for the complete structured response.
+        "options": {"temperature": 0.0, "num_predict": OLLAMA_NUM_PREDICT, "num_ctx": OLLAMA_NUM_CTX, "num_thread": OLLAMA_NUM_THREAD},
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
     }
     response = requests.post(

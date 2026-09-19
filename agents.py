@@ -24,6 +24,7 @@ OLLAMA_NUM_THREAD = int(__import__("os").getenv("OLLAMA_NUM_THREAD", str(__impor
 OLLAMA_KEEP_ALIVE = __import__("os").getenv("OLLAMA_KEEP_ALIVE", "30m")
 DECISION_RESPONSE_SCHEMA = {"type": "object", "properties": {"status": {"type": "string", "enum": ["approved", "partially_approved", "rejected", "manual_review"]}, "reasons": {"type": "array", "items": {"type": "string"}}, "policy_citations": {"type": "array", "items": {"type": "string"}}, "confidence": {"type": "number"}, "reviewer_note": {"type": "string"}, "line_item_notes": {"type": "array", "default": [], "items": {"type": "object", "properties": {"item_index": {"type": "integer"}, "note": {"type": "string"}}, "required": ["item_index", "note"]}}}, "required": ["status", "reasons", "policy_citations", "confidence", "reviewer_note"]}
 METRICS_PATH = Path(__import__("os").getenv("AGENT_METRICS_PATH", "data/agent_metrics.jsonl"))
+ESCALATION_GUIDANCE = "If your appeal is not resolved within 30 days, you can escalate to your Insurance Ombudsman or file a grievance on IRDAI's Bima Bharosa portal (https://bimabharosa.irdai.gov.in)."
 
 
 def warm_ollama() -> None:
@@ -89,14 +90,20 @@ def recommend_next_steps(decision: dict[str, Any], rules: dict[str, Any]) -> lis
     contestable_rules = {"sub_limit", "waiting_period", "ambiguous_match", "exclusion_ambiguous"}
     contestable_items = [item for item in actionable_items if str(item.get("applied_rule") or "") in contestable_rules]
 
+    def finalize(recommendations: list[str]) -> list[str]:
+        citations = decision.get("policy_citations") or []
+        if status in {"rejected", "partially_approved"} and citations and (status == "rejected" or actionable_items):
+            recommendations.append(ESCALATION_GUIDANCE)
+        return recommendations[:3]
+
     if status == "manual_review":
         missing_fields = _missing_fields_from_warnings(warnings)
         if missing_fields:
-            return [f"Upload the missing document: {field}." for field in missing_fields[:3]]
+            return finalize([f"Upload the missing document: {field}." for field in missing_fields[:3]])
         if actionable_items:
             description = str(actionable_items[0].get("description") or "this item")
-            return [f"Your claim needs manual review for {description}; our team will contact you."]
-        return ["Your claim needs manual review; our team will contact you."]
+            return finalize([f"Your claim needs manual review for {description}; our team will contact you."])
+        return finalize(["Your claim needs manual review; our team will contact you."])
 
     if status == "rejected":
         citations = decision.get("policy_citations") or []
@@ -104,12 +111,12 @@ def recommend_next_steps(decision: dict[str, Any], rules: dict[str, Any]) -> lis
             citation = str(citations[0])
             if contestable_items:
                 description = str(contestable_items[0].get("description") or "this item")
-                return [f"{description} was not covered. You can appeal this decision citing policy clause {citation}."]
-            return [f"You can appeal this decision citing policy clause {citation}."]
+                return finalize([f"{description} was not covered. You can appeal this decision citing policy clause {citation}."])
+            return finalize([f"You can appeal this decision citing policy clause {citation}."])
         if actionable_items:
             description = str(actionable_items[0].get("description") or "this item")
-            return [f"{description} was not covered. You can request a written review of this decision."]
-        return ["You can request a written review of this decision."]
+            return finalize([f"{description} was not covered. You can request a written review of this decision."])
+        return finalize(["You can request a written review of this decision."])
 
     if status == "partially_approved":
         claimant_result = rules.get("claimant_result") or {}
@@ -123,14 +130,14 @@ def recommend_next_steps(decision: dict[str, Any], rules: dict[str, Any]) -> lis
         if actionable_items:
             item_copy = f" This includes the non-covered or limited item: {str(actionable_items[0].get('description') or 'a claim item')}."
         appeal_copy = " You can appeal the affected item if you believe the policy was applied incorrectly." if contestable_items else " No action is needed unless you need a written explanation of the non-covered items."
-        return [f"You are responsible for INR {responsibility:,.2f}.{appeal_copy}{item_copy}"]
+        return finalize([f"You are responsible for INR {responsibility:,.2f}.{appeal_copy}{item_copy}"])
 
     if status == "approved":
         if has_billing_anomaly:
-            return ["Review flagged billing items before proceeding."]
-        return ["No action needed — reimbursement is being processed."]
+            return finalize(["Review flagged billing items before proceeding."])
+        return finalize(["No action needed — reimbursement is being processed."])
 
-    return ["Your claim needs manual review; our team will contact you."]
+    return finalize(["Your claim needs manual review; our team will contact you."])
 
 
 def _parse_json_response(content: str, list_key: str) -> dict[str, Any]:

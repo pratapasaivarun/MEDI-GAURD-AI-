@@ -74,11 +74,14 @@ rejected_next_steps = agents.recommend_next_steps(
     {"line_item_results": [{**items[1], "applied_rule": "sub_limit"}], "warnings": []},
 )
 assert "Surgery" in rejected_next_steps[0] and "policy-clause-1" in rejected_next_steps[0]
+assert any("Bima Bharosa" in item for item in rejected_next_steps)
 hard_exclusion_next_steps = agents.recommend_next_steps(
     {"status": "rejected", "policy_citations": ["policy-clause-1"]},
     {"line_item_results": [items[0]], "warnings": []},
 )
 assert "appeal" not in hard_exclusion_next_steps[0].lower() and "written review" in hard_exclusion_next_steps[0]
+assert any("Bima Bharosa" in item for item in hard_exclusion_next_steps)
+assert not any("Bima Bharosa" in item for item in agents.recommend_next_steps({"status": "approved"}, {"warnings": []}))
 manual_next_steps = agents.recommend_next_steps(
     {"status": "manual_review"},
     {"line_item_results": [], "warnings": ["Missing required fields: discharge_summary, admission_date"]},

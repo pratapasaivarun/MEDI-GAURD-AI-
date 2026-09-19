@@ -1357,8 +1357,11 @@ def _render_claimant_result(user: dict) -> None:
     if recommendations:
         with st.container(border=True):
             st.markdown("### Recommended next steps")
-            for recommendation in recommendations:
-                st.write(f":material/arrow_forward: {recommendation}")
+            for index, recommendation in enumerate(recommendations):
+                if recommendation.startswith("If your appeal is not resolved"):
+                    st.info(recommendation, icon=":material/account_balance:")
+                else:
+                    st.write(f":material/arrow_forward: {recommendation}")
             st.caption("This is decision-support information, not legal or insurance advice.")
     with st.container(border=True):
         st.markdown("### Download your claim documents")

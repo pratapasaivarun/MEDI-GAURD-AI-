@@ -37,4 +37,43 @@ assert evaluate_claim(100000, terms=base, claim_context={'multiple_bills': True,
 net = evaluate_claim(160000, terms=base, claim_context={'net_amount': 140000})
 assert net['status'] == 'approved' and net['payable_amount'] == 117000.0, net
 
+# Line-item evaluation: one excluded item, one category cap, and one normally
+# covered item must remain visible in the same claimant-facing calculation.
+line_item_terms = PolicyTerms(**{
+    **base.__dict__,
+    'sub_limits': {'surgery': Decimal('50000')},
+    'source': {'exclusions': {'value': ['cosmetic surgery']}},
+})
+line_item_claim = evaluate_claim(
+    110000,
+    terms=line_item_terms,
+    claim_context={'exclusion_match': {'matched': True, 'confidence': 0.99}},
+    line_items=[
+        {'description': 'Cosmetic surgery', 'amount': 20000, 'category': 'surgery', 'confidence': 0.99, 'needs_review': False},
+        {'description': 'Eligible surgery', 'amount': 80000, 'category': 'surgery', 'confidence': 0.99, 'needs_review': False},
+        {'description': 'Consultation', 'amount': 10000, 'category': 'consultation', 'confidence': 0.99, 'needs_review': False},
+    ],
+)
+assert line_item_claim['status'] == 'partially_approved', line_item_claim
+assert line_item_claim['covered_amount'] == 60000.0 and line_item_claim['payable_amount'] == 45000.0, line_item_claim
+assert [(item['status'], item['covered_amount'], item['applied_rule']) for item in line_item_claim['line_item_results']] == [
+    ('excluded', 0.0, 'exclusion'),
+    ('partial', 50000.0, 'sub_limit'),
+    ('covered', 10000.0, 'standard'),
+], line_item_claim['line_item_results']
+assert line_item_claim['line_item_results'][1]['covered_amount'] < line_item_claim['line_item_results'][1]['amount']
+
+# When extraction produces amounts that do not reconcile with the bill total,
+# retain the established aggregate calculation and expose an explicit signal for
+# claimant/admin renderers.
+fallback = evaluate_claim(
+    80000,
+    terms=base,
+    line_items=[{'description': 'Mistaken policy identifier', 'amount': 2026, 'category': 'other', 'confidence': 0.5, 'needs_review': False}],
+)
+assert fallback['line_item_results'] == []
+assert fallback['line_item_reconciliation_failed'] is True
+assert 'line_item_reconciliation_failed' in fallback['warnings']
+assert fallback['payable_amount'] == 63000.0
+
 print('PHASE6_BUSINESS_RULES_OK')

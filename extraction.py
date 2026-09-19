@@ -8,9 +8,11 @@ from __future__ import annotations
 import os
 import re
 import tempfile
+from difflib import SequenceMatcher
 from functools import lru_cache
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+from statistics import median
 from typing import Any
 
 
@@ -58,6 +60,7 @@ class NormalizedClaim:
     review_fields: list[str] = field(default_factory=list)
     raw_text_by_page: dict[str, str] = field(default_factory=dict)
     duplicate_candidates: list[dict[str, Any]] = field(default_factory=list)
+    billing_anomalies: dict[str, list[dict[str, Any]]] = field(default_factory=lambda: {"duplicates": [], "price_outliers": []})
     multiple_bill_count: int = 0
     aggregation_requires_confirmation: bool = False
 
@@ -297,7 +300,47 @@ def detect_duplicate_charges(line_items: list[dict[str, Any]]) -> list[dict[str,
             right_desc = re.sub(r"\W+", " ", str(right.get("description", "")).lower()).strip()
             if left_desc and left_desc == right_desc and money_equal(left.get("amount"), right.get("amount")):
                 candidates.append({"left": left, "right": right, "reason": "same normalized description and amount"})
+                continue
+            # Keep the exact path above intact, then identify likely OCR or
+            # phrasing variants with closely matching charges.
+            fuzzy_left = re.sub(r"\s+", " ", str(left.get("description", "")).lower()).strip()
+            fuzzy_right = re.sub(r"\s+", " ", str(right.get("description", "")).lower()).strip()
+            try:
+                left_amount = float(left.get("amount"))
+                right_amount = float(right.get("amount"))
+            except (TypeError, ValueError):
+                continue
+            ratio = SequenceMatcher(None, fuzzy_left, fuzzy_right).ratio() if fuzzy_left and fuzzy_right else 0.0
+            amount_close = max(left_amount, right_amount) > 0 and abs(left_amount - right_amount) <= max(left_amount, right_amount) * 0.05
+            if ratio > 0.85 and amount_close:
+                candidates.append({"left": left, "right": right, "reason": f"near-duplicate descriptions ({ratio:.2f} similarity) with amounts within 5%"})
     return candidates
+
+
+def detect_price_outliers(line_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Find unusually high charges within categories large enough to compare."""
+    grouped: dict[str, list[tuple[dict[str, Any], float]]] = {}
+    for item in line_items:
+        try:
+            amount = float(item.get("amount"))
+        except (TypeError, ValueError):
+            continue
+        if amount <= 0:
+            continue
+        category = str(item.get("category") or "other")
+        grouped.setdefault(category, []).append((item, amount))
+
+    outliers: list[dict[str, Any]] = []
+    for category, entries in grouped.items():
+        if len(entries) < 3:
+            continue
+        category_median = float(median(amount for _, amount in entries))
+        if category_median <= 0:
+            continue
+        for item, amount in entries:
+            if amount > 3 * category_median:
+                outliers.append({"item": item, "reason": f"amount is {amount / category_median:.2f}x the median for category {category}"})
+    return outliers
 
 
 def money_equal(left: Any, right: Any) -> bool:
@@ -351,6 +394,10 @@ def normalize_documents(documents: list[dict[str, Any]]) -> NormalizedClaim:
     claim.total_amount = find([r"(?:grand total|total amount|net payable|amount payable|total)\s*(?:[:#-]\s*)?(?:rs\.?|inr|₹|\$)?\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)", r"(?:grand total|total amount|net payable|amount payable|total)\s*(?:[:#-]\s*)?([0-9][0-9,]*(?:\.[0-9]{1,2})?)\s*(?:rs\.?|inr|₹|\$)?"], "total_amount", amount=True)
     claim.line_items = _extract_line_items(all_text, evidence)
     claim.duplicate_candidates = detect_duplicate_charges(claim.line_items)
+    claim.billing_anomalies = {
+        "duplicates": claim.duplicate_candidates,
+        "price_outliers": detect_price_outliers(claim.line_items),
+    }
     claim.multiple_bill_count = len(typed_bill_documents)
     claim.aggregation_requires_confirmation = len(typed_bill_documents) > 1
     # Do not infer total_amount from the largest currency amount. Policy limits

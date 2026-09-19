@@ -1,0 +1,24 @@
+{
+  "synthetic_only": true,
+  "case_id": "02_out_of_network",
+  "category": "rejected",
+  "expected_status": "rejected",
+  "claim_registration": {
+    "claim_number": "CLM-02_OUT_OF_NETWORK-2026",
+    "patient_name": "Aarav Sharma",
+    "hospital": "Sunrise Care Hospital",
+    "policy_number": "POL-SYN-RJ02-2026",
+    "service_date": "2026-08-20"
+  },
+  "uploaded_policy_number": "POL-SYN-RJ02-2026",
+  "upload_files": [
+    "medical_bill.pdf",
+    "policy.pdf"
+  ],
+  "expected_bill_total": 100000,
+  "reviewer_context_required": {
+    "network_status": "out_of_network",
+    "trusted": true
+  },
+  "note": "Use the two PDF files with the claim registration fields above."
+}

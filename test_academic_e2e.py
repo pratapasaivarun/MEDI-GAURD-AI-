@@ -18,7 +18,7 @@ os.environ.setdefault("TESSERACT_CMD", r"C:\Program Files\Tesseract-OCR\tesserac
 
 import fitz
 import app
-from reports import build_appeal_letter, build_decision_report
+from reports import build_appeal_letter, build_appeal_letter_pdf, build_decision_report
 
 
 class Upload:
@@ -54,9 +54,14 @@ report = build_decision_report(claim, normalized, rules, workflow)
 assert report.startswith(b"%PDF") and len(report) > 1000
 with fitz.open(stream=report, filetype="pdf") as pdf:
     report_text = "\n".join(page.get_text() for page in pdf)
-assert "Claim Decision Report" in report_text and "Evidence items:" in report_text
+assert "Claim Decision Report" in report_text and "Evidence notes" in report_text
 appeal = build_appeal_letter(claim, rules, workflow)
 assert claim["claim_number"] in appeal and "cited policy evidence" in appeal
+appeal_pdf = build_appeal_letter_pdf(claim, rules, workflow)
+assert appeal_pdf.startswith(b"%PDF") and len(appeal_pdf) > 1000
+with fitz.open(stream=appeal_pdf, filetype="pdf") as pdf:
+    appeal_text = "\n".join(page.get_text() for page in pdf)
+assert "Appeal and Review Request" in appeal_text and claim["claim_number"] in appeal_text
 
 summary = {
     "elapsed_seconds": round(elapsed, 2),
@@ -66,6 +71,7 @@ summary = {
     "evidence_count": len(evidence),
     "llm_calls": workflow["llm_calls"],
     "reportlab_pdf_bytes": len(report),
+    "appeal_pdf_bytes": len(appeal_pdf),
     "appeal_letter_ok": True,
 }
 (RUN_ROOT / "result.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")

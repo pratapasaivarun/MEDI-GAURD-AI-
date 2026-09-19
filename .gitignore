@@ -32,6 +32,7 @@ __pycache__/
 # Generated reports and test artifacts
 reports/
 artifacts/
+tmp/
 coverage.xml
 htmlcov/
 backend_full_audit_test_results.txt

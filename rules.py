@@ -44,7 +44,7 @@ def money(value: Any) -> Decimal:
     return Decimal(str(value or 0)).quantize(MONEY, rounding=ROUND_HALF_UP)
 
 
-def evaluate_claim(total_amount: Any, terms: PolicyTerms | None = None, review_fields: list[str] | None = None, missing_fields: list[str] | None = None, policy_terms_missing: list[str] | None = None, claim_context: dict[str, Any] | None = None) -> dict[str, Any]:
+def _evaluate_claim_total_only(total_amount: Any, terms: PolicyTerms | None = None, review_fields: list[str] | None = None, missing_fields: list[str] | None = None, policy_terms_missing: list[str] | None = None, claim_context: dict[str, Any] | None = None) -> dict[str, Any]:
     terms = terms or PolicyTerms()
     review_fields = review_fields or []
     missing_fields = missing_fields or []
@@ -171,3 +171,201 @@ def evaluate_claim(total_amount: Any, terms: PolicyTerms | None = None, review_f
     elif review_required or missing_fields or review_fields:
         status = "manual_review"
     return {"status": status, "rule_version": RULE_VERSION, "results": [r.to_dict() for r in results], "covered_amount": float(covered_before_limit), "deductible": float(deductible), "copayment": float(copayment), "payable_amount": float(payable), "warnings": warnings, "policy_terms": terms.source}
+
+
+def _item_matches_exclusion(item: dict[str, Any], terms: PolicyTerms, claim_context: dict[str, Any]) -> tuple[bool, bool]:
+    """Return (confirmed, possible) for a policy exclusion scoped to one item."""
+    exclusions = terms.source.get("exclusions", {}).get("value", [])
+    if not exclusions:
+        return False, False
+    item_text = " ".join(str(item.get(key, "")) for key in ("description", "category", "diagnosis")).lower()
+    item_tokens = set(re.findall(r"[a-z]{4,}", item_text))
+    explicit = item.get("exclusion_match") or claim_context.get("exclusion_match") or {}
+    for exclusion in exclusions:
+        tokens = set(re.findall(r"[a-z]{4,}", str(exclusion).lower()))
+        if not tokens or not tokens.intersection(item_tokens):
+            continue
+        # A claim-level confirmation must still match this item. Otherwise a
+        # confirmed cosmetic item could incorrectly exclude every surgery item.
+        if tokens.issubset(item_tokens):
+            if explicit.get("matched") is True and float(explicit.get("confidence", 0)) >= 0.90:
+                return True, False
+            return False, True
+    return False, False
+
+
+def evaluate_line_item(item: dict, terms: PolicyTerms, claim_context: dict | None = None) -> dict:
+    """Evaluate one extracted bill item before claim-level cost sharing.
+
+    The returned amount is the item amount eligible for coverage. Deductible and
+    copayment are intentionally not applied here because they apply once to the
+    combined claim total.
+    """
+    claim_context = claim_context or {}
+    amount = money(item.get("amount"))
+    category = str(item.get("category") or "").strip().lower()
+    result = {
+        "description": str(item.get("description") or "Unspecified item"),
+        "category": category or "uncategorized",
+        "amount": float(amount),
+        "status": "covered",
+        "covered_amount": float(amount),
+        "applied_rule": "standard",
+        "calculation": f"INR {amount} is eligible before claim-level deductible and copayment.",
+    }
+    if amount <= 0:
+        return {**result, "status": "needs_review", "covered_amount": 0.0, "applied_rule": "amount_validation", "calculation": "A positive line-item amount is required."}
+    if item.get("needs_review"):
+        return {**result, "status": "needs_review", "applied_rule": "extraction_review", "calculation": "The extracted line item requires reviewer confirmation."}
+
+    confirmed_exclusion, possible_exclusion = _item_matches_exclusion(item, terms, claim_context)
+    if confirmed_exclusion:
+        return {**result, "status": "excluded", "covered_amount": 0.0, "applied_rule": "exclusion", "calculation": "This item matches a confirmed policy exclusion."}
+    if possible_exclusion:
+        return {**result, "status": "needs_review", "applied_rule": "exclusion", "calculation": "This item may match a policy exclusion and requires reviewer confirmation."}
+
+    if terms.waiting_period_months and claim_context.get("waiting_period_satisfied") is False:
+        affected_amount = claim_context.get("_waiting_period_amount_for_item")
+        if affected_amount is None:
+            affected_categories = {str(value).lower() for value in claim_context.get("waiting_period_affected_categories", [])}
+            applies = bool(claim_context.get("waiting_period_applies")) or (category and category in affected_categories)
+            if not applies:
+                return {**result, "status": "needs_review", "applied_rule": "waiting_period", "calculation": f"The {terms.waiting_period_months}-month waiting period needs item-level confirmation."}
+            affected_amount = amount
+        affected = min(amount, money(affected_amount))
+        eligible = amount - affected
+        if affected >= amount:
+            return {**result, "status": "excluded", "covered_amount": 0.0, "applied_rule": "waiting_period", "calculation": "This item is within an unsatisfied waiting period."}
+        return {**result, "status": "partial", "covered_amount": float(eligible), "applied_rule": "waiting_period", "calculation": f"INR {affected} is excluded by the waiting period; INR {eligible} remains eligible."}
+    if terms.waiting_period_months and claim_context.get("waiting_period_satisfied") is not True:
+        return {**result, "status": "needs_review", "applied_rule": "waiting_period", "calculation": f"The {terms.waiting_period_months}-month waiting period needs confirmation."}
+
+    matched_limit = next((limit for name, limit in terms.sub_limits.items() if name.lower() == category), None)
+    if matched_limit is not None:
+        remaining = money(claim_context.get("_sub_limit_remaining", matched_limit))
+        eligible = min(amount, max(Decimal("0"), remaining))
+        if eligible < amount:
+            return {**result, "status": "partial", "covered_amount": float(eligible), "applied_rule": "sub_limit", "calculation": f"INR {amount} is capped at the remaining {category} sub-limit of INR {eligible}."}
+    return result
+
+
+def evaluate_claim(total_amount: Any, terms: PolicyTerms | None = None, review_fields: list[str] | None = None, missing_fields: list[str] | None = None, policy_terms_missing: list[str] | None = None, claim_context: dict[str, Any] | None = None, line_items: list[dict] | None = None) -> dict[str, Any]:
+    """Evaluate a claim, using line items when they are available.
+
+    Legacy callers that only provide ``total_amount`` keep the original
+    calculation path. New callers receive one transparent result per item and
+    aggregate those eligible amounts before applying deductible and copayment.
+    """
+    if not line_items:
+        legacy = _evaluate_claim_total_only(total_amount, terms, review_fields, missing_fields, policy_terms_missing, claim_context)
+        legacy["line_item_results"] = []
+        legacy["line_item_reconciliation_failed"] = False
+        legacy["line_item_notice"] = None
+        return legacy
+
+    # Extraction can occasionally mistake identifiers such as claim or policy
+    # numbers for charges. Only use item-level adjudication when the extracted
+    # charges plausibly reconcile to the saved bill total; otherwise preserve
+    # the established total-based calculation path.
+    stated_total = money(total_amount)
+    extracted_total = sum((money(item.get("amount")) for item in line_items), Decimal("0"))
+    allowed_difference = max(Decimal("1.00"), stated_total * Decimal("0.05"))
+    if stated_total > 0 and (extracted_total <= 0 or abs(extracted_total - stated_total) > allowed_difference):
+        legacy = _evaluate_claim_total_only(total_amount, terms, review_fields, missing_fields, policy_terms_missing, claim_context)
+        legacy["line_item_results"] = []
+        legacy["line_item_reconciliation_failed"] = True
+        legacy["line_item_notice"] = "Itemized charges could not be reconciled to the bill total, so the aggregate bill total was used for this calculation."
+        legacy.setdefault("warnings", []).append("line_item_reconciliation_failed")
+        return legacy
+
+    terms = terms or PolicyTerms()
+    review_fields = review_fields or []
+    missing_fields = missing_fields or []
+    policy_terms_missing = policy_terms_missing or []
+    claim_context = claim_context or {}
+    if policy_terms_missing or terms.annual_limit is None or terms.deductible is None or terms.copay_percent is None:
+        result = _evaluate_claim_total_only(total_amount, terms, review_fields, missing_fields, policy_terms_missing, claim_context)
+        result["line_item_results"] = []
+        result["line_item_reconciliation_failed"] = False
+        result["line_item_notice"] = None
+        return result
+
+    warnings: list[str] = []
+    control_warnings: list[str] = []
+    hard_reject = False
+    review_required = bool(missing_fields or review_fields)
+    if missing_fields:
+        warnings.append("Missing required fields: " + ", ".join(missing_fields))
+    if review_fields:
+        warnings.append("Fields require review: " + ", ".join(review_fields))
+
+    sub_limit_remaining = {name.lower(): money(value) for name, value in terms.sub_limits.items()}
+    waiting_remaining = money(claim_context["waiting_period_affected_amount"]) if claim_context.get("waiting_period_affected_amount") is not None else None
+    line_item_results: list[dict] = []
+    for item in line_items:
+        item_context = dict(claim_context)
+        category = str(item.get("category") or "").strip().lower()
+        if category in sub_limit_remaining:
+            item_context["_sub_limit_remaining"] = sub_limit_remaining[category]
+        if waiting_remaining is not None:
+            item_context["_waiting_period_amount_for_item"] = waiting_remaining
+        evaluated = evaluate_line_item(item, terms, item_context)
+        line_item_results.append(evaluated)
+        if category in sub_limit_remaining:
+            sub_limit_remaining[category] = max(Decimal("0"), sub_limit_remaining[category] - money(evaluated["covered_amount"]))
+        if waiting_remaining is not None:
+            waiting_remaining = max(Decimal("0"), waiting_remaining - money(item.get("amount")))
+        if evaluated["status"] == "needs_review":
+            review_required = True
+
+    # Apply the annual claim limit after item-level eligibility and category caps.
+    annual_remaining = money(terms.annual_limit)
+    for item_result in line_item_results:
+        eligible = money(item_result["covered_amount"])
+        if eligible > annual_remaining:
+            item_result["covered_amount"] = float(max(Decimal("0"), annual_remaining))
+            if item_result["status"] != "excluded":
+                item_result["status"] = "partial"
+                item_result["applied_rule"] = "annual_limit"
+                item_result["calculation"] = f"The annual policy limit leaves INR {annual_remaining} eligible for this item."
+            warnings.append("annual_limit_exceeded")
+        annual_remaining = max(Decimal("0"), annual_remaining - money(item_result["covered_amount"]))
+
+    covered_before_limit = sum((money(item["covered_amount"]) for item in line_item_results), Decimal("0"))
+    if any(item["status"] == "partial" for item in line_item_results):
+        warnings.append("item_level_policy_adjustment")
+
+    if terms.source.get("preauthorization_required", {}).get("value") is True and claim_context.get("preauthorization_obtained") is not True:
+        review_required = True
+        control_warnings.append("Policy requires pre-authorization confirmation.")
+    if terms.source.get("network_required", {}).get("value") is True:
+        if claim_context.get("in_network") is False:
+            hard_reject = True
+            control_warnings.append("Policy requires a network provider and this provider is out of network.")
+        elif claim_context.get("in_network") is not True:
+            review_required = True
+            control_warnings.append("Policy requires network-provider confirmation.")
+    if claim_context.get("duplicate_suspected") is True:
+        review_required = True
+        control_warnings.append("Possible duplicate charges require reviewer confirmation; charges were not removed automatically.")
+    if claim_context.get("multiple_bills") is True and claim_context.get("aggregation_confirmed") is not True:
+        review_required = True
+        control_warnings.append("Multiple bills require reviewer confirmation before aggregation.")
+
+    deductible = min(money(terms.deductible), covered_before_limit)
+    after_deductible = max(Decimal("0"), covered_before_limit - deductible)
+    copayment = (after_deductible * money(terms.copay_percent) / Decimal("100")).quantize(MONEY, rounding=ROUND_HALF_UP)
+    payable = max(Decimal("0"), after_deductible - copayment)
+    results = [
+        RuleResult("line_item_coverage", RULE_VERSION, "pass", {"line_items": len(line_item_results)}, f"sum(line_item_covered_amounts) = {covered_before_limit}", covered_before_limit),
+        RuleResult("deductible", RULE_VERSION, "pass", {"eligible_before_deductible": float(covered_before_limit), "deductible": float(terms.deductible)}, f"{covered_before_limit} - {deductible} = {after_deductible}", deductible),
+        RuleResult("copayment", RULE_VERSION, "pass", {"after_deductible": float(after_deductible), "copay_percent": float(terms.copay_percent)}, f"{after_deductible} x {terms.copay_percent}% = {copayment}", copayment),
+        RuleResult("payable_amount", RULE_VERSION, "pass", {"eligible_after_deductible": float(after_deductible), "copayment": float(copayment)}, f"{after_deductible} - {copayment} = {payable}", payable),
+    ]
+    warnings.extend(control_warnings)
+    status = "partially_approved" if any(item["status"] in {"partial", "excluded"} for item in line_item_results) else "approved"
+    if hard_reject:
+        status = "rejected"
+    elif review_required:
+        status = "manual_review"
+    return {"status": status, "rule_version": RULE_VERSION, "results": [item.to_dict() for item in results], "line_item_reconciliation_failed": False, "line_item_notice": None, "line_item_results": line_item_results, "covered_amount": float(covered_before_limit), "deductible": float(deductible), "copayment": float(copayment), "payable_amount": float(payable), "warnings": warnings, "policy_terms": terms.source}

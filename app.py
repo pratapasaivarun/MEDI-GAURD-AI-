@@ -19,11 +19,11 @@ load_dotenv()
 
 from extraction import run_extraction
 from rules import evaluate_claim
-from agents import _ollama_json, retrieve_policy_evidence, run_claim_workflow, warm_ollama
+from agents import _ollama_json, recommend_next_steps, retrieve_policy_evidence, run_claim_workflow, warm_ollama
 from policy_index import index_policy_documents
 from extraction import extract_document
 from policy_terms import extract_policy_terms, terms_from_json
-from reports import build_decision_report, build_appeal_letter
+from reports import build_appeal_letter_pdf, build_decision_report
 
 APP_DIR = Path(__file__).parent
 DATA_DIR = APP_DIR / "data"
@@ -40,6 +40,12 @@ CORE_DEMO_MODE = os.getenv("MEDIGUARD_CORE_DEMO", "true").lower() == "true"
 STORAGE_DIR = Path(os.getenv("MEDIGUARD_STORAGE_DIR", str(DATA_DIR))).resolve()
 UPLOAD_DIR = STORAGE_DIR / "uploads"
 ALLOWED_ROLES = {"claimant", "reviewer", "admin"}
+
+
+def _claim_warning_message(value: Any) -> str:
+    if str(value) == "line_item_reconciliation_failed":
+        return "Itemized charges could not be reconciled to the bill total, so the aggregate bill total was used for this calculation."
+    return str(value)
 
 
 def utc_now() -> str:
@@ -845,7 +851,7 @@ def evaluate_saved_claim(claim_id: str, user_id: str, normalized: dict) -> dict:
         else:
             # Do not pass the newer keyword here: this keeps the Streamlit app
             # compatible with an already-running process that has an older rules.py.
-            result = evaluate_claim(total, terms=terms, review_fields=normalized.get("review_fields"), missing_fields=normalized.get("missing_fields"), claim_context=_derived_claim_context(claim_id, user_id, normalized))
+            result = evaluate_claim(total, terms=terms, review_fields=normalized.get("review_fields"), missing_fields=normalized.get("missing_fields"), claim_context=_derived_claim_context(claim_id, user_id, normalized), line_items=normalized.get("line_items"))
         result["policy_terms_confidence"] = confidence
     else:
         result = {"status": "manual_review", "rule_version": "policy-terms-required", "results": [], "covered_amount": 0.0, "deductible": 0.0, "copayment": 0.0, "payable_amount": 0.0, "warnings": ["No active policy terms are available. Ingest a policy edition in Policy management first."], "policy_terms_missing": ["active_policy_terms"], "policy_terms": {}}
@@ -947,6 +953,16 @@ def ollama_status() -> tuple[bool, str]:
 
 def _status_badge(status: str) -> str:
     return status.replace('_', ' ').title()
+
+
+def _line_item_status_label(status: Any) -> str:
+    """Return a compact, readable status cue for claimant-facing item rows."""
+    return {
+        "covered": ":green[:material/check_circle: Covered]",
+        "partial": ":orange[:material/pie_chart: Partially covered]",
+        "excluded": ":red[:material/cancel: Excluded]",
+        "needs_review": ":orange[:material/rate_review: Needs review]",
+    }.get(str(status), str(status or "Needs review").replace("_", " ").title())
 
 
 def _status_color(status: str) -> str:
@@ -1179,7 +1195,7 @@ def _claimant_result_for_claim(claim_id: str, user: dict) -> dict[str, Any] | No
     excluded_or_limited = float(claimant.get("amount_excluded_or_limited", 0) or 0)
     not_paid = float(claimant.get("amount_not_covered", responsibility) or 0)
     reasons = decision.get("reasons") or (rules or {}).get("warnings") or []
-    reason = str(reasons[0]) if reasons else "Your claim has been processed and the result is ready to review."
+    reason = _claim_warning_message(reasons[0]) if reasons else "Your claim has been processed and the result is ready to review."
     return {
         "status": status,
         "amount_billed": billed,
@@ -1247,6 +1263,13 @@ def _render_claimant_result(user: dict) -> None:
         else:
             st.caption("This is decision-support information. Final determination should be confirmed by an authorized reviewer.")
     rules = result.get("rules", {})
+    workflow = st.session_state.get(f"workflow_{claim_id}") or {}
+    # Persisted claim status includes agent failures and reviewer sign-off, even
+    # after a new browser session loses its cached workflow.
+    workflow = {**workflow, "decision": {**workflow.get("decision", {}), "status": result["status"]}}
+    normalized = st.session_state.get(f"normalized_{claim_id}") or {}
+    if rules.get("line_item_reconciliation_failed"):
+        st.info(str(rules.get("line_item_notice") or _claim_warning_message("line_item_reconciliation_failed")))
     with st.expander("View amount breakdown", expanded=True):
         st.write(f"Covered amount before deductions: INR {float(rules.get('covered_amount', 0) or 0):,.2f}")
         st.write(f"Deductible: INR {float(result.get('deductible', 0) or 0):,.2f}")
@@ -1262,27 +1285,87 @@ def _render_claimant_result(user: dict) -> None:
             st.dataframe(adjustments, hide_index=True)
         warnings = rules.get("warnings") or []
         if warnings:
-            st.write("Why review is needed: " + "; ".join(str(item) for item in warnings))
-    workflow = st.session_state.get(f"workflow_{claim_id}") or {}
-    # Persisted claim status includes agent failures and reviewer sign-off, even
-    # after a new browser session loses its cached workflow.
-    workflow = {**workflow, "decision": {**workflow.get("decision", {}), "status": result["status"]}}
-    normalized = st.session_state.get(f"normalized_{claim_id}") or {}
-    with st.container(horizontal=True):
-        st.download_button(
-            "Download decision report",
-            data=build_decision_report(dict(claim), normalized, rules, workflow),
-            file_name=f"{claim['claim_number']}-decision-report.pdf",
-            mime="application/pdf",
-            icon=":material/download:",
-        )
-        st.download_button(
-            "Download appeal letter",
-            data=build_appeal_letter(dict(claim), rules, workflow),
-            file_name=f"{claim['claim_number']}-appeal-letter.txt",
-            mime="text/plain",
-            icon=":material/description:",
-        )
+            st.write("Calculation notes: " + "; ".join(_claim_warning_message(item) for item in warnings))
+    billing_anomalies = normalized.get("billing_anomalies") or {}
+    duplicate_flags = billing_anomalies.get("duplicates") or normalized.get("duplicate_candidates") or []
+    outlier_flags = billing_anomalies.get("price_outliers") or []
+    if duplicate_flags or outlier_flags:
+        anomaly_messages = []
+        for duplicate in duplicate_flags[:3]:
+            left = (duplicate.get("left") or {}).get("description") or "an item"
+            right = (duplicate.get("right") or {}).get("description") or "another item"
+            anomaly_messages.append(f"Possible duplicate charge: {left} and {right}.")
+        for outlier in outlier_flags[:3]:
+            item = outlier.get("item") or {}
+            anomaly_messages.append(f"Price check: {item.get('description') or 'An item'} — {outlier.get('reason') or 'unusual amount'}.")
+        st.warning("Billing checks need review:\n\n" + "\n\n".join(anomaly_messages))
+    line_item_results = rules.get("line_item_results") or []
+    if line_item_results:
+        source_items = normalized.get("line_items") or []
+        notes_by_index: dict[int, str] = {}
+        for note in (workflow.get("decision") or {}).get("line_item_notes") or []:
+            if not isinstance(note, dict):
+                continue
+            try:
+                item_index = int(note.get("item_index"))
+            except (TypeError, ValueError):
+                continue
+            note_text = str(note.get("note") or "").strip()
+            if 0 <= item_index < len(line_item_results) and note_text:
+                notes_by_index[item_index] = note_text
+        rows = []
+        for index, item_result in enumerate(line_item_results):
+            source_item = source_items[index] if index < len(source_items) and isinstance(source_items[index], dict) else {}
+            rows.append({
+                "Description": str(source_item.get("description") or item_result.get("description") or "Line item"),
+                "Amount claimed": float(source_item.get("amount") or item_result.get("amount") or 0),
+                "Amount approved": float(item_result.get("covered_amount") or 0),
+                "Status": _line_item_status_label(item_result.get("status")),
+                "Applied rule": str(item_result.get("applied_rule") or "standard").replace("_", " ").title(),
+                "Note": notes_by_index.get(index, ""),
+            })
+        with st.expander("Item-wise verification", expanded=False):
+            st.caption("Each charge is checked against the available policy terms before claim-level deductible and copayment are applied.")
+            st.dataframe(
+                rows,
+                hide_index=True,
+                column_config={
+                    "Amount claimed": st.column_config.NumberColumn(format="INR %.2f"),
+                    "Amount approved": st.column_config.NumberColumn(format="INR %.2f"),
+                    "Status": st.column_config.MarkdownColumn(),
+                },
+            )
+    recommendations = recommend_next_steps(workflow.get("decision") or {}, rules)
+    if recommendations:
+        with st.container(border=True):
+            st.markdown("### Recommended next steps")
+            for recommendation in recommendations:
+                st.write(f":material/arrow_forward: {recommendation}")
+    with st.container(border=True):
+        st.markdown("### Download your claim documents")
+        st.caption("Use the decision report to understand the calculation. Use the appeal-letter draft when you need to request a formal review.")
+        report_col, appeal_col = st.columns(2, gap="medium")
+        with report_col:
+            st.download_button(
+                "Download decision report (PDF)",
+                data=build_decision_report(dict(claim), normalized, rules, workflow),
+                file_name=f"{claim['claim_number']}-decision-report.pdf",
+                mime="application/pdf",
+                icon=":material/download:",
+                type="primary",
+                use_container_width=True,
+                help="A clear summary of the current claim outcome, amounts, reasons, and next steps.",
+            )
+        with appeal_col:
+            st.download_button(
+                "Download appeal-letter draft (PDF)",
+                data=build_appeal_letter_pdf(dict(claim), rules, workflow),
+                file_name=f"{claim['claim_number']}-appeal-letter-draft.pdf",
+                mime="application/pdf",
+                icon=":material/description:",
+                use_container_width=True,
+                help="A professional draft you can review and personalize before sending to an insurer.",
+            )
     _render_claim_assistant(claim_id, normalized, result, workflow)
     if st.button("Back to dashboard"):
         st.session_state.page = "Dashboard"; st.rerun()
@@ -1294,6 +1377,45 @@ def _render_claim_assistant(claim_id: str, normalized: dict[str, Any], result: d
         st.subheader('💬 Ask about this claim', anchor=False)
         st.caption('Ask in plain language. Answers are grounded only in this claim’s documents and decision data. ✨')
         _render_claim_assistant_chat(claim_id, normalized, result, workflow)
+
+
+def _inr(value: Any) -> str:
+    return f"INR {float(value or 0):,.2f}"
+
+
+def _claim_answer_from_saved_data(question: str, result: dict[str, Any], normalized: dict[str, Any], evidence: list[dict[str, Any]]) -> str | None:
+    """Answer stable claim facts without depending on model availability."""
+    asked = question.lower().strip()
+    amount_words = ("how much", "amount", "claim got", "claim receive", "claim received", "payable", "paid", "payout", "covered", "insurance pay", "insurance cover")
+    if any(word in asked for word in amount_words):
+        return (
+            f"The insurance-covered payable amount is {_inr(result.get('amount_covered'))}. "
+            f"The total bill is {_inr(result.get('amount_billed'))}, and the claimant responsibility is {_inr(result.get('amount_claimant_pays'))}."
+        )
+    if "deductible" in asked:
+        return f"The deductible is {_inr(result.get('deductible'))}. It is included in the claimant responsibility."
+    if "copay" in asked or "co-pay" in asked:
+        return f"The copayment is {_inr(result.get('copayment'))}. It is included in the claimant responsibility."
+    if any(word in asked for word in ("excluded", "not covered", "limited")):
+        return f"The excluded or policy-limited amount is {_inr(result.get('amount_excluded_or_limited'))}."
+    if any(word in asked for word in ("status", "approved", "decision", "result")):
+        status = _status_badge(str(result.get('status', 'manual_review')))
+        return f"The current claim status is {status}. {result.get('reason') or 'An authorized reviewer should confirm the final determination.'}"
+    if "patient" in asked:
+        patient = normalized.get('patient_name', {})
+        patient = patient.get('value') if isinstance(patient, dict) else patient
+        return f"The claim patient is {patient}." if patient else None
+    if any(word in asked for word in ("hospital", "provider")):
+        hospital = normalized.get('hospital_name', {})
+        hospital = hospital.get('value') if isinstance(hospital, dict) else hospital
+        return f"The listed provider is {hospital}." if hospital else None
+    if any(word in asked for word in ("policy", "coverage", "waiting period", "room limit")) and evidence:
+        source = evidence[0]
+        clause = str(source.get('text', '')).strip().replace('\n', ' ')
+        citation = str(source.get('clause_id') or 'retrieved policy evidence')
+        if clause:
+            return f"The most relevant policy evidence ({citation}) says: {clause[:550]}"
+    return None
 
 
 def _render_claim_assistant_chat(claim_id: str, normalized: dict[str, Any], result: dict[str, Any], workflow: dict[str, Any]) -> None:
@@ -1312,21 +1434,27 @@ def _render_claim_assistant_chat(claim_id: str, normalized: dict[str, Any], resu
     with st.chat_message('user'):
         st.write(question)
     with st.chat_message('assistant', avatar=':material/psychology:'):
+        evidence: list[dict[str, Any]] = []
         try:
-            evidence = workflow.get('policy_evidence') or retrieve_policy_evidence(saved_policy_text(claim_id), normalized, limit=3)
-            snippets = '\n'.join(f"- {str(item.get('text', ''))[:500]}" for item in evidence)
-            if not snippets:
-                raise ValueError('No policy evidence is available for this claim.')
-            answer = _ollama_json(
-                'You are a medical-insurance claim assistant. Answer only from the supplied claim result and policy evidence. Be concise, use plain language, do not invent coverage, and recommend manual review when evidence is insufficient.',
-                f"Question: {question}\n\nClaim result: {json.dumps(result, ensure_ascii=False)}\n\nPolicy evidence:\n{snippets}",
-                agent_name='claimant_assistant',
-                response_schema={'type': 'object', 'properties': {'answer': {'type': 'string'}}, 'required': ['answer']},
-            ).get('answer', '')
-            if not answer:
-                raise ValueError('The assistant did not return an answer.')
+            evidence = workflow.get('policy_evidence') or retrieve_policy_evidence(saved_policy_text(claim_id), normalized, limit=3, query=question)
         except Exception:
-            answer = 'I cannot verify that from the available claim evidence. Please request a manual review so an authorized reviewer can confirm it.'
+            evidence = []
+        answer = _claim_answer_from_saved_data(question, result, normalized, evidence)
+        if answer is None:
+            try:
+                snippets = '\n'.join(f"- {str(item.get('text', ''))[:500]}" for item in evidence)
+                if not snippets:
+                    raise ValueError('No policy evidence is available for this claim.')
+                answer = str(_ollama_json(
+                    'You are a medical-insurance claim assistant. Answer only from the supplied claim result and policy evidence. Be concise, use plain language, do not invent coverage, and recommend manual review when evidence is insufficient. The answer field must contain a complete, non-empty answer.',
+                    f"Question: {question}\n\nClaim result: {json.dumps(result, ensure_ascii=False)}\n\nPolicy evidence:\n{snippets}",
+                    agent_name='claimant_assistant',
+                    response_schema={'type': 'object', 'properties': {'answer': {'type': 'string'}}, 'required': ['answer']},
+                ).get('answer', '')).strip()
+                if not answer:
+                    raise ValueError('The assistant did not return an answer.')
+            except Exception:
+                answer = 'I cannot verify that from the available claim evidence. Please request a manual review so an authorized reviewer can confirm it.'
         st.write(answer)
     st.session_state[history_key].append({'role': 'assistant', 'content': answer})
 

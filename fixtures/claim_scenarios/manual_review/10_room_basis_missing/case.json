@@ -1,0 +1,24 @@
+{
+  "synthetic_only": true,
+  "case_id": "10_room_basis_missing",
+  "category": "manual_review",
+  "expected_status": "manual_review",
+  "claim_registration": {
+    "claim_number": "CLM-10_ROOM_BASIS_MISSING-2026",
+    "patient_name": "Aarav Sharma",
+    "hospital": "Sunrise Care Hospital",
+    "policy_number": "POL-SYN-MR10-2026",
+    "service_date": "2026-08-20"
+  },
+  "uploaded_policy_number": "POL-SYN-MR10-2026",
+  "upload_files": [
+    "medical_bill.pdf",
+    "policy.pdf"
+  ],
+  "expected_bill_total": 30000,
+  "reviewer_context_required": {
+    "room_charge": 30000,
+    "room_days": 3
+  },
+  "note": "Use the two PDF files with the claim registration fields above."
+}

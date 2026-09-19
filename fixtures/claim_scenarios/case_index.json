@@ -1,0 +1,146 @@
+[
+  {
+    "case_id": "01_standard_approved",
+    "category": "approved",
+    "expected_status": "approved",
+    "path": "approved\\01_standard_approved"
+  },
+  {
+    "case_id": "02_annual_limit_boundary",
+    "category": "approved",
+    "expected_status": "approved",
+    "path": "approved\\02_annual_limit_boundary"
+  },
+  {
+    "case_id": "03_below_deductible",
+    "category": "approved",
+    "expected_status": "approved",
+    "path": "approved\\03_below_deductible"
+  },
+  {
+    "case_id": "04_zero_copayment",
+    "category": "approved",
+    "expected_status": "approved",
+    "path": "approved\\04_zero_copayment"
+  },
+  {
+    "case_id": "05_zero_deductible",
+    "category": "approved",
+    "expected_status": "approved",
+    "path": "approved\\05_zero_deductible"
+  },
+  {
+    "case_id": "01_annual_limit_exceeded",
+    "category": "partially_approved",
+    "expected_status": "partially_approved",
+    "path": "partially_approved\\01_annual_limit_exceeded"
+  },
+  {
+    "case_id": "02_surgery_sublimit",
+    "category": "partially_approved",
+    "expected_status": "partially_approved",
+    "path": "partially_approved\\02_surgery_sublimit"
+  },
+  {
+    "case_id": "03_room_limit_proportional",
+    "category": "partially_approved",
+    "expected_status": "partially_approved",
+    "path": "partially_approved\\03_room_limit_proportional"
+  },
+  {
+    "case_id": "04_waiting_period_partial",
+    "category": "partially_approved",
+    "expected_status": "partially_approved",
+    "path": "partially_approved\\04_waiting_period_partial"
+  },
+  {
+    "case_id": "05_combined_sublimit_costshare",
+    "category": "partially_approved",
+    "expected_status": "partially_approved",
+    "path": "partially_approved\\05_combined_sublimit_costshare"
+  },
+  {
+    "case_id": "01_confirmed_exclusion",
+    "category": "rejected",
+    "expected_status": "rejected",
+    "path": "rejected\\01_confirmed_exclusion"
+  },
+  {
+    "case_id": "02_out_of_network",
+    "category": "rejected",
+    "expected_status": "rejected",
+    "path": "rejected\\02_out_of_network"
+  },
+  {
+    "case_id": "01_policy_number_mismatch",
+    "category": "manual_review",
+    "expected_status": "manual_review",
+    "path": "manual_review\\01_policy_number_mismatch"
+  },
+  {
+    "case_id": "02_missing_policy_terms",
+    "category": "manual_review",
+    "expected_status": "manual_review",
+    "path": "manual_review\\02_missing_policy_terms"
+  },
+  {
+    "case_id": "03_invalid_bill_total",
+    "category": "manual_review",
+    "expected_status": "manual_review",
+    "path": "manual_review\\03_invalid_bill_total"
+  },
+  {
+    "case_id": "04_incomplete_bill_fields",
+    "category": "manual_review",
+    "expected_status": "manual_review",
+    "path": "manual_review\\04_incomplete_bill_fields"
+  },
+  {
+    "case_id": "05_low_quality_scan",
+    "category": "manual_review",
+    "expected_status": "manual_review",
+    "path": "manual_review\\05_low_quality_scan"
+  },
+  {
+    "case_id": "06_waiting_period_unconfirmed",
+    "category": "manual_review",
+    "expected_status": "manual_review",
+    "path": "manual_review\\06_waiting_period_unconfirmed"
+  },
+  {
+    "case_id": "07_preauthorization_unconfirmed",
+    "category": "manual_review",
+    "expected_status": "manual_review",
+    "path": "manual_review\\07_preauthorization_unconfirmed"
+  },
+  {
+    "case_id": "08_network_status_unknown",
+    "category": "manual_review",
+    "expected_status": "manual_review",
+    "path": "manual_review\\08_network_status_unknown"
+  },
+  {
+    "case_id": "09_possible_exclusion",
+    "category": "manual_review",
+    "expected_status": "manual_review",
+    "path": "manual_review\\09_possible_exclusion"
+  },
+  {
+    "case_id": "10_room_basis_missing",
+    "category": "manual_review",
+    "expected_status": "manual_review",
+    "path": "manual_review\\10_room_basis_missing"
+  },
+  {
+    "case_id": "11_multiple_bills_unconfirmed",
+    "category": "manual_review",
+    "expected_status": "manual_review",
+    "path": "manual_review\\11_multiple_bills_unconfirmed"
+  },
+  {
+    "case_id": "12_possible_duplicate_charge",
+    "category": "manual_review",
+    "expected_status": "manual_review",
+    "path": "manual_review\\12_possible_duplicate_charge"
+  }
+]

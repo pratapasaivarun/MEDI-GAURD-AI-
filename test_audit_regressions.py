@@ -18,6 +18,7 @@ state = {"policy_evidence": [{"clause_id": "p1", "text": "Coverage"}], "rule_res
 with patch.object(agents, "_ollama_json", side_effect=requests.ConnectionError("offline")):
     decision = agents.decision_agent_node(state)["decision"]
     assert decision["status"] == "manual_review" and decision["_fallback"]
+    assert decision["line_item_notes"] == []
 
 app.init_db()
 user = app.get_or_create_user("audit@local.test", "Audit")
@@ -47,4 +48,14 @@ with patch.object(app.requests, "get") as get:
     get.return_value.ok = True
     get.return_value.json.return_value = {"models": []}
     assert app.ollama_status()[0] is False
+
+# Payment questions must remain answerable from saved claim data even when the
+# model or retrieval service is unavailable.
+assistant_answer = app._claim_answer_from_saved_data(
+    "HOW MUCH CLAIM THE USER GOT",
+    {"amount_covered": 67500, "amount_billed": 80000, "amount_claimant_pays": 12500},
+    {},
+    [],
+)
+assert assistant_answer and "INR 67,500.00" in assistant_answer
 print("AUDIT_REGRESSIONS_OK")

@@ -1,0 +1,21 @@
+{
+  "synthetic_only": true,
+  "case_id": "01_policy_number_mismatch",
+  "category": "manual_review",
+  "expected_status": "manual_review",
+  "claim_registration": {
+    "claim_number": "CLM-01_POLICY_NUMBER_MISMATCH-2026",
+    "patient_name": "Aarav Sharma",
+    "hospital": "Sunrise Care Hospital",
+    "policy_number": "POL-SYN-MISMATCH-2026",
+    "service_date": "2026-08-20"
+  },
+  "uploaded_policy_number": "POL-SYN-MR01-2026",
+  "upload_files": [
+    "medical_bill.pdf",
+    "policy.pdf"
+  ],
+  "expected_bill_total": 80000,
+  "reviewer_context_required": {},
+  "note": "Use the two PDF files with the claim registration fields above."
+}

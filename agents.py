@@ -22,7 +22,7 @@ OLLAMA_TIMEOUT = int(__import__("os").getenv("OLLAMA_TIMEOUT_SECONDS", "120"))
 OLLAMA_NUM_CTX = int(__import__("os").getenv("OLLAMA_NUM_CTX", "2048"))
 OLLAMA_NUM_THREAD = int(__import__("os").getenv("OLLAMA_NUM_THREAD", str(__import__("os").cpu_count() or 4)))
 OLLAMA_KEEP_ALIVE = __import__("os").getenv("OLLAMA_KEEP_ALIVE", "30m")
-DECISION_RESPONSE_SCHEMA = {"type": "object", "properties": {"status": {"type": "string", "enum": ["approved", "partially_approved", "rejected", "manual_review"]}, "reasons": {"type": "array", "items": {"type": "string"}}, "policy_citations": {"type": "array", "items": {"type": "string"}}, "confidence": {"type": "number"}, "reviewer_note": {"type": "string"}}, "required": ["status", "reasons", "policy_citations", "confidence", "reviewer_note"]}
+DECISION_RESPONSE_SCHEMA = {"type": "object", "properties": {"status": {"type": "string", "enum": ["approved", "partially_approved", "rejected", "manual_review"]}, "reasons": {"type": "array", "items": {"type": "string"}}, "policy_citations": {"type": "array", "items": {"type": "string"}}, "confidence": {"type": "number"}, "reviewer_note": {"type": "string"}, "line_item_notes": {"type": "array", "default": [], "items": {"type": "object", "properties": {"item_index": {"type": "integer"}, "note": {"type": "string"}}, "required": ["item_index", "note"]}}}, "required": ["status", "reasons", "policy_citations", "confidence", "reviewer_note"]}
 METRICS_PATH = Path(__import__("os").getenv("AGENT_METRICS_PATH", "data/agent_metrics.jsonl"))
 
 
@@ -57,6 +57,73 @@ def _record_metrics(event: dict[str, Any]) -> None:
             handle.write(json.dumps(event, ensure_ascii=False) + "\n")
     except OSError:
         pass
+
+
+def _missing_fields_from_warnings(warnings: list[Any]) -> list[str]:
+    """Extract only explicit missing-field names from rule warning text."""
+    fields: list[str] = []
+    prefixes = ("Missing required fields:", "Required policy terms missing:")
+    for warning in warnings:
+        text = str(warning or "").strip()
+        prefix = next((candidate for candidate in prefixes if text.startswith(candidate)), None)
+        if not prefix:
+            continue
+        for field in text[len(prefix):].split(","):
+            clean = field.strip().replace("_", " ")
+            if clean and clean not in fields:
+                fields.append(clean)
+    return fields
+
+
+def recommend_next_steps(decision: dict[str, Any], rules: dict[str, Any]) -> list[str]:
+    """Return concise, deterministic claimant guidance without an LLM call."""
+    status = str(decision.get("status") or rules.get("status") or "manual_review")
+    warnings = rules.get("warnings") or []
+    line_items = rules.get("line_item_results") or []
+    actionable_items = [
+        item for item in line_items
+        if isinstance(item, dict) and item.get("status") in {"excluded", "partial", "needs_review"}
+    ]
+
+    if status == "manual_review":
+        missing_fields = _missing_fields_from_warnings(warnings)
+        if missing_fields:
+            return [f"Upload the missing document: {field}." for field in missing_fields[:3]]
+        if actionable_items:
+            description = str(actionable_items[0].get("description") or "this item")
+            return [f"Your claim needs manual review for {description}; our team will contact you."]
+        return ["Your claim needs manual review; our team will contact you."]
+
+    if status == "rejected":
+        citations = decision.get("policy_citations") or []
+        if citations:
+            citation = str(citations[0])
+            if actionable_items:
+                description = str(actionable_items[0].get("description") or "this item")
+                return [f"{description} was not covered. You can appeal this decision citing policy clause {citation}."]
+            return [f"You can appeal this decision citing policy clause {citation}."]
+        if actionable_items:
+            description = str(actionable_items[0].get("description") or "this item")
+            return [f"{description} was not covered. You can request a written review of this decision."]
+        return ["You can request a written review of this decision."]
+
+    if status == "partially_approved":
+        claimant_result = rules.get("claimant_result") or {}
+        if claimant_result.get("amount_claimant_pays") is not None:
+            responsibility = float(claimant_result.get("amount_claimant_pays") or 0)
+        elif line_items:
+            responsibility = max(0.0, sum(float(item.get("amount") or 0) for item in line_items if isinstance(item, dict)) - float(rules.get("payable_amount") or 0))
+        else:
+            responsibility = float(rules.get("deductible") or 0) + float(rules.get("copayment") or 0)
+        item_copy = ""
+        if actionable_items:
+            item_copy = f" This includes the non-covered or limited item: {str(actionable_items[0].get('description') or 'a claim item')}."
+        return [f"You are responsible for INR {responsibility:,.2f}; no action needed unless you wish to appeal the non-covered items.{item_copy}"]
+
+    if status == "approved":
+        return ["No action needed — reimbursement is being processed."]
+
+    return ["Your claim needs manual review; our team will contact you."]
 
 
 def _parse_json_response(content: str, list_key: str) -> dict[str, Any]:
@@ -112,7 +179,7 @@ def _ollama_json(system: str, prompt: str, list_key: str = "items", agent_name: 
     return _parse_json_response(content, list_key)
 
 
-def retrieve_policy_evidence(policy_text: str, normalized_claim: dict[str, Any], policy_id: str = "", limit: int = 8) -> list[dict[str, Any]]:
+def retrieve_policy_evidence(policy_text: str, normalized_claim: dict[str, Any], policy_id: str = "", limit: int = 8, query: str = "") -> list[dict[str, Any]]:
     """Use persistent ChromaDB retrieval when indexed; fall back to lexical retrieval."""
     query_parts = []
     for value in normalized_claim.values():
@@ -124,11 +191,12 @@ def retrieve_policy_evidence(policy_text: str, normalized_claim: dict[str, Any],
             candidate = value
         if candidate not in (None, ""):
             query_parts.append(str(candidate))
-    query = " ".join(query_parts)
+    claim_query = " ".join(query_parts)
+    retrieval_query = " ".join(part for part in (query.strip(), claim_query) if part)
     if policy_id:
         try:
             from policy_index import retrieve_policy_evidence as chroma_retrieve
-            semantic = chroma_retrieve(query or "coverage deductible copayment limits required documents", policy_id, limit)
+            semantic = chroma_retrieve(retrieval_query or "coverage deductible copayment limits required documents", policy_id, limit)
             if semantic:
                 return semantic
         except Exception:
@@ -141,6 +209,7 @@ def retrieve_policy_evidence(policy_text: str, normalized_claim: dict[str, Any],
         if value:
             query_terms.update(str(value).lower().split())
     query_terms.update({"coverage", "deductible", "copayment", "limit", "required", "documents", "waiting"})
+    query_terms.update(term for term in query.lower().split() if len(term) > 2)
     chunks = re.split(r"(?<=[.!?])\s+|\n+", policy_text or "")
     scored: list[tuple[int, str]] = []
     for index, chunk in enumerate(chunks, start=1):
@@ -175,7 +244,7 @@ def policy_agent_node(state: ClaimWorkflowState) -> ClaimWorkflowState:
 def decision_agent_node(state: ClaimWorkflowState) -> ClaimWorkflowState:
     progress = state.get("progress_callback")
     if not state.get("policy_evidence"):
-        decision = {"status": "manual_review", "reasons": ["No policy evidence was retrieved; an authorized reviewer must verify coverage."], "policy_citations": [], "confidence": 0, "reviewer_note": "Automatic decision was blocked because policy evidence was unavailable.", "_fallback": True}
+        decision = {"status": "manual_review", "reasons": ["No policy evidence was retrieved; an authorized reviewer must verify coverage."], "policy_citations": [], "confidence": 0, "reviewer_note": "Automatic decision was blocked because policy evidence was unavailable.", "line_item_notes": [], "_fallback": True}
         if progress:
             progress("No policy evidence was retrieved. Safe Manual Review result created; Decision Agent was not called.")
         return {**state, "decision": decision}
@@ -187,25 +256,65 @@ def decision_agent_node(state: ClaimWorkflowState) -> ClaimWorkflowState:
     compact_policy = {"evidence": policy_findings.get("findings", [])[:2], "missing_evidence": policy_findings.get("missing_evidence", [])[:3]}
     rules = state.get("rule_results", {})
     compact_rules = {key: rules.get(key) for key in ("status", "covered_amount", "deductible", "copayment", "payable_amount", "warnings") if key in rules}
+    line_item_results = rules.get("line_item_results") or []
+    if line_item_results:
+        compact_rules["line_item_results"] = [
+            {
+                "item_index": index,
+                "status": item.get("status"),
+                "covered_amount": item.get("covered_amount"),
+                "applied_rule": item.get("applied_rule"),
+                "category": item.get("category"),
+            }
+            for index, item in enumerate(line_item_results)
+        ]
     prompt = json.dumps({"claim": compact_claim, "policy": compact_policy, "rules": compact_rules}, ensure_ascii=False, separators=(",", ":"))
     try:
         decision = _ollama_json(
-            "You are the Medi Gaurd Decision Agent. Use only supplied facts. Return compact JSON with status, reasons, policy_citations, confidence, reviewer_note. Use at most 3 short reasons and one short reviewer_note. Never change calculated amounts; use manual_review when evidence is missing or low-confidence.",
+            "You are the Medi Gaurd Decision Agent. Use only supplied facts. Return compact JSON with status, reasons, policy_citations, confidence, reviewer_note, and optional line_item_notes. Use at most 3 short reasons and one short reviewer_note. Each line_item_notes entry must be {item_index: int, note: str}; provide at most one short sentence only for an item whose status is not covered. Only reference item_index values that appear in the line_item_results you were given below. If no line_item_results were provided, return an empty line_item_notes list and explain the decision only at the claim level, exactly as before. Never change calculated amounts; use manual_review when evidence is missing or low-confidence.",
             prompt,
             list_key="reasons",
             agent_name="decision_agent",
             response_schema=DECISION_RESPONSE_SCHEMA,
         )
     except (RuntimeError, requests.RequestException) as exc:
-        decision = {"status": "manual_review", "reasons": ["Decision Agent response was unavailable or invalid."], "policy_citations": [], "confidence": 0, "reviewer_note": "An authorized reviewer must confirm the determination.", "_fallback": True, "_error": str(exc)}
+        decision = {"status": "manual_review", "reasons": ["Decision Agent response was unavailable or invalid."], "policy_citations": [], "confidence": 0, "reviewer_note": "An authorized reviewer must confirm the determination.", "line_item_notes": [], "_fallback": True, "_error": str(exc)}
     allowed = {"approved", "partially_approved", "rejected", "manual_review"}
     rule_status = state.get("rule_results", {}).get("status", "manual_review")
     # The LLM explains the deterministic result; it never adjudicates around
     # coverage arithmetic, exclusions, or safety gates computed by rules.py.
     decision["status"] = "manual_review" if decision.get("_fallback") else (rule_status if rule_status in allowed else "manual_review")
     evidence_ids = {str(item.get("clause_id")) for item in state.get("policy_evidence", [])}
-    citations = [str(item) for item in (decision.get("policy_citations") or []) if str(item) in evidence_ids]
+    raw_citations = decision.get("policy_citations") or []
+    raw_citations = raw_citations if isinstance(raw_citations, list) else []
+    citations = [str(item) for item in raw_citations if str(item) in evidence_ids]
     decision["policy_citations"] = citations or sorted(evidence_ids)[:2]
+    allowed_item_indices = {
+        index for index, item in enumerate(line_item_results)
+        if str(item.get("status") or "covered") != "covered"
+    }
+    line_item_notes = []
+    seen_indices: set[int] = set()
+    raw_line_item_notes = decision.get("line_item_notes") or []
+    raw_line_item_notes = raw_line_item_notes if isinstance(raw_line_item_notes, list) else []
+    for item in raw_line_item_notes:
+        if not isinstance(item, dict):
+            continue
+        index = item.get("item_index")
+        note = str(item.get("note") or "").strip()
+        if isinstance(index, bool) or not isinstance(index, int) or index not in allowed_item_indices or index in seen_indices or not note:
+            continue
+        line_item_notes.append({"item_index": index, "note": note[:240]})
+        seen_indices.add(index)
+    decision["line_item_notes"] = line_item_notes
+    _record_metrics({
+        "agent": "decision_agent_groundedness",
+        "policy_citations_received": len(raw_citations),
+        "policy_citations_dropped": len(raw_citations) - len(citations),
+        "line_item_notes_received": len(raw_line_item_notes),
+        "line_item_notes_dropped": len(raw_line_item_notes) - len(line_item_notes),
+        "timestamp": time.time(),
+    })
     if progress:
         progress("Decision Agent complete. Rendering evidence-backed result...")
     return {**state, "decision": decision, "llm_calls": state.get("llm_calls", 0) + 1}

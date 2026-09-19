@@ -60,6 +60,10 @@ assert "line_item_results" not in fallback_prompt["rules"]
 # Next-step guidance is deterministic, status-aware, and works when the
 # itemized result is unavailable on the aggregate fallback path.
 assert agents.recommend_next_steps({"status": "approved"}, {"warnings": []}) == ["No action needed — reimbursement is being processed."]
+assert agents.recommend_next_steps(
+    {"status": "approved"},
+    {"warnings": [], "line_item_results": [], "billing_anomalies": {"duplicates": [], "price_outliers": [{"reason": "amount is 10x the median"}]}},
+) == ["Review flagged billing items before proceeding."]
 partial_next_steps = agents.recommend_next_steps(
     {"status": "partially_approved"},
     {"payable_amount": 49500, "deductible": 5000, "copayment": 5500, "line_item_results": [{**items[0], "amount": 90000}], "warnings": []},

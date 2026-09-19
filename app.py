@@ -1335,7 +1335,10 @@ def _render_claimant_result(user: dict) -> None:
                     "Status": st.column_config.MarkdownColumn(),
                 },
             )
-    recommendations = recommend_next_steps(workflow.get("decision") or {}, rules)
+    recommendations = recommend_next_steps(
+        workflow.get("decision") or {},
+        {**rules, "billing_anomalies": billing_anomalies},
+    )
     if recommendations:
         with st.container(border=True):
             st.markdown("### Recommended next steps")

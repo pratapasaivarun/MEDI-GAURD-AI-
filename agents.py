@@ -80,6 +80,8 @@ def recommend_next_steps(decision: dict[str, Any], rules: dict[str, Any]) -> lis
     status = str(decision.get("status") or rules.get("status") or "manual_review")
     warnings = rules.get("warnings") or []
     line_items = rules.get("line_item_results") or []
+    billing_anomalies = rules.get("billing_anomalies") or {}
+    has_billing_anomaly = bool(billing_anomalies.get("duplicates") or billing_anomalies.get("price_outliers"))
     actionable_items = [
         item for item in line_items
         if isinstance(item, dict) and item.get("status") in {"excluded", "partial", "needs_review"}
@@ -124,6 +126,8 @@ def recommend_next_steps(decision: dict[str, Any], rules: dict[str, Any]) -> lis
         return [f"You are responsible for INR {responsibility:,.2f}.{appeal_copy}{item_copy}"]
 
     if status == "approved":
+        if has_billing_anomaly:
+            return ["Review flagged billing items before proceeding."]
         return ["No action needed — reimbursement is being processed."]
 
     return ["Your claim needs manual review; our team will contact you."]

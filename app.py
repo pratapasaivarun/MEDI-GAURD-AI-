@@ -1571,6 +1571,7 @@ def _render_claim_submission(user: dict) -> None:
     st.session_state.active_claim = claim_id
     with st.container(border=True):
         st.markdown('<div class="mg-section-title">📎 1. Add your documents</div><p class="mg-card-copy">PDF, PNG, or JPG up to the configured size limit. Upload at least one policy and one bill.</p>', unsafe_allow_html=True)
+        st.caption("Privacy notice: documents are stored in this prototype's configured private local storage and processed locally for this claim. Upload only what is needed for your assessment.")
         upload_columns = st.columns(2, gap='medium')
         with upload_columns[0]:
             policy_files = st.file_uploader('Insurance policy', type=['pdf', 'png', 'jpg', 'jpeg'], accept_multiple_files=True, key=f'claimant_policy_{claim_id}')

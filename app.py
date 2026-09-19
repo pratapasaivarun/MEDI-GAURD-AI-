@@ -27,7 +27,6 @@ from reports import build_appeal_letter_pdf, build_decision_report
 
 APP_DIR = Path(__file__).parent
 DATA_DIR = APP_DIR / "data"
-DB_PATH = Path(os.getenv("MEDIGUARD_DB_PATH", str(DATA_DIR / "mediguard.db"))).resolve()
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
 # Granite is installed locally and is the project's sole configured model.
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "ibm/granite4.1:8b")
@@ -36,10 +35,23 @@ MAX_FILE_MB = int(os.getenv("MAX_FILE_MB", "15"))
 APP_ENV = os.getenv("APP_ENV", "development").lower()
 APP_BASE_URL = os.getenv("APP_BASE_URL", "http://localhost:8505").rstrip("/")
 # The academic prototype uses a local demo identity; production authentication is deferred.
-CORE_DEMO_MODE = os.getenv("MEDIGUARD_CORE_DEMO", "true").lower() == "true"
-STORAGE_DIR = Path(os.getenv("MEDIGUARD_STORAGE_DIR", str(DATA_DIR))).resolve()
-UPLOAD_DIR = STORAGE_DIR / "uploads"
 ALLOWED_ROLES = {"claimant", "reviewer", "admin"}
+
+
+def get_db_path() -> Path:
+    return Path(os.getenv("MEDIGUARD_DB_PATH", str(DATA_DIR / "mediguard.db"))).resolve()
+
+
+def get_storage_dir() -> Path:
+    return Path(os.getenv("MEDIGUARD_STORAGE_DIR", str(DATA_DIR))).resolve()
+
+
+def get_upload_dir() -> Path:
+    return get_storage_dir() / "uploads"
+
+
+def core_demo_mode() -> bool:
+    return os.getenv("MEDIGUARD_CORE_DEMO", "true").lower() == "true"
 
 
 def _claim_warning_message(value: Any) -> str:
@@ -53,8 +65,9 @@ def utc_now() -> str:
 
 
 def db() -> sqlite3.Connection:
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
+    db_path = get_db_path()
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -236,10 +249,12 @@ def validate_security_config() -> None:
     # SESSION_SECRET is not validated here because the current Streamlit app does
     # not sign sessions or tokens. A future token implementation must add its own
     # fail-closed validation before this setting is used.
-    if STORAGE_DIR == APP_DIR or any(part.lower() in {"public", "static"} for part in STORAGE_DIR.parts):
+    storage_dir = get_storage_dir()
+    upload_dir = get_upload_dir()
+    if storage_dir == APP_DIR or any(part.lower() in {"public", "static"} for part in storage_dir.parts):
         raise RuntimeError("MEDIGUARD_STORAGE_DIR must be a private directory outside public/static paths.")
-    STORAGE_DIR.mkdir(parents=True, exist_ok=True)
-    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    storage_dir.mkdir(parents=True, exist_ok=True)
+    upload_dir.mkdir(parents=True, exist_ok=True)
 
 
 def bootstrap_admin_from_env() -> None:
@@ -467,7 +482,7 @@ def save_document(claim_id: str, user: dict | sqlite3.Row, uploaded_file, docume
     if duplicate:
         raise ValueError(f"This {document_type.replace('_', ' ')} is already attached to the claim.")
     document_id = str(uuid.uuid4())
-    claim_dir = UPLOAD_DIR / claim_id
+    claim_dir = get_upload_dir() / claim_id
     claim_dir.mkdir(parents=True, exist_ok=True)
     safe_name = safe_name.replace(" ", "_")
     target = claim_dir / f"{document_id}_{safe_name}"
@@ -651,7 +666,7 @@ def ingest_policy_version(uploaded_file, policy_number: str, version_label: str,
         require_role(user, "admin")
     content, safe_name = _validated_upload(uploaded_file)
     version_id = str(uuid.uuid4())
-    target_dir = STORAGE_DIR / "policies"
+    target_dir = get_storage_dir() / "policies"
     target_dir.mkdir(parents=True, exist_ok=True)
     target = target_dir / f"{version_id}_{safe_name.replace(' ', '_')}"
     target.write_bytes(content)
@@ -740,7 +755,7 @@ def secure_document_path(doc: sqlite3.Row, user: dict | sqlite3.Row) -> Path:
     _claim_access(doc["claim_id"], user)
     candidate = Path(doc["stored_path"]).resolve()
     try:
-        candidate.relative_to(STORAGE_DIR)
+        candidate.relative_to(get_storage_dir())
     except ValueError as exc:
         raise PermissionError("Document path is outside the private storage root.") from exc
     if not candidate.is_file():
@@ -752,7 +767,7 @@ def _extract_one(doc):
     from extraction import extract_document
     candidate = Path(doc["stored_path"]).resolve()
     try:
-        candidate.relative_to(STORAGE_DIR)
+        candidate.relative_to(get_storage_dir())
     except ValueError as exc:
         raise PermissionError("Document path is outside the private storage root.") from exc
     return extract_document(candidate, doc["document_id"], doc["original_name"])
@@ -1786,7 +1801,7 @@ def main() -> None:
     if not st.session_state.get('welcome_seen') and not (st.query_params.get('reset_token') or st.query_params.get('setup_token')):
         _render_welcome()
         return
-    if CORE_DEMO_MODE:
+    if core_demo_mode():
         _core_demo_user()
     if 'user' not in st.session_state:
         _render_login(); return

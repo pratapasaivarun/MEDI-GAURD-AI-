@@ -118,6 +118,14 @@ assert clean_claim.billing_anomalies == {"duplicates": [], "price_outliers": []}
 assert extraction.check_submission_deadline(date.today() - timedelta(days=35))["days_elapsed"] == 35
 assert extraction.check_submission_deadline(date.today() - timedelta(days=5)) is None
 assert extraction.check_submission_deadline(None) is None
+history_user = app.get_or_create_user("history@local.test", "History")
+past_claim = app.create_claim(history_user["user_id"], "HIST-1", "History", "Hospital", "POL-HISTORY", "2026-01-10")
+with app.db() as conn:
+    conn.execute("INSERT INTO rule_evaluations VALUES (?,?,?,?,?,?)", ("history-rule", past_claim, "test", "rejected", json.dumps({"line_item_results": [{"description": "cosmetic surgery", "status": "excluded", "applied_rule": "exclusion"}]}), app.utc_now()))
+history_flags = app.check_similar_past_rejections(history_user["user_id"], [{"description": "Cosmetic surgery", "status": "excluded", "applied_rule": "exclusion"}], "POL-HISTORY")
+assert len(history_flags) == 1 and "2026-01-10" in history_flags[0]["note"]
+assert app.check_similar_past_rejections(history_user["user_id"], [{"description": "Cosmetic surgery", "status": "excluded", "applied_rule": "exclusion"}], "OTHER-POLICY") == []
+assert app.check_similar_past_rejections("first-time", [{"description": "Cosmetic Surgery", "status": "excluded", "applied_rule": "exclusion"}], "POL-HISTORY") == []
 
 # Out-of-range or covered-item indices returned by the LLM are never exposed.
 with patch.object(agents, "_ollama_json", return_value={"status": "approved", "reasons": ["Rule result explained."], "policy_citations": ["policy-clause-1"], "confidence": 0.9, "reviewer_note": "Review complete.", "line_item_notes": [{"item_index": 99, "note": "Invented item."}, {"item_index": 2, "note": "Covered item note."}, {"item_index": 1, "note": "Valid item note."}]}), patch.object(agents, "_record_metrics") as metrics:

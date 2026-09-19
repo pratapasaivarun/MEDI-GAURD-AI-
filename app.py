@@ -842,6 +842,24 @@ def _policy_mismatch(claim_id: str, normalized: dict) -> tuple[str | None, str |
         return None, f"Claim policy number {claim_number} does not match extracted policy number {extracted_number}."
     return extracted_number or claim_number, None
 
+def check_similar_past_rejections(claimant_id: str, current_line_items: list, policy_id: str) -> list[dict]:
+    from difflib import SequenceMatcher
+    flags = []
+    with db() as conn:
+        rows = conn.execute("SELECT c.incident_date, c.status, r.result_json FROM claims c JOIN rule_evaluations r ON r.claim_id=c.claim_id WHERE c.user_id=? AND c.policy_number=? ORDER BY r.created_at DESC", (claimant_id, policy_id)).fetchall()
+    for current_index, current in enumerate(current_line_items or []):
+        if not isinstance(current, dict) or current.get("status") not in {"excluded", "partial"}: continue
+        description = " ".join(str(current.get("description") or "").lower().split())
+        for row in rows:
+            try: past_items = json.loads(row["result_json"]).get("line_item_results") or []
+            except (TypeError, json.JSONDecodeError): continue
+            matched = next((past for past in past_items if isinstance(past, dict) and past.get("status") in {"excluded", "partial"} and past.get("applied_rule") == current.get("applied_rule") and SequenceMatcher(None, description, " ".join(str(past.get("description") or "").lower().split())).ratio() > 0.85), None)
+            if matched:
+                past_date = str(row["incident_date"] or "unknown date")
+                flags.append({"item_index": current_index, "past_claim_date": past_date, "past_status": str(matched.get("status")), "note": f"A similar item was rejected on {past_date} for the same reason ({current.get('applied_rule')})."})
+                break
+    return flags
+
 
 def evaluate_saved_claim(claim_id: str, user_id: str, normalized: dict) -> dict:
     user = get_user(user_id)
@@ -872,6 +890,7 @@ def evaluate_saved_claim(claim_id: str, user_id: str, normalized: dict) -> dict:
         result = {"status": "manual_review", "rule_version": "policy-terms-required", "results": [], "covered_amount": 0.0, "deductible": 0.0, "copayment": 0.0, "payable_amount": 0.0, "warnings": ["No active policy terms are available. Ingest a policy edition in Policy management first."], "policy_terms_missing": ["active_policy_terms"], "policy_terms": {}}
     result["policy_source"] = f"{active_policy['policy_number']} — {active_policy['version_label']}" if active_policy else "none"
     result = _reconcile_result(result, total)
+    result["history_flags"] = check_similar_past_rejections(user_id, result.get("line_item_results") or [], policy_number or "")
     with db() as conn:
         conn.execute("INSERT INTO rule_evaluations VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), claim_id, result["rule_version"], result["status"], json.dumps(result), utc_now()))
         conn.execute("UPDATE claims SET status=?, updated_at=? WHERE claim_id=?", (result["status"], utc_now(), claim_id))
@@ -1345,7 +1364,7 @@ def _render_claimant_result(user: dict) -> None:
                 "Amount approved": float(item_result.get("covered_amount") or 0),
                 "Status": _line_item_status_label(item_result.get("status")),
                 "Applied rule": str(item_result.get("applied_rule") or "standard").replace("_", " ").title(),
-                "Note": notes_by_index.get(index, ""),
+                "Note": " ".join(part for part in [notes_by_index.get(index, ""), *[str(flag.get("note")) for flag in rules.get("history_flags", []) if flag.get("item_index") == index]] if part),
             })
         with st.expander("Item-wise verification", expanded=False):
             st.caption("Each charge is checked against the available policy terms before claim-level deductible and copayment are applied.")

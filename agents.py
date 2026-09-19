@@ -97,6 +97,8 @@ def recommend_next_steps(decision: dict[str, Any], rules: dict[str, Any]) -> lis
         citations = decision.get("policy_citations") or []
         if status in {"rejected", "partially_approved"} and citations and (status == "rejected" or actionable_items):
             recommendations.append(ESCALATION_GUIDANCE)
+        if rules.get("history_flags"):
+            recommendations.append("This looks similar to a past rejected claim — consider reviewing why before resubmitting, or gathering additional documentation this time.")
         return recommendations[:3]
 
     if status == "manual_review":

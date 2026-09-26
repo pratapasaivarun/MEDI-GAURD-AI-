@@ -1270,6 +1270,11 @@ def _page_header(eyebrow: str, title: str, subtitle: str, icon: str) -> None:
     )
 
 
+def _claimant_progress(step: int, detail: str) -> None:
+    """Show a simple, consistent progress cue through the claimant journey."""
+    st.progress(step / 3, text=f"Step {step} of 3 · {detail}")
+
+
 def _core_demo_user() -> dict[str, Any]:
     """Create the password-protected local admin used by the synthetic demo."""
     demo_email = "demo@mediguard.local"
@@ -1488,6 +1493,7 @@ def _claimant_result_for_claim(claim_id: str, user: dict) -> dict[str, Any] | No
 def _render_claimant_result(user: dict) -> None:
     claims = user_claims(user["user_id"], user)
     _page_header('CLAIM OUTCOME', 'Your claim result', 'A simple view of the policy review, your estimated responsibility, and next steps.', '✓')
+    _claimant_progress(3, "Review your assessment")
     if not claims:
         st.info("You do not have a claim yet.")
         if st.button("Register a claim", type="primary"):
@@ -1510,19 +1516,15 @@ def _render_claimant_result(user: dict) -> None:
     if status == "manual_review":
         st.warning("Your claim is under review. Some information must be confirmed before a final result can be issued.")
     elif status == "approved":
-        st.success("Your claim has been approved based on the current policy information.")
+        st.success("The automated assessment indicates approval based on the information currently available.")
     elif status == "partially_approved":
-        st.warning("Your claim is partially covered. Some charges were limited or excluded under the policy.")
+        st.warning("The automated assessment indicates partial coverage. Some charges were limited or excluded under the policy.")
     elif status == "rejected":
-        st.error("Your claim is not covered under the current policy result.")
-    with st.container(horizontal=True, horizontal_alignment='left'):
-        st.metric("Total bill", f"INR {result['amount_billed']:,.2f}", border=True)
-        st.metric("Covered by insurance", f"INR {result['amount_covered']:,.2f}", border=True)
-        st.metric("Your responsibility", f"INR {result['amount_claimant_pays']:,.2f}", border=True)
-    with st.container(horizontal=True, horizontal_alignment='left'):
-        st.metric("Excluded / policy-limited", f"INR {result['amount_excluded_or_limited']:,.2f}", border=True)
-        st.metric("Deductible", f"INR {result.get('deductible', 0):,.2f}", border=True)
-        st.metric("Copayment", f"INR {result.get('copayment', 0):,.2f}", border=True)
+        st.error("The automated assessment indicates that the current policy information does not cover this claim.")
+    amount_columns = st.columns(3, gap="medium")
+    amount_columns[0].metric("Total bill", f"INR {result['amount_billed']:,.2f}", border=True)
+    amount_columns[1].metric("Estimated insurance share", f"INR {result['amount_covered']:,.2f}", border=True)
+    amount_columns[2].metric("Estimated amount you pay", f"INR {result['amount_claimant_pays']:,.2f}", border=True)
     with st.container(border=True):
         st.markdown("### What this means for you")
         st.write(result["reason"])
@@ -1544,7 +1546,7 @@ def _render_claimant_result(user: dict) -> None:
     normalized = st.session_state.get(f"normalized_{claim_id}") or {}
     if rules.get("line_item_reconciliation_failed"):
         st.info(str(rules.get("line_item_notice") or _claim_warning_message("line_item_reconciliation_failed")))
-    with st.expander("View amount breakdown", expanded=True):
+    with st.expander("See the amount breakdown", expanded=False):
         st.write(f"Covered amount before deductions: INR {float(rules.get('covered_amount', 0) or 0):,.2f}")
         st.write(f"Deductible: INR {float(result.get('deductible', 0) or 0):,.2f}")
         st.write(f"Copayment: INR {float(result.get('copayment', 0) or 0):,.2f}")
@@ -1767,7 +1769,7 @@ def _render_dashboard(user: dict) -> None:
     with st.container(horizontal=True, horizontal_alignment='left'):
         st.metric('Total claims', len(claims), border=True)
         st.metric('Needs attention', review_count, border=True)
-        st.metric('Approved claims', approved, border=True)
+        st.metric('Approval estimates', approved, border=True, help='Automated assessments marked approved. An authorized reviewer confirms the final determination.')
     with st.container(border=True):
         st.markdown('<div class="mg-section-title">Your claims</div><p class="mg-card-copy">Open a claim to continue the guided review.</p>', unsafe_allow_html=True)
         if not claims:
@@ -1785,7 +1787,11 @@ def _render_dashboard(user: dict) -> None:
                         x.write(f"INR {float(claim_total or 0):,.2f}" if claim_total else 'Amount pending')
                         if y.button('Open', key=f"open_{claim['claim_id']}"):
                             st.session_state.active_claim = claim['claim_id']
-                            st.session_state.page = 'Submit documents' if user['role'] == 'claimant' else 'Claim review'
+                            if user['role'] == 'claimant':
+                                has_result = claim['status'] in {'approved', 'partially_approved', 'rejected', 'manual_review'}
+                                st.session_state.page = 'Claim result' if has_result else 'Submit documents'
+                            else:
+                                st.session_state.page = 'Claim review'
                             st.rerun()
     if user['role'] in {'reviewer','admin'}:
         queue = reviewer_queue(user)
@@ -1798,6 +1804,8 @@ def _render_dashboard(user: dict) -> None:
 
 def _render_register(user: dict) -> None:
     _page_header('NEW CLAIM', 'Register a claim', 'Start with the essentials. You can attach the bill and policy in the next step.', '+')
+    if user['role'] == 'claimant':
+        _claimant_progress(1, "Register your claim")
     with st.container(border=True):
         st.markdown('<div class="mg-section-title">📝 Claim details</div><p class="mg-card-copy">Fields marked by the workflow are checked against uploaded documents later.</p>', unsafe_allow_html=True)
         left,right = st.columns(2, gap='large')
@@ -1827,6 +1835,7 @@ def _render_claim_submission(user: dict) -> None:
     require_role(user, 'claimant')
     claims = user_claims(user['user_id'], user)
     _page_header('DOCUMENTS', 'Submit claim documents', 'Add the policy and bill. We will extract the key details and show a clear result.', '↑')
+    _claimant_progress(2, "Add your documents")
     if not claims:
         st.info('Register a claim first, then return here to add documents.')
         if st.button('Register a claim', type='primary', icon=':material/add_circle:'):

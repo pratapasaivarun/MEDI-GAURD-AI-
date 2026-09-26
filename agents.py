@@ -122,8 +122,8 @@ def recommend_next_steps(decision: dict[str, Any], rules: dict[str, Any]) -> lis
             return finalize([f"Upload the missing document: {field}." for field in missing_fields[:3]])
         if actionable_items:
             description = str(actionable_items[0].get("description") or "this item")
-            return finalize([f"Your claim needs manual review for {description}; our team will contact you."])
-        return finalize(["Your claim needs manual review; our team will contact you."])
+            return finalize([f"Ask an authorized reviewer to check {description} and confirm the applicable policy terms before relying on this assessment."])
+        return finalize(["Ask an authorized reviewer to verify the bill details and applicable policy terms before relying on this assessment."])
 
     if status == "rejected":
         citations = decision.get("policy_citations") or []
@@ -155,9 +155,9 @@ def recommend_next_steps(decision: dict[str, Any], rules: dict[str, Any]) -> lis
     if status == "approved":
         if has_billing_anomaly:
             return finalize(["Review flagged billing items before proceeding."])
-        return finalize(["No action needed — reimbursement is being processed."])
+        return finalize(["Ask an authorized reviewer to confirm this assessment. This prototype does not submit claims or process reimbursement."])
 
-    return finalize(["Your claim needs manual review; our team will contact you."])
+    return finalize(["Ask an authorized reviewer to verify the claim before relying on this assessment."])
 
 
 def _parse_json_response(content: str, list_key: str) -> dict[str, Any]:

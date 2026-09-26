@@ -213,6 +213,28 @@ def build_decision_report(claim: dict[str, Any], normalized: dict[str, Any], rul
     copayment = float(rules.get("copayment", 0) or 0)
     responsibility = max(0, total - float(payable or 0))
     excluded = max(0, responsibility - deductible - copayment)
+    financial_review_pending = status == "manual_review"
+    amount_rows = [("Total medical bill", _money(total))]
+    if financial_review_pending:
+        amount_rows.extend([
+            ("Estimated insurer payment", "Pending reviewer confirmation"),
+            ("Estimated claimant responsibility", "Pending reviewer confirmation"),
+            ("Policy adjustments", "Pending reviewer confirmation"),
+        ])
+        amount_explanation = "Coverage and payment estimates are unavailable until an authorized reviewer confirms the bill details and applicable policy terms."
+    else:
+        amount_rows.extend([
+            ("Covered before cost sharing", _money(rules.get("covered_amount", 0))),
+            ("Deductible", _money(deductible)),
+            ("Copayment", _money(copayment)),
+            ("Estimated insurer payment", _money(payable)),
+            ("Estimated claimant responsibility", _money(responsibility)),
+            ("Excluded or policy-limited", _money(excluded)),
+        ])
+        amount_explanation = (
+            f"The estimated claimant responsibility is {_money(responsibility)}. This includes {_money(deductible)} deductible, "
+            f"{_money(copayment)} copayment, and {_money(excluded)} that is excluded or limited by the available policy information."
+        )
     styles = _styles()
     buffer, doc = _document()
 
@@ -231,20 +253,9 @@ def build_decision_report(claim: dict[str, Any], normalized: dict[str, Any], rul
             ("Policy number", str(claim.get("policy_number") or _value(normalized.get("policy_number")) or "Not available")),
         ]),
         Paragraph("Amount breakdown", styles["heading"]),
-        _details_table([
-            ("Total medical bill", _money(total)),
-            ("Covered before cost sharing", _money(rules.get("covered_amount", 0))),
-            ("Deductible", _money(deductible)),
-            ("Copayment", _money(copayment)),
-            ("Estimated insurer payment", _money(payable)),
-            ("Estimated claimant responsibility", _money(responsibility)),
-            ("Excluded or policy-limited", _money(excluded)),
-        ]),
+        _details_table(amount_rows),
         Paragraph("What this means", styles["heading"]),
-        Paragraph(
-            f"The estimated claimant responsibility is {_money(responsibility)}. This includes {_money(deductible)} deductible, {_money(copayment)} copayment, and {_money(excluded)} that is excluded or limited by the available policy information.",
-            styles["body"],
-        ),
+        Paragraph(amount_explanation, styles["body"]),
     ]
     line_item_results = rules.get("line_item_results") or []
     if decision.get("confidence") is not None:

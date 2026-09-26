@@ -1523,20 +1523,25 @@ def _render_claimant_result(user: dict) -> None:
         st.error("The automated assessment indicates that the current policy information does not cover this claim.")
     amount_columns = st.columns(3, gap="medium")
     amount_columns[0].metric("Total bill", f"INR {result['amount_billed']:,.2f}", border=True)
-    amount_columns[1].metric("Estimated insurance share", f"INR {result['amount_covered']:,.2f}", border=True)
-    amount_columns[2].metric("Estimated amount you pay", f"INR {result['amount_claimant_pays']:,.2f}", border=True)
+    if result["requires_human_review"]:
+        amount_columns[1].metric("Estimated insurance share", "Pending review", border=True)
+        amount_columns[2].metric("Estimated amount you pay", "Pending review", border=True)
+    else:
+        amount_columns[1].metric("Estimated insurance share", f"INR {result['amount_covered']:,.2f}", border=True)
+        amount_columns[2].metric("Estimated amount you pay", f"INR {result['amount_claimant_pays']:,.2f}", border=True)
     with st.container(border=True):
         st.markdown("### What this means for you")
         st.write(result["reason"])
-        st.write(
-            f"The claimant responsibility of INR {result['amount_claimant_pays']:,.2f} includes "
-            f"INR {result['deductible']:,.2f} deductible and INR {result['copayment']:,.2f} copayment. "
-            f"INR {result['amount_excluded_or_limited']:,.2f} is excluded or limited by the policy."
-        )
-        st.caption("Deductible and copayment are policy cost-sharing amounts, not rejected charges. Excluded or policy-limited amounts are charges the policy does not pay.")
         if result["requires_human_review"]:
+            st.write("Coverage and your estimated payment are not available until the bill and applicable policy terms are confirmed.")
             st.caption("This is not a final determination. An authorized reviewer must confirm the result.")
         else:
+            st.write(
+                f"The claimant responsibility of INR {result['amount_claimant_pays']:,.2f} includes "
+                f"INR {result['deductible']:,.2f} deductible and INR {result['copayment']:,.2f} copayment. "
+                f"INR {result['amount_excluded_or_limited']:,.2f} is excluded or limited by the policy."
+            )
+            st.caption("Deductible and copayment are policy cost-sharing amounts, not rejected charges. Excluded or policy-limited amounts are charges the policy does not pay.")
             st.caption("This is decision-support information. Final determination should be confirmed by an authorized reviewer.")
     rules = result.get("rules", {})
     workflow = st.session_state.get(f"workflow_{claim_id}") or {}
@@ -1546,22 +1551,25 @@ def _render_claimant_result(user: dict) -> None:
     normalized = st.session_state.get(f"normalized_{claim_id}") or {}
     if rules.get("line_item_reconciliation_failed"):
         st.info(str(rules.get("line_item_notice") or _claim_warning_message("line_item_reconciliation_failed")))
-    with st.expander("See the amount breakdown", expanded=False):
-        st.write(f"Covered amount before deductions: INR {float(rules.get('covered_amount', 0) or 0):,.2f}")
-        st.write(f"Deductible: INR {float(result.get('deductible', 0) or 0):,.2f}")
-        st.write(f"Copayment: INR {float(result.get('copayment', 0) or 0):,.2f}")
-        st.write(f"Excluded or policy-limited amount: INR {float(result.get('amount_excluded_or_limited', 0) or 0):,.2f}")
-        st.caption("Claimant responsibility equals deductible, copayment, and any excluded or policy-limited amount.")
-        adjustments = []
-        for item in rules.get("results", []):
-            if item.get("status") in {"partial", "fail"}:
-                adjustments.append({"Policy check": str(item.get("rule_id", "")).replace("_", " ").title(), "Effect": item.get("calculation", "Policy adjustment applied"), "Amount affected": item.get("amount")})
-        if adjustments:
-            st.markdown("#### Items or rules affecting coverage")
-            st.dataframe(adjustments, hide_index=True)
-        warnings = rules.get("warnings") or []
-        if warnings:
-            st.write("Calculation notes: " + "; ".join(_claim_warning_message(item) for item in warnings))
+    if result["requires_human_review"]:
+        st.info("The amount breakdown will be available after the reviewer confirms the required information.")
+    else:
+        with st.expander("See the amount breakdown", expanded=False):
+            st.write(f"Covered amount before deductions: INR {float(rules.get('covered_amount', 0) or 0):,.2f}")
+            st.write(f"Deductible: INR {float(result.get('deductible', 0) or 0):,.2f}")
+            st.write(f"Copayment: INR {float(result.get('copayment', 0) or 0):,.2f}")
+            st.write(f"Excluded or policy-limited amount: INR {float(result.get('amount_excluded_or_limited', 0) or 0):,.2f}")
+            st.caption("Claimant responsibility equals deductible, copayment, and any excluded or policy-limited amount.")
+            adjustments = []
+            for item in rules.get("results", []):
+                if item.get("status") in {"partial", "fail"}:
+                    adjustments.append({"Policy check": str(item.get("rule_id", "")).replace("_", " ").title(), "Effect": item.get("calculation", "Policy adjustment applied"), "Amount affected": item.get("amount")})
+            if adjustments:
+                st.markdown("#### Items or rules affecting coverage")
+                st.dataframe(adjustments, hide_index=True)
+            warnings = rules.get("warnings") or []
+            if warnings:
+                st.write("Calculation notes: " + "; ".join(_claim_warning_message(item) for item in warnings))
     billing_anomalies = normalized.get("billing_anomalies") or {}
     bill_date_value = (normalized.get("bill_date") or {}).get("value")
     try:
@@ -1640,7 +1648,8 @@ def _render_claimant_result(user: dict) -> None:
         st.caption("Use the decision report to understand the calculation. Use the appeal-letter draft when you need to request a formal review.")
         final_status = str((workflow.get("decision") or {}).get("status") or rules.get("status") or "manual_review")
         appeal_available = final_status in {"partially_approved", "rejected"}
-        report_col, appeal_col = st.columns(2 if appeal_available else 1, gap="medium")
+        download_columns = st.columns(2 if appeal_available else 1, gap="medium")
+        report_col = download_columns[0]
         with report_col:
             st.download_button(
                 "Download decision report (PDF)",
@@ -1653,6 +1662,7 @@ def _render_claimant_result(user: dict) -> None:
                 help="A clear summary of the current claim outcome, amounts, reasons, and next steps.",
             )
         if appeal_available:
+            appeal_col = download_columns[1]
             with appeal_col:
                 st.download_button(
                     "Download appeal-letter draft (PDF)",
@@ -1688,6 +1698,9 @@ def _claim_answer_from_saved_data(question: str, result: dict[str, Any], normali
     """Answer stable claim facts without depending on model availability."""
     asked = question.lower().strip()
     amount_words = ("how much", "amount", "claim got", "claim receive", "claim received", "payable", "paid", "payout", "covered", "insurance pay", "insurance cover")
+    if result.get("status") == "manual_review":
+        if any(word in asked for word in amount_words) or "deductible" in asked or "copay" in asked or "co-pay" in asked or any(word in asked for word in ("excluded", "not covered", "limited")):
+            return "A coverage or payment estimate is not available yet. An authorized reviewer must confirm the bill details and applicable policy terms first."
     if any(word in asked for word in amount_words):
         return (
             f"The insurance-covered payable amount is {_inr(result.get('amount_covered'))}. "

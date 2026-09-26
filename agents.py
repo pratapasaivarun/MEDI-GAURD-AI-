@@ -1,4 +1,11 @@
-"""One-call LangGraph workflow: retrieval/routing are deterministic; only decision uses the LLM."""
+"""LangGraph agents used after document preprocessing.
+
+The workflow is Document Processing → Supervisor → Policy Agent → Rule Engine
+→ Decision Agent. The Policy Agent retrieves policy evidence only, the Rule
+Engine calculates deterministic outcomes, and the Decision Agent uses the LLM
+to explain the rule result and format the output. Document extraction has no
+LLM fallback.
+"""
 from __future__ import annotations
 
 import json

@@ -1,0 +1,122 @@
+{
+  "timestamp_utc": "2026-09-26T04:08:50.296607+00:00",
+  "synthetic_or_human_review_only": true,
+  "ocr_cer_wer": {
+    "documents_scored": 0,
+    "per_document": [],
+    "mean_cer": "Not Evaluated — Ground Truth/Data Required",
+    "mean_wer": "Not Evaluated — Ground Truth/Data Required"
+  },
+  "retrieval": {
+    "annotated_query_count": 0,
+    "precision_at_1": "Not Evaluated — Ground Truth/Data Required",
+    "precision_at_3": "Not Evaluated — Ground Truth/Data Required",
+    "precision_at_5": "Not Evaluated — Ground Truth/Data Required",
+    "recall_at_3": "Not Evaluated — Ground Truth/Data Required",
+    "recall_at_5": "Not Evaluated — Ground Truth/Data Required",
+    "per_query": []
+  },
+  "model_case_scores": {
+    "rules-only": {
+      "rule_engine": {
+        "cases_scored": 24,
+        "correct": 24,
+        "accuracy": 1.0,
+        "accuracy_percent": 100.0,
+        "confusion_matrix_expected_rows_actual_columns": {
+          "approved": {
+            "approved": 5,
+            "partially_approved": 0,
+            "rejected": 0,
+            "manual_review": 0
+          },
+          "partially_approved": {
+            "approved": 0,
+            "partially_approved": 5,
+            "rejected": 0,
+            "manual_review": 0
+          },
+          "rejected": {
+            "approved": 0,
+            "partially_approved": 0,
+            "rejected": 2,
+            "manual_review": 0
+          },
+          "manual_review": {
+            "approved": 0,
+            "partially_approved": 0,
+            "rejected": 0,
+            "manual_review": 12
+          }
+        }
+      },
+      "decision_agent": {
+        "cases_scored": 0,
+        "correct": 0,
+        "accuracy": "Not Evaluated — Ground Truth/Data Required",
+        "accuracy_percent": "Not Evaluated — Ground Truth/Data Required",
+        "confusion_matrix_expected_rows_actual_columns": {
+          "approved": {
+            "approved": 0,
+            "partially_approved": 0,
+            "rejected": 0,
+            "manual_review": 0
+          },
+          "partially_approved": {
+            "approved": 0,
+            "partially_approved": 0,
+            "rejected": 0,
+            "manual_review": 0
+          },
+          "rejected": {
+            "approved": 0,
+            "partially_approved": 0,
+            "rejected": 0,
+            "manual_review": 0
+          },
+          "manual_review": {
+            "approved": 0,
+            "partially_approved": 0,
+            "rejected": 0,
+            "manual_review": 0
+          }
+        }
+      }
+    }
+  },
+  "evidence_correctness": {
+    "decision_support": {
+      "scored": 0,
+      "supported": 0,
+      "percentage": "Not Evaluated — Ground Truth/Data Required"
+    },
+    "rule_consistency": {
+      "scored": 0,
+      "supported": 0,
+      "percentage": "Not Evaluated — Ground Truth/Data Required"
+    },
+    "review_count": 0,
+    "unsupported_claims_reported": 0
+  },
+  "appeal_quality": {
+    "letters_scored": 0,
+    "scale": "0-2 per rubric item; maximum mean 2",
+    "mean_overall": "Not Evaluated — Ground Truth/Data Required",
+    "mean_by_rubric_item": {
+      "factual_consistency": "Not Evaluated — Ground Truth/Data Required",
+      "policy_consistency": "Not Evaluated — Ground Truth/Data Required",
+      "disputed_items_relevant": "Not Evaluated — Ground Truth/Data Required",
+      "completeness": "Not Evaluated — Ground Truth/Data Required",
+      "fabrication_absent": "Not Evaluated — Ground Truth/Data Required",
+      "clarity": "Not Evaluated — Ground Truth/Data Required",
+      "usefulness": "Not Evaluated — Ground Truth/Data Required"
+    }
+  },
+  "expert_validation": {
+    "status": "Not Evaluated — Ground Truth/Data Required",
+    "qualifying_review_count": 0,
+    "distinct_reviewer_count": 0
+  },
+  "model_comparison": "Not Evaluated — Ground Truth/Data Required",
+  "model_comparison_reason": "A matched 8B and 3B system_results.json run is required. Human-scored quality stays pending until model-specific reviews are entered."
+}

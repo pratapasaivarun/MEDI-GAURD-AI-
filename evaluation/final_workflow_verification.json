@@ -1,0 +1,58 @@
+{
+  "elapsed_seconds": 115.39,
+  "rule_status": "partially_approved",
+  "payable_amount": 49500.0,
+  "decision_status": "partially_approved",
+  "evidence_count": 2,
+  "llm_calls": 1,
+  "reportlab_pdf_bytes": 4645,
+  "appeal_pdf_bytes": 2778,
+  "appeal_letter_ok": true,
+  "case_id": "02_surgery_sublimit",
+  "extracted_bill_fields": {
+    "patient_name": "Aarav Sharma",
+    "hospital_name": "Sunrise Care Hospital",
+    "policy_number": "POL-SYN-PA02-2026",
+    "total_amount": 80000.0
+  },
+  "retrieved_policy_evidence": [
+    {
+      "clause_id": "f4b089733330fec8054c25e6e75597666a7afb3b883f1d97c90cc4c0e580604f",
+      "text": "10% Room limit per day INR 5000 Surgery sub-limit INR 60000 This fictional document is not an insurance contract.",
+      "page": 1,
+      "section": "copayment",
+      "source_name": "policy.pdf",
+      "policy_id": "488b492d-d2f6-4dd1-bd7c-34dc1b2ddfa1",
+      "distance": 0.31235814094543457
+    },
+    {
+      "clause_id": "3bd0a3358deffca65b523539ce8b62e3df9a992cdc0b68da657687b073446a51",
+      "text": "Synthetic Insurance Policy Field / evidence Value SYNTHETIC POLICY DOCUMENT - FOR ACADEMIC TESTING ONLY Policy number POL-SYN-PA02-2026 Policy version Synthetic Test Edition 2026 Effective date 2026-01-01 Annual limit INR 100000",
+      "page": 1,
+      "section": "general",
+      "source_name": "policy.pdf",
+      "policy_id": "488b492d-d2f6-4dd1-bd7c-34dc1b2ddfa1",
+      "distance": 0.3897562623023987
+    }
+  ],
+  "decision_reasons": [
+    "The surgery cost (INR 80,000) exceeds the surgery sub-limit (INR 60,000) as per clause f4b089733330fec8054c25e6e75597666a7afb3b883f1d97c90cc4c0e580604f.",
+    "The policy annual limit (INR 100,000) allows coverage up to INR 60,000 for the surgery under the sub-limit.",
+    "The deductible and copayment calculations are consistent with the policy rules, resulting in a payable amount of INR 49,500 after applying the sub-limit."
+  ],
+  "confidence": 0.95,
+  "embedding_backend": {
+    "configured": "BAAI/bge-small-en-v1.5",
+    "active": "BAAI/bge-small-en-v1.5"
+  },
+  "decision_report_path": "C:\\Users\\prata\\AppData\\Local\\Temp\\academic_e2e_vzaq_h5e\\decision_report.pdf",
+  "appeal_pdf_path": "C:\\Users\\prata\\AppData\\Local\\Temp\\academic_e2e_vzaq_h5e\\appeal_draft.pdf",
+  "q_and_a_question": "What policy coverage applies to this inpatient treatment?",
+  "q_and_a_answer": "The most relevant policy evidence (f4b089733330fec8054c25e6e75597666a7afb3b883f1d97c90cc4c0e580604f) says: 10% Room limit per day INR 5000 Surgery sub-limit INR 60000 This fictional document is not an insurance contract.",
+  "manual_review_case_id": "02_missing_policy_terms",
+  "manual_review_status": "manual_review",
+  "manual_review_reason": [
+    "Policy terms have not been confirmed by a reviewer. Confirm the applicable policy terms before calculation."
+  ],
+  "workflow_complete": true
+}

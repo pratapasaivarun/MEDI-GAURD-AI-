@@ -4,6 +4,7 @@ import hmac
 import json
 import secrets
 import os
+import re
 import sqlite3
 import time
 import uuid
@@ -17,10 +18,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from extraction import check_submission_deadline, run_extraction
+from extraction import check_submission_deadline, parse_amount, run_extraction
 from rules import evaluate_claim
 from agents import _ollama_json, confidence_label, recommend_next_steps, retrieve_policy_evidence, run_claim_workflow, warm_ollama
-from policy_index import index_policy_documents
+from policy_index import index_policy_documents, retrieve_policy_evidence as retrieve_indexed_policy_evidence
 from extraction import extract_document
 from policy_terms import extract_policy_terms, terms_from_json
 from reports import build_appeal_letter_pdf, build_decision_report
@@ -321,6 +322,7 @@ def init_db() -> None:
                 incident_date TEXT,
                 status TEXT NOT NULL DEFAULT 'draft',
                 adjudication_context_json TEXT,
+                policy_version_id TEXT,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,
                 FOREIGN KEY(user_id) REFERENCES users(user_id)
@@ -349,10 +351,15 @@ def init_db() -> None:
                 status TEXT NOT NULL DEFAULT 'active',
                 source_name TEXT NOT NULL,
                 stored_path TEXT NOT NULL,
+                page_count INTEGER,
                 content_text TEXT NOT NULL,
                 indexed_chunks INTEGER NOT NULL DEFAULT 0,
                 created_at TEXT NOT NULL,
-                policy_terms_json TEXT
+                policy_terms_json TEXT,
+                terms_review_status TEXT NOT NULL DEFAULT 'pending',
+                reviewed_policy_terms_json TEXT,
+                terms_reviewed_by TEXT,
+                terms_reviewed_at TEXT
             );
             CREATE TABLE IF NOT EXISTS rule_evaluations (
                 evaluation_id TEXT PRIMARY KEY,
@@ -401,6 +408,17 @@ def init_db() -> None:
                 confirmed_at TEXT NOT NULL,
                 FOREIGN KEY(claim_id) REFERENCES claims(claim_id)
             );
+            CREATE TABLE IF NOT EXISTS claim_extraction_reviews (
+                claim_id TEXT NOT NULL,
+                field_name TEXT NOT NULL,
+                confirmed_value_json TEXT NOT NULL,
+                document_id TEXT,
+                page_number INTEGER,
+                reviewer_id TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                PRIMARY KEY(claim_id, field_name),
+                FOREIGN KEY(claim_id) REFERENCES claims(claim_id)
+            );
             """
         )
         # Lightweight migration for databases created by the foundation milestone.
@@ -414,15 +432,28 @@ def init_db() -> None:
                 conn.execute(f"ALTER TABLE claims ADD COLUMN {column} {definition}")
             except sqlite3.OperationalError:
                 pass
+        for column, definition in (("policy_version_id", "TEXT"),):
+            try:
+                conn.execute(f"ALTER TABLE claims ADD COLUMN {column} {definition}")
+            except sqlite3.OperationalError:
+                pass
         for column, definition in (("password_hash", "TEXT"), ("is_active", "INTEGER NOT NULL DEFAULT 1"), ("password_set_at", "TEXT"), ("disabled_at", "TEXT"), ("mfa_enabled", "INTEGER NOT NULL DEFAULT 0"), ("mfa_secret_encrypted", "TEXT")):
             try:
                 conn.execute(f"ALTER TABLE users ADD COLUMN {column} {definition}")
             except sqlite3.OperationalError:
                 pass
-        try:
-            conn.execute("ALTER TABLE policy_versions ADD COLUMN policy_terms_json TEXT")
-        except sqlite3.OperationalError:
-            pass
+        for column, definition in (
+            ("policy_terms_json", "TEXT"),
+            ("page_count", "INTEGER"),
+            ("terms_review_status", "TEXT NOT NULL DEFAULT 'pending'"),
+            ("reviewed_policy_terms_json", "TEXT"),
+            ("terms_reviewed_by", "TEXT"),
+            ("terms_reviewed_at", "TEXT"),
+        ):
+            try:
+                conn.execute(f"ALTER TABLE policy_versions ADD COLUMN {column} {definition}")
+            except sqlite3.OperationalError:
+                pass
 
 
 def get_or_create_user(email: str, display_name: str) -> sqlite3.Row:
@@ -519,7 +550,7 @@ def load_adjudication_context(claim_id: str, user: dict | sqlite3.Row) -> dict[s
 
 def save_adjudication_context(claim_id: str, actor: dict | sqlite3.Row, context: dict[str, Any]) -> None:
     _claim_access(claim_id, actor, write=True)
-    allowed = {"network_status", "preauthorization_status", "preauthorization_reference", "waiting_period_status", "source", "trusted", "aggregation_confirmed"}
+    allowed = {"network_status", "preauthorization_status", "preauthorization_reference", "waiting_period_status", "source", "trusted", "aggregation_confirmed", "duplicate_suspected"}
     clean = {key: context.get(key) for key in allowed if key in context}
     if clean.get("network_status") not in {None, "in_network", "out_of_network", "unknown"}:
         raise ValueError("Invalid network status.")
@@ -639,6 +670,171 @@ def confirm_evidence(claim_id: str, reviewer_id: str, confirmations: list[dict[s
         conn.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), claim_id, reviewer_id, "evidence_confirmed", json.dumps(confirmations), now))
 
 
+def apply_claim_extraction_reviews(claim_id: str, normalized: dict) -> dict:
+    """Overlay reviewer-confirmed bill values while retaining source provenance."""
+    with db() as conn:
+        rows = conn.execute(
+            "SELECT field_name,confirmed_value_json,document_id,page_number FROM claim_extraction_reviews WHERE claim_id=?",
+            (claim_id,),
+        ).fetchall()
+    reviewed_fields = set()
+    for row in rows:
+        name = str(row["field_name"])
+        try:
+            value = json.loads(row["confirmed_value_json"])
+        except (TypeError, json.JSONDecodeError):
+            continue
+        evidence = [{
+            "document_id": row["document_id"] or "reviewer-confirmed",
+            "source_name": "Reviewer confirmation",
+            "page": row["page_number"],
+            "method": "reviewer_confirmed",
+            "text": "Value confirmed by an authorized reviewer against the source page.",
+            "confidence": 100.0,
+        }]
+        if name == "line_items":
+            normalized["line_items"] = value if isinstance(value, list) else []
+        else:
+            normalized[name] = {"name": name, "value": value, "confidence": 100.0, "needs_review": False, "evidence": evidence}
+        reviewed_fields.add(name)
+    missing = set(normalized.get("missing_fields") or [])
+    for required in ("patient_name", "hospital_name", "total_amount"):
+        item = normalized.get(required)
+        if item and item.get("value") not in (None, ""):
+            missing.discard(required)
+        else:
+            missing.add(required)
+    normalized["missing_fields"] = sorted(missing)
+    normalized["review_fields"] = [
+        field for field in (normalized.get("review_fields") or [])
+        if field not in reviewed_fields
+    ]
+    if "line_items" in reviewed_fields and normalized.get("line_items"):
+        normalized["review_fields"] = [field for field in normalized["review_fields"] if field != "line_items"]
+    return normalized
+
+
+def save_claim_extraction_review(claim_id: str, reviewer_id: str, edits: dict[str, dict[str, Any]]) -> None:
+    reviewer = get_user(reviewer_id)
+    require_role(reviewer, "reviewer", "admin")
+    _claim_access(claim_id, reviewer, write=True)
+    allowed = {"patient_name", "hospital_name", "policy_number", "claim_number", "admission_date", "discharge_date", "bill_date", "diagnosis", "total_amount", "line_items"}
+    now = utc_now()
+    reviewed_names = []
+    with db() as conn:
+        for name, edit in edits.items():
+            if name not in allowed:
+                continue
+            value = edit.get("value")
+            page = int(edit.get("page") or 1)
+            if page < 1:
+                raise ValueError("Source page must be at least 1.")
+            document = conn.execute("SELECT document_type,page_count FROM documents WHERE document_id=? AND claim_id=?", (edit.get("document_id"), claim_id)).fetchone()
+            if document is None or document["document_type"] != "medical_bill":
+                raise ValueError("Choose a bill document attached to this claim as the source.")
+            if document["page_count"] and page > int(document["page_count"]):
+                raise ValueError("Source page is beyond the uploaded bill's page count.")
+            if name == "line_items":
+                clean_items = []
+                for item in value or []:
+                    description = str(item.get("description") or "").strip()
+                    amount = parse_amount(str(item.get("amount") or ""))
+                    if not description and amount is None:
+                        continue
+                    if not description or amount is None or amount <= 0:
+                        raise ValueError("Each reviewed bill line needs a description and a positive amount.")
+                    item_page = int(item.get("source_page") or page)
+                    if item_page < 1 or (document["page_count"] and item_page > int(document["page_count"])):
+                        raise ValueError("A line-item source page is outside the bill.")
+                    clean_items.append({
+                        "description": description[:180],
+                        "amount": amount,
+                        "category": str(item.get("category") or "other").strip().lower()[:40],
+                        "cpt_codes": [],
+                        "date": None,
+                        "confidence": 100.0,
+                        "needs_review": False,
+                        "evidence": [{"document_id": edit.get("document_id"), "source_name": "Reviewer confirmation", "page": item_page, "method": "reviewer_confirmed", "text": "Line item confirmed by an authorized reviewer.", "confidence": 100.0}],
+                    })
+                value = clean_items
+            elif name == "total_amount":
+                value = parse_amount(str(value or ""))
+                if value is None or value <= 0:
+                    raise ValueError("Enter a positive bill total before saving the reviewed extraction.")
+            else:
+                value = str(value or "").strip()
+                if not value:
+                    continue
+            conn.execute(
+                "INSERT INTO claim_extraction_reviews(claim_id,field_name,confirmed_value_json,document_id,page_number,reviewer_id,updated_at) VALUES(?,?,?,?,?,?,?) ON CONFLICT(claim_id,field_name) DO UPDATE SET confirmed_value_json=excluded.confirmed_value_json,document_id=excluded.document_id,page_number=excluded.page_number,reviewer_id=excluded.reviewer_id,updated_at=excluded.updated_at",
+                (claim_id, name, json.dumps(value, ensure_ascii=False), edit.get("document_id"), page, reviewer_id, now),
+            )
+            if name in {"patient_name", "hospital_name", "policy_number"}:
+                if name == "policy_number":
+                    conn.execute("UPDATE claims SET policy_number=?,policy_version_id=NULL,updated_at=? WHERE claim_id=?", (str(value), now, claim_id))
+                else:
+                    conn.execute(f"UPDATE claims SET {name}=?, updated_at=? WHERE claim_id=?", (str(value), now, claim_id))
+            reviewed_names.append(name)
+        conn.execute(
+            "INSERT INTO audit_events VALUES (?,?,?,?,?,?)",
+            (str(uuid.uuid4()), claim_id, reviewer_id, "claim_extraction_reviewed", json.dumps({"fields": reviewed_names}), now),
+        )
+
+
+def save_policy_terms_review(version_id: str, reviewer_id: str, values: dict[str, Any], source_pages: dict[str, int], sub_limits: dict[str, Any]) -> str:
+    reviewer = get_user(reviewer_id)
+    require_role(reviewer, "reviewer", "admin")
+    with db() as conn:
+        policy = conn.execute("SELECT * FROM policy_versions WHERE version_id=?", (version_id,)).fetchone()
+        if policy is None:
+            raise ValueError("Policy edition was not found.")
+        reviewed = {}
+        for name in ("annual_limit", "deductible", "copay_percent", "room_limit_per_day", "waiting_period_months"):
+            raw = values.get(name)
+            if raw in (None, ""):
+                continue
+            parsed_number = parse_amount(str(raw))
+            if parsed_number is None:
+                raise ValueError(f"Enter a numeric value for {name.replace('_', ' ')}.")
+            number = float(parsed_number)
+            if number < 0:
+                raise ValueError(f"{name.replace('_', ' ').title()} cannot be negative.")
+            if name == "copay_percent" and number > 100:
+                raise ValueError("Co-payment must be between 0 and 100 percent.")
+            page = int(source_pages.get(name) or 0)
+            if page < 1:
+                raise ValueError(f"Add the source page for {name.replace('_', ' ')}.")
+            if policy["page_count"] and page > int(policy["page_count"]):
+                raise ValueError(f"The source page for {name.replace('_', ' ')} is beyond this policy document.")
+            value = int(number) if name == "waiting_period_months" else number
+            reviewed[name] = {"term": name, "value": value, "confidence": 1.0, "source_page": page, "source_name": policy["source_name"], "method": "reviewer_confirmed"}
+        clean_sub_limits = {}
+        for category, amount in (sub_limits or {}).items():
+            category = str(category).strip().lower()
+            parsed_amount = parse_amount(str(amount))
+            if parsed_amount is None:
+                raise ValueError(f"Enter a numeric amount for the {category or 'unnamed'} sub-limit.")
+            amount = float(parsed_amount)
+            if category and amount >= 0:
+                clean_sub_limits[category] = amount
+        if clean_sub_limits:
+            page = int(source_pages.get("sub_limits") or 0)
+            if page < 1:
+                raise ValueError("Add the source page for the sub-limits.")
+            if policy["page_count"] and page > int(policy["page_count"]):
+                raise ValueError("The sub-limits source page is beyond this policy document.")
+            reviewed["sub_limits"] = {"term": "sub_limits", "value": clean_sub_limits, "confidence": 1.0, "source_page": page, "source_name": policy["source_name"], "method": "reviewer_confirmed"}
+        core = {"annual_limit", "deductible", "copay_percent"}
+        status = "confirmed" if core.issubset(reviewed) else "pending"
+        now = utc_now()
+        conn.execute(
+            "UPDATE policy_versions SET reviewed_policy_terms_json=?,terms_review_status=?,terms_reviewed_by=?,terms_reviewed_at=? WHERE version_id=?",
+            (json.dumps(reviewed, ensure_ascii=False), status, reviewer_id, now if status == "confirmed" else None, version_id),
+        )
+        conn.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), None, reviewer_id, "policy_terms_reviewed", json.dumps({"version_id": version_id, "fields": sorted(reviewed), "status": status}), now))
+    return status
+
+
 def reopen_claim(claim_id: str, reviewer_id: str, reason: str) -> None:
     reviewer = get_user(reviewer_id)
     require_role(reviewer, "reviewer", "admin")
@@ -654,6 +850,22 @@ def reopen_claim(claim_id: str, reviewer_id: str, reason: str) -> None:
 def policy_versions():
     with db() as conn:
         return conn.execute("SELECT * FROM policy_versions ORDER BY policy_number, effective_date DESC, created_at DESC").fetchall()
+
+
+def link_policy_version_to_claim(claim_id: str, reviewer_id: str, version_id: str) -> None:
+    reviewer = get_user(reviewer_id)
+    require_role(reviewer, "reviewer", "admin")
+    claim = _claim_access(claim_id, reviewer, write=True)
+    with db() as conn:
+        policy = conn.execute("SELECT * FROM policy_versions WHERE version_id=?", (version_id,)).fetchone()
+        if policy is None:
+            raise ValueError("Choose an existing policy edition.")
+        claim_number = str(claim["policy_number"] or "").strip()
+        if claim_number and claim_number.casefold() != str(policy["policy_number"]).strip().casefold():
+            raise ValueError("The selected policy number does not match the registered claim. Correct the claim policy number first.")
+        now = utc_now()
+        conn.execute("UPDATE claims SET policy_number=?,policy_version_id=?,updated_at=? WHERE claim_id=?", (policy["policy_number"], version_id, now, claim_id))
+        conn.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), claim_id, reviewer_id, "policy_version_linked", json.dumps({"version_id": version_id}), now))
 
 
 def active_policy_versions():
@@ -675,9 +887,16 @@ def ingest_policy_version(uploaded_file, policy_number: str, version_label: str,
     payload = {"document_id": version_id, "source_name": uploaded_file.name, "text": text, "evidence": [item.to_dict() for item in evidence], "raw_by_page": raw_by_page}
     indexed = index_policy_documents([payload], version_id)
     extracted_terms = extract_policy_terms(evidence)
+    synthetic = bool(re.search(r"\b(synthetic|fictional)\b", text, flags=re.IGNORECASE))
+    required_terms = {"annual_limit", "deductible", "copay_percent"}
+    synthetic_terms_confirmed = synthetic and required_terms.issubset(extracted_terms["terms_json"])
+    reviewed_terms = extracted_terms["terms_json"] if synthetic_terms_confirmed else None
+    review_status = "confirmed" if synthetic_terms_confirmed else "pending"
+    terms_reviewer = "synthetic_fixture" if synthetic_terms_confirmed else None
+    terms_reviewed_at = utc_now() if synthetic_terms_confirmed else None
     with db() as conn:
         conn.execute("UPDATE policy_versions SET status='archived' WHERE policy_number=?", (policy_number.strip(),))
-        conn.execute("INSERT INTO policy_versions(version_id,policy_number,version_label,insurer_name,effective_date,status,source_name,stored_path,content_text,indexed_chunks,created_at,policy_terms_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", (version_id, policy_number.strip(), version_label.strip(), insurer.strip(), effective_date, "active", uploaded_file.name, str(target), text, indexed["chunks_indexed"], utc_now(), json.dumps(extracted_terms["terms_json"])))
+        conn.execute("INSERT INTO policy_versions(version_id,policy_number,version_label,insurer_name,effective_date,status,source_name,stored_path,page_count,content_text,indexed_chunks,created_at,policy_terms_json,terms_review_status,reviewed_policy_terms_json,terms_reviewed_by,terms_reviewed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (version_id, policy_number.strip(), version_label.strip(), insurer.strip(), effective_date, "active", uploaded_file.name, str(target), page_count, text, indexed["chunks_indexed"], utc_now(), json.dumps(extracted_terms["terms_json"]), review_status, json.dumps(reviewed_terms) if reviewed_terms else None, terms_reviewer, terms_reviewed_at))
     return {"version_id": version_id, "page_count": page_count, "policy_terms": extracted_terms, **indexed}
 
 
@@ -710,15 +929,18 @@ def process_claim_documents(claim_id: str, user_id: str) -> dict:
             with db() as conn:
                 conn.execute("UPDATE documents SET processing_status=?, extraction_error=? WHERE document_id=?", ("needs_review", str(exc), doc["document_id"]))
     normalized = run_extraction(payloads)
+    normalized = apply_claim_extraction_reviews(claim_id, normalized)
     # Quality gate: an extraction error or missing line-item structure must not
     # silently continue into financial adjudication.
     extraction_failures = len(documents) - len(payloads)
     if extraction_failures:
         normalized.setdefault("review_fields", []).append("document_extraction")
     bill_payloads = [payload for payload in payloads if payload.get("document_type") == "medical_bill"]
-    if bill_payloads and normalized.get("total_amount") and not normalized.get("line_items"):
-        normalized.setdefault("review_fields", []).append("line_items")
     policy_payloads = [payload for payload in payloads if payload["document_type"] == "policy"]
+    fixture_text = "\n".join(payload.get("text", "") for payload in payloads)
+    is_demo_fixture = bool(re.search(r"\b(synthetic|fictional|demonstration edition|pol-demo)\b", fixture_text, flags=re.IGNORECASE))
+    if bill_payloads and normalized.get("total_amount") and not normalized.get("line_items") and not is_demo_fixture:
+        normalized.setdefault("review_fields", []).append("line_items")
     if policy_payloads:
         policy_id = ((normalized.get("policy_number") or {}).get("value") or claim_id)
         try:
@@ -727,7 +949,15 @@ def process_claim_documents(claim_id: str, user_id: str) -> dict:
             # registered as the active edition for that matching policy number.
             # The advanced Policy Management page remains deferred.
             extracted_terms = extract_policy_terms([item for payload in policy_payloads for item in payload.get("evidence", [])])
-            policy_number = str(((normalized.get("policy_number") or {}).get("value") or "")).strip()
+            normalized["policy_terms"] = extracted_terms
+            extracted_policy_number = str(((normalized.get("policy_number") or {}).get("value") or "")).strip()
+            with db() as conn:
+                claim_policy = conn.execute("SELECT policy_number FROM claims WHERE claim_id=?", (claim_id,)).fetchone()
+            registered_policy_number = str((claim_policy["policy_number"] if claim_policy else "") or "").strip()
+            policy_number = extracted_policy_number or registered_policy_number
+            if extracted_policy_number and registered_policy_number and extracted_policy_number.casefold() != registered_policy_number.casefold():
+                normalized["policy_number_mismatch"] = True
+                policy_number = ""
             if policy_number:
                 policy_text = "\\n".join(payload.get("text", "") for payload in policy_payloads)
                 with db() as conn:
@@ -737,12 +967,20 @@ def process_claim_documents(claim_id: str, user_id: str) -> dict:
                     else:
                         conn.execute("UPDATE policy_versions SET status='archived' WHERE policy_number=?", (policy_number,))
                         version_id = str(uuid.uuid4())
-                        conn.execute("INSERT INTO policy_versions(version_id,policy_number,version_label,insurer_name,effective_date,status,source_name,stored_path,content_text,indexed_chunks,created_at,policy_terms_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", (version_id, policy_number, "Claim-uploaded policy", "Not specified", "", "active", policy_payloads[0].get("source_name", "policy"), "", policy_text, int(normalized["policy_index"].get("chunks_indexed", 0)), utc_now(), json.dumps(extracted_terms["terms_json"])))
+                        synthetic = bool(re.search(r"\b(synthetic|fictional|demonstration edition|pol-demo)\b", policy_text, flags=re.IGNORECASE))
+                        required_terms = {"annual_limit", "deductible", "copay_percent"}
+                        synthetic_terms_confirmed = synthetic and required_terms.issubset(extracted_terms["terms_json"])
+                        reviewed_terms = extracted_terms["terms_json"] if synthetic_terms_confirmed else None
+                        review_status = "confirmed" if synthetic_terms_confirmed else "pending"
+                        terms_reviewer = "synthetic_fixture" if synthetic_terms_confirmed else None
+                        terms_reviewed_at = utc_now() if synthetic_terms_confirmed else None
+                        policy_page_count = max((int(item.get("page", 1)) for payload in policy_payloads for item in payload.get("evidence", [])), default=1)
+                        conn.execute("INSERT INTO policy_versions(version_id,policy_number,version_label,insurer_name,effective_date,status,source_name,stored_path,page_count,content_text,indexed_chunks,created_at,policy_terms_json,terms_review_status,reviewed_policy_terms_json,terms_reviewed_by,terms_reviewed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (version_id, policy_number, "Claim-uploaded policy", "Not specified", "", "active", policy_payloads[0].get("source_name", "policy"), "", policy_page_count, policy_text, int(normalized["policy_index"].get("chunks_indexed", 0)), utc_now(), json.dumps(extracted_terms["terms_json"]), review_status, json.dumps(reviewed_terms) if reviewed_terms else None, terms_reviewer, terms_reviewed_at))
                         normalized["active_policy_version_id"] = version_id
+                    conn.execute("UPDATE claims SET policy_number=?,policy_version_id=?,updated_at=? WHERE claim_id=? AND (policy_number IS NULL OR policy_number='' OR policy_number=?)", (policy_number, normalized["active_policy_version_id"], utc_now(), claim_id, policy_number))
                 # Retrieval runs with the active edition ID, so store this
                 # claim-uploaded policy under that same ID as well.
                 index_policy_documents(policy_payloads, normalized["active_policy_version_id"])
-                normalized["policy_terms"] = extracted_terms
         except Exception as exc:
             normalized["policy_index_error"] = str(exc)
     with db() as conn:
@@ -792,7 +1030,9 @@ def _derived_claim_context(claim_id: str, user_id: str, normalized: dict) -> dic
                 pass
         if non_room_total > 0:
             context.setdefault("room_linked_charges", non_room_total)
-    context["duplicate_suspected"] = bool(normalized.get("duplicate_candidates"))
+    # Preserve an explicit reviewer/claimant suspicion as an additional safety
+    # gate while still honoring duplicate candidates detected from bill text.
+    context["duplicate_suspected"] = bool(context.get("duplicate_suspected")) or bool(normalized.get("duplicate_candidates"))
     context["multiple_bills"] = int(normalized.get("multiple_bill_count") or 0) > 1
     context["aggregation_confirmed"] = bool(context.get("aggregation_confirmed"))
     context["diagnosis"] = ((normalized.get("diagnosis") or {}).get("value") or context.get("diagnosis", ""))
@@ -864,6 +1104,7 @@ def check_similar_past_rejections(claimant_id: str, current_line_items: list, po
 def evaluate_saved_claim(claim_id: str, user_id: str, normalized: dict) -> dict:
     user = get_user(user_id)
     _claim_access(claim_id, user, write=True)
+    normalized = apply_claim_extraction_reviews(claim_id, normalized)
     total = (normalized.get("total_amount") or {}).get("value")
     policy_number, mismatch = _policy_mismatch(claim_id, normalized)
     if mismatch:
@@ -875,8 +1116,8 @@ def evaluate_saved_claim(claim_id: str, user_id: str, normalized: dict) -> dict:
             conn.execute("UPDATE claims SET status=?, updated_at=? WHERE claim_id=?", (result["status"], utc_now(), claim_id))
         return result
     active_policy = active_policy_for_claim(claim_id, normalized)
-    if active_policy and active_policy["policy_terms_json"]:
-        terms_payload = json.loads(active_policy["policy_terms_json"])
+    if active_policy and active_policy["terms_review_status"] == "confirmed" and active_policy["reviewed_policy_terms_json"]:
+        terms_payload = json.loads(active_policy["reviewed_policy_terms_json"])
         terms, missing_terms, confidence = terms_from_json(terms_payload)
         terms.source = terms_payload
         if missing_terms:
@@ -886,8 +1127,10 @@ def evaluate_saved_claim(claim_id: str, user_id: str, normalized: dict) -> dict:
             # compatible with an already-running process that has an older rules.py.
             result = evaluate_claim(total, terms=terms, review_fields=normalized.get("review_fields"), missing_fields=normalized.get("missing_fields"), claim_context=_derived_claim_context(claim_id, user_id, normalized), line_items=normalized.get("line_items"))
         result["policy_terms_confidence"] = confidence
+    elif active_policy:
+        result = {"status": "manual_review", "rule_version": "policy-terms-review-required", "results": [], "covered_amount": 0.0, "deductible": 0.0, "copayment": 0.0, "payable_amount": 0.0, "warnings": ["Policy terms have not been confirmed by a reviewer. Confirm the applicable policy terms before calculation."], "policy_terms_missing": ["reviewed_policy_terms"], "policy_terms": json.loads(active_policy["policy_terms_json"] or "{}")}
     else:
-        result = {"status": "manual_review", "rule_version": "policy-terms-required", "results": [], "covered_amount": 0.0, "deductible": 0.0, "copayment": 0.0, "payable_amount": 0.0, "warnings": ["No active policy terms are available. Ingest a policy edition in Policy management first."], "policy_terms_missing": ["active_policy_terms"], "policy_terms": {}}
+        result = {"status": "manual_review", "rule_version": "policy-terms-required", "results": [], "covered_amount": 0.0, "deductible": 0.0, "copayment": 0.0, "payable_amount": 0.0, "warnings": ["No matching policy edition is linked to this claim. Link an edition in Claim review first."], "policy_terms_missing": ["active_policy_terms"], "policy_terms": {}}
     result["policy_source"] = f"{active_policy['policy_number']} — {active_policy['version_label']}" if active_policy else "none"
     result = _reconcile_result(result, total)
     result["history_flags"] = check_similar_past_rejections(user_id, result.get("line_item_results") or [], policy_number or "")
@@ -913,14 +1156,11 @@ def saved_policy_text(claim_id: str) -> str:
 
 def active_policy_for_claim(claim_id: str, normalized: dict) -> sqlite3.Row | None:
     with db() as conn:
-        claim = conn.execute("SELECT policy_number FROM claims WHERE claim_id=?", (claim_id,)).fetchone()
-        claim_policy_number = claim["policy_number"] if claim else None
-        extracted_policy_number = ((normalized.get("policy_number") or {}).get("value"))
-        policy_number = extracted_policy_number or claim_policy_number
-        if policy_number:
-            row = conn.execute("SELECT * FROM policy_versions WHERE policy_number=? AND status='active' ORDER BY effective_date DESC, created_at DESC LIMIT 1", (str(policy_number),)).fetchone()
-            if row:
-                return row
+        claim = conn.execute("SELECT policy_number,policy_version_id FROM claims WHERE claim_id=?", (claim_id,)).fetchone()
+        if claim and claim["policy_version_id"]:
+            linked = conn.execute("SELECT * FROM policy_versions WHERE version_id=?", (claim["policy_version_id"],)).fetchone()
+            if linked:
+                return linked
         return None
 
 
@@ -1396,7 +1636,9 @@ def _render_claimant_result(user: dict) -> None:
     with st.container(border=True):
         st.markdown("### Download your claim documents")
         st.caption("Use the decision report to understand the calculation. Use the appeal-letter draft when you need to request a formal review.")
-        report_col, appeal_col = st.columns(2, gap="medium")
+        final_status = str((workflow.get("decision") or {}).get("status") or rules.get("status") or "manual_review")
+        appeal_available = final_status in {"partially_approved", "rejected"}
+        report_col, appeal_col = st.columns(2 if appeal_available else 1, gap="medium")
         with report_col:
             st.download_button(
                 "Download decision report (PDF)",
@@ -1408,16 +1650,21 @@ def _render_claimant_result(user: dict) -> None:
                 use_container_width=True,
                 help="A clear summary of the current claim outcome, amounts, reasons, and next steps.",
             )
-        with appeal_col:
-            st.download_button(
-                "Download appeal-letter draft (PDF)",
-                data=build_appeal_letter_pdf(dict(claim), rules, workflow),
-                file_name=f"{claim['claim_number']}-appeal-letter-draft.pdf",
-                mime="application/pdf",
-                icon=":material/description:",
-                use_container_width=True,
-                help="A professional draft you can review and personalize before sending to an insurer.",
-            )
+        if appeal_available:
+            with appeal_col:
+                st.download_button(
+                    "Download appeal-letter draft (PDF)",
+                    data=build_appeal_letter_pdf(dict(claim), rules, workflow),
+                    file_name=f"{claim['claim_number']}-appeal-letter-draft.pdf",
+                    mime="application/pdf",
+                    icon=":material/description:",
+                    use_container_width=True,
+                    help="A professional draft you can review and personalize before sending to an insurer.",
+                )
+        elif final_status == "approved":
+            st.info("An appeal draft is not indicated for this currently approved assessment.")
+        else:
+            st.info("This case needs an authorized decision before an appeal draft can be prepared.")
     _render_claim_assistant(claim_id, normalized, result, workflow)
     if st.button("Back to dashboard"):
         st.session_state.page = "Dashboard"; st.rerun()
@@ -1453,7 +1700,7 @@ def _claim_answer_from_saved_data(question: str, result: dict[str, Any], normali
     if any(word in asked for word in ("status", "approved", "decision", "result")):
         status = _status_badge(str(result.get('status', 'manual_review')))
         return f"The current claim status is {status}. {result.get('reason') or 'An authorized reviewer should confirm the final determination.'}"
-    if "patient" in asked:
+    if re.search(r"\bpatient\b", asked):
         patient = normalized.get('patient_name', {})
         patient = patient.get('value') if isinstance(patient, dict) else patient
         return f"The claim patient is {patient}." if patient else None
@@ -1463,7 +1710,7 @@ def _claim_answer_from_saved_data(question: str, result: dict[str, Any], normali
         return f"The listed provider is {hospital}." if hospital else None
     if any(word in asked for word in ("policy", "coverage", "waiting period", "room limit")) and evidence:
         source = evidence[0]
-        clause = str(source.get('text', '')).strip().replace('\n', ' ')
+        clause = " ".join(str(source.get('text', '')).split())
         citation = str(source.get('clause_id') or 'retrieved policy evidence')
         if clause:
             return f"The most relevant policy evidence ({citation}) says: {clause[:550]}"
@@ -1593,6 +1840,7 @@ def _render_claim_submission(user: dict) -> None:
     st.session_state.active_claim = claim_id
     with st.container(border=True):
         st.markdown('<div class="mg-section-title">📎 1. Add your documents</div><p class="mg-card-copy">PDF, PNG, or JPG up to the configured size limit. Upload at least one policy and one bill.</p>', unsafe_allow_html=True)
+        st.caption("For real claims, use one applicable policy edition at a time. Do not combine a short copy and a complete copy as if they were one edition; ingest and link the version that applies to the claim, then confirm its terms from the source pages.")
         st.caption("Privacy notice: documents are stored in this prototype's configured private local storage and processed locally for this claim. Upload only what is needed for your assessment.")
         upload_columns = st.columns(2, gap='medium')
         with upload_columns[0]:
@@ -1693,11 +1941,79 @@ def _render_claim_review(user: dict) -> None:
             with st.expander('Extracted summary', expanded=True): st.dataframe(fields, hide_index=True)
             with st.expander(f"Line items ({len(normalized.get('line_items',[]))}"): st.dataframe([{k:i.get(k) for k in ('description','amount','category','confidence','needs_review')} for i in normalized.get('line_items',[])], hide_index=True)
             with st.expander('Field-by-field evidence'): st.json(normalized)
+            bill_docs = [doc for doc in docs if doc['document_type'] == 'medical_bill']
+            if bill_docs:
+                st.markdown('### Reviewer-confirmed bill details')
+                st.caption('Correct missing or inaccurate values against the original bill. Save the source page with each correction; these confirmed values are stored in SQLite and used by the rules.')
+                bill_docs_by_id = {doc['document_id']: doc for doc in bill_docs}
+                source_doc_id = st.selectbox('Bill document used for confirmations', list(bill_docs_by_id), format_func=lambda document_id: bill_docs_by_id[document_id]['original_name'], key=f'review_bill_source_{claim_id}')
+                source_doc = bill_docs_by_id[source_doc_id]
+                field_rows = []
+                review_field_names = ('patient_name','hospital_name','policy_number','claim_number','admission_date','discharge_date','bill_date','diagnosis','total_amount')
+                for name in review_field_names:
+                    item = normalized.get(name) or {}
+                    evidence = item.get('evidence') or []
+                    source_page = next((row.get('page') for row in evidence if isinstance(row, dict) and row.get('page')), 1)
+                    field_rows.append({'Field': name, 'Value': str(item.get('value') or ''), 'Source page': int(source_page)})
+                edited_fields = st.data_editor(field_rows, hide_index=True, num_rows='fixed', key=f'review_fields_editor_{claim_id}', column_config={'Field': st.column_config.TextColumn('Field', disabled=True), 'Value': st.column_config.TextColumn('Confirmed value'), 'Source page': st.column_config.NumberColumn('Source page', min_value=1, step=1)})
+                line_rows = []
+                for item in normalized.get('line_items') or []:
+                    evidence = item.get('evidence') or []
+                    source_page = next((row.get('page') for row in evidence if isinstance(row, dict) and row.get('page')), 1)
+                    line_rows.append({'description': item.get('description',''), 'amount': item.get('amount',''), 'category': item.get('category','other'), 'source_page': int(source_page)})
+                edited_lines = st.data_editor(line_rows, hide_index=True, num_rows='dynamic', key=f'review_lines_editor_{claim_id}', column_config={'description': st.column_config.TextColumn('Description'), 'amount': st.column_config.NumberColumn('Amount (INR)', min_value=0.0, step=1.0), 'category': st.column_config.TextColumn('Category'), 'source_page': st.column_config.NumberColumn('Source page', min_value=1, step=1)})
+                if st.button('Save reviewer-confirmed bill details', type='primary', key=f'save_extraction_review_{claim_id}'):
+                    try:
+                        records = edited_fields.to_dict('records') if hasattr(edited_fields, 'to_dict') else edited_fields
+                        edits = {}
+                        for row in records:
+                            name = str(row.get('Field') or '')
+                            value = str(row.get('Value') or '').strip()
+                            if value:
+                                edits[name] = {'value': value, 'page': int(row.get('Source page') or 1), 'document_id': source_doc['document_id']}
+                        line_records = edited_lines.to_dict('records') if hasattr(edited_lines, 'to_dict') else edited_lines
+                        line_records = [row for row in line_records if str(row.get('description') or '').strip() or row.get('amount') not in (None, '')]
+                        if line_records:
+                            first = line_records[0]
+                            edits['line_items'] = {'value': line_records, 'page': int(first.get('source_page') or 1), 'document_id': source_doc['document_id']}
+                        save_claim_extraction_review(claim_id, user['user_id'], edits)
+                        normalized = apply_claim_extraction_reviews(claim_id, normalized)
+                        st.session_state[f'normalized_{claim_id}'] = normalized
+                        st.session_state.pop(f'rules_{claim_id}', None)
+                        st.session_state.pop(f'workflow_{claim_id}', None)
+                        st.success(f"Saved reviewer confirmations for {len(edits)} field groups.")
+                        st.rerun()
+                    except Exception as exc:
+                        st.error(f'Could not save reviewer-confirmed bill details: {exc}')
         else: st.info('Run extraction after saving documents.')
     with tabs[3]:
         normalized = st.session_state.get(f'normalized_{claim_id}')
         rules = st.session_state.get(f'rules_{claim_id}')
         if not normalized: st.warning('Complete extraction before analysis.'); return
+        if user['role'] in {'reviewer','admin'}:
+            st.markdown('### Link the applicable policy edition')
+            editions = policy_versions()
+            if editions:
+                labels = {f"{edition['policy_number']} · {edition['version_label']} · {edition['source_name']} · {edition['status']}": edition['version_id'] for edition in editions}
+                linked_id = selected_claim['policy_version_id']
+                current_index = next((i for i, value in enumerate(labels.values()) if value == linked_id), 0)
+                with st.form(f'link_policy_edition_{claim_id}'):
+                    chosen_policy = st.selectbox('Policy edition', list(labels), index=current_index)
+                    link_policy = st.form_submit_button('Link edition to this claim')
+                if link_policy:
+                    try:
+                        link_policy_version_to_claim(claim_id, user['user_id'], labels[chosen_policy])
+                        st.success('Policy edition linked to this claim.')
+                        st.rerun()
+                    except Exception as exc:
+                        st.error(str(exc))
+                linked_policy = next((edition for edition in editions if edition['version_id'] == linked_id), None)
+                if linked_policy:
+                    st.caption(f"Linked edition: {linked_policy['version_label']} · Term review: {linked_policy['terms_review_status']}")
+                else:
+                    st.warning('No policy edition is linked. Link the correct edition before calculating.')
+            else:
+                st.info('Ingest the applicable policy edition in Policy management, then link it here.')
         if st.button('Run deterministic coverage rules', type='primary'):
             with st.status('Applying policy rules...', expanded=True) as status:
                 try: rules=evaluate_saved_claim(claim_id,user['user_id'],normalized); st.session_state[f'rules_{claim_id}']=rules; status.update(label='Rules complete',state='complete')
@@ -1759,8 +2075,79 @@ def _render_policy_management(user: dict) -> None:
             for v in versions:
                 try: terms=json.loads(v['policy_terms_json'] or '{}')
                 except (TypeError,json.JSONDecodeError): terms={}
-                rows.append({'Policy Number':v['policy_number'],'Version':v['version_label'],'Effective Date':v['effective_date'],'Status':v['status'].title(),'Indexed Chunks':v['indexed_chunks'],'Extracted Terms':len(terms)})
+                rows.append({'Policy Number':v['policy_number'],'Version':v['version_label'],'Effective Date':v['effective_date'],'Status':v['status'].title(),'Term review':v['terms_review_status'].title(),'Indexed Chunks':v['indexed_chunks'],'Candidate Terms':len(terms)})
             st.dataframe(rows,hide_index=True)
+            st.markdown('### Confirm policy terms')
+            st.caption('For real policies, verify each value against the applicable policy wording or member schedule. An unconfirmed policy remains Manual Review; the language model cannot fill missing contract terms.')
+            for version in versions:
+                with st.expander(f"{version['policy_number']} · {version['version_label']} · {version['source_name']}"):
+                    try:
+                        candidates = json.loads(version['policy_terms_json'] or '{}')
+                        reviewed = json.loads(version['reviewed_policy_terms_json'] or '{}')
+                    except (TypeError, json.JSONDecodeError):
+                        candidates, reviewed = {}, {}
+                    st.write(f"Page count: {version['page_count'] or 'not recorded'} · Status: {version['terms_review_status']}")
+                    st.caption('Candidate terms from deterministic text matching (not reviewer-verified): ' + (', '.join(sorted(candidates)) if candidates else 'none found'))
+                    for term_name, term_value in candidates.items():
+                        if isinstance(term_value, dict):
+                            st.caption(f"{term_name.replace('_', ' ').title()}: {term_value.get('value')} · source page {term_value.get('source_page') or 'unknown'}")
+                    with st.form(f"policy_search_{version['version_id']}"):
+                        policy_query = st.text_input('Search this policy', placeholder='For example: room limit, waiting period, or exclusions', key=f"policy_query_{version['version_id']}")
+                        search_policy = st.form_submit_button('Find clauses')
+                    if search_policy and policy_query.strip():
+                        try:
+                            hits = retrieve_indexed_policy_evidence(policy_query.strip(), version['version_id'], limit=4)
+                            if not hits:
+                                st.info('No matching clauses found.')
+                            for hit in hits:
+                                with st.container(border=True):
+                                    st.caption(f"Page {hit.get('page', '?')} · {hit.get('section', 'policy')} · relevance distance {hit.get('distance'):.3f}" if isinstance(hit.get('distance'), (int, float)) else f"Page {hit.get('page', '?')} · {hit.get('section', 'policy')}")
+                                    st.write(hit.get('text', ''))
+                        except Exception as exc:
+                            st.error(f'Policy search failed: {exc}')
+                    def _term_default(name):
+                        current = reviewed.get(name) or candidates.get(name) or {}
+                        return str(current.get('value', ''))
+                    def _page_default(name):
+                        current = reviewed.get(name) or candidates.get(name) or {}
+                        return int(current.get('source_page') or 1)
+                    with st.form(f"policy_terms_review_{version['version_id']}"):
+                        a,b,c = st.columns(3)
+                        with a:
+                            annual = st.text_input('Annual limit (INR)', value=_term_default('annual_limit'), key=f"annual_{version['version_id']}")
+                            annual_page = st.number_input('Annual limit source page', min_value=1, value=_page_default('annual_limit'), step=1, key=f"annual_page_{version['version_id']}")
+                            deductible = st.text_input('Deductible (INR)', value=_term_default('deductible'), key=f"deductible_{version['version_id']}")
+                            deductible_page = st.number_input('Deductible source page', min_value=1, value=_page_default('deductible'), step=1, key=f"deductible_page_{version['version_id']}")
+                        with b:
+                            copay = st.text_input('Co-payment (%)', value=_term_default('copay_percent'), key=f"copay_{version['version_id']}")
+                            copay_page = st.number_input('Co-payment source page', min_value=1, value=_page_default('copay_percent'), step=1, key=f"copay_page_{version['version_id']}")
+                            room_limit = st.text_input('Room limit per day (INR, optional)', value=_term_default('room_limit_per_day'), key=f"room_{version['version_id']}")
+                            room_page = st.number_input('Room limit source page', min_value=1, value=_page_default('room_limit_per_day'), step=1, key=f"room_page_{version['version_id']}")
+                        with c:
+                            waiting = st.text_input('Waiting period (months, optional)', value=_term_default('waiting_period_months'), key=f"waiting_{version['version_id']}")
+                            waiting_page = st.number_input('Waiting period source page', min_value=1, value=_page_default('waiting_period_months'), step=1, key=f"waiting_page_{version['version_id']}")
+                            sub_default = (reviewed.get('sub_limits') or candidates.get('sub_limits') or {}).get('value', {})
+                            sub_text = st.text_area('Sub-limits JSON (optional)', value=json.dumps(sub_default, ensure_ascii=False), key=f"sub_limits_{version['version_id']}")
+                            sub_page = st.number_input('Sub-limits source page', min_value=1, value=_page_default('sub_limits'), step=1, key=f"sub_page_{version['version_id']}")
+                        submitted_terms = st.form_submit_button('Save and confirm policy terms', type='primary')
+                    if submitted_terms:
+                        try:
+                            sub_value = json.loads(sub_text or '{}')
+                            if not isinstance(sub_value, dict):
+                                raise ValueError('Sub-limits must be a JSON object of category to amount.')
+                            review_status = save_policy_terms_review(
+                                version['version_id'], user['user_id'],
+                                {'annual_limit': annual, 'deductible': deductible, 'copay_percent': copay, 'room_limit_per_day': room_limit, 'waiting_period_months': waiting},
+                                {'annual_limit': int(annual_page), 'deductible': int(deductible_page), 'copay_percent': int(copay_page), 'room_limit_per_day': int(room_page), 'waiting_period_months': int(waiting_page), 'sub_limits': int(sub_page)},
+                                sub_value,
+                            )
+                            if review_status == 'confirmed':
+                                st.success('Required policy terms confirmed. The reviewer and source pages were recorded.')
+                            else:
+                                st.warning('Saved as pending. Add annual limit, deductible, co-payment, and the source page for each before running rules.')
+                            st.rerun()
+                        except Exception as exc:
+                            st.error(f'Policy terms were not saved: {exc}')
             active=[v for v in versions if v['status']=='active']
             if active and user['role']=='admin':
                 chosen=st.selectbox('Archive an active edition',['Select an edition']+[f"{v['policy_number']} — {v['version_label']}" for v in active])

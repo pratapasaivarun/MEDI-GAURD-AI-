@@ -7,8 +7,10 @@ pydantic>=2.8.0
 pytesseract>=0.3.13
 Pillow>=10.0.0
 langgraph>=0.2.0
-langchain-ollama>=0.2.0
+# langchain-ollama is not used; agents communicate with Ollama via direct HTTP (requests).
 chromadb>=0.5.0
+# Required for the configured BGE-small-v1.5 Chroma embedding function.
+sentence-transformers>=3.0.0
 reportlab>=4.2.0
 cryptography>=43.0.0
 pyotp>=2.9.0

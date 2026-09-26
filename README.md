@@ -1,13 +1,17 @@
 # Medi Gaurd AI
 
 Medi Gaurd AI is a local Streamlit mini-project that demonstrates a clear,
-evidence-led health-insurance claim workflow. It extracts synthetic medical
-bills and policy documents, applies deterministic coverage rules, retrieves
-relevant policy clauses, and presents an explainable result for a reviewer or
-claimant.
+evidence-led health-insurance claim workflow. Its tracked walkthrough and
+evaluation fixtures are synthetic. For privately supplied real documents, it
+supports reviewer correction of extracted bill data and confirmation of policy
+terms before rule calculation. It applies deterministic coverage rules,
+retrieves relevant policy clauses, and presents an explainable result for a
+reviewer or claimant.
 
-> This is an academic prototype using synthetic demonstration material. It is
-> not an insurer decision system and must not be used with real patient data.
+> This is an academic prototype. Synthetic demo files are safe to share; private
+> bills and policy PDFs belong in the ignored `TEST/` folder or other local
+> storage and must not be committed. Decisions require human verification; this
+> is not an insurer decision system.
 
 ## What it demonstrates
 
@@ -23,15 +27,14 @@ claimant.
 
 ```mermaid
 flowchart LR
-    A[Streamlit UI] --> B[SQLite and private storage]
-    A --> C[Document extraction]
-    C --> D[Normalized claim data]
-    D --> E[Deterministic coverage rules]
-    C --> F[Chroma policy retrieval]
-    F --> G[Local Ollama explanation]
-    E --> H[Reviewer sign-off]
-    G --> H
-    H --> I[Claim result and reports]
+    A[Document Processing] --> B[Deterministic Supervisor]
+    B --> C[Policy Agent: retrieve clauses]
+    C --> D[Rule Engine: calculate outcome]
+    D --> E[Decision Agent: explain and format]
+    E --> F[Report and appeal draft]
+    F --> G[Reviewer sign-off]
+    H[Streamlit UI] --> B
+    H --> I[SQLite and private storage]
 ```
 
 ## Run locally
@@ -40,8 +43,12 @@ flowchart LR
 
 - Python 3.11 or newer
 - [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) installed locally
-- [Ollama](https://ollama.com/) with `ibm/granite4.1:8b` available for the
-  agent workflow
+- On Windows, set `TESSERACT_CMD` to the installed `tesseract.exe` path if it
+  is not at `C:\Program Files\Tesseract-OCR\tesseract.exe`.
+- The first policy-index operation downloads the configured BGE-small-v1.5
+  weights; `HF_HOME` defaults to `.venv/hf-cache` and can be overridden.
+- [Ollama](https://ollama.com/) with `ibm/granite4.1:8b` pulled locally for the
+  agent workflow (`ollama pull ibm/granite4.1:8b`)
 
 ### Setup
 
@@ -59,6 +66,15 @@ Start the normal local application:
 ```powershell
 .\.venv\Scripts\python.exe -m streamlit run app.py
 ```
+
+Run the existing script-based checks through pytest:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest
+```
+
+The pytest configuration runs the checks in isolated subprocesses and excludes
+generated runtime data under `data/` from test discovery.
 
 Open `http://127.0.0.1:8505`.
 
@@ -128,6 +144,10 @@ reports.py                PDF decision report and appeal draft generation
 fixtures/phase4/          Tracked OCR and rule-test fixtures
 demo_assets/              Small synthetic files for the walkthrough
 test_*.py                 Reproducible verification scripts
+tests/                    Focused pytest checks
+evaluation/               Synthetic evaluation inputs and results
+PROJECT_AUDIT_REPORT.md   Project and evaluation audit
+TEST/                     Ignored local-only real document inputs
 ```
 
 ## Limits

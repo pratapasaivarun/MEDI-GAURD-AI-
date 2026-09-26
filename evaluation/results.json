@@ -1,0 +1,922 @@
+{
+  "timestamp_utc": "2026-09-26T03:56:40.679961+00:00",
+  "evaluation_type": "synthetic prototype evaluation; not real-world performance",
+  "environment": {
+    "python": "3.13.1",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "configured_ollama_model": "ibm/granite4.1:8b",
+    "ollama": {
+      "available": true,
+      "models": [
+        "ibm/granite4.1:8b"
+      ]
+    },
+    "tesseract_cmd": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
+  },
+  "dataset": {
+    "synthetic_only": true,
+    "source": "fixtures/claim_scenarios/case_index.json",
+    "scenario_count": 24,
+    "category_counts": {
+      "approved": 5,
+      "partially_approved": 5,
+      "rejected": 2,
+      "manual_review": 12
+    },
+    "cases": [
+      {
+        "case_id": "01_standard_approved",
+        "expected_decision": "approved",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {},
+        "case_manifest": "fixtures\\claim_scenarios\\approved\\01_standard_approved\\case.json"
+      },
+      {
+        "case_id": "02_annual_limit_boundary",
+        "expected_decision": "approved",
+        "expected_bill_total": 100000,
+        "reviewer_context_required": {},
+        "case_manifest": "fixtures\\claim_scenarios\\approved\\02_annual_limit_boundary\\case.json"
+      },
+      {
+        "case_id": "03_below_deductible",
+        "expected_decision": "approved",
+        "expected_bill_total": 3000,
+        "reviewer_context_required": {},
+        "case_manifest": "fixtures\\claim_scenarios\\approved\\03_below_deductible\\case.json"
+      },
+      {
+        "case_id": "04_zero_copayment",
+        "expected_decision": "approved",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {},
+        "case_manifest": "fixtures\\claim_scenarios\\approved\\04_zero_copayment\\case.json"
+      },
+      {
+        "case_id": "05_zero_deductible",
+        "expected_decision": "approved",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {},
+        "case_manifest": "fixtures\\claim_scenarios\\approved\\05_zero_deductible\\case.json"
+      },
+      {
+        "case_id": "01_annual_limit_exceeded",
+        "expected_decision": "partially_approved",
+        "expected_bill_total": 140000,
+        "reviewer_context_required": {},
+        "case_manifest": "fixtures\\claim_scenarios\\partially_approved\\01_annual_limit_exceeded\\case.json"
+      },
+      {
+        "case_id": "02_surgery_sublimit",
+        "expected_decision": "partially_approved",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {
+          "coverage_category": "surgery"
+        },
+        "case_manifest": "fixtures\\claim_scenarios\\partially_approved\\02_surgery_sublimit\\case.json"
+      },
+      {
+        "case_id": "03_room_limit_proportional",
+        "expected_decision": "partially_approved",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {
+          "room_charge": 30000,
+          "room_days": 3,
+          "room_linked_charges": 50000
+        },
+        "case_manifest": "fixtures\\claim_scenarios\\partially_approved\\03_room_limit_proportional\\case.json"
+      },
+      {
+        "case_id": "04_waiting_period_partial",
+        "expected_decision": "partially_approved",
+        "expected_bill_total": 100000,
+        "reviewer_context_required": {
+          "waiting_period_status": "not_satisfied",
+          "waiting_period_affected_amount": 40000,
+          "unrelated_eligible_amount": 60000,
+          "trusted": true
+        },
+        "case_manifest": "fixtures\\claim_scenarios\\partially_approved\\04_waiting_period_partial\\case.json"
+      },
+      {
+        "case_id": "05_combined_sublimit_costshare",
+        "expected_decision": "partially_approved",
+        "expected_bill_total": 100000,
+        "reviewer_context_required": {
+          "coverage_category": "surgery"
+        },
+        "case_manifest": "fixtures\\claim_scenarios\\partially_approved\\05_combined_sublimit_costshare\\case.json"
+      },
+      {
+        "case_id": "01_confirmed_exclusion",
+        "expected_decision": "rejected",
+        "expected_bill_total": 100000,
+        "reviewer_context_required": {
+          "exclusion_match": {
+            "matched": true,
+            "confidence": 0.99
+          }
+        },
+        "case_manifest": "fixtures\\claim_scenarios\\rejected\\01_confirmed_exclusion\\case.json"
+      },
+      {
+        "case_id": "02_out_of_network",
+        "expected_decision": "rejected",
+        "expected_bill_total": 100000,
+        "reviewer_context_required": {
+          "network_status": "out_of_network",
+          "trusted": true
+        },
+        "case_manifest": "fixtures\\claim_scenarios\\rejected\\02_out_of_network\\case.json"
+      },
+      {
+        "case_id": "01_policy_number_mismatch",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {},
+        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\01_policy_number_mismatch\\case.json"
+      },
+      {
+        "case_id": "02_missing_policy_terms",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {},
+        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\02_missing_policy_terms\\case.json"
+      },
+      {
+        "case_id": "03_invalid_bill_total",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 0,
+        "reviewer_context_required": {},
+        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\03_invalid_bill_total\\case.json"
+      },
+      {
+        "case_id": "04_incomplete_bill_fields",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {},
+        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\04_incomplete_bill_fields\\case.json"
+      },
+      {
+        "case_id": "05_low_quality_scan",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {},
+        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\05_low_quality_scan\\case.json"
+      },
+      {
+        "case_id": "06_waiting_period_unconfirmed",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {
+          "waiting_period_status": "unknown"
+        },
+        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\06_waiting_period_unconfirmed\\case.json"
+      },
+      {
+        "case_id": "07_preauthorization_unconfirmed",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {
+          "preauthorization_status": "not_confirmed",
+          "trusted": true
+        },
+        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\07_preauthorization_unconfirmed\\case.json"
+      },
+      {
+        "case_id": "08_network_status_unknown",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {
+          "network_status": "unknown"
+        },
+        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\08_network_status_unknown\\case.json"
+      },
+      {
+        "case_id": "09_possible_exclusion",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 100000,
+        "reviewer_context_required": {
+          "exclusion_match": {
+            "matched": false,
+            "confidence": 0.5
+          }
+        },
+        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\09_possible_exclusion\\case.json"
+      },
+      {
+        "case_id": "10_room_basis_missing",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 30000,
+        "reviewer_context_required": {
+          "room_charge": 30000,
+          "room_days": 3
+        },
+        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\10_room_basis_missing\\case.json"
+      },
+      {
+        "case_id": "11_multiple_bills_unconfirmed",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {
+          "multiple_bills": true,
+          "aggregation_confirmed": false
+        },
+        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\11_multiple_bills_unconfirmed\\case.json"
+      },
+      {
+        "case_id": "12_possible_duplicate_charge",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {
+          "duplicate_suspected": true
+        },
+        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\12_possible_duplicate_charge\\case.json"
+      }
+    ]
+  },
+  "annotations_file": "evaluation\\annotations.json",
+  "extraction": {
+    "dataset": "fixtures/phase4/ground_truth.json (synthetic_only=true)",
+    "documents_tested": 6,
+    "fields_evaluated": 24,
+    "correct_fields": 19,
+    "incorrect_or_missing_fields": 5,
+    "accuracy": 0.7916666666666666,
+    "accuracy_percent": 79.17,
+    "ocr_field_accuracy": {
+      "correct_fields": 11,
+      "fields_evaluated": 16,
+      "accuracy_percent": 68.75
+    },
+    "digital_pdf_field_accuracy": {
+      "correct_fields": 8,
+      "fields_evaluated": 8,
+      "accuracy_percent": 100.0
+    },
+    "field_scope": [
+      "patient_name",
+      "hospital_name",
+      "policy_number",
+      "total_amount"
+    ],
+    "field_details": [
+      {
+        "document": "bill_selectable_text.pdf",
+        "extraction_methods": [
+          "pymupdf"
+        ],
+        "ocr_attempted": false,
+        "field_results": {
+          "patient_name": {
+            "expected": "Alex Morgan",
+            "actual": "Alex Morgan",
+            "correct": true
+          },
+          "hospital_name": {
+            "expected": "North Star General Hospital",
+            "actual": "North Star General Hospital",
+            "correct": true
+          },
+          "policy_number": {
+            "expected": "POL-SYN-1001",
+            "actual": "POL-SYN-1001",
+            "correct": true
+          },
+          "total_amount": {
+            "expected": 145000.0,
+            "actual": 145000.0,
+            "correct": true
+          }
+        },
+        "field_count": 4,
+        "correct_fields": 4,
+        "timing": {
+          "mean_seconds": 0.084988,
+          "median_seconds": 0.004482,
+          "min_seconds": 0.004151,
+          "max_seconds": 0.246332
+        }
+      },
+      {
+        "document": "bill_phone_photo.png",
+        "extraction_methods": [
+          "tesseract"
+        ],
+        "ocr_attempted": true,
+        "field_results": {
+          "patient_name": {
+            "expected": "Alex Morgan",
+            "actual": "Alex Morgan",
+            "correct": true
+          },
+          "hospital_name": {
+            "expected": "North Star General Hospital",
+            "actual": "North Star General Hospital",
+            "correct": true
+          },
+          "policy_number": {
+            "expected": "POL-SYN-1001",
+            "actual": "POL-SYN-1001",
+            "correct": true
+          },
+          "total_amount": {
+            "expected": 145000.0,
+            "actual": 145000.0,
+            "correct": true
+          }
+        },
+        "field_count": 4,
+        "correct_fields": 4,
+        "timing": {
+          "mean_seconds": 1.484275,
+          "median_seconds": 1.05591,
+          "min_seconds": 1.053737,
+          "max_seconds": 2.343179
+        }
+      },
+      {
+        "document": "bill_low_light.jpg",
+        "extraction_methods": [],
+        "ocr_attempted": true,
+        "field_results": {
+          "patient_name": {
+            "expected": "Alex Morgan",
+            "actual": null,
+            "correct": false
+          },
+          "hospital_name": {
+            "expected": "North Star General Hospital",
+            "actual": null,
+            "correct": false
+          },
+          "policy_number": {
+            "expected": "POL-SYN-1001",
+            "actual": null,
+            "correct": false
+          },
+          "total_amount": {
+            "expected": 145000.0,
+            "actual": null,
+            "correct": false
+          }
+        },
+        "field_count": 4,
+        "correct_fields": 0,
+        "timing": {
+          "mean_seconds": 0.710668,
+          "median_seconds": 0.481621,
+          "min_seconds": 0.46915,
+          "max_seconds": 1.181233
+        }
+      },
+      {
+        "document": "bill_skewed_compressed.jpg",
+        "extraction_methods": [
+          "tesseract"
+        ],
+        "ocr_attempted": true,
+        "field_results": {
+          "patient_name": {
+            "expected": "Alex Morgan",
+            "actual": "Alex Morgan",
+            "correct": true
+          },
+          "hospital_name": {
+            "expected": "North Star General Hospital",
+            "actual": null,
+            "correct": false
+          },
+          "policy_number": {
+            "expected": "POL-SYN-1001",
+            "actual": "POL-SYN-1001",
+            "correct": true
+          },
+          "total_amount": {
+            "expected": 145000.0,
+            "actual": 145000.0,
+            "correct": true
+          }
+        },
+        "field_count": 4,
+        "correct_fields": 3,
+        "timing": {
+          "mean_seconds": 0.96528,
+          "median_seconds": 0.963984,
+          "min_seconds": 0.846459,
+          "max_seconds": 1.085397
+        }
+      },
+      {
+        "document": "bill_multi_page.pdf",
+        "extraction_methods": [
+          "pymupdf"
+        ],
+        "ocr_attempted": false,
+        "field_results": {
+          "patient_name": {
+            "expected": "Alex Morgan",
+            "actual": "Alex Morgan",
+            "correct": true
+          },
+          "hospital_name": {
+            "expected": "North Star General Hospital",
+            "actual": "North Star General Hospital",
+            "correct": true
+          },
+          "policy_number": {
+            "expected": "POL-SYN-1001",
+            "actual": "POL-SYN-1001",
+            "correct": true
+          },
+          "total_amount": {
+            "expected": 145000.0,
+            "actual": 145000.0,
+            "correct": true
+          }
+        },
+        "field_count": 4,
+        "correct_fields": 4,
+        "timing": {
+          "mean_seconds": 0.004425,
+          "median_seconds": 0.004724,
+          "min_seconds": 0.003809,
+          "max_seconds": 0.004743
+        }
+      },
+      {
+        "document": "bill_scanned_image_only.pdf",
+        "extraction_methods": [
+          "tesseract"
+        ],
+        "ocr_attempted": true,
+        "field_results": {
+          "patient_name": {
+            "expected": "Alex Morgan",
+            "actual": "Alex Morgan",
+            "correct": true
+          },
+          "hospital_name": {
+            "expected": "North Star General Hospital",
+            "actual": "North Star General Hospital",
+            "correct": true
+          },
+          "policy_number": {
+            "expected": "POL-SYN-1001",
+            "actual": "POL-SYN-1001",
+            "correct": true
+          },
+          "total_amount": {
+            "expected": 145000.0,
+            "actual": 145000.0,
+            "correct": true
+          }
+        },
+        "field_count": 4,
+        "correct_fields": 4,
+        "timing": {
+          "mean_seconds": 1.061627,
+          "median_seconds": 1.071543,
+          "min_seconds": 1.038112,
+          "max_seconds": 1.075227
+        }
+      }
+    ],
+    "document_processing_timing": {
+      "mean_seconds": 0.718544,
+      "median_seconds": 0.905221,
+      "min_seconds": 0.003809,
+      "max_seconds": 2.343179
+    },
+    "ocr_document_count": 4,
+    "ocr_timing": {
+      "mean_seconds": 1.055463,
+      "median_seconds": 1.054823,
+      "min_seconds": 0.46915,
+      "max_seconds": 2.343179
+    },
+    "ocr_cer": "Not Evaluated — Ground Truth/Data Required",
+    "ocr_wer": "Not Evaluated — Ground Truth/Data Required",
+    "ocr_documents_scored_for_text": 0,
+    "ocr_metric_normalization": "Unicode NFC; whitespace collapsed; CER is case-sensitive; WER tokenization is case-insensitive.",
+    "ocr_note": "CER/WER are scored only when annotations.json contains a manually verified reference_text for that document.",
+    "ocr_documents": [
+      {
+        "document": "bill_phone_photo.png",
+        "ground_truth_text": null,
+        "ocr_text": "MEDICAL BILL - SYNTHETIC FIXTURE\nClaim Number: CLM-SYN-1001\nPatient Name: Alex Morgan\nHospital: North Star General Hospital\nPolicy Number: POL-SYN-1001\nAdmission Date: 2026-07-10\nDischarge Date: 2026-07-13\nDiagnosis: Acute appendicitis\nRoom charges: INR 18000\nDoctor consultation: INR 12000\nSurgery and procedure: INR 85000\nMedicines: INR 14000\nDiagnostic tests: INR 16000\nTotal Amount: INR 145000",
+        "cer": null,
+        "wer": null,
+        "status": "Not Evaluated — Ground Truth/Data Required"
+      },
+      {
+        "document": "bill_low_light.jpg",
+        "ground_truth_text": null,
+        "ocr_text": "",
+        "cer": null,
+        "wer": null,
+        "status": "Not Evaluated — Ground Truth/Data Required"
+      },
+      {
+        "document": "bill_skewed_compressed.jpg",
+        "ground_truth_text": null,
+        "ocr_text": "SYNTHETIC FIXTURE\nMEDICAL BILL -\nClaim Number: CLM-SYN-1001\nPatient Name: Alex Morgan\nNorth Star General Hospital\nHospital:\nPolicy Number: POL-SYN-1001\nAdmission Date: 2026-07-10\nDischarge Date: 2026-07-13\nDiagnosis: Acute appendicitis\nRoom charges: INR 18000\nconsultation: INR 12000\nDoctor\nand procedure: INR 85000\nSurgery\nMedicines: INR 44000\nDiagnostic tests: INR 16000\nTotal Amount: INR 145000",
+        "cer": null,
+        "wer": null,
+        "status": "Not Evaluated — Ground Truth/Data Required"
+      },
+      {
+        "document": "bill_scanned_image_only.pdf",
+        "ground_truth_text": null,
+        "ocr_text": "MEDICAL BILL - SYNTHETIC FIXTURE\nClaim Number: CLM-SYN-1001\nPatient Name: Alex Morgan\nHospital: North Star General Hospital\nPolicy Number: POL-SYN-1001\nAdmission Date: 2026-07-10\nDischarge Date: 2026-07-13\nDiagnosis: Acute appendicitis\nRoom charges: INR 18000\nDoctor consultation: INR 12000\nSurgery and procedure: INR 85000\nMedicines: INR 14000\nDiagnostic tests: INR 16000\nTotal Amount: INR 145000",
+        "cer": null,
+        "wer": null,
+        "status": "Not Evaluated — Ground Truth/Data Required"
+      }
+    ]
+  },
+  "retrieval": {
+    "precision_at_1": "Not Evaluated — Ground Truth/Data Required",
+    "precision_at_3": "Not Evaluated — Ground Truth/Data Required",
+    "precision_at_5": "Not Evaluated — Ground Truth/Data Required",
+    "recall_at_3": "Not Evaluated — Ground Truth/Data Required",
+    "recall_at_5": "Not Evaluated — Ground Truth/Data Required",
+    "reason": "No case has manually annotated relevant policy clause/chunk IDs; retrieval scores would be unsupported."
+  },
+  "decision": {
+    "test_cases": 24,
+    "expected_decisions_available": true,
+    "rule_engine": {
+      "status_accuracy": "Not Evaluated — Ground Truth/Data Required",
+      "status_accuracy_percent": null,
+      "scored_cases": 0,
+      "correct_cases": null,
+      "excluded_context_required_cases": 24,
+      "case_results": [
+        {
+          "case_id": "01_standard_approved",
+          "expected_decision": "approved",
+          "rule_engine_status": "approved",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {},
+          "rule_warnings": [
+            "line_item_reconciliation_failed"
+          ]
+        },
+        {
+          "case_id": "02_annual_limit_boundary",
+          "expected_decision": "approved",
+          "rule_engine_status": "approved",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {},
+          "rule_warnings": [
+            "line_item_reconciliation_failed"
+          ]
+        },
+        {
+          "case_id": "03_below_deductible",
+          "expected_decision": "approved",
+          "rule_engine_status": "approved",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {},
+          "rule_warnings": [
+            "line_item_reconciliation_failed"
+          ]
+        },
+        {
+          "case_id": "04_zero_copayment",
+          "expected_decision": "approved",
+          "rule_engine_status": "approved",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {},
+          "rule_warnings": [
+            "line_item_reconciliation_failed"
+          ]
+        },
+        {
+          "case_id": "05_zero_deductible",
+          "expected_decision": "approved",
+          "rule_engine_status": "approved",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {},
+          "rule_warnings": [
+            "line_item_reconciliation_failed"
+          ]
+        },
+        {
+          "case_id": "01_annual_limit_exceeded",
+          "expected_decision": "partially_approved",
+          "rule_engine_status": "partially_approved",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {},
+          "rule_warnings": [
+            "line_item_reconciliation_failed"
+          ]
+        },
+        {
+          "case_id": "02_surgery_sublimit",
+          "expected_decision": "partially_approved",
+          "rule_engine_status": "approved",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {
+            "coverage_category": "surgery"
+          },
+          "rule_warnings": [
+            "line_item_reconciliation_failed"
+          ]
+        },
+        {
+          "case_id": "03_room_limit_proportional",
+          "expected_decision": "partially_approved",
+          "rule_engine_status": "approved",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {
+            "room_charge": 30000,
+            "room_days": 3,
+            "room_linked_charges": 50000
+          },
+          "rule_warnings": [
+            "line_item_reconciliation_failed"
+          ]
+        },
+        {
+          "case_id": "04_waiting_period_partial",
+          "expected_decision": "partially_approved",
+          "rule_engine_status": "manual_review",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {
+            "waiting_period_status": "not_satisfied",
+            "waiting_period_affected_amount": 40000,
+            "unrelated_eligible_amount": 60000,
+            "trusted": true
+          },
+          "rule_warnings": [
+            "Policy waiting period of 12 months requires confirmation.",
+            "line_item_reconciliation_failed"
+          ]
+        },
+        {
+          "case_id": "05_combined_sublimit_costshare",
+          "expected_decision": "partially_approved",
+          "rule_engine_status": "approved",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {
+            "coverage_category": "surgery"
+          },
+          "rule_warnings": [
+            "line_item_reconciliation_failed"
+          ]
+        },
+        {
+          "case_id": "01_confirmed_exclusion",
+          "expected_decision": "rejected",
+          "rule_engine_status": "approved",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {
+            "exclusion_match": {
+              "matched": true,
+              "confidence": 0.99
+            }
+          },
+          "rule_warnings": [
+            "line_item_reconciliation_failed"
+          ]
+        },
+        {
+          "case_id": "02_out_of_network",
+          "expected_decision": "rejected",
+          "rule_engine_status": "manual_review",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {
+            "network_status": "out_of_network",
+            "trusted": true
+          },
+          "rule_warnings": [
+            "Policy requires network-provider confirmation.",
+            "line_item_reconciliation_failed"
+          ]
+        },
+        {
+          "case_id": "01_policy_number_mismatch",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "approved",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {},
+          "rule_warnings": [
+            "line_item_reconciliation_failed"
+          ]
+        },
+        {
+          "case_id": "02_missing_policy_terms",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "manual_review",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {},
+          "rule_warnings": [
+            "Required policy terms missing: deductible, copay_percent",
+            "line_item_reconciliation_failed"
+          ]
+        },
+        {
+          "case_id": "03_invalid_bill_total",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "manual_review",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {},
+          "rule_warnings": [
+            "total_amount_missing_or_invalid"
+          ]
+        },
+        {
+          "case_id": "04_incomplete_bill_fields",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "manual_review",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {},
+          "rule_warnings": [
+            "Missing required fields: patient_name, total_amount"
+          ]
+        },
+        {
+          "case_id": "05_low_quality_scan",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "approved",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {},
+          "rule_warnings": [
+            "line_item_reconciliation_failed"
+          ]
+        },
+        {
+          "case_id": "06_waiting_period_unconfirmed",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "manual_review",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {
+            "waiting_period_status": "unknown"
+          },
+          "rule_warnings": [
+            "Policy waiting period of 12 months requires confirmation.",
+            "line_item_reconciliation_failed"
+          ]
+        },
+        {
+          "case_id": "07_preauthorization_unconfirmed",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "manual_review",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {
+            "preauthorization_status": "not_confirmed",
+            "trusted": true
+          },
+          "rule_warnings": [
+            "Policy requires pre-authorization confirmation.",
+            "line_item_reconciliation_failed"
+          ]
+        },
+        {
+          "case_id": "08_network_status_unknown",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "manual_review",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {
+            "network_status": "unknown"
+          },
+          "rule_warnings": [
+            "Policy requires network-provider confirmation.",
+            "line_item_reconciliation_failed"
+          ]
+        },
+        {
+          "case_id": "09_possible_exclusion",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "approved",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {
+            "exclusion_match": {
+              "matched": false,
+              "confidence": 0.5
+            }
+          },
+          "rule_warnings": [
+            "line_item_reconciliation_failed"
+          ]
+        },
+        {
+          "case_id": "10_room_basis_missing",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "approved",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {
+            "room_charge": 30000,
+            "room_days": 3
+          },
+          "rule_warnings": [
+            "line_item_reconciliation_failed"
+          ]
+        },
+        {
+          "case_id": "11_multiple_bills_unconfirmed",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "manual_review",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {
+            "multiple_bills": true,
+            "aggregation_confirmed": false
+          },
+          "rule_warnings": [
+            "Multiple bills require reviewer confirmation before aggregation.",
+            "line_item_reconciliation_failed"
+          ]
+        },
+        {
+          "case_id": "12_possible_duplicate_charge",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "approved",
+          "correct": null,
+          "scored": false,
+          "reviewer_context_required": {
+            "duplicate_suspected": true
+          },
+          "rule_warnings": [
+            "line_item_reconciliation_failed"
+          ]
+        }
+      ],
+      "note": "Rule-engine status only; not Decision Agent accuracy. All scenario statuses remain unscored until the harness mirrors app-level policy matching, upload selection, and trusted reviewer context.",
+      "reason": "A direct rule-call prototype did not mirror the application's policy-number, upload-selection, and reviewer-context gates; case accuracy is therefore not reported."
+    },
+    "decision_agent_accuracy": "Not Evaluated — Ground Truth/Data Required",
+    "confusion_matrix": "Not Evaluated — Ground Truth/Data Required",
+    "reason": "Scenario manifests label expected status, but they lack complete annotated rule inputs, expected rule traces, and per-run decision outputs."
+  },
+  "evidence_support": "Not Evaluated — Ground Truth/Data Required",
+  "appeal_quality": {
+    "score": "Not Evaluated — Ground Truth/Data Required",
+    "rubric": {
+      "0": "Incorrect",
+      "1": "Partially correct",
+      "2": "Correct"
+    },
+    "reason": "Requires case-level factual/policy answer keys and expert review; no expert annotations are present."
+  },
+  "latency": {
+    "document_processing": {
+      "mean_seconds": 0.718544,
+      "median_seconds": 0.905221,
+      "min_seconds": 0.003809,
+      "max_seconds": 2.343179
+    },
+    "ocr": {
+      "mean_seconds": 1.055463,
+      "median_seconds": 1.054823,
+      "min_seconds": 0.46915,
+      "max_seconds": 2.343179
+    },
+    "retrieval": "Not Evaluated — Ground Truth/Data Required",
+    "rule_engine": "Not Evaluated — Ground Truth/Data Required",
+    "decision_agent": "Not Evaluated — Ground Truth/Data Required",
+    "report_generation": "Not Evaluated — Ground Truth/Data Required",
+    "end_to_end": "Not Evaluated — Ground Truth/Data Required",
+    "reason": "Only extraction/document-processing timing is measured by this runner; no isolated reproducible full workflow harness is in the repository."
+  },
+  "model_comparison": {
+    "8b": "Not Evaluated — Ground Truth/Data Required",
+    "3b": "Not Evaluated — Ground Truth/Data Required",
+    "reason": "Only the configured 8B model is present in Ollama; matched 8B/3B scoring requires both models and quality annotations."
+  },
+  "expert_validation": "Not Evaluated — Ground Truth/Data Required",
+  "limitations": [
+    "synthetic dataset",
+    "limited claim scenarios",
+    "OCR sensitivity to document quality",
+    "policy wording varies across insurers",
+    "CPU-only target configuration",
+    "no large-scale expert validation",
+    "3B model unavailable for matched comparison",
+    "sentence-transformers unavailable; BGE retrieval evaluation not run"
+  ]
+}

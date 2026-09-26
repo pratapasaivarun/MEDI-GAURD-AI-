@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "dataset_notice": "Only manually verified transcripts, clause relevance labels, and human review scores belong here. Existing synthetic case outcome labels are read directly from their case.json manifests.",
+  "ocr_transcripts": [
+    {"document_id": "bill_phone_photo.png", "reference_text": null, "verified_by": null, "verified_at": null},
+    {"document_id": "bill_low_light.jpg", "reference_text": null, "verified_by": null, "verified_at": null},
+    {"document_id": "bill_skewed_compressed.jpg", "reference_text": null, "verified_by": null, "verified_at": null},
+    {"document_id": "bill_scanned_image_only.pdf", "reference_text": null, "verified_by": null, "verified_at": null}
+  ],
+  "retrieval_queries": [],
+  "case_ground_truth": [],
+  "evidence_reviews": [],
+  "appeal_reviews": []
+}

@@ -292,6 +292,29 @@ def _infer_line_category(description: str) -> str:
     return "other"
 
 
+
+# Matches CPT / procedure codes in two forms:
+#   Labelled  – "CPT 99213", "ICD-10 Z00.00", "Procedure Code: 27447"
+#   Bare      – standalone 5-digit numeric code, e.g. "27447"
+_CPT_PATTERN = re.compile(
+    r"\b(?:CPT|ICD[-\s]?(?:10|9)|Procedure\s+Code)[:\s#-]*([A-Z0-9]{2,7}(?:\.[A-Z0-9]{1,4})?)"
+    r"|(?<![0-9])([0-9]{5})(?![0-9])",
+    re.IGNORECASE,
+)
+
+
+def _extract_cpt_codes(text: str) -> list[str]:
+    """Return all unique CPT / ICD procedure codes found in *text*, preserving order."""
+    seen: set[str] = set()
+    codes: list[str] = []
+    for match in _CPT_PATTERN.finditer(text):
+        code = (match.group(1) or match.group(2) or "").strip().upper()
+        if code and code not in seen:
+            seen.add(code)
+            codes.append(code)
+    return codes
+
+
 def _extract_line_items(text: str, evidence: list[Evidence]) -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
     pattern = re.compile(r"^\s*([A-Za-z][A-Za-z /&()'_-]{2,80})\s*[:\-]\s*(?:INR|Rs\.?|₹|USD|\$)?\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)\s*$", re.IGNORECASE)
@@ -302,12 +325,25 @@ def _extract_line_items(text: str, evidence: list[Evidence]) -> list[dict[str, A
         description = re.sub(r"\s+", " ", match.group(1)).strip()
         if re.search(r"^(total|grand total|amount payable|net payable|subtotal|discount|tax)\b", description, re.IGNORECASE):
             continue
+        if re.search(r"\b(?:policy|claim|member|patient|insured|certificate|uhid|invoice|bill)\b", description, re.IGNORECASE) or re.match(r"^(?:POL|CLM)[-/]", description, re.IGNORECASE):
+            continue
         amount = parse_amount(match.group(2))
         if amount is None or amount <= 0:
             continue
         source = next((item for item in evidence if line.strip().lower() in item.text.lower()), evidence[0] if evidence else None)
         confidence = source.confidence if source else 0.0
-        items.append({"description": description, "amount": amount, "category": _infer_line_category(description), "date": None, "confidence": confidence, "needs_review": confidence < OCR_REVIEW_THRESHOLD, "evidence": [source.to_dict()] if source else []})
+        # Extract any CPT / ICD-10 procedure code that appears on the same line.
+        cpt_codes = _extract_cpt_codes(line)
+        items.append({
+            "description": description,
+            "amount": amount,
+            "category": _infer_line_category(description),
+            "cpt_codes": cpt_codes,
+            "date": None,
+            "confidence": confidence,
+            "needs_review": confidence < OCR_REVIEW_THRESHOLD,
+            "evidence": [source.to_dict()] if source else [],
+        })
     return items
 
 
@@ -398,20 +434,27 @@ def normalize_documents(documents: list[dict[str, Any]]) -> NormalizedClaim:
         ev = next((x for x in evidence if matched and matched.lower() in x.text.lower()), best)
         return _field(name, value, ev)
 
-    claim.patient_name = find([r"(?:patient|member|insured)\s*name\s*(?:[:#-]\s*)?([^\n]+)", r"patient\s*(?:[:#-]\s*)?([^\n]+)"], "patient_name")
+    claim.patient_name = find([r"(?:patient|member|insured)\s*name\s*(?:[:#-]\s*)?([^\n]+)", r"(?<![A-Za-z-])patient\s*(?:[:#-]\s*)?([^\n]+)"], "patient_name")
     claim.hospital_name = find([
         # Digital PDFs commonly place this compound label and its value on
         # adjacent lines; match it before the looser hospital/provider rule.
         r"hospital\s*/\s*provider\s*(?:[:#-]\s*)?([^\n]+)",
         r"(?:hospital|provider|facility)\s*(?:name)?\s*(?:[:#-]\s*)?([^\n]+)",
     ], "hospital_name")
-    claim.policy_number = find([r"(?:policy|member)\s*(?:no|number|id)\s*(?:[:#-]\s*)?([A-Z0-9/-]+)"], "policy_number")
-    claim.claim_number = find([r"claim\s*(?:no|number|id)\s*(?:[:#-]\s*)?([A-Z0-9/-]+)"], "claim_number")
-    claim.admission_date = find([r"(?:admission(?:\s+date)?|admit|date\s+of\s+admission)\s*(?:[:#-]\s*)?([0-9]{1,4}[/-][0-9]{1,2}[/-][0-9]{1,4})"], "admission_date")
-    claim.discharge_date = find([r"(?:discharge(?:\s+date)?|date of discharge)\s*(?:[:#-]\s*)?([0-9]{1,4}[/-][0-9]{1,2}[/-][0-9]{1,4})"], "discharge_date")
-    claim.bill_date = find([r"(?:bill|invoice)\s*date\s*(?:[:#-]\s*)?([0-9]{1,4}[/-][0-9]{1,2}[/-][0-9]{1,4})"], "bill_date")
+    claim.policy_number = find([
+        r"(?:policy|member)\s*(?:no|number|id)\.?\s*(?:of\s+(?:the\s+)?patient\s*)?(?:[:#-]\s*)?([A-Z0-9/-]+)",
+        r"policy\s*(?:no|number)\.?\s*(?:of\s+(?:the\s+)?insured\s*)?(?:[:#-]\s*)?([A-Z0-9/-]+)",
+    ], "policy_number")
+    claim.claim_number = find([r"claim\s*(?:no|number|id)\.?\s*(?:[:#-]\s*)?([A-Z0-9/-]+)"], "claim_number")
+    date_value = r"([0-9]{1,4}[./-][0-9]{1,2}[./-][0-9]{1,4}|[0-9]{1,2}\s+[A-Za-z]{3,9}\s+[0-9]{4})"
+    claim.admission_date = find([rf"(?:admission(?:\s+date)?|admit|date\s+of\s+admission)\s*(?:[:#-]\s*)?{date_value}"], "admission_date")
+    claim.discharge_date = find([rf"(?:discharge(?:\s+date)?|date\s+of\s+discharge)\s*(?:[:#-]\s*)?{date_value}"], "discharge_date")
+    claim.bill_date = find([rf"(?:bill|invoice)\s*date\s*(?:[:#-]\s*)?{date_value}"], "bill_date")
     claim.diagnosis = find([r"diagnosis\s*(?:[:#-]\s*)?([^\n]+)"], "diagnosis")
-    claim.total_amount = find([r"(?:grand total|total amount|net payable|amount payable|total)\s*(?:[:#-]\s*)?(?:rs\.?|inr|₹|\$)?\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)", r"(?:grand total|total amount|net payable|amount payable|total)\s*(?:[:#-]\s*)?([0-9][0-9,]*(?:\.[0-9]{1,2})?)\s*(?:rs\.?|inr|₹|\$)?"], "total_amount", amount=True)
+    claim.total_amount = find([
+        r"(?:net\s+bill\s+amount|gross\s+bill\s+amount|grand\s+total|total\s+amount|net\s+payable|amount\s+payable|invoice\s+total|bill\s+total|total)\s*(?:[:#-]\s*)?(?:rs\.?|inr|₹|\$)?\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)",
+        r"(?:net\s+bill\s+amount|gross\s+bill\s+amount|grand\s+total|total\s+amount|net\s+payable|amount\s+payable|invoice\s+total|bill\s+total|total)\s*(?:[:#-]\s*)?([0-9][0-9,]*(?:\.[0-9]{1,2})?)\s*(?:rs\.?|inr|₹|\$)?",
+    ], "total_amount", amount=True)
     claim.line_items = _extract_line_items(all_text, evidence)
     claim.duplicate_candidates = detect_duplicate_charges(claim.line_items)
     claim.billing_anomalies = {

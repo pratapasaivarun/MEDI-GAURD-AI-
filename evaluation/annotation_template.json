@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "dataset_notice": "Fill only from manually verified synthetic-source material or independent review. Do not infer annotations from system outputs.",
+  "ocr_transcripts": [
+    {
+      "document_id": "bill_phone_photo.png",
+      "reference_text": null,
+      "verified_by": null,
+      "verified_at": null
+    },
+    {
+      "document_id": "bill_low_light.jpg",
+      "reference_text": null,
+      "verified_by": null,
+      "verified_at": null
+    },
+    {
+      "document_id": "bill_skewed_compressed.jpg",
+      "reference_text": null,
+      "verified_by": null,
+      "verified_at": null
+    },
+    {
+      "document_id": "bill_scanned_image_only.pdf",
+      "reference_text": null,
+      "verified_by": null,
+      "verified_at": null
+    }
+  ],
+  "retrieval_queries": [
+    {
+      "query_id": "",
+      "case_id": "",
+      "query": "",
+      "relevant_clause_ids": [],
+      "annotated_by": null,
+      "annotated_at": null
+    }
+  ],
+  "case_ground_truth": [
+    {
+      "case_id": "",
+      "expected_rule_status": null,
+      "expected_decision": null,
+      "expected_rule_values": {},
+      "expected_extracted_fields": {},
+      "verified_by": null,
+      "verified_at": null
+    }
+  ],
+  "evidence_reviews": [
+    {
+      "case_id": "",
+      "model_name": "",
+      "evidence_supports_decision": null,
+      "rule_result_consistent": null,
+      "unsupported_claims": [],
+      "reviewer_id": null,
+      "reviewer_qualification": null,
+      "independent": null,
+      "reviewed_at": null
+    }
+  ],
+  "appeal_reviews": [
+    {
+      "case_id": "",
+      "model_name": "",
+      "factual_consistency": null,
+      "policy_consistency": null,
+      "disputed_items_relevant": null,
+      "completeness": null,
+      "fabrication_absent": null,
+      "clarity": null,
+      "usefulness": null,
+      "reviewer_id": null,
+      "reviewer_qualification": null,
+      "independent": null,
+      "reviewed_at": null
+    }
+  ],
+  "rating_legend": {
+    "0": "Incorrect / absent / unsupported",
+    "1": "Partially correct or incomplete",
+    "2": "Correct and complete",
+    "binary_fields": "Use true/false only after reviewing the complete case evidence and generated artifact."
+  }
+}

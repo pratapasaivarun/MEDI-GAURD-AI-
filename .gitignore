@@ -8,6 +8,7 @@
 
 # Patient, policy, database, and generated data
 data/
+TEST/
 *.db
 *.sqlite
 *.sqlite3
@@ -53,3 +54,18 @@ EXTRA/
 REFERNCE DATASETS/
 sample_documents/
 project_snapshot*.zip
+
+# Temporary test-run session directories created by pytest / audit scripts
+academic_e2e_*/
+audit_regression_*/
+audit_fallback_*/
+demo_scenarios_*/
+ui_audit_*/
+e2e_s*/
+final_demo/
+final_regression_*/
+scenario_check_*/
+debug_line_*/
+verify_*/
+chroma/
+chroma_e2e/

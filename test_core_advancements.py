@@ -61,7 +61,7 @@ assert "line_item_results" not in fallback_prompt["rules"]
 
 # Next-step guidance is deterministic, status-aware, and works when the
 # itemized result is unavailable on the aggregate fallback path.
-assert agents.recommend_next_steps({"status": "approved"}, {"warnings": []}) == ["No action needed — reimbursement is being processed."]
+assert agents.recommend_next_steps({"status": "approved"}, {"warnings": []}) == ["Ask an authorized reviewer to confirm this assessment. This prototype does not submit claims or process reimbursement."]
 assert agents.recommend_next_steps(
     {"status": "approved"},
     {"warnings": [], "line_item_results": [], "billing_anomalies": {"duplicates": [], "price_outliers": [{"reason": "amount is 10x the median"}]}},
@@ -94,7 +94,7 @@ fallback_next_steps = agents.recommend_next_steps(
     {"status": "manual_review"},
     {"line_item_results": [], "warnings": ["line_item_reconciliation_failed"]},
 )
-assert fallback_next_steps == ["Your claim needs manual review; our team will contact you."]
+assert fallback_next_steps == ["Ask an authorized reviewer to verify the bill details and applicable policy terms before relying on this assessment."]
 
 # Billing anomalies preserve exact duplicate detection and add fuzzy matching
 # and category-aware price outlier checks.

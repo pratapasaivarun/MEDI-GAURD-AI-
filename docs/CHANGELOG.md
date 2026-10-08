@@ -7,6 +7,7 @@
 - Bound settlement comparisons to the selected claim and uploaded bill total (tolerance INR 1), made missing totals a manual-review condition, and surfaced missing claim IDs as review reasons. Added five app-path settlement tests, including a spaced/case-variant matching reference.
 - Removed document-keyword shortcuts for policy confirmation and bill-line review. Trusted fixture auto-confirmation now requires `MEDIGUARD_TRUSTED_FIXTURES=true`, a required-term set, and an allowlisted SHA-256 hash; only `run_demo.py` opts in. Added two upload-pipeline tests; the pre-fix keyword-based test failed, and both pass after the change.
 - Removed the legacy status-based appeal PDF from claimant results. Appeal drafts now have a single comparison-gated path and are available only for `possible_discrepancy`; otherwise the UI asks the claimant to upload the insurer settlement letter. Added status-gate tests; full suite: **71 passed**.
+- Persisted settlement and comparison dataclasses as JSON with Decimal values encoded as strings, tied each result to its settlement document SHA-256, and added an idempotent SQLite table creation migration. Claimant/reviewer views hydrate empty session state from the saved result. A reload-state test passes.
 
 ## Phase 0 - Baseline and safe defaults
 

@@ -6,6 +6,7 @@
 - Settlement references are normalized by removing spaces and hyphens and comparing case-insensitively. A missing reference is recorded as a review reason and still forces a manual-review result; absent or materially mismatched bill totals also block reliance.
 - Fixture auto-confirmation is allowed only in the isolated demo launcher, behind `MEDIGUARD_TRUSTED_FIXTURES`, and only for a bundled policy whose SHA-256 is in `config/trusted_fixtures.json`. Text inside an uploaded document is never trusted as fixture provenance.
 - The comparison-based appeal workflow is the only claimant appeal-download path. A decision status alone does not establish a settlement discrepancy.
+- Persisted comparison results are only reused while a current settlement document with the saved SHA-256 remains attached to the same claim. Decimal values serialize as strings and are reconstructed as Decimal on load.
 
 ## Phase 0
 

@@ -11,7 +11,8 @@ import sqlite3
 import time
 import uuid
 from datetime import date, datetime, timezone
-from decimal import Decimal
+from dataclasses import fields, is_dataclass
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
@@ -33,7 +34,8 @@ from reports import (build_decision_report,
     build_comparison_appeal_letter_docx, build_hospital_note_text,
     build_hospital_note_pdf, build_hospital_note_docx)
 from comparison import compare as compare_claim_settlement
-from models import ClaimResult, Clause, LineItem, LineResult, PolicyTerms as TypedPolicyTerms, SettlementData
+from models import (CategoryComparison, ClaimResult, Clause, ComparisonResult, LineItem,
+                    LineResult, PolicyTerms as TypedPolicyTerms, SettlementData, SettlementDeduction)
 from settlement import parse_settlement
 
 APP_DIR = Path(__file__).parent
@@ -368,6 +370,14 @@ def init_db() -> None:
                 created_by TEXT NOT NULL,
                 created_at TEXT NOT NULL,
                 FOREIGN KEY(user_id) REFERENCES users(user_id)
+            );
+            CREATE TABLE IF NOT EXISTS settlement_comparisons (
+                claim_id TEXT PRIMARY KEY,
+                settlement_document_sha256 TEXT NOT NULL,
+                settlement_json TEXT NOT NULL,
+                comparison_json TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY(claim_id) REFERENCES claims(claim_id)
             );
             CREATE TABLE IF NOT EXISTS claims (
                 claim_id TEXT PRIMARY KEY,
@@ -1327,7 +1337,92 @@ def run_settlement_comparison(claim_id: str, user_id: str, normalized: dict, rul
         status="manual_review" if rules.get("status") == "manual_review" else "computed",
         review_reasons=list(rules.get("warnings") or []),
     )
-    return compare_claim_settlement(typed_claim, settlement, typed_terms), settlement
+    comparison = compare_claim_settlement(typed_claim, settlement, typed_terms)
+    if len(settlement_docs) == 1:
+        save_settlement_comparison(claim_id, settlement_docs[0]["sha256"], comparison, settlement)
+    return comparison, settlement
+
+
+def _json_safe(value: Any) -> Any:
+    if isinstance(value, Decimal):
+        return str(value)
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    if is_dataclass(value):
+        return {item.name: _json_safe(getattr(value, item.name)) for item in fields(value)}
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(item) for item in value]
+    return value
+
+
+def save_settlement_comparison(claim_id: str, document_hash: str, comparison, settlement: SettlementData) -> None:
+    with db() as conn:
+        conn.execute(
+            "INSERT INTO settlement_comparisons(claim_id,settlement_document_sha256,settlement_json,comparison_json,created_at) VALUES(?,?,?,?,?) "
+            "ON CONFLICT(claim_id) DO UPDATE SET settlement_document_sha256=excluded.settlement_document_sha256,settlement_json=excluded.settlement_json,comparison_json=excluded.comparison_json,created_at=excluded.created_at",
+            (claim_id, document_hash, json.dumps(_json_safe(settlement)), json.dumps(_json_safe(comparison)), utc_now()),
+        )
+
+
+def _load_settlement_data(payload: dict[str, Any]) -> SettlementData:
+    deductions = [SettlementDeduction(
+        str(row["category"]), Decimal(str(row["amount"])), str(row.get("reason_text", "")), bool(row.get("needs_review", False))
+    ) for row in payload.get("deductions", [])]
+    return SettlementData(
+        payload.get("claim_id"), Decimal(str(payload.get("amount_paid", "0"))), deductions,
+        Decimal(str(payload["copay_applied"])) if payload.get("copay_applied") is not None else None,
+        bool(payload.get("needs_review", False)), list(payload.get("review_reasons", [])),
+        Decimal(str(payload["bill_total"])) if payload.get("bill_total") is not None else None,
+    )
+
+
+def _load_comparison_result(payload: dict[str, Any]) -> ComparisonResult:
+    categories = []
+    for row in payload.get("categories", []):
+        raw_clause = row.get("clause")
+        clause = Clause(str(raw_clause["text"]), int(raw_clause["page"]), raw_clause.get("section")) if raw_clause else None
+        categories.append(CategoryComparison(
+            str(row["category"]), Decimal(str(row["insurer_deducted"])), Decimal(str(row["engine_disallowed"])),
+            Decimal(str(row["difference"])), str(row["status"]), str(row.get("insurer_reason", "")),
+            str(row.get("engine_reason", "")), clause, Decimal(str(row["payout_effect"])),
+        ))
+    return ComparisonResult(
+        Decimal(str(payload["expected_patient_share"])), Decimal(str(payload["actual_patient_share"])),
+        Decimal(str(payload["possible_difference"])), categories, str(payload["status"]),
+        list(payload.get("review_reasons", [])), Decimal(str(payload.get("billed_total", "0"))),
+        Decimal(str(payload.get("actual_insurer_payment", "0"))), Decimal(str(payload.get("expected_insurer_payment", "0"))),
+    )
+
+
+def load_settlement_comparison(claim_id: str, user: dict | sqlite3.Row):
+    _claim_access(claim_id, user)
+    with db() as conn:
+        saved = conn.execute("SELECT * FROM settlement_comparisons WHERE claim_id=?", (claim_id,)).fetchone()
+        settlement_doc = conn.execute("SELECT sha256 FROM documents WHERE claim_id=? AND document_type='settlement' ORDER BY created_at DESC LIMIT 1", (claim_id,)).fetchone()
+    if not saved or not settlement_doc or saved["settlement_document_sha256"] != settlement_doc["sha256"]:
+        return None
+    try:
+        settlement_payload = json.loads(saved["settlement_json"])
+        comparison_payload = json.loads(saved["comparison_json"])
+        return _load_comparison_result(comparison_payload), _load_settlement_data(settlement_payload)
+    except (KeyError, TypeError, ValueError, InvalidOperation, json.JSONDecodeError):
+        return None
+
+
+def get_comparison_for_view(claim_id: str, user: dict | sqlite3.Row, session_state=None):
+    session_state = st.session_state if session_state is None else session_state
+    comparison_key = f"comparison_{claim_id}"
+    settlement_key = f"settlement_{claim_id}"
+    comparison, settlement = session_state.get(comparison_key), session_state.get(settlement_key)
+    if comparison is None or settlement is None:
+        stored = load_settlement_comparison(claim_id, user)
+        if stored:
+            comparison, settlement = stored
+            session_state[comparison_key] = comparison
+            session_state[settlement_key] = settlement
+    return comparison, settlement
 
 
 def saved_policy_text(claim_id: str) -> str:
@@ -1878,8 +1973,7 @@ def _render_claimant_result(user: dict) -> None:
             use_container_width=True,
             help="A clear summary of the current claim outcome, amounts, reasons, and next steps.",
         )
-    comparison = st.session_state.get(f'comparison_{claim_id}')
-    settlement = st.session_state.get(f'settlement_{claim_id}')
+    comparison, settlement = get_comparison_for_view(claim_id, user)
     if comparison and settlement:
         with st.container(border=True):
             _render_settlement_comparison(dict(claim), comparison, settlement)
@@ -2349,8 +2443,7 @@ def _render_claim_review(user: dict) -> None:
     with tabs[4]:
         normalized = st.session_state.get(f'normalized_{claim_id}')
         rules = st.session_state.get(f'rules_{claim_id}')
-        comparison = st.session_state.get(f'comparison_{claim_id}')
-        settlement = st.session_state.get(f'settlement_{claim_id}')
+        comparison, settlement = get_comparison_for_view(claim_id, user)
         settlement_docs = [doc for doc in claim_documents(claim_id, user) if doc['document_type'] == 'settlement']
         if not settlement_docs:
             st.info('Upload and save the insurer settlement letter in Add documents first.')
@@ -2363,8 +2456,7 @@ def _render_claim_review(user: dict) -> None:
                 st.session_state[f'settlement_{claim_id}'] = settlement
             except Exception as exc:
                 st.error(f'Settlement comparison could not be completed: {exc}')
-        comparison = st.session_state.get(f'comparison_{claim_id}')
-        settlement = st.session_state.get(f'settlement_{claim_id}')
+        comparison, settlement = get_comparison_for_view(claim_id, user)
         if comparison and settlement:
             _render_settlement_comparison(dict(selected_claim), comparison, settlement)
     st.caption('Decision support only. Final determination must be confirmed by an authorized reviewer.')

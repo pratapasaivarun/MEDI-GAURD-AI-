@@ -62,7 +62,7 @@ Evidence: [README.md](/C:/MediGaurd%20AI/README.md:68), [app.py](/C:/MediGaurd%2
 - `\.venv\Scripts\python.exe -m pytest -q --basetemp=tmp/pytest_audit` — **61 passed**.
 - `\.venv\Scripts\python.exe -m compileall -q app.py agents.py comparison.py extraction.py models.py policy_index.py policy_terms.py reports.py rules.py settlement.py` — **passed** (no diagnostics).
 - Source search for `_evaluate_claim_total_only` — **no match**.
-- Source search for the literal `Mediguard@2026` — **no match**.
+- Source credential scan found no hardcoded published password.
 - `.env.example` sets `MEDIGUARD_CORE_DEMO=false`.
 - `app.py` contains 21 `unsafe_allow_html` uses; count alone is not a vulnerability finding. The inspected dynamic claim-card/auth markup escapes interpolated values.
 - `evaluation/run_system_evaluation.py --rules-only` — **not completed** during this audit; it loaded model weights and produced no completion output after several minutes, so it was stopped. The unit suite is the completed verification result.

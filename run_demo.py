@@ -11,8 +11,16 @@ os.environ.update({
     'MEDIGUARD_STORAGE_DIR': str(storage),
     'CHROMA_DIR': str(storage / 'chroma'),
     'MEDIGUARD_CORE_DEMO': 'true',
-    'ADMIN_EMAIL': '',
+    'APP_ENV': 'development',
+    'MEDIGUARD_ADMIN_EMAIL': '',
 })
+if os.getenv('MEDIGUARD_ADMIN_PASSWORD'):
+    # The launcher is the sole place that provisions the synthetic demo admin.
+    from app import _core_demo_user, init_db
+    init_db()
+    _core_demo_user()
+else:
+    print('MEDIGUARD_ADMIN_PASSWORD is unset; no demo administrator was created.', flush=True)
 print('Synthetic local demonstration: http://127.0.0.1:8506', flush=True)
 print('Demo claims persist under data/final_demo. Press Ctrl+C to stop.', flush=True)
 raise SystemExit(subprocess.call([sys.executable, '-m', 'streamlit', 'run', str(ROOT / 'app.py'), '--server.port', '8506', '--server.address', '127.0.0.1'], cwd=ROOT))

@@ -160,7 +160,8 @@ def test_10_policy_exclusions():
     )
     context = {"diagnosis": "Bariatric Obesity Surgery", "exclusion_match": {"matched": True, "confidence": 0.95}}
     res = evaluate_claim(150000.0, terms=terms, claim_context=context)
-    assert res["status"] == "rejected"
+    assert res["status"] == "manual_review"
+    assert "DIAGNOSIS_EXCLUSION" in " ".join(res["warnings"])
 
 
 # 11. Partial Approval
@@ -195,15 +196,16 @@ def test_13_manual_review():
 
 # 14. Duplicate Charge Detection
 def test_14_duplicate_charge_detection():
-    # A. Exact Duplicate -> Excluded
+    # A. Exact duplicates are retained and routed to reviewer confirmation.
     items_dup = [
         {"description": "Blood Test CBC", "amount": 1500.0, "date": "10-Aug-2026", "quantity": 1},
         {"description": "Blood Test CBC", "amount": 1500.0, "date": "10-Aug-2026", "quantity": 1},
     ]
     terms = PolicyTerms(annual_limit=Decimal("500000"), deductible=Decimal("0"), copay_percent=Decimal("0"))
     res_a = evaluate_claim(3000.0, terms=terms, line_items=items_dup)
-    assert res_a["line_item_results"][1]["status"] == "excluded"
-    assert res_a["line_item_results"][1]["applied_rule"] == "duplicate_detection"
+    assert res_a["line_item_results"][1]["status"] == "covered"
+    assert res_a["line_item_results"][1]["possible_duplicate"] is True
+    assert res_a["status"] == "manual_review"
 
     # B. Legitimate Repeat Service -> Covered
     items_legit = [
@@ -225,8 +227,8 @@ def test_15_bill_policy_name_mismatch():
     assert verify_patient_name_match("Arun Kumar", "ARUN KUMAR")["result"] == "MATCH"
     # Case & Spacing Variation -> MATCH
     assert verify_patient_name_match("Arun  Kumar", "ARUN KUMAR")["result"] == "MATCH"
-    # Initial Variation -> MINOR_VARIATION (MATCH)
-    assert verify_patient_name_match("Arun K.", "ARUN KUMAR")["result"] == "MINOR_VARIATION"
+    # A shortened surname is not accepted as an identity match.
+    assert verify_patient_name_match("Arun K.", "ARUN KUMAR")["result"] == "MISMATCH"
     # Genuine Mismatch -> MISMATCH
     mismatch = verify_patient_name_match("Rahul Kumar", "ARUN KUMAR")
     assert mismatch["result"] == "MISMATCH"

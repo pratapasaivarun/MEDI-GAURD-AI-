@@ -7,11 +7,11 @@
 
 ## Overview
 
-MediGuard AI analyses medical bills against insurance policy documents and produces a transparent, evidence-backed adjudication result. It is designed for the Indian health insurance market (tested against Star Health and Allied Insurance policy formats) and follows one strict core principle:
+MediGuard AI is an academic prototype for comparing medical bills, policy terms, and insurer settlement letters. Its extraction and calculation paths require source confirmation and human review where evidence is incomplete. No insurer integration or production certification is provided. The current project does not claim validation against a representative set of insurers or policy editions. Its core principle is:
 
 > **Deterministic code determines all financial outcomes. RAG retrieves policy evidence. The LLM explains the result. The LLM never decides the financial outcome.**
 
-The system supports 22 patient-centered insurance scenarios — from simple coverage approval to complex cases involving room-rent caps, ICU limits, duplicate billing, package billing ambiguity, waiting periods, co-payment, cumulative sum-insured exhaustion, and patient-name mismatch.
+The automated scenario suite covers 22 synthetic cases, including room limits, duplicate billing, waiting periods, co-payment, coverage limits, and patient-name mismatch. Passing synthetic tests does not establish real-world claim accuracy.
 
 ---
 
@@ -109,7 +109,7 @@ The system supports 22 patient-centered insurance scenarios — from simple cove
 | 21 | Daycare procedures (0-night stays) | ✅ |
 | 22 | Package billing ambiguity (C11-style) | ✅ |
 
-**Test results:** 22/22 passed in `tests/test_all_22_scenarios.py` (31.44 seconds).
+See the current automated test suite for implementation checks; test results are not a measure of real-world accuracy.
 
 ---
 
@@ -163,9 +163,10 @@ Copy `.env.example` to `.env` and configure:
 | `TESSERACT_CMD` | `C:\Program Files\Tesseract-OCR\tesseract.exe` | Path to Tesseract binary |
 | `OLLAMA_HOST` | `http://localhost:11434` | Ollama server URL |
 | `OLLAMA_MODEL` | `ibm/granite4.1:8b` | LLM model for explanations |
-| `OLLAMA_TIMEOUT` | `120` | Request timeout in seconds |
+| `OLLAMA_TIMEOUT_SECONDS` | `120` | Request timeout in seconds |
 | `HF_HOME` | `.venv/hf-cache` | HuggingFace model cache directory |
-| `DEMO_ADMIN_PASSWORD` | `Mediguard@2026` | Admin dashboard password (change in production) |
+| `MEDIGUARD_CORE_DEMO` | `false` | Enable synthetic demo mode only through `run_demo.py` |
+| `MEDIGUARD_ADMIN_PASSWORD` | unset | Required by `run_demo.py` to provision its isolated demo administrator |
 
 > **Security:** Never commit `.env`. Real patient documents must never be committed to the repository.
 
@@ -184,11 +185,8 @@ Copy `.env.example` to `.env` and configure:
 - Correct extracted fields, override decisions, add notes
 - Sign off for final settlement
 
-**Default demo credentials** (synthetic demo only):
-```
-Email:    demo@mediguard.local
-Password: Mediguard@2026
-```
+The demo administrator is created only when `run_demo.py` is launched with
+`MEDIGUARD_ADMIN_PASSWORD` set. No demo password is published or supplied by default.
 
 ---
 
@@ -213,24 +211,9 @@ Three pre-loaded walkthroughs using files in `demo_assets/`:
 ## Running Tests
 
 ```powershell
-# Full 22-scenario test suite (recommended)
-.\.venv\Scripts\python.exe -m pytest tests/test_all_22_scenarios.py -v
-
-# All tests including real document support
+# Full automated test suite
 .\.venv\Scripts\python.exe -m pytest tests/ -v --basetemp=tmp/pytest_tmp
-
-# Performance benchmark (rule engine + pipeline stages)
-.\.venv\Scripts\python.exe benchmark_performance.py
 ```
-
-**Test results (verified):**
-
-| Suite | Tests | Passed | Duration |
-|---|---|---|---|
-| `test_all_22_scenarios.py` | 22 | 22 | 31.44 s |
-| `test_real_document_support.py` | 2 | 2 | — |
-| `test_legacy_scripts.py` | — | pass | — |
-
 ---
 
 ## Project Structure
@@ -257,10 +240,10 @@ MediGaurd AI/
 │
 ├── tests/                          # Automated test suite
 │   ├── test_all_22_scenarios.py    # 22/22 patient scenario coverage
-│   ├── test_real_document_support.py  # Real Star Health document tests
+│   ├── test_real_document_support.py  # Optional local document checks
 │   ├── test_legacy_scripts.py      # Regression guard for legacy scripts
 │   └── fixtures/
-│       └── real_documents/         # Real Star Health bill + policy PDFs (gitignored)
+│       └── real_documents/         # Optional local documents (gitignored)
 │
 ├── demo_assets/                    # Synthetic PDF walkthroughs (safe to commit)
 │   ├── approved_bill.pdf
@@ -290,16 +273,9 @@ MediGaurd AI/
 
 ---
 
-## Performance (Measured)
+## Performance
 
-| Stage | Time |
-|---|---|
-| Rule engine execution | 4.89 ms |
-| Full 22-scenario test suite | 31.44 s |
-| 1 LLM call per workflow | ~90–120 s (local `ibm/granite4.1:8b`) |
-| Star Health field extraction | 9/9 fields (100% on tested document) |
-
-> End-to-end wall time (~2.7 min uncached) is dominated by the local LLM call. Rule-engine math is deterministic and takes under 5 ms.
+No representative performance or field-accuracy benchmark is currently published. Runtime depends on document length, OCR, local hardware, and whether optional local model assistance is used.
 
 ---
 
@@ -307,20 +283,21 @@ MediGaurd AI/
 
 MediGuard AI is an academic prototype developed as part of a research project on deterministic AI-assisted insurance claim verification. Key design decisions:
 
-1. **LLM role is strictly explanatory** — all financial decisions (coverage amounts, deductibles, co-pay, exclusions) are computed deterministically in `rules.py`. The LLM is called exactly once per claim and only to produce a human-readable explanation.
+1. **LLM role is explanatory or extraction assistance only** — financial decisions (coverage amounts, deductibles, co-pay, exclusions) are computed deterministically in `rules.py`; model-derived extraction values require review.
 2. **RAG provides evidence, not decisions** — ChromaDB + BGE-small-v1.5 retrieves the most relevant policy clauses; the rule engine then applies them.
 3. **Ambiguous cases go to human review** — patient name mismatches, unknown policy terms, package billing ambiguity, and uncertain ICU limits are explicitly routed to a human reviewer rather than auto-rejected.
-4. **3 agents + 1 deterministic rule engine** — the architecture has a Supervisor/Workflow Coordinator, a Policy RAG Agent, and a Decision LLM Agent. The Rule Engine is deterministic code, not an agent.
+4. **Human reviewer gate** — automated output is a recommendation. An authorized reviewer confirms the claim determination.
 
 ---
 
 ## Limitations
 
 - **Academic prototype only** — not certified for production insurance use.
+- **No multi-factor authentication (MFA)** — MFA is not implemented; account access uses password authentication and login throttling.
 - **No insurer API integration** — operates on uploaded documents only.
 - **OCR quality dependent** — heavily skewed or very low-resolution images may reduce extraction accuracy.
 - **Local LLM latency** — `ibm/granite4.1:8b` on CPU is slow (~2 minutes per claim). Use a GPU or a faster model for production.
-- **Indian insurance focus** — tested specifically on Star Health & Allied Insurance policy formats.
+- **Limited validation** — synthetic fixtures and automated tests do not establish accuracy for real claims or any particular insurer.
 
 ---
 

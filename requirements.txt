@@ -1,17 +1,16 @@
-streamlit>=1.62.0
-requests>=2.32.0
-python-dotenv>=1.0.0
-pymupdf>=1.24.0
-pydantic>=2.8.0
+streamlit==1.62.0
+requests==2.34.2
+python-dotenv==1.2.3
+pymupdf==1.28.2
+pydantic==2.13.4
 # Tesseract is the sole OCR engine in this academic prototype; PaddleOCR is deferred.
-pytesseract>=0.3.13
-Pillow>=10.0.0
-langgraph>=0.2.0
+pytesseract==0.3.13
+Pillow==12.3.0
+langgraph==1.2.11
 # langchain-ollama is not used; agents communicate with Ollama via direct HTTP (requests).
-chromadb>=0.5.0
+chromadb==1.5.9
 # Required for the configured BGE-small-v1.5 Chroma embedding function.
-sentence-transformers>=3.0.0
-reportlab>=4.2.0
-cryptography>=43.0.0
-pyotp>=2.9.0
-pytest>=8.0.0
+sentence-transformers==6.1.0
+reportlab==5.0.1
+cryptography==50.0.1
+python-docx==1.2.0

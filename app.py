@@ -69,6 +69,24 @@ def dev_show_links() -> bool:
     return os.getenv("MEDIGUARD_DEV_SHOW_LINKS", "false").lower() == "true"
 
 
+def trusted_fixtures_enabled() -> bool:
+    return os.getenv("MEDIGUARD_TRUSTED_FIXTURES", "false").lower() == "true"
+
+
+def trusted_fixture_hashes() -> set[str]:
+    path = APP_DIR / "config" / "trusted_fixtures.json"
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return set()
+    hashes = payload.get("sha256", []) if isinstance(payload, dict) else []
+    return {str(value).lower() for value in hashes if re.fullmatch(r"[a-fA-F0-9]{64}", str(value))}
+
+
+def is_trusted_fixture_hash(value: str | None) -> bool:
+    return bool(value and value.lower() in trusted_fixture_hashes())
+
+
 def _claim_warning_message(value: Any) -> str:
     if str(value) == "line_item_reconciliation_failed":
         return "Itemized charges could not be reconciled to the bill total, so the aggregate bill total was used for this calculation."
@@ -933,13 +951,12 @@ def ingest_policy_version(uploaded_file, policy_number: str, version_label: str,
     payload = {"document_id": version_id, "source_name": uploaded_file.name, "text": text, "evidence": [item.to_dict() for item in evidence], "raw_by_page": raw_by_page}
     indexed = index_policy_documents([payload], version_id)
     extracted_terms = extract_policy_terms(evidence)
-    synthetic = bool(re.search(r"\b(synthetic|fictional)\b", text, flags=re.IGNORECASE))
     required_terms = {"annual_limit", "deductible", "copay_percent"}
-    synthetic_terms_confirmed = synthetic and required_terms.issubset(extracted_terms["terms_json"])
-    reviewed_terms = extracted_terms["terms_json"] if synthetic_terms_confirmed else None
-    review_status = "confirmed" if synthetic_terms_confirmed else "pending"
-    terms_reviewer = "synthetic_fixture" if synthetic_terms_confirmed else None
-    terms_reviewed_at = utc_now() if synthetic_terms_confirmed else None
+    trusted_terms_confirmed = trusted_fixtures_enabled() and is_trusted_fixture_hash(hashlib.sha256(content).hexdigest()) and required_terms.issubset(extracted_terms["terms_json"])
+    reviewed_terms = extracted_terms["terms_json"] if trusted_terms_confirmed else None
+    review_status = "confirmed" if trusted_terms_confirmed else "pending"
+    terms_reviewer = "trusted_fixture" if trusted_terms_confirmed else None
+    terms_reviewed_at = utc_now() if trusted_terms_confirmed else None
     with db() as conn:
         conn.execute("UPDATE policy_versions SET status='archived' WHERE policy_number=?", (policy_number.strip(),))
         conn.execute("INSERT INTO policy_versions(version_id,policy_number,version_label,insurer_name,effective_date,status,source_name,stored_path,page_count,content_text,indexed_chunks,created_at,policy_terms_json,terms_review_status,reviewed_policy_terms_json,terms_reviewed_by,terms_reviewed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (version_id, policy_number.strip(), version_label.strip(), insurer.strip(), effective_date, "active", uploaded_file.name, str(target), page_count, text, indexed["chunks_indexed"], utc_now(), json.dumps(extracted_terms["terms_json"]), review_status, json.dumps(reviewed_terms) if reviewed_terms else None, terms_reviewer, terms_reviewed_at))
@@ -967,6 +984,7 @@ def process_claim_documents(claim_id: str, user_id: str) -> dict:
                 "document_id": doc["document_id"],
                 "source_name": doc["original_name"],
                 "document_type": doc["document_type"],
+                "sha256": doc["sha256"],
                 "text": "\\n".join(item.text for item in evidence),
                 "evidence": [item.to_dict() for item in evidence],
                 "raw_by_page": raw_by_page,
@@ -985,9 +1003,7 @@ def process_claim_documents(claim_id: str, user_id: str) -> dict:
         normalized.setdefault("review_fields", []).append("document_extraction")
     bill_payloads = [payload for payload in payloads if payload.get("document_type") == "medical_bill"]
     policy_payloads = [payload for payload in payloads if payload["document_type"] == "policy"]
-    fixture_text = "\n".join(payload.get("text", "") for payload in payloads)
-    is_demo_fixture = bool(re.search(r"\b(synthetic|fictional|demonstration edition|pol-demo)\b", fixture_text, flags=re.IGNORECASE))
-    if bill_payloads and normalized.get("total_amount") and not normalized.get("line_items") and not is_demo_fixture:
+    if bill_payloads and normalized.get("total_amount") and not normalized.get("line_items"):
         normalized.setdefault("review_fields", []).append("line_items")
     if policy_payloads:
         policy_id = ((normalized.get("policy_number") or {}).get("value") or claim_id)
@@ -1015,13 +1031,12 @@ def process_claim_documents(claim_id: str, user_id: str) -> dict:
                     else:
                         conn.execute("UPDATE policy_versions SET status='archived' WHERE policy_number=?", (policy_number,))
                         version_id = str(uuid.uuid4())
-                        synthetic = bool(re.search(r"\b(synthetic|fictional|demonstration edition|pol-demo)\b", policy_text, flags=re.IGNORECASE))
                         required_terms = {"annual_limit", "deductible", "copay_percent"}
-                        synthetic_terms_confirmed = synthetic and required_terms.issubset(extracted_terms["terms_json"])
-                        reviewed_terms = extracted_terms["terms_json"] if synthetic_terms_confirmed else None
-                        review_status = "confirmed" if synthetic_terms_confirmed else "pending"
-                        terms_reviewer = "synthetic_fixture" if synthetic_terms_confirmed else None
-                        terms_reviewed_at = utc_now() if synthetic_terms_confirmed else None
+                        trusted_terms_confirmed = trusted_fixtures_enabled() and any(is_trusted_fixture_hash(payload.get("sha256")) for payload in policy_payloads) and required_terms.issubset(extracted_terms["terms_json"])
+                        reviewed_terms = extracted_terms["terms_json"] if trusted_terms_confirmed else None
+                        review_status = "confirmed" if trusted_terms_confirmed else "pending"
+                        terms_reviewer = "trusted_fixture" if trusted_terms_confirmed else None
+                        terms_reviewed_at = utc_now() if trusted_terms_confirmed else None
                         policy_page_count = max((int(item.get("page", 1)) for payload in policy_payloads for item in payload.get("evidence", [])), default=1)
                         conn.execute("INSERT INTO policy_versions(version_id,policy_number,version_label,insurer_name,effective_date,status,source_name,stored_path,page_count,content_text,indexed_chunks,created_at,policy_terms_json,terms_review_status,reviewed_policy_terms_json,terms_reviewed_by,terms_reviewed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (version_id, policy_number, "Claim-uploaded policy", "Not specified", "", "active", policy_payloads[0].get("source_name", "policy"), "", policy_page_count, policy_text, int(normalized["policy_index"].get("chunks_indexed", 0)), utc_now(), json.dumps(extracted_terms["terms_json"]), review_status, json.dumps(reviewed_terms) if reviewed_terms else None, terms_reviewer, terms_reviewed_at))
                         normalized["active_policy_version_id"] = version_id

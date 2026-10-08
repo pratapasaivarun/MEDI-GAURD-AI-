@@ -5,6 +5,7 @@
 - Fixed the extracted uppercase room category being skipped by the app's room-limit context, introduced shared case-insensitive category normalization, and use Decimal amounts for room-linked context. Hospital stay days use the date difference, matching the four-day room example for 10–14 August.
 - Added an app-context regression test. It failed before the fix because `room_charge` was absent, then passed; full suite after the task: **62 passed**.
 - Bound settlement comparisons to the selected claim and uploaded bill total (tolerance INR 1), made missing totals a manual-review condition, and surfaced missing claim IDs as review reasons. Added five app-path settlement tests, including a spaced/case-variant matching reference.
+- Removed document-keyword shortcuts for policy confirmation and bill-line review. Trusted fixture auto-confirmation now requires `MEDIGUARD_TRUSTED_FIXTURES=true`, a required-term set, and an allowlisted SHA-256 hash; only `run_demo.py` opts in. Added two upload-pipeline tests; the pre-fix keyword-based test failed, and both pass after the change.
 
 ## Phase 0 - Baseline and safe defaults
 

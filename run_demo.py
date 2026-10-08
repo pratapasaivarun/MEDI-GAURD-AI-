@@ -11,6 +11,7 @@ os.environ.update({
     'MEDIGUARD_STORAGE_DIR': str(storage),
     'CHROMA_DIR': str(storage / 'chroma'),
     'MEDIGUARD_CORE_DEMO': 'true',
+    'MEDIGUARD_TRUSTED_FIXTURES': 'true',
     'APP_ENV': 'development',
     'MEDIGUARD_ADMIN_EMAIL': '',
 })

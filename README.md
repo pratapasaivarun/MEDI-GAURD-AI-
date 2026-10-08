@@ -117,7 +117,7 @@ Only add manually verified annotations. `evaluation/annotation_template.json` de
 - Copy `.env.example` to `.env`; never commit secrets or local environment files.
 - `MEDIGUARD_CORE_DEMO` defaults to `false`; `run_demo.py` is the supported isolated synthetic demo launcher.
 - The demo administrator requires an explicitly supplied `MEDIGUARD_ADMIN_PASSWORD`; no default credential is provided.
-- Login throttling is enabled. Password reset responses do not disclose whether an account exists. Development reset/invitation links are hidden unless `MEDIGUARD_DEV_SHOW_LINKS=true`.
+- Login throttling is enabled. Password reset responses do not disclose whether an account exists. Reset links remain hidden unless `MEDIGUARD_DEV_SHOW_LINKS=true`; email delivery is out of scope. A reviewer invitation link is shown only to the signed-in administrator who created it.
 - MFA is not implemented. This prototype is not certified or suitable for production claims handling.
 - Avoid uploading real patient information to a development instance. Keep local data and secrets out of commits.
 

@@ -7,6 +7,7 @@
 - Fixture auto-confirmation is allowed only in the isolated demo launcher, behind `MEDIGUARD_TRUSTED_FIXTURES`, and only for a bundled policy whose SHA-256 is in `config/trusted_fixtures.json`. Text inside an uploaded document is never trusted as fixture provenance.
 - The comparison-based appeal workflow is the only claimant appeal-download path. A decision status alone does not establish a settlement discrepancy.
 - Persisted comparison results are only reused while a current settlement document with the saved SHA-256 remains attached to the same claim. Decimal values serialize as strings and are reconstructed as Decimal on load.
+- No email provider is included. Password-reset links remain disabled in the UI by default; reviewer setup links are surfaced once to the administrator who creates the invitation, in that authenticated admin session only. Tokens are never written to application logs.
 
 ## Phase 0
 

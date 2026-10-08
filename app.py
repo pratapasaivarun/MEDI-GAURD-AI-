@@ -71,6 +71,24 @@ def dev_show_links() -> bool:
     return os.getenv("MEDIGUARD_DEV_SHOW_LINKS", "false").lower() == "true"
 
 
+def password_reset_link_for_display(request: dict[str, Any]) -> str | None:
+    token = request.get("reset_token")
+    if not dev_show_links() or not token:
+        return None
+    return f"{APP_BASE_URL}/?reset_token={token}"
+
+
+def _render_password_reset_link(request: dict[str, Any]) -> None:
+    link = password_reset_link_for_display(request)
+    if link:
+        st.code(link)
+
+
+def reviewer_invitation_link(user: dict | sqlite3.Row, invitation: dict[str, Any]) -> str:
+    require_role(user, "admin")
+    return f"{APP_BASE_URL}/?setup_token={invitation['setup_token']}"
+
+
 def trusted_fixtures_enabled() -> bool:
     return os.getenv("MEDIGUARD_TRUSTED_FIXTURES", "false").lower() == "true"
 
@@ -198,6 +216,7 @@ def create_password_reset_request(email: str, expiry_hours: int = 1) -> dict[str
         reset_id = str(uuid.uuid4())
         conn.execute("INSERT INTO password_reset_tokens(reset_id,user_id,token_hash,expires_at,used_at,created_at) VALUES(?,?,?,?,?,?)", (reset_id, user["user_id"], _token_hash(token), expires_at, None, utc_now()))
         conn.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), None, user["user_id"], "password_reset_requested", json.dumps({"reset_id": reset_id, "expires_at": expires_at}), utc_now()))
+        logging.getLogger(__name__).info("Password reset token issued for user_id=%s", user["user_id"])
     return {"email": email, "reset_token": token, "expires_at": expires_at}
 
 
@@ -236,6 +255,7 @@ def create_reviewer_invitation(actor: dict | sqlite3.Row, email: str, display_na
         invitation_id = str(uuid.uuid4())
         conn.execute("INSERT INTO reviewer_invitations(invitation_id,user_id,token_hash,expires_at,used_at,created_by,created_at) VALUES(?,?,?,?,?,?,?)", (invitation_id, user_id, _token_hash(token), expires_at, None, actor["user_id"], utc_now()))
         conn.execute("INSERT INTO audit_events VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), None, actor["user_id"], "reviewer_invitation_created", json.dumps({"user_id": user_id, "email": email, "expires_at": expires_at}), utc_now()))
+        logging.getLogger(__name__).info("Reviewer invitation token issued for user_id=%s", user_id)
     return {"invitation_id": invitation_id, "user_id": user_id, "email": email, "expires_at": expires_at, "setup_token": token}
 
 
@@ -1720,10 +1740,7 @@ def _render_login() -> None:
             if submitted:
                 request = create_password_reset_request(email)
                 st.success('If this email exists, a reset link has been issued.')
-                if request['reset_token']:
-                    link = f"{APP_BASE_URL}/?reset_token={request['reset_token']}"
-                    logging.getLogger(__name__).info("Development password reset link: %s", link)
-                    if dev_show_links(): st.code(link)
+                _render_password_reset_link(request)
         if st.button('← Choose a different workspace', key='change_workspace'):
             st.session_state.pop('entry_role', None)
             st.session_state.welcome_seen = False
@@ -2574,9 +2591,17 @@ def _render_admin_panel(user: dict) -> None:
             a,b=st.columns([1,1]); name=a.text_input('Name'); email=b.text_input('Email address'); sent=st.form_submit_button('Send invite',type='primary')
         if sent:
             try:
-                invite=create_reviewer_invitation(user,email,name); link=f"{APP_BASE_URL}/?setup_token={invite['setup_token']}"; logging.getLogger(__name__).info("Development reviewer invitation link: %s", link); st.success('Reviewer invitation created.')
-                if dev_show_links(): st.code(link)
+                invite=create_reviewer_invitation(user,email,name)
+                link=reviewer_invitation_link(user, invite)
+                st.session_state['pending_reviewer_invite'] = {'link': link, 'user_id': invite['user_id'], 'expires_at': invite['expires_at']}
+                st.success('Reviewer invitation created.')
             except Exception as exc: st.error(str(exc))
+        pending_invite = st.session_state.get('pending_reviewer_invite')
+        if pending_invite:
+            require_role(user, 'admin')
+            st.markdown('#### Pending reviewer invitation link')
+            st.caption(f"Visible only in this signed-in administrator session · expires {pending_invite['expires_at']}")
+            st.code(pending_invite['link'])
     with st.container(border=True):
         st.markdown('### Users')
         with db() as conn: users=conn.execute('SELECT user_id,email,display_name,role,is_active,created_at FROM users ORDER BY created_at DESC').fetchall()

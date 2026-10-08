@@ -6,7 +6,7 @@
 *.key
 *.crt
 
-# Patient, policy, database, and generated data
+# Runtime data (session uploads, ChromaDB, SQLite claims DB)
 data/
 TEST/
 *.db
@@ -15,6 +15,9 @@ TEST/
 uploads/
 policies/
 chroma_index/
+chroma_db/
+chroma/
+chroma_e2e/
 
 # Python environments and caches
 .venv/

@@ -137,6 +137,20 @@ def chunk_policy_text(text: str, page: int = 1, chunk_size: int = 700, overlap: 
 
 def index_policy_documents(policy_documents: list[dict[str, Any]], policy_id: str) -> dict[str, Any]:
     collection = _client_and_collection()
+    # Check if policy is already indexed in ChromaDB
+    try:
+        existing = collection.get(where={"policy_id": policy_id}, limit=1)
+        if existing and existing.get("ids") and len(existing["ids"]) > 0:
+            return {
+                "collection": COLLECTION_NAME,
+                "policy_id": policy_id,
+                "chunks_indexed": len(existing["ids"]),
+                "storage_path": str(CHROMA_DIR),
+                "cached": True,
+            }
+    except Exception:
+        pass
+
     ids: list[str] = []
     texts: list[str] = []
     metadatas: list[dict[str, Any]] = []
@@ -157,7 +171,7 @@ def index_policy_documents(policy_documents: list[dict[str, Any]], policy_id: st
                 metadatas.append({"policy_id": policy_id, "document_id": document.get("document_id", ""), "source_name": document.get("source_name", ""), "page": page, "section": chunk["section"], "clause_id": chunk_id})
     if ids:
         collection.upsert(ids=ids, documents=texts, metadatas=metadatas)
-    return {"collection": COLLECTION_NAME, "policy_id": policy_id, "chunks_indexed": len(ids), "storage_path": str(CHROMA_DIR)}
+    return {"collection": COLLECTION_NAME, "policy_id": policy_id, "chunks_indexed": len(ids), "storage_path": str(CHROMA_DIR), "cached": False}
 
 
 def retrieve_policy_evidence(query: str, policy_id: str, limit: int = 8) -> list[dict[str, Any]]:

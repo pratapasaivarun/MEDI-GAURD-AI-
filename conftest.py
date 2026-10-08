@@ -1,7 +1,12 @@
 """Shared pytest isolation for function-based tests added to this project."""
 from __future__ import annotations
 
+import pathlib
 import pytest
+
+# Ensure the pytest basetemp directory exists before any test session starts.
+# This prevents FileNotFoundError when tmp/ has been cleared between runs.
+pathlib.Path("tmp/pytest_tmp").mkdir(parents=True, exist_ok=True)
 
 
 @pytest.fixture(autouse=True)

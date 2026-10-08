@@ -18,6 +18,11 @@ class PolicyTerms:
     deductible: Decimal | None = Decimal("10000")
     copay_percent: Decimal | None = Decimal("10")
     room_limit_per_day: Decimal | None = Decimal("5000")
+    icu_limit_per_day: Decimal | None = None
+    pre_hospitalization_days: int | None = None
+    post_hospitalization_days: int | None = None
+    daycare_procedures: list[str] = field(default_factory=list)
+    previous_claims_total: Decimal | None = None
     waiting_period_months: int | None = None
     sub_limits: dict[str, Decimal] = field(default_factory=dict)
     source: dict[str, Any] = field(default_factory=dict)
@@ -42,6 +47,140 @@ class RuleResult:
 
 def money(value: Any) -> Decimal:
     return Decimal(str(value or 0)).quantize(MONEY, rounding=ROUND_HALF_UP)
+
+
+def verify_patient_name_match(bill_name: str | None, policy_name: str | None) -> dict[str, Any]:
+    """Verify identity consistency between bill patient name and policy holder name."""
+    if not bill_name or not policy_name:
+        return {"result": "MISSING", "status": "manual_review", "warning": "Patient name missing on bill or policy; reviewer confirmation required."}
+    
+    b_clean = re.sub(r"^(mr|mrs|ms|dr|master|sri|smt)\b\.?\s*", "", str(bill_name).strip(), flags=re.IGNORECASE)
+    p_clean = re.sub(r"^(mr|mrs|ms|dr|master|sri|smt)\b\.?\s*", "", str(policy_name).strip(), flags=re.IGNORECASE)
+    
+    b_norm = re.sub(r"[^\w\s]", "", b_clean).upper()
+    p_norm = re.sub(r"[^\w\s]", "", p_clean).upper()
+    
+    b_tokens = b_norm.split()
+    p_tokens = p_norm.split()
+    
+    if not b_tokens or not p_tokens:
+        return {"result": "MISSING", "status": "manual_review", "warning": "Patient name missing or invalid after normalization."}
+        
+    if b_norm == p_norm or set(b_tokens) == set(p_tokens):
+        return {"result": "MATCH", "status": "approved", "warning": None}
+    
+    if len(b_tokens) == len(p_tokens):
+        matches = True
+        for bt, pt in zip(b_tokens, p_tokens):
+            if bt == pt or (len(bt) == 1 and pt.startswith(bt)) or (len(pt) == 1 and bt.startswith(pt)):
+                continue
+            else:
+                matches = False
+                break
+        if matches:
+            return {"result": "MINOR_VARIATION", "status": "approved", "warning": None}
+            
+    import difflib
+    ratio = difflib.SequenceMatcher(None, b_norm, p_norm).ratio()
+    if ratio >= 0.85:
+        return {"result": "MINOR_VARIATION", "status": "approved", "warning": None}
+            
+    return {
+        "result": "MISMATCH",
+        "status": "manual_review",
+        "warning": f"Patient name on bill ('{bill_name}') does not match policy holder ('{policy_name}'); reviewer confirmation required."
+    }
+
+
+def parse_date_flexible(date_str: Any) -> Any:
+    if not date_str:
+        return None
+    from datetime import datetime
+    clean = str(date_str).strip()
+    for fmt in ("%Y-%m-%d", "%d-%b-%Y", "%d-%m-%Y", "%d/%m/%Y", "%Y/%m/%d", "%d %b %Y"):
+        try:
+            return datetime.strptime(clean, fmt).date()
+        except ValueError:
+            pass
+    return None
+
+
+def validate_expense_date_window(expense_date_str: Any, admission_date_str: Any, discharge_date_str: Any, pre_days: int | None, post_days: int | None, category: str = "") -> dict[str, Any]:
+    exp_date = parse_date_flexible(expense_date_str)
+    adm_date = parse_date_flexible(admission_date_str)
+    dis_date = parse_date_flexible(discharge_date_str)
+    
+    if not exp_date or not adm_date or not dis_date:
+        return {"valid": False, "status": "needs_review", "rule": "pre_post_window", "notice": "Expense or admission/discharge dates missing/ambiguous; requires reviewer verification."}
+    
+    from datetime import timedelta
+    cat_lower = str(category).lower()
+    
+    is_pre = "pre" in cat_lower or exp_date < adm_date
+    is_post = "post" in cat_lower or exp_date > dis_date
+    
+    if is_pre and pre_days is not None:
+        min_pre_date = adm_date - timedelta(days=pre_days)
+        if min_pre_date <= exp_date <= adm_date:
+            return {"valid": True, "status": "covered", "rule": "pre_hospitalization", "notice": f"Expense date ({exp_date}) is within the {pre_days}-day pre-hospitalization window."}
+        else:
+            return {"valid": False, "status": "excluded", "rule": "pre_hospitalization", "notice": f"Expense date ({exp_date}) is outside the {pre_days}-day pre-hospitalization window (admission: {adm_date})."}
+            
+    if is_post and post_days is not None:
+        max_post_date = dis_date + timedelta(days=post_days)
+        if dis_date <= exp_date <= max_post_date:
+            return {"valid": True, "status": "covered", "rule": "post_hospitalization", "notice": f"Expense date ({exp_date}) is within the {post_days}-day post-hospitalization window."}
+        else:
+            return {"valid": False, "status": "excluded", "rule": "post_hospitalization", "notice": f"Expense date ({exp_date}) is outside the {post_days}-day post-hospitalization window (discharge: {dis_date})."}
+            
+    return {"valid": True, "status": "covered", "rule": "hospitalization_period", "notice": "Expense date is within standard hospitalization period."}
+
+
+def detect_line_item_duplicates(line_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    seen_exact: dict[tuple, int] = {}
+    results = []
+    
+    for idx, item in enumerate(line_items):
+        if item.get("allow_duplicate") or item.get("legitimate_repeat"):
+            results.append({"index": idx, "duplicate": False, "certainty": "legitimate", "notice": None})
+            continue
+            
+        desc = re.sub(r"[^\w\s]", "", str(item.get("description") or "").lower()).strip()
+        amt = money(item.get("amount"))
+        date = str(item.get("date") or item.get("expense_date") or "").strip()
+        qty = item.get("quantity") or 1
+        
+        key = (desc, amt, date, qty)
+        if key in seen_exact and amt > 0:
+            results.append({
+                "index": idx,
+                "duplicate": True,
+                "certainty": "high",
+                "notice": f"Exact duplicate line item detected (matches item #{seen_exact[key] + 1})."
+            })
+        else:
+            if amt > 0 and desc:
+                seen_exact[key] = idx
+            results.append({"index": idx, "duplicate": False, "certainty": "none", "notice": None})
+            
+    return results
+
+
+def validate_daycare_procedure(procedure_name: str | None, Whitelist: list[str], length_of_stay_nights: int = 0) -> dict[str, Any]:
+    if length_of_stay_nights > 0:
+        return {"valid": True, "status": "covered", "notice": "Inpatient hospitalization (> 24h stay); daycare whitelist check not required."}
+    
+    if not procedure_name or not Whitelist:
+        return {"valid": False, "status": "manual_review", "notice": "Daycare procedure or policy whitelist unconfirmed; reviewer verification required."}
+        
+    p_norm = re.sub(r"[^\w\s]", "", str(procedure_name).lower()).strip()
+    
+    for item in Whitelist:
+        w_norm = re.sub(r"[^\w\s]", "", str(item).lower()).strip()
+        if p_norm == w_norm or w_norm in p_norm or p_norm in w_norm:
+            return {"valid": True, "status": "covered", "notice": f"Procedure '{procedure_name}' is covered under Daycare Policy Whitelist."}
+            
+    return {"valid": False, "status": "excluded", "notice": f"Procedure '{procedure_name}' is not listed in the policy daycare whitelist for 0-night stays."}
 
 
 def _evaluate_claim_total_only(total_amount: Any, terms: PolicyTerms | None = None, review_fields: list[str] | None = None, missing_fields: list[str] | None = None, policy_terms_missing: list[str] | None = None, claim_context: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -179,18 +318,24 @@ def _item_matches_exclusion(item: dict[str, Any], terms: PolicyTerms, claim_cont
     if not exclusions:
         return False, False
     item_text = " ".join(str(item.get(key, "")) for key in ("description", "category", "diagnosis")).lower()
-    item_tokens = set(re.findall(r"[a-z]{4,}", item_text))
-    explicit = item.get("exclusion_match") or claim_context.get("exclusion_match") or {}
+    item_tokens = set(re.findall(r"[a-z0-9]{3,}", item_text))
+    item_explicit = item.get("exclusion_match") or {}
+    claim_explicit = claim_context.get("exclusion_match") or {}
     for exclusion in exclusions:
-        tokens = set(re.findall(r"[a-z]{4,}", str(exclusion).lower()))
-        if not tokens or not tokens.intersection(item_tokens):
+        ex_clean = str(exclusion).lower().strip()
+        if not ex_clean:
             continue
-        # A claim-level confirmation must still match this item. Otherwise a
-        # confirmed cosmetic item could incorrectly exclude every surgery item.
-        if tokens.issubset(item_tokens):
-            if explicit.get("matched") is True and float(explicit.get("confidence", 0)) >= 0.90:
+        if ex_clean in item_text:
+            return True, False
+        tokens = set(re.findall(r"[a-z0-9]{3,}", ex_clean))
+        if tokens and tokens.issubset(item_tokens):
+            return True, False
+        if item_explicit.get("matched") is True and float(item_explicit.get("confidence", 0)) >= 0.90:
+            if tokens and tokens.intersection(item_tokens):
                 return True, False
-            return False, True
+        if claim_explicit.get("matched") is True and float(claim_explicit.get("confidence", 0)) >= 0.90:
+            if tokens and tokens.issubset(item_tokens):
+                return True, False
     return False, False
 
 
@@ -204,8 +349,11 @@ def evaluate_line_item(item: dict, terms: PolicyTerms, claim_context: dict | Non
     claim_context = claim_context or {}
     amount = money(item.get("amount"))
     category = str(item.get("category") or "").strip().lower()
+    description = str(item.get("description") or "Unspecified item")
+    desc_lower = description.lower()
+
     result = {
-        "description": str(item.get("description") or "Unspecified item"),
+        "description": description,
         "category": category or "uncategorized",
         "amount": float(amount),
         "status": "covered",
@@ -224,6 +372,41 @@ def evaluate_line_item(item: dict, terms: PolicyTerms, claim_context: dict | Non
     if possible_exclusion:
         return {**result, "status": "needs_review", "applied_rule": "exclusion", "calculation": "This item may match a policy exclusion and requires reviewer confirmation."}
 
+    # ICU Limit Check
+    is_icu = category == "icu" or "icu" in desc_lower or "intensive care" in desc_lower
+    if is_icu:
+        icu_limit = terms.icu_limit_per_day or terms.sub_limits.get("icu")
+        if claim_context.get("icu_limit_uncertain") is True or (icu_limit is None and claim_context.get("has_icu_stay") is True):
+            return {**result, "status": "needs_review", "applied_rule": "icu_limit", "calculation": "ICU limit information is unavailable or ambiguous; requires reviewer confirmation."}
+        if icu_limit is not None:
+            days = item.get("days") or item.get("quantity") or claim_context.get("icu_days") or 1
+            allowed_icu = money(icu_limit) * int(days)
+            if amount > allowed_icu:
+                return {
+                    **result,
+                    "status": "partial",
+                    "covered_amount": float(allowed_icu),
+                    "applied_rule": "icu_limit",
+                    "calculation": f"INR {amount} billed ICU charge capped at daily limit of INR {icu_limit} x {days} day(s) = INR {allowed_icu}.",
+                }
+
+    # Pre / Post Hospitalization Window Validation
+    item_date = item.get("date") or item.get("expense_date")
+    if (terms.pre_hospitalization_days is not None or terms.post_hospitalization_days is not None or "pre" in category or "post" in category) and item_date:
+        window_res = validate_expense_date_window(
+            expense_date_str=item_date,
+            admission_date_str=claim_context.get("admission_date"),
+            discharge_date_str=claim_context.get("discharge_date"),
+            pre_days=terms.pre_hospitalization_days,
+            post_days=terms.post_hospitalization_days,
+            category=category or desc_lower,
+        )
+        if window_res["status"] == "excluded":
+            return {**result, "status": "excluded", "covered_amount": 0.0, "applied_rule": window_res["rule"], "calculation": window_res["notice"]}
+        elif window_res["status"] == "needs_review":
+            return {**result, "status": "needs_review", "applied_rule": window_res["rule"], "calculation": window_res["notice"]}
+
+    # Waiting Period Validation
     if terms.waiting_period_months and claim_context.get("waiting_period_satisfied") is False:
         affected_amount = claim_context.get("_waiting_period_amount_for_item")
         if affected_amount is None:
@@ -240,6 +423,7 @@ def evaluate_line_item(item: dict, terms: PolicyTerms, claim_context: dict | Non
     if terms.waiting_period_months and claim_context.get("waiting_period_satisfied") is not True:
         return {**result, "status": "needs_review", "applied_rule": "waiting_period", "calculation": f"The {terms.waiting_period_months}-month waiting period needs confirmation."}
 
+    # Category Sub-Limits Validation
     matched_limit = next((limit for name, limit in terms.sub_limits.items() if name.lower() == category), None)
     if matched_limit is not None:
         remaining = money(claim_context.get("_sub_limit_remaining", matched_limit))
@@ -256,17 +440,71 @@ def evaluate_claim(total_amount: Any, terms: PolicyTerms | None = None, review_f
     calculation path. New callers receive one transparent result per item and
     aggregate those eligible amounts before applying deductible and copayment.
     """
+    terms = terms or PolicyTerms()
+    review_fields = review_fields or []
+    missing_fields = missing_fields or []
+    policy_terms_missing = policy_terms_missing or []
+    claim_context = claim_context or {}
+
+    warnings: list[str] = []
+    control_warnings: list[str] = []
+    hard_reject = False
+    review_required = bool(missing_fields or review_fields)
+
+    # 1. Patient Name Matching Validation
+    bill_patient_name = claim_context.get("bill_patient_name") or claim_context.get("patient_name")
+    policy_holder_name = claim_context.get("policy_holder_name") or claim_context.get("insured_name")
+    if bill_patient_name or policy_holder_name:
+        name_match = verify_patient_name_match(bill_patient_name, policy_holder_name)
+        if name_match["result"] == "MISMATCH":
+            review_required = True
+            control_warnings.append(name_match["warning"])
+        elif name_match["result"] == "MISSING":
+            review_required = True
+            control_warnings.append(name_match["warning"])
+
+    # 2. Cumulative Sum Insured Check
+    prev_claims_raw = terms.previous_claims_total if terms.previous_claims_total is not None else claim_context.get("previous_claims_total")
+    if claim_context.get("previous_claims_uncertain") is True:
+        review_required = True
+        control_warnings.append("Previous claims history is uncertain; reviewer confirmation required.")
+    
+    effective_annual_limit = money(terms.annual_limit) if terms.annual_limit is not None else Decimal("0")
+    if prev_claims_raw is not None:
+        prev_claims = money(prev_claims_raw)
+        remaining_sum_insured = max(Decimal("0"), effective_annual_limit - prev_claims)
+        if prev_claims >= effective_annual_limit:
+            hard_reject = True
+            control_warnings.append("Annual sum insured is fully exhausted by previous claims.")
+        effective_annual_limit = remaining_sum_insured
+
+    # 3. Daycare Procedure Whitelist Check (for 0-night stays)
+    stay_nights = claim_context.get("length_of_stay_nights")
+    if stay_nights is None:
+        stay_nights = claim_context.get("length_of_stay", 1)
+    if stay_nights == 0 or claim_context.get("is_daycare") is True:
+        proc_name = claim_context.get("procedure") or claim_context.get("diagnosis")
+        daycare_res = validate_daycare_procedure(proc_name, terms.daycare_procedures, length_of_stay_nights=stay_nights)
+        if daycare_res["status"] == "excluded":
+            hard_reject = True
+            control_warnings.append(daycare_res["notice"])
+        elif daycare_res["status"] == "manual_review":
+            review_required = True
+            control_warnings.append(daycare_res["notice"])
+
     if not line_items:
         legacy = _evaluate_claim_total_only(total_amount, terms, review_fields, missing_fields, policy_terms_missing, claim_context)
         legacy["line_item_results"] = []
         legacy["line_item_reconciliation_failed"] = False
         legacy["line_item_notice"] = None
+        if control_warnings:
+            legacy.setdefault("warnings", []).extend(control_warnings)
+            if hard_reject:
+                legacy["status"] = "rejected"
+            elif review_required:
+                legacy["status"] = "manual_review"
         return legacy
 
-    # Extraction can occasionally mistake identifiers such as claim or policy
-    # numbers for charges. Only use item-level adjudication when the extracted
-    # charges plausibly reconcile to the saved bill total; otherwise preserve
-    # the established total-based calculation path.
     stated_total = money(total_amount)
     extracted_total = sum((money(item.get("amount")) for item in line_items), Decimal("0"))
     allowed_difference = max(Decimal("1.00"), stated_total * Decimal("0.05"))
@@ -276,13 +514,14 @@ def evaluate_claim(total_amount: Any, terms: PolicyTerms | None = None, review_f
         legacy["line_item_reconciliation_failed"] = True
         legacy["line_item_notice"] = "Itemized charges could not be reconciled to the bill total, so the aggregate bill total was used for this calculation."
         legacy.setdefault("warnings", []).append("line_item_reconciliation_failed")
+        if control_warnings:
+            legacy.setdefault("warnings", []).extend(control_warnings)
+            if hard_reject:
+                legacy["status"] = "rejected"
+            elif review_required:
+                legacy["status"] = "manual_review"
         return legacy
 
-    terms = terms or PolicyTerms()
-    review_fields = review_fields or []
-    missing_fields = missing_fields or []
-    policy_terms_missing = policy_terms_missing or []
-    claim_context = claim_context or {}
     if policy_terms_missing or terms.annual_limit is None or terms.deductible is None or terms.copay_percent is None:
         result = _evaluate_claim_total_only(total_amount, terms, review_fields, missing_fields, policy_terms_missing, claim_context)
         result["line_item_results"] = []
@@ -290,26 +529,37 @@ def evaluate_claim(total_amount: Any, terms: PolicyTerms | None = None, review_f
         result["line_item_notice"] = None
         return result
 
-    warnings: list[str] = []
-    control_warnings: list[str] = []
-    hard_reject = False
-    review_required = bool(missing_fields or review_fields)
     if missing_fields:
         warnings.append("Missing required fields: " + ", ".join(missing_fields))
     if review_fields:
         warnings.append("Fields require review: " + ", ".join(review_fields))
 
+    # 4. Automated Line Item Duplicate Detection
+    duplicate_info = detect_line_item_duplicates(line_items)
+
     sub_limit_remaining = {name.lower(): money(value) for name, value in terms.sub_limits.items()}
     waiting_remaining = money(claim_context["waiting_period_affected_amount"]) if claim_context.get("waiting_period_affected_amount") is not None else None
     line_item_results: list[dict] = []
-    for item in line_items:
+    
+    for idx, item in enumerate(line_items):
         item_context = dict(claim_context)
         category = str(item.get("category") or "").strip().lower()
         if category in sub_limit_remaining:
             item_context["_sub_limit_remaining"] = sub_limit_remaining[category]
         if waiting_remaining is not None:
             item_context["_waiting_period_amount_for_item"] = waiting_remaining
+            
         evaluated = evaluate_line_item(item, terms, item_context)
+        
+        # Check duplicate flag for this item
+        dup_entry = duplicate_info[idx]
+        if dup_entry["duplicate"]:
+            evaluated["status"] = "excluded"
+            evaluated["covered_amount"] = 0.0
+            evaluated["applied_rule"] = "duplicate_detection"
+            evaluated["calculation"] = dup_entry["notice"]
+            warnings.append("duplicate_line_item_detected")
+
         line_item_results.append(evaluated)
         if category in sub_limit_remaining:
             sub_limit_remaining[category] = max(Decimal("0"), sub_limit_remaining[category] - money(evaluated["covered_amount"]))
@@ -318,8 +568,8 @@ def evaluate_claim(total_amount: Any, terms: PolicyTerms | None = None, review_f
         if evaluated["status"] == "needs_review":
             review_required = True
 
-    # Apply the annual claim limit after item-level eligibility and category caps.
-    annual_remaining = money(terms.annual_limit)
+    # Apply the effective annual limit (after cumulative previous claims deduction)
+    annual_remaining = effective_annual_limit
     for item_result in line_item_results:
         eligible = money(item_result["covered_amount"])
         if eligible > annual_remaining:
@@ -327,7 +577,7 @@ def evaluate_claim(total_amount: Any, terms: PolicyTerms | None = None, review_f
             if item_result["status"] != "excluded":
                 item_result["status"] = "partial"
                 item_result["applied_rule"] = "annual_limit"
-                item_result["calculation"] = f"The annual policy limit leaves INR {annual_remaining} eligible for this item."
+                item_result["calculation"] = f"The remaining annual policy limit leaves INR {annual_remaining} eligible for this item."
             warnings.append("annual_limit_exceeded")
         annual_remaining = max(Decimal("0"), annual_remaining - money(item_result["covered_amount"]))
 
@@ -369,3 +619,4 @@ def evaluate_claim(total_amount: Any, terms: PolicyTerms | None = None, review_f
     elif review_required:
         status = "manual_review"
     return {"status": status, "rule_version": RULE_VERSION, "results": [item.to_dict() for item in results], "line_item_reconciliation_failed": False, "line_item_notice": None, "line_item_results": line_item_results, "covered_amount": float(covered_before_limit), "deductible": float(deductible), "copayment": float(copayment), "payable_amount": float(payable), "warnings": warnings, "policy_terms": terms.source}
+

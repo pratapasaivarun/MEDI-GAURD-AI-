@@ -5,7 +5,9 @@ common fields. Every field retains provenance and confidence.
 """
 from __future__ import annotations
 
+import json
 import os
+import requests
 import re
 import tempfile
 from difflib import SequenceMatcher
@@ -317,15 +319,15 @@ def _extract_cpt_codes(text: str) -> list[str]:
 
 def _extract_line_items(text: str, evidence: list[Evidence]) -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
-    pattern = re.compile(r"^\s*([A-Za-z][A-Za-z /&()'_-]{2,80})\s*[:\-]\s*(?:INR|Rs\.?|₹|USD|\$)?\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)\s*$", re.IGNORECASE)
+    pattern = re.compile(r"^\s*([A-Za-z][A-Za-z /&()'_-]{2,80})\s*[:\-]?\s*(?:INR|Rs\.?|₹|USD|\$)?\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)", re.IGNORECASE)
     for line in text.splitlines():
         match = pattern.match(line.strip())
         if not match:
             continue
         description = re.sub(r"\s+", " ", match.group(1)).strip()
-        if re.search(r"^(total|grand total|amount payable|net payable|subtotal|discount|tax)\b", description, re.IGNORECASE):
+        if re.search(r"^(total|grand total|amount payable|net payable|subtotal|discount|tax|inr|rs|usd)\b", description, re.IGNORECASE) or description.lower() in {"inr", "rs", "usd"}:
             continue
-        if re.search(r"\b(?:policy|claim|member|patient|insured|certificate|uhid|invoice|bill)\b", description, re.IGNORECASE) or re.match(r"^(?:POL|CLM)[-/]", description, re.IGNORECASE):
+        if re.search(r"\b(?:policy|claim|member|patient|insured|certificate|uhid|invoice|bill|date|version|effective|period|page|code|number|term|value)\b", description, re.IGNORECASE) or re.match(r"^(?:POL|CLM)[-/]", description, re.IGNORECASE):
             continue
         amount = parse_amount(match.group(2))
         if amount is None or amount <= 0:
@@ -405,6 +407,56 @@ def money_equal(left: Any, right: Any) -> bool:
         return False
 
 
+def _llm_extract_claim_fallback(text: str) -> dict[str, Any] | None:
+    """Fallback LLM extraction for medical bills when code-first regex extraction leaves fields missing."""
+    if not text or len(text.strip()) < 10:
+        return None
+    ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
+    ollama_model = os.getenv("OLLAMA_MODEL", "ibm/granite4.1:8b")
+
+    prompt = f"""Extract medical bill data into JSON format.
+Return ONLY valid JSON matching this schema:
+{{
+  "patient_name": "name or null",
+  "hospital_name": "hospital name or null",
+  "policy_number": "policy number or null",
+  "claim_number": "claim number or null",
+  "total_amount": 0.0 or null,
+  "diagnosis": "diagnosis or null",
+  "admission_date": "date or null",
+  "discharge_date": "date or null",
+  "line_items": [
+    {{"description": "item description", "amount": 0.0, "category": "room/surgery/pharmacy/diagnostics/consultation/other"}}
+  ]
+}}
+
+Document Text:
+{text[:3500]}
+"""
+    try:
+        response = requests.post(
+            f"{ollama_host}/api/generate",
+            json={
+                "model": ollama_model,
+                "prompt": prompt,
+                "stream": False,
+                "format": "json",
+                "options": {"num_predict": 512, "temperature": 0.1},
+            },
+            timeout=15,
+        )
+        if response.status_code == 200:
+            payload = response.json()
+            resp_content = payload.get("response")
+            if isinstance(resp_content, dict):
+                return resp_content
+            elif isinstance(resp_content, str):
+                return json.loads(resp_content)
+    except Exception:
+        pass
+    return None
+
+
 def normalize_documents(documents: list[dict[str, Any]]) -> NormalizedClaim:
     claim = NormalizedClaim()
     typed_bill_documents = [doc for doc in documents if doc.get("document_type") == "medical_bill"]
@@ -446,7 +498,7 @@ def normalize_documents(documents: list[dict[str, Any]]) -> NormalizedClaim:
         r"policy\s*(?:no|number)\.?\s*(?:of\s+(?:the\s+)?insured\s*)?(?:[:#-]\s*)?([A-Z0-9/-]+)",
     ], "policy_number")
     claim.claim_number = find([r"claim\s*(?:no|number|id)\.?\s*(?:[:#-]\s*)?([A-Z0-9/-]+)"], "claim_number")
-    date_value = r"([0-9]{1,4}[./-][0-9]{1,2}[./-][0-9]{1,4}|[0-9]{1,2}\s+[A-Za-z]{3,9}\s+[0-9]{4})"
+    date_value = r"([0-9]{1,4}[./-][0-9]{1,2}[./-][0-9]{1,4}|[0-9]{1,2}[-/\s]+[A-Za-z]{3,9}[-/\s]+[0-9]{4})"
     claim.admission_date = find([rf"(?:admission(?:\s+date)?|admit|date\s+of\s+admission)\s*(?:[:#-]\s*)?{date_value}"], "admission_date")
     claim.discharge_date = find([rf"(?:discharge(?:\s+date)?|date\s+of\s+discharge)\s*(?:[:#-]\s*)?{date_value}"], "discharge_date")
     claim.bill_date = find([rf"(?:bill|invoice)\s*date\s*(?:[:#-]\s*)?{date_value}"], "bill_date")
@@ -455,6 +507,15 @@ def normalize_documents(documents: list[dict[str, Any]]) -> NormalizedClaim:
         r"(?:net\s+bill\s+amount|gross\s+bill\s+amount|grand\s+total|total\s+amount|net\s+payable|amount\s+payable|invoice\s+total|bill\s+total|total)\s*(?:[:#-]\s*)?(?:rs\.?|inr|₹|\$)?\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)",
         r"(?:net\s+bill\s+amount|gross\s+bill\s+amount|grand\s+total|total\s+amount|net\s+payable|amount\s+payable|invoice\s+total|bill\s+total|total)\s*(?:[:#-]\s*)?([0-9][0-9,]*(?:\.[0-9]{1,2})?)\s*(?:rs\.?|inr|₹|\$)?",
     ], "total_amount", amount=True)
+    if claim.patient_name and isinstance(claim.patient_name.value, str):
+        claim.patient_name.value = re.split(r"\s+(?:age|sex|uhid|ip|admission|discharge|diagnosis)\b", claim.patient_name.value, flags=re.IGNORECASE)[0].strip()
+    if claim.hospital_name and isinstance(claim.hospital_name.value, str):
+        if "|" in claim.hospital_name.value or "sample" in claim.hospital_name.value.lower():
+            for line in all_text.splitlines():
+                line_c = line.strip()
+                if "hospital" in line_c.lower() and not line_c.lower().startswith("network") and "|" not in line_c and "sample" not in line_c.lower():
+                    claim.hospital_name.value = line_c
+                    break
     claim.line_items = _extract_line_items(all_text, evidence)
     claim.duplicate_candidates = detect_duplicate_charges(claim.line_items)
     claim.billing_anomalies = {
@@ -467,6 +528,56 @@ def normalize_documents(documents: list[dict[str, Any]]) -> NormalizedClaim:
     # and line items can be larger than the actual bill total; missing explicit
     # totals must remain Manual Review.
 
+    temp_missing = [req for req in ("patient_name", "hospital_name", "total_amount") if getattr(claim, req) is None]
+    if (temp_missing or not claim.line_items) and all_text.strip():
+        llm_parsed = _llm_extract_claim_fallback(all_text)
+        if llm_parsed and isinstance(llm_parsed, dict):
+            if not claim.patient_name and llm_parsed.get("patient_name"):
+                claim.patient_name = _field("patient_name", str(llm_parsed["patient_name"]).strip(), best, confidence=90.0)
+            if not claim.hospital_name and llm_parsed.get("hospital_name"):
+                claim.hospital_name = _field("hospital_name", str(llm_parsed["hospital_name"]).strip(), best, confidence=90.0)
+            if not claim.policy_number and llm_parsed.get("policy_number"):
+                claim.policy_number = _field("policy_number", str(llm_parsed["policy_number"]).strip(), best, confidence=90.0)
+            if not claim.claim_number and llm_parsed.get("claim_number"):
+                claim.claim_number = _field("claim_number", str(llm_parsed["claim_number"]).strip(), best, confidence=90.0)
+            if not claim.diagnosis and llm_parsed.get("diagnosis"):
+                claim.diagnosis = _field("diagnosis", str(llm_parsed["diagnosis"]).strip(), best, confidence=90.0)
+            if not claim.admission_date and llm_parsed.get("admission_date"):
+                claim.admission_date = _field("admission_date", str(llm_parsed["admission_date"]).strip(), best, confidence=90.0)
+            if not claim.discharge_date and llm_parsed.get("discharge_date"):
+                claim.discharge_date = _field("discharge_date", str(llm_parsed["discharge_date"]).strip(), best, confidence=90.0)
+            if not claim.total_amount and llm_parsed.get("total_amount") is not None:
+                parsed_tot = parse_amount(str(llm_parsed["total_amount"]))
+                if parsed_tot is not None and parsed_tot > 0:
+                    claim.total_amount = _field("total_amount", parsed_tot, best, confidence=90.0)
+
+            if not claim.line_items and llm_parsed.get("line_items"):
+                extracted_items = []
+                for item in llm_parsed.get("line_items", []):
+                    if isinstance(item, dict) and item.get("description") and item.get("amount") is not None:
+                        desc = str(item["description"]).strip()
+                        amt = parse_amount(str(item["amount"]))
+                        if desc and amt is not None and amt > 0:
+                            extracted_items.append({
+                                "description": desc,
+                                "amount": amt,
+                                "category": item.get("category") or _infer_line_category(desc),
+                                "cpt_codes": _extract_cpt_codes(desc),
+                                "date": None,
+                                "confidence": 90.0,
+                                "needs_review": False,
+                                "evidence": [best.to_dict()] if best else [],
+                            })
+                if extracted_items:
+                    claim.line_items = extracted_items
+                    claim.duplicate_candidates = detect_duplicate_charges(claim.line_items)
+                    claim.billing_anomalies = {
+                        "duplicates": claim.duplicate_candidates,
+                        "price_outliers": detect_price_outliers(claim.line_items),
+                    }
+
+    claim.missing_fields = []
+    claim.review_fields = []
     for required in ("patient_name", "hospital_name", "total_amount"):
         if getattr(claim, required) is None:
             claim.missing_fields.append(required)

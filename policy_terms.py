@@ -1,7 +1,10 @@
 """Deterministic extraction of financial policy terms from policy evidence."""
 from __future__ import annotations
 
+import json
+import os
 import re
+import requests
 from decimal import Decimal
 from typing import Any, Iterable
 
@@ -57,14 +60,80 @@ def _find(rows: list[dict[str, Any]], patterns: list[str], label: str, value_cas
     return None
 
 
+def _llm_extract_policy_terms_fallback(rows: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Fallback LLM policy terms extraction when regex fails on complex policy PDFs."""
+    if not rows:
+        return None
+    ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
+    ollama_model = os.getenv("OLLAMA_MODEL", "ibm/granite4.1:8b")
+
+    combined_text = "\n".join(row["text"] for row in rows[:15])
+    prompt = f"""Extract insurance policy financial parameters into JSON format.
+Return ONLY valid JSON matching this schema:
+{{
+  "annual_limit": 0.0 or null,
+  "deductible": 0.0 or null,
+  "copay_percent": 0.0 or null,
+  "room_limit_per_day": 0.0 or null,
+  "waiting_period_months": 0 or null
+}}
+
+Policy Document Text:
+{combined_text[:3500]}
+"""
+    try:
+        response = requests.post(
+            f"{ollama_host}/api/generate",
+            json={
+                "model": ollama_model,
+                "prompt": prompt,
+                "stream": False,
+                "format": "json",
+                "options": {"num_predict": 350, "temperature": 0.1},
+            },
+            timeout=15,
+        )
+        if response.status_code == 200:
+            payload = response.json()
+            resp_content = payload.get("response")
+            if isinstance(resp_content, dict):
+                return resp_content
+            elif isinstance(resp_content, str):
+                return json.loads(resp_content)
+    except Exception:
+        pass
+    return None
+
+
 def extract_policy_terms(source: Any) -> dict[str, Any]:
     """Extract terms without an LLM so calculations remain reproducible."""
     rows = _evidence_rows(source)
     terms: dict[str, dict[str, Any]] = {}
-    terms["annual_limit"] = _find(rows, [rf"annual\s+(?:policy\s+)?limit\s*[:\-]?\s*{_MONEY}"], "annual_limit", _number)
+    terms["annual_limit"] = _find(rows, [
+        rf"annual\s+(?:policy\s+)?limit\s*[:\-]?\s*{_MONEY}",
+        rf"(?:basic\s+)?sum\s+insured\s*(?:limit)?\s*[:\-]?\s*{_MONEY}",
+        rf"coverage\s+limit\s*[:\-]?\s*{_MONEY}",
+        rf"maximum\s+limit\s*[:\-]?\s*{_MONEY}",
+    ], "annual_limit", _number)
     terms["deductible"] = _find(rows, [rf"deductible\s*[:\-]?\s*{_MONEY}"], "deductible", _number)
-    terms["copay_percent"] = _find(rows, [r"copay(?:ment)?\s*[:\-]?\s*([0-9]+(?:\.\d+)?)\s*(?:%|percent)"], "copay_percent", Decimal)
-    terms["room_limit_per_day"] = _find(rows, [rf"room\s+(?:and\s+board\s+)?limit\s*(?:per\s*day)?\s*[:\-]?\s*{_MONEY}\s*(?:per\s*day)?"], "room_limit_per_day", _number)
+    if terms["deductible"] is None:
+        for row in rows:
+            if re.search(r"deductible\s*[:\-]?\s*(?:nil|none|zero|0\b)", row["text"], re.IGNORECASE):
+                terms["deductible"] = {"term": "deductible", "value": Decimal("0"), "confidence": 0.95, "source_text": row["text"].strip(), "source_page": row.get("page"), "source_name": row.get("source_name", "policy"), "method": "deterministic_regex"}
+                break
+    terms["copay_percent"] = _find(rows, [
+        r"copay(?:ment)?\s*[:\-]?\s*([0-9]+(?:\.\d+)?)\s*(?:%|percent)?",
+        r"co[- ]pay\s*[:\-]?\s*([0-9]+(?:\.\d+)?)\s*(?:%|percent)?",
+    ], "copay_percent", Decimal)
+    if terms["copay_percent"] is None:
+        for row in rows:
+            if re.search(r"co[- ]?pay(?:ment)?\s*[:\-]?\s*(?:nil|none|zero|0%|no\s+copay)", row["text"], re.IGNORECASE):
+                terms["copay_percent"] = {"term": "copay_percent", "value": Decimal("0"), "confidence": 0.95, "source_text": row["text"].strip(), "source_page": row.get("page"), "source_name": row.get("source_name", "policy"), "method": "deterministic_regex"}
+                break
+    terms["room_limit_per_day"] = _find(rows, [
+        rf"room\s+(?:and\s+board\s+)?limit\s*(?:per\s*day)?\s*[:\-]?\s*{_MONEY}\s*(?:per\s*day)?",
+        rf"room\s+rent\s*(?:limit)?\s*[:\-]?\s*{_MONEY}\s*(?:per\s*day)?",
+    ], "room_limit_per_day", _number)
     terms["waiting_period_months"] = _find(rows, [r"waiting\s+period\s*[:\-]?\s*([0-9]+)\s*months?"], "waiting_period_months", int)
     # Capture simple category-specific limits such as "Surgery sub-limit: INR 100000".
     sub_limit_rows = []
@@ -84,6 +153,37 @@ def extract_policy_terms(source: Any) -> dict[str, Any]:
     exclusions = [row["text"].strip() for row in rows if re.search(r"exclusion|excluded|non[- ]payable", row["text"], re.IGNORECASE)]
     if exclusions:
         terms["exclusions"] = {"term": "exclusions", "value": exclusions[:20], "confidence": 0.85, "source_text": "\n".join(exclusions[:3]), "source_page": rows[0].get("page"), "source_name": rows[0].get("source_name", "policy"), "method": "deterministic_keyword"}
+
+    if any(terms.get(k) is None for k in ("annual_limit", "deductible", "copay_percent")):
+        llm_terms = _llm_extract_policy_terms_fallback(rows)
+        if llm_terms and isinstance(llm_terms, dict):
+            src_name = rows[0].get("source_name", "policy") if rows else "policy"
+            src_page = rows[0].get("page") if rows else None
+            if terms.get("annual_limit") is None and llm_terms.get("annual_limit") is not None:
+                try:
+                    terms["annual_limit"] = {"term": "annual_limit", "value": Decimal(str(llm_terms["annual_limit"])), "confidence": 0.90, "source_text": "extracted via LLM", "source_page": src_page, "source_name": src_name, "method": "llm_fallback"}
+                except Exception:
+                    pass
+            if terms.get("deductible") is None and llm_terms.get("deductible") is not None:
+                try:
+                    terms["deductible"] = {"term": "deductible", "value": Decimal(str(llm_terms["deductible"])), "confidence": 0.90, "source_text": "extracted via LLM", "source_page": src_page, "source_name": src_name, "method": "llm_fallback"}
+                except Exception:
+                    pass
+            if terms.get("copay_percent") is None and llm_terms.get("copay_percent") is not None:
+                try:
+                    terms["copay_percent"] = {"term": "copay_percent", "value": Decimal(str(llm_terms["copay_percent"])), "confidence": 0.90, "source_text": "extracted via LLM", "source_page": src_page, "source_name": src_name, "method": "llm_fallback"}
+                except Exception:
+                    pass
+            if terms.get("room_limit_per_day") is None and llm_terms.get("room_limit_per_day") is not None:
+                try:
+                    terms["room_limit_per_day"] = {"term": "room_limit_per_day", "value": Decimal(str(llm_terms["room_limit_per_day"])), "confidence": 0.90, "source_text": "extracted via LLM", "source_page": src_page, "source_name": src_name, "method": "llm_fallback"}
+                except Exception:
+                    pass
+            if terms.get("waiting_period_months") is None and llm_terms.get("waiting_period_months") is not None:
+                try:
+                    terms["waiting_period_months"] = {"term": "waiting_period_months", "value": int(llm_terms["waiting_period_months"]), "confidence": 0.90, "source_text": "extracted via LLM", "source_page": src_page, "source_name": src_name, "method": "llm_fallback"}
+                except Exception:
+                    pass
 
     present = {key: value for key, value in terms.items() if value is not None}
     missing = [key for key, value in terms.items() if value is None]

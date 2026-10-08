@@ -1,5 +1,10 @@
 # Changelog
 
+## MediGuard prototype completion — 2026-10-09
+
+- Fixed the extracted uppercase room category being skipped by the app's room-limit context, introduced shared case-insensitive category normalization, and use Decimal amounts for room-linked context. Hospital stay days use the date difference, matching the four-day room example for 10–14 August.
+- Added an app-context regression test. It failed before the fix because `room_charge` was absent, then passed; full suite after the task: **62 passed**.
+
 ## Phase 0 - Baseline and safe defaults
 
 - Added the typed pipeline contracts in `models.py`; kept them independent of the existing runtime during this baseline phase.

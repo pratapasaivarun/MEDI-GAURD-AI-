@@ -5,6 +5,7 @@ from collections import defaultdict
 from decimal import Decimal, ROUND_HALF_UP
 
 from models import CategoryComparison, ClaimResult, ComparisonResult, PolicyTerms, SettlementData
+from category_names import OTHER_CATEGORY, normalize_category
 
 CENT = Decimal("0.01")
 
@@ -32,7 +33,7 @@ def compare(claim: ClaimResult, settlement: SettlementData, terms: PolicyTerms) 
     engine_reasons: dict[str, list[str]] = defaultdict(list)
     clauses = {}
     for row in claim.lines:
-        category = row.item.category.upper()
+        category = normalize_category(row.item.category)
         engine_totals[category] += row.disallowed
         if row.reason_code != "OK":
             engine_reasons[category].append(row.reason_code)
@@ -42,7 +43,7 @@ def compare(claim: ClaimResult, settlement: SettlementData, terms: PolicyTerms) 
     insurer_reasons: dict[str, list[str]] = defaultdict(list)
     category_review: set[str] = set()
     for row in settlement.deductions:
-        category = row.category.upper()
+        category = normalize_category(row.category)
         insurer_totals[category] += row.amount
         if row.reason_text:
             insurer_reasons[category].append(row.reason_text)
@@ -56,7 +57,7 @@ def compare(claim: ClaimResult, settlement: SettlementData, terms: PolicyTerms) 
         insurer_amount = insurer_totals[category]
         difference = insurer_amount - engine_amount
         clause = clauses.get(category) or terms.clauses.get(category)
-        review = category == "OTHER" or category in category_review or (difference > 0 and clause is None)
+        review = category == OTHER_CATEGORY or category in category_review or (difference > 0 and clause is None)
         if review:
             status = "REVIEW"
             payout_effect = Decimal("0")

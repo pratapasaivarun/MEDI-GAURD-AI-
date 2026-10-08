@@ -26,6 +26,7 @@ from rules import evaluate_claim
 from agents import _ollama_json, confidence_label, explain_comparison, recommend_next_steps, retrieve_policy_evidence, run_claim_workflow, warm_ollama
 from policy_index import index_policy_documents, retrieve_policy_evidence as retrieve_indexed_policy_evidence
 from extraction import extract_document
+from category_names import ROOM_CATEGORY, normalize_category
 from policy_terms import extract_policy_terms, terms_from_json
 from reports import (build_appeal_letter_pdf, build_decision_report,
     build_comparison_appeal_letter_text, build_comparison_appeal_letter_pdf,
@@ -1062,17 +1063,17 @@ def _derived_claim_context(claim_id: str, user_id: str, normalized: dict) -> dic
     user = get_user(user_id)
     context = load_adjudication_context(claim_id, user)
     line_items = normalized.get("line_items") or []
-    room_items = [item for item in line_items if item.get("category") == "room"]
-    non_room_total = sum(float(item.get("amount", 0) or 0) for item in line_items if item.get("category") != "room")
+    room_items = [item for item in line_items if normalize_category(item.get("category")) == ROOM_CATEGORY]
+    non_room_total = sum((Decimal(str(item.get("amount", 0) or 0)) for item in line_items if normalize_category(item.get("category")) != ROOM_CATEGORY), Decimal("0"))
     if room_items:
-        context.setdefault("room_charge", sum(float(item.get("amount", 0) or 0) for item in room_items))
+        context.setdefault("room_charge", sum((Decimal(str(item.get("amount", 0) or 0)) for item in room_items), Decimal("0")))
         admission = (normalized.get("admission_date") or {}).get("value")
         discharge = (normalized.get("discharge_date") or {}).get("value")
         if admission and discharge:
             try:
                 start = datetime.fromisoformat(str(admission))
                 end = datetime.fromisoformat(str(discharge))
-                context.setdefault("room_days", max(1, (end - start).days + 1))
+                context.setdefault("room_days", max(1, (end - start).days))
             except ValueError:
                 pass
         if non_room_total > 0:
@@ -1246,7 +1247,7 @@ def run_settlement_comparison(claim_id: str, user_id: str, normalized: dict, rul
         item_date = parse_bill_date(item.get("date") or item.get("expense_date"))
         typed_items.append(LineItem(
             str(item.get("description") or "Unspecified item"),
-            str(item.get("category") or "OTHER").upper(),
+            normalize_category(item.get("category")),
             Decimal(str(item.get("amount") or 0)),
             item_date,
             str(item.get("source") or "rule"),

@@ -18,6 +18,11 @@ from models import (
     LineResult as TypedLineResult,
     PolicyTerms as TypedPolicyTerms,
 )
+from category_names import (
+    ROOM_CATEGORY, ROOM_RENT_CATEGORY, ACCOMMODATION_CATEGORY,
+    DOCTOR_NURSING_CATEGORY, NURSING_CATEGORY, DOCTOR_CATEGORY,
+    CONSULTATION_CATEGORY, normalize_category,
+)
 
 RULE_VERSION = "mvp-1.0"
 MONEY = Decimal("0.01")
@@ -485,7 +490,8 @@ def evaluate_claim(
             control_warnings.append(daycare["notice"])
 
     duplicate_info = detect_line_item_duplicates(items)
-    room_items = [item for item in items if str(item.get("category") or "").lower() in {"room", "room_rent", "accommodation"} or re.search(r"\b(room|accommodation)\b", str(item.get("description") or ""), re.I)]
+    room_categories = {ROOM_CATEGORY, ROOM_RENT_CATEGORY, ACCOMMODATION_CATEGORY}
+    room_items = [item for item in items if normalize_category(item.get("category"), "") in room_categories or re.search(r"\b(room|accommodation)\b", str(item.get("description") or ""), re.I)]
     room_total = sum((money(item.get("amount")) for item in room_items), Decimal("0"))
     room_days = int(context.get("room_days") or 0)
     room_cap = money(terms.room_limit_per_day) * room_days if terms.room_limit_per_day is not None and room_days > 0 else None
@@ -506,14 +512,14 @@ def evaluate_claim(
             evaluated = evaluate_line_item(item, terms, context)
 
         if item in room_items and room_cap is not None:
-            previously_allowed = sum((money(row.get("covered_amount")) for row in line_results if row.get("category") in {"room", "room_rent", "accommodation"}), Decimal("0"))
+            previously_allowed = sum((money(row.get("covered_amount")) for row in line_results if normalize_category(row.get("category"), "") in room_categories), Decimal("0"))
             line_allowance = max(Decimal("0"), room_cap - previously_allowed)
             allowed_room = min(money(evaluated.get("covered_amount")), line_allowance)
             if allowed_room < money(evaluated.get("covered_amount")):
                 evaluated.update(status="partial", covered_amount=float(allowed_room), applied_rule="room_limit", calculation=f"Room charge capped at INR {room_cap} for {room_days} day(s).")
             total_room_reduction += money(evaluated.get("amount")) - money(evaluated.get("covered_amount"))
 
-        if terms.proportionate_deduction and room_ratio < 1 and category in {"doctor_nursing", "nursing", "doctor", "consultation"}:
+        if terms.proportionate_deduction and room_ratio < 1 and normalize_category(category, "") in {DOCTOR_NURSING_CATEGORY, NURSING_CATEGORY, DOCTOR_CATEGORY, CONSULTATION_CATEGORY}:
             before = money(evaluated.get("covered_amount"))
             allowed = (before * room_ratio).quantize(MONEY, rounding=ROUND_HALF_UP)
             if allowed < before:

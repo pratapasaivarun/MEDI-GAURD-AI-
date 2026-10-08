@@ -1,5 +1,9 @@
 # Implementation decisions
 
+## 2026-10-09 completion work
+
+- Category matching uses `category_names.normalize_category` and uppercase shared constants at module boundaries. Room days are elapsed date days (`discharge - admission`), which gives four room days for 10–14 August and avoids counting the discharge date as an additional billed day.
+
 ## Phase 0
 
 - Demo mode defaults to off. `run_demo.py` opts in explicitly. The synthetic demo account is provisioned only by that launcher, and only when `MEDIGUARD_ADMIN_PASSWORD` is set.

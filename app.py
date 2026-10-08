@@ -28,7 +28,7 @@ from policy_index import index_policy_documents, retrieve_policy_evidence as ret
 from extraction import extract_document
 from category_names import ROOM_CATEGORY, normalize_category
 from policy_terms import extract_policy_terms, terms_from_json
-from reports import (build_appeal_letter_pdf, build_decision_report,
+from reports import (build_decision_report,
     build_comparison_appeal_letter_text, build_comparison_appeal_letter_pdf,
     build_comparison_appeal_letter_docx, build_hospital_note_text,
     build_hospital_note_pdf, build_hospital_note_docx)
@@ -1867,43 +1867,24 @@ def _render_claimant_result(user: dict) -> None:
             st.caption("This is decision-support information, not legal or insurance advice.")
     with st.container(border=True):
         st.markdown("### Download your claim documents")
-        st.caption("Use the decision report to understand the calculation. Use the appeal-letter draft when you need to request a formal review.")
-        final_status = str((workflow.get("decision") or {}).get("status") or rules.get("status") or "manual_review")
-        appeal_available = final_status in {"partially_approved", "rejected"}
-        download_columns = st.columns(2 if appeal_available else 1, gap="medium")
-        report_col = download_columns[0]
-        with report_col:
-            st.download_button(
-                "Download decision report (PDF)",
-                data=build_decision_report(dict(claim), normalized, rules, workflow),
-                file_name=f"{claim['claim_number']}-decision-report.pdf",
-                mime="application/pdf",
-                icon=":material/download:",
-                type="primary",
-                use_container_width=True,
-                help="A clear summary of the current claim outcome, amounts, reasons, and next steps.",
-            )
-        if appeal_available:
-            appeal_col = download_columns[1]
-            with appeal_col:
-                st.download_button(
-                    "Download appeal-letter draft (PDF)",
-                    data=build_appeal_letter_pdf(dict(claim), rules, workflow),
-                    file_name=f"{claim['claim_number']}-appeal-letter-draft.pdf",
-                    mime="application/pdf",
-                    icon=":material/description:",
-                    use_container_width=True,
-                    help="A professional draft you can review and personalize before sending to an insurer.",
-                )
-        elif final_status == "approved":
-            st.info("An appeal draft is not indicated for this currently approved assessment.")
-        else:
-            st.info("This case needs an authorized decision before an appeal draft can be prepared.")
+        st.caption("Use the decision report to understand the rules-based estimate. An appeal draft is available only from a possible discrepancy comparison.")
+        st.download_button(
+            "Download decision report (PDF)",
+            data=build_decision_report(dict(claim), normalized, rules, workflow),
+            file_name=f"{claim['claim_number']}-decision-report.pdf",
+            mime="application/pdf",
+            icon=":material/download:",
+            type="primary",
+            use_container_width=True,
+            help="A clear summary of the current claim outcome, amounts, reasons, and next steps.",
+        )
     comparison = st.session_state.get(f'comparison_{claim_id}')
     settlement = st.session_state.get(f'settlement_{claim_id}')
     if comparison and settlement:
         with st.container(border=True):
             _render_settlement_comparison(dict(claim), comparison, settlement)
+    else:
+        st.info("Upload the insurer's settlement letter to compare it and enable a draft.")
     _render_claim_assistant(claim_id, normalized, result, workflow)
     if st.button("Back to dashboard"):
         st.session_state.page = "Dashboard"; st.rerun()
@@ -1919,6 +1900,11 @@ def _render_claim_assistant(claim_id: str, normalized: dict[str, Any], result: d
 
 def _inr(value: Any) -> str:
     return f"INR {float(value or 0):,.2f}"
+
+
+def appeal_draft_available(comparison: Any) -> bool:
+    """Appeal downloads require a comparison with a possible discrepancy."""
+    return comparison is not None and getattr(comparison, "status", None) == "possible_discrepancy"
 
 
 def _render_settlement_comparison(claim: dict[str, Any], comparison, settlement: SettlementData) -> None:
@@ -1953,7 +1939,7 @@ def _render_settlement_comparison(claim: dict[str, Any], comparison, settlement:
         with st.container(border=True):
             st.markdown('#### What the comparison means')
             st.write(explanation)
-    if comparison.status == 'possible_discrepancy':
+    if appeal_draft_available(comparison):
         st.markdown('#### Review documents')
         st.caption('These drafts use the comparison figures and should be checked and personalized before sending.')
         a, b = st.columns(2, gap='medium')
@@ -1967,6 +1953,8 @@ def _render_settlement_comparison(claim: dict[str, Any], comparison, settlement:
             st.text(build_comparison_appeal_letter_text(claim, comparison, settlement, explanation))
         with st.expander('Preview hospital note'):
             st.text(build_hospital_note_text(claim, comparison))
+    else:
+        st.info("Upload the insurer's settlement letter to compare it and enable a draft.")
 
 
 def _claim_answer_from_saved_data(question: str, result: dict[str, Any], normalized: dict[str, Any], evidence: list[dict[str, Any]]) -> str | None:

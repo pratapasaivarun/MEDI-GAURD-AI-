@@ -5,6 +5,7 @@
 - Category matching uses `category_names.normalize_category` and uppercase shared constants at module boundaries. Room days are elapsed date days (`discharge - admission`), which gives four room days for 10–14 August and avoids counting the discharge date as an additional billed day.
 - Settlement references are normalized by removing spaces and hyphens and comparing case-insensitively. A missing reference is recorded as a review reason and still forces a manual-review result; absent or materially mismatched bill totals also block reliance.
 - Fixture auto-confirmation is allowed only in the isolated demo launcher, behind `MEDIGUARD_TRUSTED_FIXTURES`, and only for a bundled policy whose SHA-256 is in `config/trusted_fixtures.json`. Text inside an uploaded document is never trusted as fixture provenance.
+- The comparison-based appeal workflow is the only claimant appeal-download path. A decision status alone does not establish a settlement discrepancy.
 
 ## Phase 0
 

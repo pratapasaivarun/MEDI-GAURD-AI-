@@ -12,6 +12,8 @@ MediGuard AI is an academic prototype for reviewing medical bills against policy
 
 Model-assisted extraction and explanations are optional and subject to validation. Financial calculations are made by code. Missing, uncertain, or unreconciled information should go to manual review.
 
+**Use synthetic data only. Do not upload real patient documents.** This prototype produces estimates for review and must not be used to make a real claim decision.
+
 ## Architecture
 
 ```text
@@ -70,7 +72,7 @@ Open `http://127.0.0.1:8501`. Claimant accounts can be created from the sign-in 
 1. Register a claim and upload the applicable policy and hospital bill.
 2. Optionally add the insurer settlement letter (`.pdf` or `.txt`) for comparison.
 3. Review extracted fields and correct source-backed details where needed.
-4. Link and confirm the applicable policy edition, then run the deterministic rules.
+4. Link and confirm the applicable policy edition, then run the deterministic rules. The rules determine amounts and statuses; the policy provides evidence, and model output is explanatory only and must be reviewed.
 5. Review the settlement comparison. Draft letters are enabled only when a possible discrepancy is supported by the comparison; review and personalize any draft before use.
 6. An authorized reviewer confirms the final determination.
 
@@ -84,6 +86,15 @@ pip install -r requirements-dev.txt
 ```
 
 The tests cover deterministic rules, extraction validation, settlement parsing, comparison, generated reports, and app security behavior. Passing synthetic tests is not evidence of accuracy on real claims or any insurer's documents.
+
+## Known limitations
+
+- No MFA is implemented.
+- Email delivery is out of scope; password-reset and reviewer setup links are not sent by email.
+- Use synthetic data only. Do not use real patient data or upload real patient documents.
+- Settlement parsing supports one settlement-letter layout, provided as a text-layer PDF or UTF-8 text, with an optional LLM fallback. Image-only settlement documents require manual review.
+- Results are estimates for human review, not insurer decisions or verified entitlements.
+- OCR, retrieval relevance, model quality, and expert validation have not been established beyond the synthetic checks described in `evaluation/PAPER_RESULTS.md`.
 
 ## Evaluation tools
 
@@ -110,7 +121,7 @@ Then score available human annotations and regenerate paper tables:
 
 `evaluation/annotations.json` is the annotation source. Retrieval quality, OCR text error, model quality, and expert validation remain unmeasured where verified ground truth is absent. See `evaluation/PAPER_RESULTS.md` for recorded synthetic results and their limits. The extraction evaluation runner currently expects legacy fixtures under `fixtures/phase4/`; those fixtures are not part of this repository, so that runner and `run_full_evaluation.py` need those inputs before use.
 
-Only add manually verified annotations. `evaluation/annotation_template.json` describes the annotation fields. Retrieval annotations need a query, its case ID, and manually confirmed relevant clause IDs. OCR annotations need a checked transcript and reviewer/date metadata. Evidence and appeal-quality scores require human review; blank or unverified labels should remain unevaluated.
+Only add manually verified annotations. `evaluation/annotation_template.json` describes the annotation fields. Retrieval annotations need a query, its case ID, and manually confirmed relevant clause IDs. OCR annotations need a checked transcript and reviewer/date metadata. Evidence and appeal-quality scores require human review; blank or unverified labels should remain unevaluated. The retention purge function is available for an authorized administrator to run manually; automatic retention purging is not configured.
 
 ## Configuration and security notes
 
@@ -118,8 +129,7 @@ Only add manually verified annotations. `evaluation/annotation_template.json` de
 - `MEDIGUARD_CORE_DEMO` defaults to `false`; `run_demo.py` is the supported isolated synthetic demo launcher.
 - The demo administrator requires an explicitly supplied `MEDIGUARD_ADMIN_PASSWORD`; no default credential is provided.
 - Login throttling is enabled. Password reset responses do not disclose whether an account exists. Reset links remain hidden unless `MEDIGUARD_DEV_SHOW_LINKS=true`; email delivery is out of scope. A reviewer invitation link is shown only to the signed-in administrator who created it.
-- MFA is not implemented. This prototype is not certified or suitable for production claims handling.
-- Avoid uploading real patient information to a development instance. Keep local data and secrets out of commits.
+- This prototype is not certified or suitable for production claims handling. Keep local data and secrets out of commits.
 
 ## Repository layout
 

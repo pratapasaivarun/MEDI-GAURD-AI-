@@ -71,4 +71,5 @@
 - Comparison now reconciles co-pay deductions explicitly and calculates their patient-share effect without applying the co-pay percentage twice.
 - Moved the application stylesheet and reusable escaped presentation helpers into the `ui` package while retaining `app.py`'s current rendering API for compatibility.
 - Moved welcome/login screens into `ui/auth_pages.py` and claim/result/reviewer screens into `ui/claim_pages.py`; `app.main()` now routes to those pages. Kept `appeal_draft_available` in `app.py` as a compatibility helper used by tests and callers.
+- Added `.gitattributes` with LF text normalization and committed the renormalization separately. Appeal-letter insurer reasons now end as a sentence before the review point. README documents the prototype pipeline, manual retention purge, and known limitations: no MFA/email, synthetic data only, one supported settlement layout with fallback, and estimates only.
 

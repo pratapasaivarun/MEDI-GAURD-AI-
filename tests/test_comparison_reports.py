@@ -31,6 +31,7 @@ def test_appeal_letter_uses_expected_numbers_and_neutral_language():
     for value in ("₹1,32,000", "₹1,02,600", "₹1,11,600", "₹9,000", "₹10,000", "Clause 3.4", "page 9"):
         assert value in letter
     assert ESTIMATE_DISCLAIMER in letter
+    assert "Insurer reason: Medicines outside the hospitalization window. Review point:" in letter
     for forbidden in ("fraud", "illegal", "cheat", "wrongful", "intentional"):
         assert forbidden not in letter.lower()
 

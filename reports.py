@@ -517,6 +517,9 @@ def build_comparison_appeal_letter_text(
     rows = [row for row in comparison.categories if row.status in {"UNEXPLAINED_DEDUCTION", "EXCESS_DEDUCTION"}]
     details = []
     for row in rows:
+        insurer_reason = row.insurer_reason or "No reason was recorded."
+        if insurer_reason.rstrip()[-1:] not in {".", "!", "?"}:
+            insurer_reason = insurer_reason.rstrip() + "."
         clause = (
             f"Supporting policy text: {row.clause.text} (page {row.clause.page})."
             if row.clause else "No supporting policy clause was available; reviewer confirmation is required."
@@ -524,7 +527,7 @@ def build_comparison_appeal_letter_text(
         details.append(
             f"- {row.category}: insurer deduction {_inr_indian(row.insurer_deducted)}; "
             f"amount supported by rules {_inr_indian(row.engine_disallowed)}. "
-            f"Insurer reason: {row.insurer_reason or 'No reason was recorded.'} "
+            f"Insurer reason: {insurer_reason} "
             f"Review point: {row.engine_reason} {clause}"
         )
     body = [

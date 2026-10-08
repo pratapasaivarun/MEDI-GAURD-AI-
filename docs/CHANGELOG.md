@@ -65,3 +65,8 @@
 - Removed unverified insurer-validation and performance claims; documented prototype limits and that MFA is not implemented.
 - Corrected remaining MediGuard branding and aligned the documented timeout variable with `.env.example`.
 - Final verification after implementation and documentation changes: `python -m pytest tests/ -q --basetemp=tmp/pytest_final`: **61 passed in 15.54s**; Python compilation succeeded; `git diff --check` is clean.
+# Unreleased
+
+- Added a seven-case synthetic comparison evaluation and runner; its generated outcomes match the declared expectations.
+- Comparison now reconciles co-pay deductions explicitly and calculates their patient-share effect without applying the co-pay percentage twice.
+

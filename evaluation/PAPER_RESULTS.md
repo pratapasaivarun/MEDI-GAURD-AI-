@@ -1,5 +1,9 @@
 # Paper-ready quantitative results
 
+## Synthetic comparison scenarios (runner output)
+
+The comparison scenario runner produced **7 synthetic scenarios**, with **7/7 expected status outcomes matched**. Expected appeal-letter availability also matched in **7/7 synthetic scenarios**. This small hand-authored scenario set is a functional check, not an accuracy estimate or independent insurance validation.
+
 These results use fictional synthetic fixtures. They do not establish real-world, clinical, or insurer performance.
 
 ## Evaluation scope and method

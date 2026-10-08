@@ -85,3 +85,22 @@ def test_missing_clause_marks_category_for_review():
     settlement = SettlementData("CLM-2026-0417", Decimal("102600"), [], Decimal("11400"), False, [], Decimal("132000"))
     result = compare(claim, settlement, terms)
     assert result.status == "manual_review"
+
+
+def test_double_applied_copay_is_a_possible_discrepancy():
+    claim, terms = _demo_claim()
+    terms.clauses["COPAY"] = Clause("The 10 percent co-payment is applied once to eligible expenses.", 1, "Co-payment")
+    settlement = SettlementData(
+        "CLM-2026-0417", Decimal("99200"),
+        [SettlementDeduction(category, amount, "policy calculation") for category, amount in (
+            ("ADMISSION", Decimal("2000")), ("ROOM", Decimal("4000")), ("DOCTOR_NURSING", Decimal("2000")),
+        )],
+        Decimal("24800"), False, [], Decimal("132000"),
+    )
+    result = compare(claim, settlement, terms)
+    assert result.status == "possible_discrepancy"
+    assert result.possible_difference == claim.copay
+    copay = next(row for row in result.categories if row.category == "COPAY")
+    assert copay.engine_disallowed == claim.copay
+    assert copay.insurer_deducted == claim.copay * 2
+    assert copay.payout_effect == claim.copay

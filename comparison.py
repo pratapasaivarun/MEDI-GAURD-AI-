@@ -39,6 +39,8 @@ def compare(claim: ClaimResult, settlement: SettlementData, terms: PolicyTerms) 
             engine_reasons[category].append(row.reason_code)
         if row.clause:
             clauses[category] = row.clause
+    if claim.copay:
+        engine_totals["COPAY"] += claim.copay
     insurer_totals: dict[str, Decimal] = defaultdict(lambda: Decimal("0"))
     insurer_reasons: dict[str, list[str]] = defaultdict(list)
     category_review: set[str] = set()
@@ -49,6 +51,8 @@ def compare(claim: ClaimResult, settlement: SettlementData, terms: PolicyTerms) 
             insurer_reasons[category].append(row.reason_text)
         if row.needs_review:
             category_review.add(category)
+    if settlement.copay_applied:
+        insurer_totals["COPAY"] += settlement.copay_applied
 
     comparisons: list[CategoryComparison] = []
     discrepancy_total = Decimal("0")
@@ -69,7 +73,9 @@ def compare(claim: ClaimResult, settlement: SettlementData, terms: PolicyTerms) 
             payout_effect = Decimal("0")
         else:
             status = "UNEXPLAINED_DEDUCTION" if engine_amount == 0 else "EXCESS_DEDUCTION"
-            payout_effect = (difference * (Decimal("1") - terms.copay_percent / Decimal("100"))).quantize(CENT, rounding=ROUND_HALF_UP)
+            # A co-pay difference is already a patient-share amount. Applying
+            # the co-pay percentage to it again would understate its effect.
+            payout_effect = difference.quantize(CENT, rounding=ROUND_HALF_UP) if category == "COPAY" else (difference * (Decimal("1") - terms.copay_percent / Decimal("100"))).quantize(CENT, rounding=ROUND_HALF_UP)
             discrepancy_total += payout_effect
         comparisons.append(CategoryComparison(
             category=category,

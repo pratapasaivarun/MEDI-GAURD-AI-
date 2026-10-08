@@ -69,4 +69,5 @@
 
 - Added a seven-case synthetic comparison evaluation and runner; its generated outcomes match the declared expectations.
 - Comparison now reconciles co-pay deductions explicitly and calculates their patient-share effect without applying the co-pay percentage twice.
+- Moved the application stylesheet and reusable escaped presentation helpers into the `ui` package while retaining `app.py`'s current rendering API for compatibility.
 

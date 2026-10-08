@@ -70,4 +70,5 @@
 - Added a seven-case synthetic comparison evaluation and runner; its generated outcomes match the declared expectations.
 - Comparison now reconciles co-pay deductions explicitly and calculates their patient-share effect without applying the co-pay percentage twice.
 - Moved the application stylesheet and reusable escaped presentation helpers into the `ui` package while retaining `app.py`'s current rendering API for compatibility.
+- Moved welcome/login screens into `ui/auth_pages.py` and claim/result/reviewer screens into `ui/claim_pages.py`; `app.main()` now routes to those pages. Kept `appeal_draft_available` in `app.py` as a compatibility helper used by tests and callers.
 

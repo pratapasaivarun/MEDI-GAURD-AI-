@@ -111,8 +111,8 @@ def parse_settlement(file_bytes: bytes, filename: str) -> SettlementData:
         except UnicodeDecodeError as exc:
             raise ValueError("Settlement text must use UTF-8 encoding.") from exc
 
-    claim_match = re.search(r"\b(?:claim\s*(?:id|no\.?|number)?|claim\s*ref(?:erence)?)\s*[:#-]?\s*([A-Z0-9][A-Z0-9/-]{3,})", text, re.I)
-    claim_id = claim_match.group(1).strip(".,;:") if claim_match else None
+    claim_match = re.search(r"\b(?:claim\s*(?:id|no\.?|number)?|claim\s*ref(?:erence)?)\s*[:#-]?\s*([A-Z0-9][A-Z0-9 /-]{3,})", text, re.I)
+    claim_id = claim_match.group(1).strip(".,;: ") if claim_match else None
     amount_paid = _extract_labeled_amount(text, r"amount\s*(?:paid|settled)|settlement\s*amount|net\s*(?:amount\s*)?paid|approved\s*amount")
     bill_total = _extract_labeled_amount(text, r"bill\s*total|total\s*(?:bill|billed|amount)")
     copay = _extract_labeled_amount(text, r"co[- ]?pay(?:ment)?(?:\s+applied)?")

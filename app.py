@@ -1220,7 +1220,7 @@ def _claim_policy_clause_map(claim_id: str) -> dict[str, Clause]:
 def run_settlement_comparison(claim_id: str, user_id: str, normalized: dict, rules: dict) -> tuple[Any, SettlementData]:
     """Build the typed comparison from saved claim documents and rule outputs."""
     user = get_user(user_id)
-    _claim_access(claim_id, user)
+    claim = _claim_access(claim_id, user)
     documents = claim_documents(claim_id, user)
     settlement_docs = [doc for doc in documents if doc["document_type"] == "settlement"]
     if len(settlement_docs) != 1:
@@ -1231,12 +1231,21 @@ def run_settlement_comparison(claim_id: str, user_id: str, normalized: dict, rul
 
     total_field = normalized.get("total_amount") or {}
     bill_total = Decimal(str(total_field.get("value") or 0))
-    if settlement.bill_total is None:
-        settlement.bill_total = bill_total
-        reconciled = bill_total - sum((row.amount for row in settlement.deductions), Decimal("0")) - (settlement.copay_applied or Decimal("0"))
-        if settlement.amount_paid and abs(reconciled - settlement.amount_paid) > Decimal("1"):
+    if settlement.claim_id is None:
+        settlement.needs_review = True
+        settlement.review_reasons.append("CLAIM_ID_MISSING: settlement claim reference was not identified.")
+    else:
+        claim_key = re.sub(r"[\s-]+", "", str(claim["claim_number"] or "")).casefold()
+        settlement_key = re.sub(r"[\s-]+", "", settlement.claim_id).casefold()
+        if claim_key != settlement_key:
             settlement.needs_review = True
-            settlement.review_reasons.append("Settlement totals do not reconcile with the uploaded bill within INR 1.")
+            settlement.review_reasons.append("CLAIM_ID_MISMATCH: settlement claim reference does not match the selected claim.")
+    if settlement.bill_total is None:
+        settlement.needs_review = True
+        settlement.review_reasons.append("SETTLEMENT_TOTAL_MISSING: settlement bill total was not identified.")
+    elif abs(settlement.bill_total - bill_total) > Decimal("1"):
+        settlement.needs_review = True
+        settlement.review_reasons.append("BILL_TOTAL_MISMATCH: settlement bill total does not match the uploaded bill within INR 1.")
 
     patient = str(((normalized.get("patient_name") or {}).get("value") or ""))
     admission = parse_bill_date((normalized.get("admission_date") or {}).get("value"))

@@ -1533,6 +1533,16 @@ def _status_badge(status: str) -> str:
     return status.replace('_', ' ').title()
 
 
+def deterministic_result_header_html(status: Any) -> str:
+    safe_status = html.escape(_safe_status(status), quote=True)
+    return f"<div class='mg-section-title'>Deterministic result <span class='mg-pill mg-pill-{safe_status}'>{html.escape(_status_badge(safe_status))}</span></div>"
+
+
+def evidence_recommendation_header_html(status: Any) -> str:
+    safe_status = html.escape(_safe_status(status), quote=True)
+    return f"<div class='mg-section-title'>Evidence-based recommendation <span class='mg-pill mg-pill-{safe_status}'>{html.escape(_status_badge(safe_status))}</span></div>"
+
+
 def _line_item_status_label(status: Any) -> str:
     """Return a compact, readable status cue for claimant-facing item rows."""
     return {
@@ -1565,13 +1575,18 @@ def _brand_header() -> None:
 
 def _page_header(eyebrow: str, title: str, subtitle: str, icon: str) -> None:
     """Use one consistent, lightweight page hierarchy across the prototype UI."""
-    st.markdown(
-        f'''<div class="mg-page-header">
+    st.markdown(page_header_html(eyebrow, title, subtitle, icon), unsafe_allow_html=True)
+
+
+def page_header_html(eyebrow: str, title: str, subtitle: str, icon: str) -> str:
+    return f'''<div class="mg-page-header">
         <div class="mg-header-icon">{html.escape(str(icon))}</div>
         <div><div class="mg-eyebrow">{html.escape(str(eyebrow))}</div><h1>{html.escape(str(title))}</h1>
-        <p class="mg-subtitle">{html.escape(str(subtitle))}</p></div></div>''',
-        unsafe_allow_html=True,
-    )
+        <p class="mg-subtitle">{html.escape(str(subtitle))}</p></div></div>'''
+
+
+def auth_portal_html(label: str, title: str, copy: str) -> str:
+    return f'<div class="mg-auth-kicker">{html.escape(str(label))}</div><div class="mg-auth-title">{html.escape(str(title))}</div><div class="mg-auth-copy">{html.escape(str(copy))}</div>'
 
 
 def _claimant_progress(step: int, detail: str) -> None:
@@ -1587,26 +1602,26 @@ def _safe_status(status: Any) -> str:
 
 def claim_context_html(claim: Any, status: Any) -> str:
     """Render user-derived claim labels as escaped text inside trusted markup."""
-    safe_status = _safe_status(status)
+    safe_status = html.escape(_safe_status(status), quote=True)
     claim_number = html.escape(str(claim["claim_number"] or ""), quote=True)
     patient = html.escape(str(claim["patient_name"] or ""), quote=True)
     policy = html.escape(str(claim["policy_number"] or "Policy number pending"), quote=True)
     return (
         f"<div class='mg-context'><div><b>{claim_number}</b>"
         f"<div class='mg-card-copy'>{patient} · {policy}</div></div>"
-        f"<span class='mg-pill mg-pill-{safe_status}'>{_status_badge(safe_status)}</span></div>"
+        f"<span class='mg-pill mg-pill-{safe_status}'>{html.escape(_status_badge(safe_status))}</span></div>"
     )
 
 
 def claim_row_html(claim: Any) -> str:
-    safe_status = _safe_status(claim["status"])
+    safe_status = html.escape(_safe_status(claim["status"]), quote=True)
     claim_number = html.escape(str(claim["claim_number"] or ""), quote=True)
     patient = html.escape(str(claim["patient_name"] or ""), quote=True)
     hospital = html.escape(str(claim["hospital_name"] or "Provider pending"), quote=True)
     return (
         f"<div class='mg-claim-row'><div><b>{claim_number}</b>"
         f"<div class='mg-card-copy'>{patient} · {hospital}</div></div>"
-        f"<span class='mg-pill mg-pill-{safe_status}'>{_status_badge(safe_status)}</span></div>"
+        f"<span class='mg-pill mg-pill-{safe_status}'>{html.escape(_status_badge(safe_status))}</span></div>"
     )
 
 
@@ -1694,7 +1709,7 @@ def _render_login() -> None:
         portal_title = 'Admin sign in' if staff_portal else 'Welcome back'
         portal_copy = 'Use your authorized administrator or reviewer credentials.' if staff_portal else 'Sign in to continue your claim review.'
         portal_label = 'ADMINISTRATOR PORTAL' if staff_portal else 'USER WORKSPACE'
-        st.markdown(f'<div class="mg-auth-kicker">{html.escape(portal_label)}</div><div class="mg-auth-title">{html.escape(portal_title)}</div><div class="mg-auth-copy">{html.escape(portal_copy)}</div>', unsafe_allow_html=True)
+        st.markdown(auth_portal_html(portal_label, portal_title, portal_copy), unsafe_allow_html=True)
         if staff_portal:
             login_tab, reset_tab = st.tabs(['Secure sign in', 'Reset password'])
         else:
@@ -2428,7 +2443,7 @@ def _render_claim_review(user: dict) -> None:
                 except Exception as exc: status.update(label='Rules failed',state='error'); st.error(str(exc))
         if rules:
             result_status = _safe_status(rules['status'])
-            st.markdown(f"<div class='mg-section-title'>Deterministic result <span class='mg-pill mg-pill-{result_status}'>{_status_badge(result_status)}</span></div>", unsafe_allow_html=True)
+            st.markdown(deterministic_result_header_html(result_status), unsafe_allow_html=True)
             with st.container(horizontal=True, horizontal_alignment='left'):
                 st.metric('Covered',f"INR {rules.get('covered_amount',0):,.2f}", border=True)
                 st.metric('Deductible',f"INR {rules.get('deductible',0):,.2f}", border=True)
@@ -2444,7 +2459,7 @@ def _render_claim_review(user: dict) -> None:
                         started=time.perf_counter(); workflow=run_agents_for_claim(claim_id,user['user_id'],normalized,rules,progress_callback=lambda msg: status.write(msg)); workflow['elapsed_seconds']=round(time.perf_counter()-started,2); st.session_state[f'workflow_{claim_id}']=workflow; status.update(label='Two-agent analysis complete',state='complete')
                     except Exception as exc: status.update(label='Agent workflow failed',state='error'); st.error(str(exc))
             if workflow:
-                decision=workflow.get('decision',{}); decision_status = _safe_status(decision.get('status','manual_review')); st.markdown(f"<div class='mg-section-title'>Evidence-based recommendation <span class='mg-pill mg-pill-{decision_status}'>{_status_badge(decision_status)}</span></div>", unsafe_allow_html=True)
+                decision=workflow.get('decision',{}); decision_status = _safe_status(decision.get('status','manual_review')); st.markdown(evidence_recommendation_header_html(decision_status), unsafe_allow_html=True)
                 for reason in decision.get('reasons',[]): st.write(f'• {reason}')
                 st.caption(f"Policy source: {workflow.get('policy_source','none')} · LLM calls: {workflow.get('llm_calls',0)} · Time: {workflow.get('elapsed_seconds','n/a')}s")
                 with st.expander('Policy evidence and agent reasoning'): st.json({'decision':decision,'policy_findings':workflow.get('policy_findings',{})})

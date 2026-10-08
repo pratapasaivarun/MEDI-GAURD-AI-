@@ -9,6 +9,7 @@
 - Removed the legacy status-based appeal PDF from claimant results. Appeal drafts now have a single comparison-gated path and are available only for `possible_discrepancy`; otherwise the UI asks the claimant to upload the insurer settlement letter. Added status-gate tests; full suite: **71 passed**.
 - Persisted settlement and comparison dataclasses as JSON with Decimal values encoded as strings, tied each result to its settlement document SHA-256, and added an idempotent SQLite table creation migration. Claimant/reviewer views hydrate empty session state from the saved result. A reload-state test passes.
 - Removed token-bearing reset/invitation URLs from logs. Issuance logs contain only the user ID; reset URLs stay hidden by default, and the created reviewer invite URL is displayed only in the admin panel/session. Added link visibility/log tests and documented email delivery as out of scope.
+- Audited all 21 `unsafe_allow_html` calls in `app.py`, extracted interpolated markup into testable helpers, and escaped dynamic claim/status values. Added seven payload-based rendering-helper tests and documented every call in `docs/XSS_AUDIT.md`.
 
 ## Phase 0 - Baseline and safe defaults
 

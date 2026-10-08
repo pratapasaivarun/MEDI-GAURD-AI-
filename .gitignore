@@ -55,7 +55,6 @@ sample_*.jpg
 # Archived, source-reference, and trial material kept outside the publishable project
 EXTRA/
 REFERNCE DATASETS/
-sample_documents/
 project_snapshot*.zip
 
 # Temporary test-run session directories created by pytest / audit scripts
@@ -70,5 +69,3 @@ final_regression_*/
 scenario_check_*/
 debug_line_*/
 verify_*/
-chroma/
-chroma_e2e/

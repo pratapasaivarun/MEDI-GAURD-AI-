@@ -9,10 +9,13 @@ LLM fallback.
 from __future__ import annotations
 
 import json
+from decimal import Decimal
 import re
 import time
 from pathlib import Path
 from typing import Any, Callable, TypedDict
+
+from models import ComparisonResult
 
 import requests
 
@@ -186,6 +189,99 @@ def _parse_json_response(content: str, list_key: str) -> dict[str, Any]:
     if not isinstance(parsed, dict):
         raise RuntimeError("Ollama returned JSON that is neither an object nor an array.")
     return parsed
+
+
+def _comparison_money_values(comparison: ComparisonResult) -> set[str]:
+    values = {
+        comparison.expected_patient_share,
+        comparison.actual_patient_share,
+        comparison.possible_difference,
+        comparison.billed_total,
+        comparison.actual_insurer_payment,
+        comparison.expected_insurer_payment,
+    }
+    for row in comparison.categories:
+        values.update({row.insurer_deducted, row.engine_disallowed, row.difference, row.payout_effect})
+    return {str(value.quantize(Decimal("0.01"))) for value in values}
+
+
+def comparison_template_explanation(comparison: ComparisonResult) -> str:
+    """Stable explanation used when the model is offline or fails validation."""
+    if comparison.status == "manual_review":
+        return "An authorized reviewer must confirm the settlement values and supporting policy evidence before this comparison can be relied on."
+    disputed = [row for row in comparison.categories if row.status in {"UNEXPLAINED_DEDUCTION", "EXCESS_DEDUCTION"}]
+    if not disputed:
+        return "The insurer deductions match the deterministic policy calculation based on the documents provided. This remains an estimate for reviewer confirmation."
+    row = disputed[0]
+    clause = f" The supporting clause is on page {row.clause.page}." if row.clause else ""
+    return (
+        f"The documents show a possible difference of INR {comparison.possible_difference:,.2f}. "
+        f"The {row.category.lower()} deduction of INR {row.insurer_deducted:,.2f} is greater than the amount supported by the deterministic rules."
+        f"{clause} Please ask an authorized reviewer to confirm the documents and calculation."
+    )
+
+
+def validate_comparison_explanation(text: str, comparison: ComparisonResult) -> bool:
+    if not isinstance(text, str) or not text.strip() or len(text.split()) > 120:
+        return False
+    allowed = _comparison_money_values(comparison)
+    for match in re.finditer(r"(?:INR|Rs\.?|₹)\s*([0-9][0-9,]*(?:\.\d{1,2})?)", text, re.I):
+        try:
+            amount = Decimal(match.group(1).replace(",", "")).quantize(Decimal("0.01"))
+        except Exception:
+            return False
+        if str(amount) not in allowed:
+            return False
+    clauses = [row.clause.text for row in comparison.categories if row.clause]
+    quoted = re.findall(r"[\"“](.+?)[\"”]", text)
+    if any(not any(quote in clause for clause in clauses) for quote in quoted):
+        return False
+    allowed_citations = {row.clause.section for row in comparison.categories if row.clause and row.clause.section}
+    for citation in re.findall(r"\bClause\s+([A-Za-z0-9.]+)", text, re.I):
+        if citation not in allowed_citations:
+            return False
+    return True
+
+
+def explain_comparison(comparison: ComparisonResult, use_llm: bool = True) -> str:
+    """Explain fixed comparison facts; invalid model text is discarded."""
+    fallback = comparison_template_explanation(comparison)
+    if not use_llm or comparison.status == "manual_review":
+        return fallback
+    categories = [
+        {
+            "category": row.category,
+            "insurer_deducted": str(row.insurer_deducted),
+            "engine_disallowed": str(row.engine_disallowed),
+            "difference": str(row.difference),
+            "status": row.status,
+            "payout_effect": str(row.payout_effect),
+            "clause": row.clause.text if row.clause else None,
+            "page": row.clause.page if row.clause else None,
+        }
+        for row in comparison.categories
+    ]
+    prompt = {
+        "status": comparison.status,
+        "expected_patient_share": str(comparison.expected_patient_share),
+        "actual_patient_share": str(comparison.actual_patient_share),
+        "possible_difference": str(comparison.possible_difference),
+        "categories": categories,
+    }
+    schema = {"type": "object", "properties": {"explanation": {"type": "string"}}, "required": ["explanation"]}
+    try:
+        response = _ollama_json(
+            "Explain the supplied comparison in plain English in no more than 120 words. The figures and policy clauses are fixed facts: do not change them, add figures, or infer a decision. Return only the requested JSON.",
+            json.dumps(prompt),
+            agent_name="comparison_explainer",
+            response_schema=schema,
+        )
+        explanation = response.get("explanation")
+        if validate_comparison_explanation(explanation, comparison):
+            return explanation.strip()
+    except Exception:
+        pass
+    return fallback
 
 
 def _ollama_json(system: str, prompt: str, list_key: str = "items", agent_name: str = "unknown", response_schema: dict[str, Any] | None = None) -> dict[str, Any]:

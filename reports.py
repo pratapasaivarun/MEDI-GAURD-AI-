@@ -14,6 +14,7 @@ from reportlab.lib.units import inch
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from agents import confidence_label, recommend_next_steps
+from models import ComparisonResult, SettlementData
 
 
 TEAL = colors.HexColor("#0F766E")
@@ -25,6 +26,26 @@ MINT = colors.HexColor("#EAF8F5")
 
 def _money(value: Any) -> str:
     return f"INR {float(value or 0):,.2f}"
+
+
+def _inr_indian(value: Any) -> str:
+    """Format Decimal rupees using Indian digit grouping at display time."""
+    from decimal import Decimal, ROUND_HALF_UP
+
+    amount = Decimal(str(value or 0)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    negative = amount < 0
+    whole, fraction = f"{abs(amount):.2f}".split(".")
+    if len(whole) > 3:
+        tail, head = whole[-3:], whole[:-3]
+        groups = []
+        while len(head) > 2:
+            groups.insert(0, head[-2:])
+            head = head[:-2]
+        if head:
+            groups.insert(0, head)
+        whole = ",".join(groups + [tail])
+    decimals = f".{fraction}" if fraction != "00" else ""
+    return f"{'-' if negative else ''}₹{whole}{decimals}"
 
 
 def _value(item: Any) -> Any:
@@ -69,7 +90,7 @@ def _footer(canvas: Any, doc: Any) -> None:
     canvas.line(doc.leftMargin, 0.42 * inch, A4[0] - doc.rightMargin, 0.42 * inch)
     canvas.setFillColor(MUTED)
     canvas.setFont("Helvetica", 7.5)
-    canvas.drawString(doc.leftMargin, 0.27 * inch, "Medi Gaurd AI - decision support document")
+    canvas.drawString(doc.leftMargin, 0.27 * inch, "MediGuard AI - decision support document")
     canvas.drawRightString(A4[0] - doc.rightMargin, 0.27 * inch, f"Page {doc.page}")
     canvas.restoreState()
 
@@ -83,8 +104,8 @@ def _document() -> tuple[io.BytesIO, SimpleDocTemplate]:
         leftMargin=0.62 * inch,
         topMargin=0.58 * inch,
         bottomMargin=0.68 * inch,
-        title="Medi Gaurd AI claim document",
-        author="Medi Gaurd AI",
+        title="MediGuard AI claim document",
+        author="MediGuard AI",
     )
     return buffer, doc
 
@@ -239,7 +260,7 @@ def build_decision_report(claim: dict[str, Any], normalized: dict[str, Any], rul
     buffer, doc = _document()
 
     story = [
-        Paragraph("MEDI GAURD AI", styles["subtitle"]),
+        Paragraph("MEDIGUARD AI", styles["subtitle"]),
         Paragraph("Claim Decision Report", styles["title"]),
         Paragraph(f"Prepared {datetime.now().strftime('%d %b %Y')} | Claim reference: {claim.get('claim_number', 'Not available')}", styles["subtitle"]),
         Spacer(1, 13),
@@ -297,7 +318,7 @@ def build_decision_report(claim: dict[str, Any], normalized: dict[str, Any], rul
             story.append(Paragraph(f"<b>{citation}:</b> {text[:480]}", styles["small"]))
     else:
         story.append(Paragraph("No policy excerpts were retained in this session. The calculation and review status are shown above.", styles["small"]))
-    story.extend([Spacer(1, 8), Paragraph("This document is decision support only and is not a final insurer determination.", styles["small"])])
+        story.extend([Spacer(1, 8), Paragraph(escape(ESTIMATE_DISCLAIMER), styles["small"])])
     doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
     return buffer.getvalue()
 
@@ -439,7 +460,7 @@ def build_appeal_letter_pdf(claim: dict[str, Any], rules: dict[str, Any], workfl
     buffer, doc = _document()
     reasons = decision.get("reasons") or rules.get("warnings") or ["Please review the claim documents and calculation."]
     story = [
-        Paragraph("MEDI GAURD AI", styles["subtitle"]),
+        Paragraph("MEDIGUARD AI", styles["subtitle"]),
         Paragraph("Appeal and Review Request", styles["title"]),
         Paragraph(f"Prepared {datetime.now().strftime('%d %b %Y')} | Claim reference: {claim.get('claim_number', 'Not available')}", styles["subtitle"]),
         Spacer(1, 20),
@@ -464,7 +485,126 @@ def build_appeal_letter_pdf(claim: dict[str, Any], rules: dict[str, Any], workfl
         Paragraph("Sincerely,", styles["letter"]),
         Paragraph("Claimant or authorized representative", styles["letter"]),
         Spacer(1, 12),
-        Paragraph("This is a prepared draft. Review and personalize it before submitting it to an insurer.", styles["small"]),
+        Paragraph(escape(ESTIMATE_DISCLAIMER), styles["small"]),
     ])
     doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
     return buffer.getvalue()
+
+
+ESTIMATE_DISCLAIMER = "This is an estimate prepared from the documents provided. It is not the insurer's decision."
+FORBIDDEN_APPEAL_WORDS = ("fraud", "illegal", "cheat", "wrongful", "intentional")
+
+
+def build_comparison_appeal_letter_text(
+    claim: dict[str, Any],
+    comparison: ComparisonResult,
+    settlement: SettlementData,
+    explanation: str | None = None,
+    signature: str = "Claimant or authorized representative",
+) -> str:
+    """Build a fixed-template appeal draft using the comparison's financial facts."""
+    from agents import validate_comparison_explanation
+
+    if comparison.status != "possible_discrepancy":
+        raise ValueError("An appeal draft is available only for a possible discrepancy.")
+    if explanation and not validate_comparison_explanation(explanation, comparison):
+        explanation = None
+    claim_id = str(claim.get("claim_number") or settlement.claim_id or "Not available")
+    patient = str(claim.get("patient_name") or "Not available")
+    hospital = str(claim.get("hospital_name") or "Not available")
+    policy = str(claim.get("policy_number") or "Not available")
+    stay = str(claim.get("stay_dates") or "Not available")
+    rows = [row for row in comparison.categories if row.status in {"UNEXPLAINED_DEDUCTION", "EXCESS_DEDUCTION"}]
+    details = []
+    for row in rows:
+        clause = (
+            f"Supporting policy text: {row.clause.text} (page {row.clause.page})."
+            if row.clause else "No supporting policy clause was available; reviewer confirmation is required."
+        )
+        details.append(
+            f"- {row.category}: insurer deduction {_inr_indian(row.insurer_deducted)}; "
+            f"amount supported by rules {_inr_indian(row.engine_disallowed)}. "
+            f"Insurer reason: {row.insurer_reason or 'No reason was recorded.'} "
+            f"Review point: {row.engine_reason} {clause}"
+        )
+    body = [
+        f"To: Claims Review Team\nSubject: Request to review possible incorrect deduction - Claim {claim_id}",
+        "Dear Claims Review Team,",
+        f"I request a written review of the settlement for {patient}. Claim: {claim_id}. Policy: {policy}. Hospital: {hospital}. Hospital stay: {stay}.",
+        f"The bill total is {_inr_indian(comparison.billed_total)}. The settlement records payment of {_inr_indian(comparison.actual_insurer_payment)}. The rules-based estimate of insurer payment is {_inr_indian(comparison.expected_insurer_payment)}. The possible difference is {_inr_indian(comparison.possible_difference)}.",
+        "Items for review:",
+        *details,
+    ]
+    if explanation:
+        body.append(f"Explanation: {explanation}")
+    body.extend([
+        "Please provide a written explanation or revised settlement within 30 days. This letter requests review and does not assert a final entitlement.",
+        "Enclosures: hospital bill; insurance policy; settlement letter.",
+        "If the issue is not resolved, you may escalate it to the Insurance Ombudsman or submit a grievance through IRDAI's Bima Bharosa portal (https://bimabharosa.irdai.gov.in).",
+        "Sincerely,",
+        signature.strip() or "Claimant or authorized representative",
+        ESTIMATE_DISCLAIMER,
+    ])
+    letter = "\n\n".join(body)
+    if any(word in letter.lower() for word in FORBIDDEN_APPEAL_WORDS):
+        raise ValueError("Appeal draft contains wording outside the approved neutral template.")
+    return letter
+
+
+def build_hospital_note_text(claim: dict[str, Any], comparison: ComparisonResult) -> str:
+    if comparison.status != "possible_discrepancy":
+        raise ValueError("A hospital note is available only for a possible discrepancy.")
+    claim_id = str(claim.get("claim_number") or "Not available")
+    patient = str(claim.get("patient_name") or "Not available")
+    return "\n\n".join([
+        f"To: Billing Department\nSubject: Please record the possible insurer difference as under insurer review - Claim {claim_id}",
+        f"For {patient}, please record {_inr_indian(comparison.possible_difference)} as under insurer review while the settlement is being checked. The rules-based estimate of the undisputed patient amount is {_inr_indian(comparison.expected_patient_share)}.",
+        "Please provide an itemized account statement and keep the disputed amount separate from the undisputed balance while the insurer review is pending.",
+        ESTIMATE_DISCLAIMER,
+    ])
+
+
+def build_comparison_appeal_letter_pdf(claim: dict[str, Any], comparison: ComparisonResult, settlement: SettlementData, explanation: str | None = None, signature: str = "Claimant or authorized representative") -> bytes:
+    letter = build_comparison_appeal_letter_text(claim, comparison, settlement, explanation, signature)
+    styles = _styles()
+    buffer, doc = _document()
+    story = [Paragraph("MediGuard AI", styles["subtitle"]), Paragraph("Request for Review", styles["title"])]
+    for paragraph in letter.split("\n\n"):
+        safe = escape(paragraph).replace("\n", "<br/>")
+        story.append(Paragraph(safe, styles["letter"]))
+    doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
+    return buffer.getvalue()
+
+
+def build_comparison_appeal_letter_docx(claim: dict[str, Any], comparison: ComparisonResult, settlement: SettlementData, explanation: str | None = None, signature: str = "Claimant or authorized representative") -> bytes:
+    from docx import Document
+
+    letter = build_comparison_appeal_letter_text(claim, comparison, settlement, explanation, signature)
+    document = Document()
+    document.add_heading("Request for Review", level=1)
+    for paragraph in letter.split("\n\n"):
+        document.add_paragraph(paragraph)
+    output = io.BytesIO()
+    document.save(output)
+    return output.getvalue()
+
+
+def build_hospital_note_pdf(claim: dict[str, Any], comparison: ComparisonResult) -> bytes:
+    styles = _styles()
+    buffer, doc = _document()
+    story = [Paragraph("MediGuard AI", styles["subtitle"]), Paragraph("Hospital Billing Note", styles["title"])]
+    story.extend(Paragraph(escape(paragraph), styles["letter"]) for paragraph in build_hospital_note_text(claim, comparison).split("\n\n"))
+    doc.build(story, onFirstPage=_footer)
+    return buffer.getvalue()
+
+
+def build_hospital_note_docx(claim: dict[str, Any], comparison: ComparisonResult) -> bytes:
+    from docx import Document
+
+    document = Document()
+    document.add_heading("Hospital Billing Note", level=1)
+    for paragraph in build_hospital_note_text(claim, comparison).split("\n\n"):
+        document.add_paragraph(paragraph)
+    output = io.BytesIO()
+    document.save(output)
+    return output.getvalue()

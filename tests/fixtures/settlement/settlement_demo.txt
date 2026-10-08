@@ -1,0 +1,13 @@
+FICTIONAL SAMPLE
+Settlement Letter
+Claim ID: CLM-2026-0417
+Bill Total: INR 132000
+
+Deductions
+Admission and registration | INR 2000 | Non-payable
+Room rent | INR 4000 | Room cap applied
+Doctor and nursing fees | INR 2000 | Proportionate deduction applied
+Pharmacy medicines | INR 10000 | Medicines outside hospitalization window
+Co-pay applied | INR 11400 | 10 percent cost share
+
+Amount paid: INR 102600

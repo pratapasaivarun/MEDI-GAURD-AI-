@@ -1,10 +1,23 @@
-"""Deterministic claim coverage rules for the Medi Gaurd MVP."""
+"""Deterministic claim rules.
+
+Calculation order: non-payable categories, room cap, proportionate reduction,
+exclusions and other item rules, sum-insured limit, deductible, then co-pay.
+The LLM is not used by this module.
+"""
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from decimal import Decimal, ROUND_HALF_UP
 import re
 from typing import Any
+
+from models import (
+    BillData,
+    ClaimResult,
+    LineItem as TypedLineItem,
+    LineResult as TypedLineResult,
+    PolicyTerms as TypedPolicyTerms,
+)
 
 RULE_VERSION = "mvp-1.0"
 MONEY = Decimal("0.01")
@@ -26,6 +39,7 @@ class PolicyTerms:
     waiting_period_months: int | None = None
     sub_limits: dict[str, Decimal] = field(default_factory=dict)
     source: dict[str, Any] = field(default_factory=dict)
+    proportionate_deduction: bool = True
 
 
 @dataclass
@@ -57,8 +71,8 @@ def verify_patient_name_match(bill_name: str | None, policy_name: str | None) ->
     b_clean = re.sub(r"^(mr|mrs|ms|dr|master|sri|smt)\b\.?\s*", "", str(bill_name).strip(), flags=re.IGNORECASE)
     p_clean = re.sub(r"^(mr|mrs|ms|dr|master|sri|smt)\b\.?\s*", "", str(policy_name).strip(), flags=re.IGNORECASE)
     
-    b_norm = re.sub(r"[^\w\s]", "", b_clean).upper()
-    p_norm = re.sub(r"[^\w\s]", "", p_clean).upper()
+    b_norm = re.sub(r"\s+", " ", re.sub(r"[^\w\s]", "", b_clean).upper()).strip()
+    p_norm = re.sub(r"\s+", " ", re.sub(r"[^\w\s]", "", p_clean).upper()).strip()
     
     b_tokens = b_norm.split()
     p_tokens = p_norm.split()
@@ -66,24 +80,20 @@ def verify_patient_name_match(bill_name: str | None, policy_name: str | None) ->
     if not b_tokens or not p_tokens:
         return {"result": "MISSING", "status": "manual_review", "warning": "Patient name missing or invalid after normalization."}
         
-    if b_norm == p_norm or set(b_tokens) == set(p_tokens):
+    if b_norm == p_norm:
         return {"result": "MATCH", "status": "approved", "warning": None}
-    
-    if len(b_tokens) == len(p_tokens):
-        matches = True
-        for bt, pt in zip(b_tokens, p_tokens):
-            if bt == pt or (len(bt) == 1 and pt.startswith(bt)) or (len(pt) == 1 and bt.startswith(pt)):
-                continue
-            else:
-                matches = False
-                break
-        if matches:
+    # Indian claim documents commonly abbreviate given or middle names. The
+    # surname must remain an exact match; short-token edit-distance matches are
+    # never accepted.
+    if b_tokens[-1] == p_tokens[-1] and len(b_tokens) == len(p_tokens):
+        token_matches = all(
+            left == right
+            or (len(left) == 1 and right.startswith(left))
+            or (len(right) == 1 and left.startswith(right))
+            for left, right in zip(b_tokens[:-1], p_tokens[:-1])
+        )
+        if token_matches:
             return {"result": "MINOR_VARIATION", "status": "approved", "warning": None}
-            
-    import difflib
-    ratio = difflib.SequenceMatcher(None, b_norm, p_norm).ratio()
-    if ratio >= 0.85:
-        return {"result": "MINOR_VARIATION", "status": "approved", "warning": None}
             
     return {
         "result": "MISMATCH",
@@ -183,135 +193,6 @@ def validate_daycare_procedure(procedure_name: str | None, Whitelist: list[str],
     return {"valid": False, "status": "excluded", "notice": f"Procedure '{procedure_name}' is not listed in the policy daycare whitelist for 0-night stays."}
 
 
-def _evaluate_claim_total_only(total_amount: Any, terms: PolicyTerms | None = None, review_fields: list[str] | None = None, missing_fields: list[str] | None = None, policy_terms_missing: list[str] | None = None, claim_context: dict[str, Any] | None = None) -> dict[str, Any]:
-    terms = terms or PolicyTerms()
-    review_fields = review_fields or []
-    missing_fields = missing_fields or []
-    policy_terms_missing = policy_terms_missing or []
-    claim_context = claim_context or {}
-    if policy_terms_missing:
-        warnings = ["Required policy terms missing: " + ", ".join(policy_terms_missing)]
-        return {"status": "manual_review", "rule_version": RULE_VERSION, "results": [], "covered_amount": 0.0, "deductible": 0.0, "copayment": 0.0, "payable_amount": 0.0, "warnings": warnings, "policy_terms_missing": policy_terms_missing, "policy_terms": terms.source}
-    if terms.annual_limit is None or terms.deductible is None or terms.copay_percent is None:
-        warnings = ["Annual limit, deductible, and copayment must come from the active policy edition."]
-        return {"status": "manual_review", "rule_version": RULE_VERSION, "results": [], "covered_amount": 0.0, "deductible": 0.0, "copayment": 0.0, "payable_amount": 0.0, "warnings": warnings, "policy_terms_missing": ["annual_limit", "deductible", "copay_percent"], "policy_terms": terms.source}
-    warnings: list[str] = []
-    results: list[RuleResult] = []
-    hard_reject = False
-    review_required = False
-    partial_recommended = False
-    raw_net = claim_context.get("net_amount")
-    total = money(raw_net if raw_net is not None else total_amount)
-    if raw_net is not None:
-        warnings.append("net_amount_basis_used")
-
-    if total <= 0:
-        results.append(RuleResult("amount_present", RULE_VERSION, "manual_review", {"total_amount": float(total)}, "A positive total amount is required.", warnings=["total_amount_missing_or_invalid"]))
-        return {"status": "manual_review", "rule_version": RULE_VERSION, "results": [r.to_dict() for r in results], "covered_amount": 0.0, "deductible": 0.0, "copayment": 0.0, "payable_amount": 0.0, "warnings": ["total_amount_missing_or_invalid"]}
-
-    if missing_fields:
-        warnings.append("Missing required fields: " + ", ".join(missing_fields))
-    if review_fields:
-        warnings.append("Fields require review: " + ", ".join(review_fields))
-
-    covered_before_limit = min(total, terms.annual_limit)
-    partial_recommended = total > terms.annual_limit
-    results.append(RuleResult("policy_limit", RULE_VERSION, "pass" if total <= terms.annual_limit else "partial", {"billed_amount": float(total), "annual_limit": float(terms.annual_limit)}, f"min({total}, {terms.annual_limit}) = {covered_before_limit}", covered_before_limit, ["annual_limit_exceeded"] if total > terms.annual_limit else []))
-
-    control_warnings: list[str] = []
-    if terms.source.get("preauthorization_required", {}).get("value") is True and claim_context.get("preauthorization_obtained") is not True:
-        review_required = True
-        control_warnings.append("Policy requires pre-authorization confirmation.")
-    waiting_violation = terms.waiting_period_months and claim_context.get("waiting_period_satisfied") is False
-    if waiting_violation:
-        affected_amount = claim_context.get("waiting_period_affected_amount")
-        unrelated_amount = claim_context.get("unrelated_eligible_amount")
-        if affected_amount is not None and unrelated_amount is not None:
-            partial_recommended = True
-            covered_before_limit = max(Decimal("0"), covered_before_limit - money(affected_amount))
-            warnings.append("waiting_period_affected_condition_excluded")
-            results.append(RuleResult("waiting_period", RULE_VERSION, "partial", {"affected_amount": float(money(affected_amount)), "unrelated_eligible_amount": float(money(unrelated_amount))}, "affected condition excluded; unrelated eligible items remain payable", money(affected_amount), ["waiting_period_violation"]))
-        else:
-            review_required = True
-            control_warnings.append(f"Policy waiting period of {terms.waiting_period_months} months requires confirmation for the affected condition.")
-    elif terms.waiting_period_months and claim_context.get("waiting_period_satisfied") is not True:
-        review_required = True
-        control_warnings.append(f"Policy waiting period of {terms.waiting_period_months} months requires confirmation.")
-
-    exclusions = terms.source.get("exclusions", {}).get("value", [])
-    diagnosis = str(claim_context.get("diagnosis", "")).lower()
-    if exclusions and diagnosis:
-        possible = [str(item) for item in exclusions if any(token in diagnosis for token in re.findall(r"[a-z]{4,}", str(item).lower()))]
-        if possible:
-            match = claim_context.get("exclusion_match") or {}
-            if match.get("matched") is True and float(match.get("confidence", 0)) >= 0.90:
-                hard_reject = True
-                control_warnings.append("Claim diagnosis clearly matches a policy exclusion.")
-            else:
-                review_required = True
-                control_warnings.append("Claim diagnosis may match a policy exclusion; reviewer confirmation is required.")
-    if terms.source.get("network_required", {}).get("value") is True:
-        in_network = claim_context.get("in_network")
-        if in_network is False:
-            hard_reject = True
-            control_warnings.append("Policy requires a network provider and this provider is out of network.")
-        elif in_network is not True:
-            review_required = True
-            control_warnings.append("Policy requires network-provider confirmation.")
-    if claim_context.get("duplicate_suspected") is True:
-        review_required = True
-        control_warnings.append("Possible duplicate charges require reviewer confirmation; charges were not removed automatically.")
-    if claim_context.get("multiple_bills") is True and claim_context.get("aggregation_confirmed") is not True:
-        review_required = True
-        control_warnings.append("Multiple bills require reviewer confirmation before aggregation.")
-    category = str(claim_context.get("coverage_category", "")).strip().lower()
-    if category and terms.sub_limits:
-        matched_limit = next((limit for name, limit in terms.sub_limits.items() if name.lower() == category), None)
-        if matched_limit is not None and covered_before_limit > matched_limit:
-            partial_recommended = True
-            covered_before_limit = matched_limit
-            warnings.append(f"sub_limit_applied:{category}")
-            results.append(RuleResult("sub_limit", RULE_VERSION, "partial", {"coverage_category": category, "sub_limit": float(matched_limit)}, f"covered amount capped at {matched_limit}", matched_limit, ["sub_limit_exceeded"]))
-
-    room_charge = claim_context.get("room_charge")
-    room_days = claim_context.get("room_days") or 0
-    if room_charge is not None and terms.room_limit_per_day is not None and room_days:
-        allowed_room = money(terms.room_limit_per_day) * int(room_days)
-        room_charge_money = money(room_charge)
-        if room_charge_money > allowed_room:
-            linked_charges = claim_context.get("room_linked_charges")
-            if linked_charges is None:
-                review_required = True
-                control_warnings.append("Room-limit proportional basis is missing; reviewer confirmation is required.")
-            else:
-                linked_money = money(linked_charges)
-                factor = (allowed_room / room_charge_money) if room_charge_money else Decimal("0")
-                linked_reduction = (linked_money * (Decimal("1") - factor)).quantize(MONEY, rounding=ROUND_HALF_UP)
-                direct_reduction = room_charge_money - allowed_room
-                partial_recommended = True
-                covered_before_limit = max(Decimal("0"), covered_before_limit - direct_reduction - linked_reduction)
-                warnings.append("room_limit_proportional_applied")
-                results.append(RuleResult("room_limit", RULE_VERSION, "partial", {"room_charge": float(room_charge_money), "room_days": int(room_days), "allowed_room_charge": float(allowed_room), "linked_charges": float(linked_money), "proportional_factor": float(factor)}, f"room and linked charges reduced by factor {factor}", direct_reduction + linked_reduction, ["room_limit_exceeded", "proportional_reduction"]))
-
-    deductible = min(terms.deductible, covered_before_limit)
-    after_deductible = max(Decimal("0"), covered_before_limit - deductible)
-    results.append(RuleResult("deductible", RULE_VERSION, "pass", {"eligible_before_deductible": float(covered_before_limit), "deductible": float(terms.deductible)}, f"{covered_before_limit} - {deductible} = {after_deductible}", deductible))
-
-    copayment = (after_deductible * terms.copay_percent / Decimal("100")).quantize(MONEY, rounding=ROUND_HALF_UP)
-    payable = max(Decimal("0"), after_deductible - copayment)
-    results.append(RuleResult("copayment", RULE_VERSION, "pass", {"after_deductible": float(after_deductible), "copay_percent": float(terms.copay_percent)}, f"{after_deductible} × {terms.copay_percent}% = {copayment}", copayment))
-    results.append(RuleResult("payable_amount", RULE_VERSION, "pass", {"eligible_after_deductible": float(after_deductible), "copayment": float(copayment)}, f"{after_deductible} - {copayment} = {payable}", payable))
-
-    if control_warnings:
-        warnings.extend(control_warnings)
-    status = "partially_approved" if partial_recommended else "approved"
-    if hard_reject:
-        status = "rejected"
-    elif review_required or missing_fields or review_fields:
-        status = "manual_review"
-    return {"status": status, "rule_version": RULE_VERSION, "results": [r.to_dict() for r in results], "covered_amount": float(covered_before_limit), "deductible": float(deductible), "copayment": float(copayment), "payable_amount": float(payable), "warnings": warnings, "policy_terms": terms.source}
-
-
 def _item_matches_exclusion(item: dict[str, Any], terms: PolicyTerms, claim_context: dict[str, Any]) -> tuple[bool, bool]:
     """Return (confirmed, possible) for a policy exclusion scoped to one item."""
     exclusions = terms.source.get("exclusions", {}).get("value", [])
@@ -330,12 +211,8 @@ def _item_matches_exclusion(item: dict[str, Any], terms: PolicyTerms, claim_cont
         tokens = set(re.findall(r"[a-z0-9]{3,}", ex_clean))
         if tokens and tokens.issubset(item_tokens):
             return True, False
-        if item_explicit.get("matched") is True and float(item_explicit.get("confidence", 0)) >= 0.90:
-            if tokens and tokens.intersection(item_tokens):
-                return True, False
-        if claim_explicit.get("matched") is True and float(claim_explicit.get("confidence", 0)) >= 0.90:
-            if tokens and tokens.issubset(item_tokens):
-                return True, False
+        # Fuzzy exclusion signals are never converted into a financial denial.
+        # Diagnosis-level matches are routed to reviewer confirmation upstream.
     return False, False
 
 
@@ -433,190 +310,266 @@ def evaluate_line_item(item: dict, terms: PolicyTerms, claim_context: dict | Non
     return result
 
 
-def evaluate_claim(total_amount: Any, terms: PolicyTerms | None = None, review_fields: list[str] | None = None, missing_fields: list[str] | None = None, policy_terms_missing: list[str] | None = None, claim_context: dict[str, Any] | None = None, line_items: list[dict] | None = None) -> dict[str, Any]:
-    """Evaluate a claim, using line items when they are available.
+def evaluate_claim(
+    total_amount: Any,
+    terms: PolicyTerms | None = None,
+    review_fields: list[str] | None = None,
+    missing_fields: list[str] | None = None,
+    policy_terms_missing: list[str] | None = None,
+    claim_context: dict[str, Any] | None = None,
+    line_items: list[dict] | None = None,
+) -> dict[str, Any] | ClaimResult:
+    """Evaluate a claim through one item-based calculation path.
 
-    Legacy callers that only provide ``total_amount`` keep the original
-    calculation path. New callers receive one transparent result per item and
-    aggregate those eligible amounts before applying deductible and copayment.
+    Aggregate-only claims become a single synthetic ``OTHER`` item. Itemized
+    totals must reconcile within 1%; duplicates remain included and are flagged
+    for reviewer confirmation. Every amount is computed with ``Decimal`` and
+    converted only in this legacy dictionary response for JSON compatibility.
     """
-    terms = terms or PolicyTerms()
-    review_fields = review_fields or []
-    missing_fields = missing_fields or []
-    policy_terms_missing = policy_terms_missing or []
-    claim_context = claim_context or {}
+    if isinstance(total_amount, BillData):
+        bill = total_amount
+        typed_terms = terms
+        if not isinstance(typed_terms, TypedPolicyTerms):
+            raise TypeError("BillData evaluation requires models.PolicyTerms.")
+        source = {
+            "exclusions": {"value": list(typed_terms.exclusions)},
+            "non_payable_categories": {"value": list(typed_terms.non_payable_categories)},
+        }
+        legacy_terms = PolicyTerms(
+            annual_limit=typed_terms.sum_insured,
+            deductible=Decimal("0"),
+            copay_percent=typed_terms.copay_percent,
+            room_limit_per_day=typed_terms.room_rent_cap_per_day,
+            source=source,
+            proportionate_deduction=typed_terms.proportionate_deduction,
+        )
+        context = dict(claim_context or {})
+        context.setdefault("room_days", bill.room_days)
+        typed_items = list(bill.line_items) or [TypedLineItem("Claim total", "OTHER", bill.total_amount, source="user")]
+        for field_name, needs_review in bill.field_flags.items():
+            if needs_review:
+                review_fields = [*(review_fields or []), field_name]
+        output = evaluate_claim(
+            bill.total_amount,
+            terms=legacy_terms,
+            review_fields=review_fields,
+            missing_fields=missing_fields,
+            claim_context=context,
+            line_items=[
+                {
+                    "description": item.description,
+                    "category": item.category,
+                    "amount": item.amount,
+                    "date": item.date.isoformat() if item.date else None,
+                    "source": item.source,
+                    "needs_review": item.needs_review,
+                }
+                for item in typed_items
+            ],
+        )
+        typed_lines = []
+        for item, result in zip(typed_items, output["line_item_results"]):
+            rule = result.get("applied_rule")
+            reason_code = {
+                "non_payable": "NON_PAYABLE",
+                "room_limit": "ROOM_CAP",
+                "proportionate_deduction": "PROPORTIONATE",
+                "exclusion": "EXCLUSION",
+                "needs_review": "REVIEW",
+            }.get(rule, "OK")
+            clause = typed_terms.clauses.get(item.category) or typed_terms.clauses.get(reason_code.lower())
+            allowed = money(result.get("covered_amount"))
+            typed_lines.append(TypedLineResult(item, allowed, max(Decimal("0"), item.amount - allowed), reason_code, clause))
+        eligible = sum((line.allowed for line in typed_lines), Decimal("0"))
+        insurer_share = money(output["payable_amount"])
+        return ClaimResult(
+            lines=typed_lines,
+            eligible_total=eligible,
+            copay=money(output["copayment"]),
+            patient_share=max(Decimal("0"), bill.total_amount - insurer_share),
+            insurer_share=insurer_share,
+            status="manual_review" if output["status"] == "manual_review" else "computed",
+            review_reasons=list(output.get("warnings", [])) if output["status"] == "manual_review" else [],
+        )
 
+    terms = terms or PolicyTerms()
+    review_fields = list(review_fields or [])
+    missing_fields = list(missing_fields or [])
+    policy_terms_missing = list(policy_terms_missing or [])
+    context = dict(claim_context or {})
     warnings: list[str] = []
     control_warnings: list[str] = []
+    review_required = bool(missing_fields or review_fields or policy_terms_missing)
     hard_reject = False
-    review_required = bool(missing_fields or review_fields)
 
-    # 1. Patient Name Matching Validation
-    bill_patient_name = claim_context.get("bill_patient_name") or claim_context.get("patient_name")
-    policy_holder_name = claim_context.get("policy_holder_name") or claim_context.get("insured_name")
-    if bill_patient_name or policy_holder_name:
-        name_match = verify_patient_name_match(bill_patient_name, policy_holder_name)
-        if name_match["result"] == "MISMATCH":
-            review_required = True
-            control_warnings.append(name_match["warning"])
-        elif name_match["result"] == "MISSING":
-            review_required = True
-            control_warnings.append(name_match["warning"])
-
-    # 2. Cumulative Sum Insured Check
-    prev_claims_raw = terms.previous_claims_total if terms.previous_claims_total is not None else claim_context.get("previous_claims_total")
-    if claim_context.get("previous_claims_uncertain") is True:
-        review_required = True
-        control_warnings.append("Previous claims history is uncertain; reviewer confirmation required.")
-    
-    effective_annual_limit = money(terms.annual_limit) if terms.annual_limit is not None else Decimal("0")
-    if prev_claims_raw is not None:
-        prev_claims = money(prev_claims_raw)
-        remaining_sum_insured = max(Decimal("0"), effective_annual_limit - prev_claims)
-        if prev_claims >= effective_annual_limit:
-            hard_reject = True
-            control_warnings.append("Annual sum insured is fully exhausted by previous claims.")
-        effective_annual_limit = remaining_sum_insured
-
-    # 3. Daycare Procedure Whitelist Check (for 0-night stays)
-    stay_nights = claim_context.get("length_of_stay_nights")
-    if stay_nights is None:
-        stay_nights = claim_context.get("length_of_stay", 1)
-    if stay_nights == 0 or claim_context.get("is_daycare") is True:
-        proc_name = claim_context.get("procedure") or claim_context.get("diagnosis")
-        daycare_res = validate_daycare_procedure(proc_name, terms.daycare_procedures, length_of_stay_nights=stay_nights)
-        if daycare_res["status"] == "excluded":
-            hard_reject = True
-            control_warnings.append(daycare_res["notice"])
-        elif daycare_res["status"] == "manual_review":
-            review_required = True
-            control_warnings.append(daycare_res["notice"])
-
-    if not line_items:
-        legacy = _evaluate_claim_total_only(total_amount, terms, review_fields, missing_fields, policy_terms_missing, claim_context)
-        legacy["line_item_results"] = []
-        legacy["line_item_reconciliation_failed"] = False
-        legacy["line_item_notice"] = None
-        if control_warnings:
-            legacy.setdefault("warnings", []).extend(control_warnings)
-            if hard_reject:
-                legacy["status"] = "rejected"
-            elif review_required:
-                legacy["status"] = "manual_review"
-        return legacy
-
-    stated_total = money(total_amount)
-    extracted_total = sum((money(item.get("amount")) for item in line_items), Decimal("0"))
-    allowed_difference = max(Decimal("1.00"), stated_total * Decimal("0.05"))
-    if stated_total > 0 and (extracted_total <= 0 or abs(extracted_total - stated_total) > allowed_difference):
-        legacy = _evaluate_claim_total_only(total_amount, terms, review_fields, missing_fields, policy_terms_missing, claim_context)
-        legacy["line_item_results"] = []
-        legacy["line_item_reconciliation_failed"] = True
-        legacy["line_item_notice"] = "Itemized charges could not be reconciled to the bill total, so the aggregate bill total was used for this calculation."
-        legacy.setdefault("warnings", []).append("line_item_reconciliation_failed")
-        if control_warnings:
-            legacy.setdefault("warnings", []).extend(control_warnings)
-            if hard_reject:
-                legacy["status"] = "rejected"
-            elif review_required:
-                legacy["status"] = "manual_review"
-        return legacy
-
+    total = money(context.get("net_amount", total_amount))
+    supplied_items = list(line_items or [])
+    synthetic = not supplied_items
+    items = supplied_items or [{"description": "Claim total", "category": "other", "amount": total, "source": "user"}]
+    if total <= 0:
+        return {"status": "manual_review", "rule_version": RULE_VERSION, "results": [], "line_item_results": [], "covered_amount": 0.0, "deductible": 0.0, "copayment": 0.0, "payable_amount": 0.0, "warnings": ["total_amount_missing_or_invalid"]}
     if policy_terms_missing or terms.annual_limit is None or terms.deductible is None or terms.copay_percent is None:
-        result = _evaluate_claim_total_only(total_amount, terms, review_fields, missing_fields, policy_terms_missing, claim_context)
-        result["line_item_results"] = []
-        result["line_item_reconciliation_failed"] = False
-        result["line_item_notice"] = None
-        return result
+        missing = policy_terms_missing or ["annual_limit", "deductible", "copay_percent"]
+        return {"status": "manual_review", "rule_version": RULE_VERSION, "results": [], "line_item_results": [], "covered_amount": 0.0, "deductible": 0.0, "copayment": 0.0, "payable_amount": 0.0, "warnings": ["Required policy terms missing: " + ", ".join(missing)], "policy_terms_missing": missing, "policy_terms": terms.source}
 
     if missing_fields:
         warnings.append("Missing required fields: " + ", ".join(missing_fields))
     if review_fields:
         warnings.append("Fields require review: " + ", ".join(review_fields))
 
-    # 4. Automated Line Item Duplicate Detection
-    duplicate_info = detect_line_item_duplicates(line_items)
-
-    sub_limit_remaining = {name.lower(): money(value) for name, value in terms.sub_limits.items()}
-    waiting_remaining = money(claim_context["waiting_period_affected_amount"]) if claim_context.get("waiting_period_affected_amount") is not None else None
-    line_item_results: list[dict] = []
-    
-    for idx, item in enumerate(line_items):
-        item_context = dict(claim_context)
-        category = str(item.get("category") or "").strip().lower()
-        if category in sub_limit_remaining:
-            item_context["_sub_limit_remaining"] = sub_limit_remaining[category]
-        if waiting_remaining is not None:
-            item_context["_waiting_period_amount_for_item"] = waiting_remaining
-            
-        evaluated = evaluate_line_item(item, terms, item_context)
-        
-        # Check duplicate flag for this item
-        dup_entry = duplicate_info[idx]
-        if dup_entry["duplicate"]:
-            evaluated["status"] = "excluded"
-            evaluated["covered_amount"] = 0.0
-            evaluated["applied_rule"] = "duplicate_detection"
-            evaluated["calculation"] = dup_entry["notice"]
-            warnings.append("duplicate_line_item_detected")
-
-        line_item_results.append(evaluated)
-        if category in sub_limit_remaining:
-            sub_limit_remaining[category] = max(Decimal("0"), sub_limit_remaining[category] - money(evaluated["covered_amount"]))
-        if waiting_remaining is not None:
-            waiting_remaining = max(Decimal("0"), waiting_remaining - money(item.get("amount")))
-        if evaluated["status"] == "needs_review":
+    bill_name = context.get("bill_patient_name") or context.get("patient_name")
+    policy_name = context.get("policy_holder_name") or context.get("insured_name")
+    if bill_name or policy_name:
+        match = verify_patient_name_match(bill_name, policy_name)
+        if match["result"] in {"MISMATCH", "MISSING"}:
             review_required = True
+            control_warnings.append(match["warning"])
 
-    # Apply the effective annual limit (after cumulative previous claims deduction)
-    annual_remaining = effective_annual_limit
-    for item_result in line_item_results:
-        eligible = money(item_result["covered_amount"])
-        if eligible > annual_remaining:
-            item_result["covered_amount"] = float(max(Decimal("0"), annual_remaining))
-            if item_result["status"] != "excluded":
-                item_result["status"] = "partial"
-                item_result["applied_rule"] = "annual_limit"
-                item_result["calculation"] = f"The remaining annual policy limit leaves INR {annual_remaining} eligible for this item."
-            warnings.append("annual_limit_exceeded")
-        annual_remaining = max(Decimal("0"), annual_remaining - money(item_result["covered_amount"]))
+    # Diagnosis matches are never treated as definitive financial denials.
+    exclusions = terms.source.get("exclusions", {}).get("value", [])
+    diagnosis_tokens = set(re.findall(r"[a-z0-9]{3,}", str(context.get("diagnosis") or "").lower()))
+    for exclusion in exclusions:
+        exclusion_tokens = set(re.findall(r"[a-z0-9]{3,}", str(exclusion).lower()))
+        if exclusion_tokens and exclusion_tokens.issubset(diagnosis_tokens):
+            review_required = True
+            control_warnings.append("DIAGNOSIS_EXCLUSION: diagnosis may match an exclusion; reviewer confirmation is required.")
+            break
 
-    covered_before_limit = sum((money(item["covered_amount"]) for item in line_item_results), Decimal("0"))
-    if any(item["status"] == "partial" for item in line_item_results):
-        warnings.append("item_level_policy_adjustment")
+    extracted_total = sum((money(item.get("amount")) for item in items), Decimal("0"))
+    mismatch = not synthetic and abs(extracted_total - total) > total * Decimal("0.01")
+    if mismatch:
+        review_required = True
+        warnings.append("TOTAL_MISMATCH: itemized charges differ from the bill total by more than 1%.")
 
-    if terms.source.get("preauthorization_required", {}).get("value") is True and claim_context.get("preauthorization_obtained") is not True:
+    duplicates = detect_line_item_duplicates(items)
+    if any(entry["duplicate"] for entry in duplicates):
+        review_required = True
+        warnings.append("POSSIBLE_DUPLICATE: identical charges were retained and require reviewer confirmation.")
+    if context.get("duplicate_suspected") is True:
+        review_required = True
+        control_warnings.append("Possible duplicate charges require reviewer confirmation; charges were not removed automatically.")
+    if context.get("multiple_bills") is True and context.get("aggregation_confirmed") is not True:
+        review_required = True
+        control_warnings.append("Multiple bills require reviewer confirmation before aggregation.")
+    if context.get("previous_claims_uncertain") is True:
+        review_required = True
+        control_warnings.append("Previous claims history is uncertain; reviewer confirmation required.")
+
+    annual_limit = money(terms.annual_limit)
+    previous = terms.previous_claims_total if terms.previous_claims_total is not None else context.get("previous_claims_total")
+    if previous is not None:
+        annual_limit = max(Decimal("0"), annual_limit - money(previous))
+        if annual_limit == 0:
+            hard_reject = True
+            control_warnings.append("Annual sum insured is fully exhausted by previous claims.")
+
+    if terms.source.get("preauthorization_required", {}).get("value") is True and context.get("preauthorization_obtained") is not True:
         review_required = True
         control_warnings.append("Policy requires pre-authorization confirmation.")
     if terms.source.get("network_required", {}).get("value") is True:
-        if claim_context.get("in_network") is False:
+        if context.get("in_network") is False:
             hard_reject = True
             control_warnings.append("Policy requires a network provider and this provider is out of network.")
-        elif claim_context.get("in_network") is not True:
+        elif context.get("in_network") is not True:
             review_required = True
             control_warnings.append("Policy requires network-provider confirmation.")
-    if claim_context.get("duplicate_suspected") is True:
-        review_required = True
-        control_warnings.append("Possible duplicate charges require reviewer confirmation; charges were not removed automatically.")
-    if claim_context.get("multiple_bills") is True and claim_context.get("aggregation_confirmed") is not True:
-        review_required = True
-        control_warnings.append("Multiple bills require reviewer confirmation before aggregation.")
 
-    deductible = min(money(terms.deductible), covered_before_limit)
-    after_deductible = max(Decimal("0"), covered_before_limit - deductible)
+    stay_nights = context.get("length_of_stay_nights", context.get("length_of_stay", 1))
+    if stay_nights == 0 or context.get("is_daycare") is True:
+        daycare = validate_daycare_procedure(context.get("procedure") or context.get("diagnosis"), terms.daycare_procedures, int(stay_nights or 0))
+        if daycare["status"] == "excluded":
+            hard_reject = True
+            control_warnings.append(daycare["notice"])
+        elif daycare["status"] == "manual_review":
+            review_required = True
+            control_warnings.append(daycare["notice"])
+
+    duplicate_info = detect_line_item_duplicates(items)
+    room_items = [item for item in items if str(item.get("category") or "").lower() in {"room", "room_rent", "accommodation"} or re.search(r"\b(room|accommodation)\b", str(item.get("description") or ""), re.I)]
+    room_total = sum((money(item.get("amount")) for item in room_items), Decimal("0"))
+    room_days = int(context.get("room_days") or 0)
+    room_cap = money(terms.room_limit_per_day) * room_days if terms.room_limit_per_day is not None and room_days > 0 else None
+    ratio_basis = room_total
+    if synthetic and context.get("room_charge") is not None:
+        ratio_basis = money(context["room_charge"])
+    room_ratio = min(Decimal("1"), room_cap / ratio_basis) if room_cap is not None and ratio_basis > room_cap and ratio_basis else Decimal("1")
+
+    line_results: list[dict[str, Any]] = []
+    total_room_reduction = Decimal("0")
+    non_payables = {str(value).lower() for value in terms.source.get("non_payable_categories", {}).get("value", [])}
+    for index, item in enumerate(items):
+        amount = money(item.get("amount"))
+        category = str(item.get("category") or "other").lower()
+        if category in non_payables or any(term in str(item.get("description") or "").lower() for term in non_payables):
+            evaluated = {"description": item.get("description", "Unspecified item"), "category": category, "amount": float(amount), "status": "excluded", "covered_amount": 0.0, "applied_rule": "non_payable", "calculation": "This category is listed as non-payable in the reviewed policy terms."}
+        else:
+            evaluated = evaluate_line_item(item, terms, context)
+
+        if item in room_items and room_cap is not None:
+            previously_allowed = sum((money(row.get("covered_amount")) for row in line_results if row.get("category") in {"room", "room_rent", "accommodation"}), Decimal("0"))
+            line_allowance = max(Decimal("0"), room_cap - previously_allowed)
+            allowed_room = min(money(evaluated.get("covered_amount")), line_allowance)
+            if allowed_room < money(evaluated.get("covered_amount")):
+                evaluated.update(status="partial", covered_amount=float(allowed_room), applied_rule="room_limit", calculation=f"Room charge capped at INR {room_cap} for {room_days} day(s).")
+            total_room_reduction += money(evaluated.get("amount")) - money(evaluated.get("covered_amount"))
+
+        if terms.proportionate_deduction and room_ratio < 1 and category in {"doctor_nursing", "nursing", "doctor", "consultation"}:
+            before = money(evaluated.get("covered_amount"))
+            allowed = (before * room_ratio).quantize(MONEY, rounding=ROUND_HALF_UP)
+            if allowed < before:
+                evaluated.update(status="partial", covered_amount=float(allowed), applied_rule="proportionate_deduction", calculation=f"Room-linked charges scaled by {room_ratio} because the room cap was exceeded.")
+
+        # Legacy aggregate context has no room line to apportion the documented
+        # room and linked reductions across; apply that adjustment to its single
+        # synthetic line while preserving the unified pipeline.
+        if synthetic and index == 0 and context.get("room_charge") is not None and room_days and terms.room_limit_per_day is not None:
+            billed_room = money(context["room_charge"])
+            cap = money(terms.room_limit_per_day) * int(room_days)
+            direct = max(Decimal("0"), billed_room - cap)
+            linked = money(context.get("room_linked_charges") or 0)
+            linked_reduction = (linked * (Decimal("1") - min(Decimal("1"), cap / billed_room))).quantize(MONEY, rounding=ROUND_HALF_UP) if billed_room else Decimal("0")
+            adjustment = direct + linked_reduction
+            if adjustment:
+                evaluated["covered_amount"] = float(max(Decimal("0"), money(evaluated.get("covered_amount")) - adjustment))
+                evaluated.update(status="partial", applied_rule="room_limit", calculation=f"Room and linked-charge reduction: INR {adjustment}.")
+
+        if duplicate_info[index]["duplicate"]:
+            evaluated["possible_duplicate"] = True
+        line_results.append(evaluated)
+        if evaluated.get("status") == "needs_review":
+            review_required = True
+
+    covered = sum((money(item.get("covered_amount")) for item in line_results), Decimal("0"))
+    pre_limit = covered
+    remaining = annual_limit
+    for item in line_results:
+        allowed = money(item.get("covered_amount"))
+        if allowed > remaining:
+            item["covered_amount"] = float(max(Decimal("0"), remaining))
+            item.update(status="partial", applied_rule="sum_insured", calculation=f"The remaining sum insured leaves INR {remaining} eligible for this item.")
+        remaining = max(Decimal("0"), remaining - money(item.get("covered_amount")))
+    covered = sum((money(item.get("covered_amount")) for item in line_results), Decimal("0"))
+    deductible = min(money(terms.deductible), covered)
+    after_deductible = max(Decimal("0"), covered - deductible)
     copayment = (after_deductible * money(terms.copay_percent) / Decimal("100")).quantize(MONEY, rounding=ROUND_HALF_UP)
     payable = max(Decimal("0"), after_deductible - copayment)
-    results = [
-        RuleResult("line_item_coverage", RULE_VERSION, "pass", {"line_items": len(line_item_results)}, f"sum(line_item_covered_amounts) = {covered_before_limit}", covered_before_limit),
-        RuleResult("deductible", RULE_VERSION, "pass", {"eligible_before_deductible": float(covered_before_limit), "deductible": float(terms.deductible)}, f"{covered_before_limit} - {deductible} = {after_deductible}", deductible),
-        RuleResult("copayment", RULE_VERSION, "pass", {"after_deductible": float(after_deductible), "copay_percent": float(terms.copay_percent)}, f"{after_deductible} x {terms.copay_percent}% = {copayment}", copayment),
-        RuleResult("payable_amount", RULE_VERSION, "pass", {"eligible_after_deductible": float(after_deductible), "copayment": float(copayment)}, f"{after_deductible} - {copayment} = {payable}", payable),
-    ]
-    warnings.extend(control_warnings)
-    status = "partially_approved" if any(item["status"] in {"partial", "excluded"} for item in line_item_results) else "approved"
+    status = "partially_approved" if any(item.get("status") in {"partial", "excluded"} for item in line_results) or total > annual_limit or mismatch else "approved"
     if hard_reject:
         status = "rejected"
     elif review_required:
         status = "manual_review"
-    return {"status": status, "rule_version": RULE_VERSION, "results": [item.to_dict() for item in results], "line_item_reconciliation_failed": False, "line_item_notice": None, "line_item_results": line_item_results, "covered_amount": float(covered_before_limit), "deductible": float(deductible), "copayment": float(copayment), "payable_amount": float(payable), "warnings": warnings, "policy_terms": terms.source}
+    warnings.extend(control_warnings)
+    if total > annual_limit:
+        warnings.append("annual_limit_exceeded")
+    if any(item.get("applied_rule") == "room_limit" for item in line_results):
+        warnings.append("room_limit_applied")
+    if terms.proportionate_deduction and room_ratio < 1:
+        warnings.append("room_limit_proportional_applied")
+    rule_results = [
+        RuleResult("line_item_coverage", RULE_VERSION, "pass", {"line_items": len(line_results)}, f"sum(allowed line items) = {covered}", covered),
+        RuleResult("deductible", RULE_VERSION, "pass", {"eligible_before_deductible": float(covered), "deductible": float(deductible)}, f"{covered} - {deductible} = {after_deductible}", deductible),
+        RuleResult("copayment", RULE_VERSION, "pass", {"after_deductible": float(after_deductible), "copay_percent": float(terms.copay_percent)}, f"{after_deductible} x {terms.copay_percent}% = {copayment}", copayment),
+        RuleResult("payable_amount", RULE_VERSION, "pass", {"eligible_after_deductible": float(after_deductible), "copayment": float(copayment)}, f"{after_deductible} - {copayment} = {payable}", payable),
+    ]
+    return {"status": status, "rule_version": RULE_VERSION, "results": [row.to_dict() for row in rule_results], "line_item_reconciliation_failed": mismatch, "line_item_notice": "Itemized charges differ from the bill total by more than 1%; reviewer confirmation is required." if mismatch else None, "line_item_results": line_results, "covered_amount": float(covered), "deductible": float(deductible), "copayment": float(copayment), "payable_amount": float(payable), "patient_share": float(max(Decimal("0"), total - payable)), "warnings": warnings, "policy_terms": terms.source}
 

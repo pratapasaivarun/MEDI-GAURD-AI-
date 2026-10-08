@@ -10,6 +10,7 @@ import requests
 import app
 import policy_index
 from reports import FORBIDDEN_APPEAL_WORDS, build_comparison_appeal_letter_text
+from category_names import ROOM_CATEGORY, normalize_category
 
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures" / "demo_case"
@@ -75,8 +76,8 @@ def test_demo_pdfs_run_through_full_pipeline_and_support_the_letter(monkeypatch,
     }
     assert Decimal(str(rules["payable_amount"])) == Decimal("111600")
     assert Decimal(str(rules["covered_amount"])) == Decimal("124000")
-    room = next(row for row in rules["line_item_results"] if row["category"] == "room")
-    doctor = next(row for row in rules["line_item_results"] if row["category"] == "doctor_nursing")
+    room = next(row for row in rules["line_item_results"] if normalize_category(row["category"]) == ROOM_CATEGORY)
+    doctor = next(row for row in rules["line_item_results"] if normalize_category(row["category"]) == "DOCTOR_NURSING")
     assert Decimal(str(room["covered_amount"])) == Decimal("20000")
     assert Decimal(str(doctor["covered_amount"])) == Decimal("10000")
     assert comparison.expected_patient_share == Decimal("20400")

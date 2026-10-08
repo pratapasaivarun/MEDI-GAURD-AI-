@@ -19,6 +19,7 @@ def _json_value(value: Any) -> Any:
     return value
 
 from rules import PolicyTerms
+from category_names import ADMISSION_CATEGORY
 
 _MONEY = r"(?:INR|Rs\.?|₹|USD|\$)?\s*([0-9][0-9,]*(?:\.\d+)?)"
 
@@ -153,6 +154,23 @@ def extract_policy_terms(source: Any) -> dict[str, Any]:
     exclusions = [row["text"].strip() for row in rows if re.search(r"exclusion|excluded|non[- ]payable", row["text"], re.IGNORECASE)]
     if exclusions:
         terms["exclusions"] = {"term": "exclusions", "value": exclusions[:20], "confidence": 0.85, "source_text": "\n".join(exclusions[:3]), "source_page": rows[0].get("page"), "source_name": rows[0].get("source_name", "policy"), "method": "deterministic_keyword"}
+
+    non_payable_categories = []
+    non_payable_evidence = None
+    for row in rows:
+        text = row["text"]
+        if re.search(r"(?:admission|registration).{0,60}non[- ]?payable|non[- ]?payable.{0,60}(?:admission|registration)", text, re.IGNORECASE | re.DOTALL):
+            non_payable_categories.append(ADMISSION_CATEGORY)
+            non_payable_evidence = row
+            break
+    if non_payable_categories and non_payable_evidence:
+        terms["non_payable_categories"] = {
+            "term": "non_payable_categories", "value": non_payable_categories,
+            "confidence": 0.95, "source_text": non_payable_evidence["text"].strip(),
+            "source_page": non_payable_evidence.get("page"),
+            "source_name": non_payable_evidence.get("source_name", "policy"),
+            "method": "deterministic_regex",
+        }
 
     if any(terms.get(k) is None for k in ("annual_limit", "deductible", "copay_percent")):
         llm_terms = _llm_extract_policy_terms_fallback(rows)

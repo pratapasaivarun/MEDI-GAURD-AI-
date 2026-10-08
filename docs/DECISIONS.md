@@ -9,6 +9,7 @@
 - Persisted comparison results are only reused while a current settlement document with the saved SHA-256 remains attached to the same claim. Decimal values serialize as strings and are reconstructed as Decimal on load.
 - No email provider is included. Password-reset links remain disabled in the UI by default; reviewer setup links are surfaced once to the administrator who creates the invitation, in that authenticated admin session only. Tokens are never written to application logs.
 - `app.py` retains app-authored HTML only for the existing visual shell. Dynamic claim strings are escaped, status values are allowlisted and escaped, and `docs/XSS_AUDIT.md` records the per-call review and tests.
+- The demo policy uses deterministic admission non-payable extraction so the application calculation, not test-only hand-built rule terms, produces the fixture's INR 111,600 insurer estimate. The demo PDFs are searchable text PDFs and all contain a `FICTIONAL SAMPLE` label.
 
 ## Phase 0
 

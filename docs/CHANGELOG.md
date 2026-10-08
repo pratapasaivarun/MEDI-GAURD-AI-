@@ -10,6 +10,7 @@
 - Persisted settlement and comparison dataclasses as JSON with Decimal values encoded as strings, tied each result to its settlement document SHA-256, and added an idempotent SQLite table creation migration. Claimant/reviewer views hydrate empty session state from the saved result. A reload-state test passes.
 - Removed token-bearing reset/invitation URLs from logs. Issuance logs contain only the user ID; reset URLs stay hidden by default, and the created reviewer invite URL is displayed only in the admin panel/session. Added link visibility/log tests and documented email delivery as out of scope.
 - Audited all 21 `unsafe_allow_html` calls in `app.py`, extracted interpolated markup into testable helpers, and escaped dynamic claim/status values. Added seven payload-based rendering-helper tests and documented every call in `docs/XSS_AUDIT.md`.
+- Added the three requested, searchable fictional demo PDFs and a no-network end-to-end test through extraction, saved policy terms, app context, deterministic rules, settlement comparison, and appeal-letter generation. The first run exposed that admission non-payable wording was not entering the rule engine; policy-term extraction now records that supported deterministic category. The exact estimate, pharmacy discrepancy, page-9 clause, letter figures, forbidden wording check, and wrong/mismatched/unreadable settlement cases now pass.
 
 ## Phase 0 - Baseline and safe defaults
 

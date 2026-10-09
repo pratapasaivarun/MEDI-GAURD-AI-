@@ -2,6 +2,7 @@ from datetime import date
 
 import extraction
 from extraction import normalize_documents, parse_bill_date
+from rules import parse_date_flexible
 
 
 def test_supported_bill_date_formats_and_day_month_preference():
@@ -10,6 +11,11 @@ def test_supported_bill_date_formats_and_day_month_preference():
     assert parse_bill_date("05 Mar 2026") == date(2026, 3, 5)
     assert parse_bill_date("2026-03-05") == date(2026, 3, 5)
     assert parse_bill_date("03/04/2026") == date(2026, 4, 3)
+
+
+def test_rules_date_parser_uses_the_same_formats_and_interpretation():
+    for raw in ("12/31/2026", "5-Mar-26", "05 Mar 2026", "2026-03-05", "03/04/2026"):
+        assert parse_date_flexible(raw) == parse_bill_date(raw)
 
 
 def test_ambiguous_dates_only_flag_when_admission_discharge_order_changes(monkeypatch):

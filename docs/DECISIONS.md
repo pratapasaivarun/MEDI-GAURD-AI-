@@ -2,6 +2,7 @@
 
 ## 2026-10-10 mini-prototype completion
 
+- Bill and rules date parsing must share `extraction.parse_bill_date`; do not maintain a second list of accepted formats or date-order rules.
 - ICU charges use their own category and daily limit, separate from the room-rent cap. If the policy stores the ICU limit as a sub-limit, interpret it as a daily ICU cap in this prototype, and use the hospitalization room-day count as the available ICU-day estimate.
 - Policy clauses attached to comparison rows must come from indexed evidence for the linked policy version, match the category, include coverage/payability wording, and not contain exclusion wording. Retrieval failure yields no clause rather than a guessed match.
 - A settlement's explicit outside/window/pre/post reason is not accepted as proof by itself. Compare same-category bill dates against admission/discharge dates; missing/out-of-range data stays in `REVIEW`, while dates entirely within the stay leave an unexplained deduction for neutral explanation. Surface the date-check note in results and letters.

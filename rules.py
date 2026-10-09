@@ -108,16 +108,9 @@ def verify_patient_name_match(bill_name: str | None, policy_name: str | None) ->
 
 
 def parse_date_flexible(date_str: Any) -> Any:
-    if not date_str:
-        return None
-    from datetime import datetime
-    clean = str(date_str).strip()
-    for fmt in ("%Y-%m-%d", "%d-%b-%Y", "%d-%m-%Y", "%d/%m/%Y", "%Y/%m/%d", "%d %b %Y"):
-        try:
-            return datetime.strptime(clean, fmt).date()
-        except ValueError:
-            pass
-    return None
+    from extraction import parse_bill_date
+
+    return parse_bill_date(date_str)
 
 
 def validate_expense_date_window(expense_date_str: Any, admission_date_str: Any, discharge_date_str: Any, pre_days: int | None, post_days: int | None, category: str = "") -> dict[str, Any]:

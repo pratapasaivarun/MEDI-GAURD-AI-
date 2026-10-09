@@ -2,6 +2,7 @@
 
 ## MediGuard prototype completion — 2026-10-09
 
+- T6: `rules.parse_date_flexible` now delegates to `extraction.parse_bill_date`, so rule checks and extracted dates share accepted formats and day/month interpretation. Full suite: **106 passed**.
 - T5: ICU is now classified separately from room rent. Policy extraction and reviewed JSON carry a daily ICU cap into the shared typed rules path, with ICU stay days used for the cap and the result labeled `ICU_CAP`. Full suite: **105 passed**.
 - T4: Comparison clause evidence is now retrieved from the active policy index with category and coverage terms. Results need positive coverage language and are discarded when exclusion language appears. Missing evidence uses a plain policy-check message. Retrieval tests mock the index. Full suite: **102 passed**.
 - T3: Settlement reasons that mention a hospitalization window now trigger a date check for matching bill categories. Missing/out-of-stay dates require manual review; fully dated entries inside admission/discharge are labeled `UNEXPLAINED_DEDUCTION`. Notes appear in comparison results and letters. Full suite: **101 passed**.

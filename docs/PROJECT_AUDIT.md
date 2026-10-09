@@ -1,80 +1,49 @@
 # MediGuard AI Project Audit
 
-**Audit date:** 2026-10-09
-**Repository branch:** `mediguard-prototype-implementation`
-**Audit scope:** source code, repository layout, automated tests, Python compilation, and the documented synthetic evaluation entry point. This is a source-level audit, not a clinical, insurance, privacy, or penetration certification.
+**Audit date:** 2026-10-10
+**Repository branch:** `finish-mini-prototype`
+**Audit scope:** application source, repository layout, automated tests, Python compilation, and documentation accuracy. This is a source-level review, not clinical, insurance, privacy, or penetration certification.
 
 ## Summary
 
-The repository contains a coherent academic prototype with typed pipeline models, deterministic rules, document extraction, policy retrieval, settlement parsing, comparison/report generation, role-based Streamlit workflows, SQLite persistence, and security-focused tests. The main automated suite passes (61 tests), and the audited application modules compile.
+The repository contains a synthetic-data Streamlit prototype with typed pipeline models, deterministic claim rules, extraction, policy-index retrieval, settlement parsing, settlement comparison, report generation, SQLite persistence, and claimant/reviewer/admin workflows. The T1–T8 implementation is committed on this branch. The current full test suite passes **110 tests**.
 
-There are two high-impact correctness problems in the application path: room-category values produced by extraction do not match the case-sensitive category check used to derive room limits, and settlement data is not bound to the selected claim or reconciled against the uploaded bill when the settlement letter supplies its own bill total. These can lead to incomplete or misleading financial comparisons. There are also workflow and prototype-readiness gaps described below. Do not use this prototype to make real claim decisions without fixing and validating these issues.
+The previous audit's P1 findings are addressed: room categories are normalized for rules context, and settlement references and totals are checked before comparison. The previous workflow findings are also addressed in code and tests: comparisons persist against the settlement document hash, appeal drafts require a reconciled possible discrepancy, fixture trust uses explicit provenance, and token-bearing URLs are not logged. Remaining limitations are listed below.
 
-## Findings
+## Prior findings and current status
 
-### P1 — Room-limit context is skipped for extracted room line items
-
-`extraction._infer_line_category` returns category names from `config/categories.yaml`, whose group names are uppercase (`ROOM`, `SURGERY`, etc.). But `app._derived_claim_context` selects room items only when `item["category"] == "room"`. Thus normal extracted `ROOM` items are not recognized, and the app does not derive `room_charge`, `room_days`, or `room_linked_charges` for the rules engine. This prevents the room-cap/proportionate-deduction path from receiving the context it needs.
-
-Evidence: [app.py](/C:/MediGaurd%20AI/app.py:1061), [extraction.py](/C:/MediGaurd%20AI/extraction.py:327), [categories.yaml](/C:/MediGaurd%20AI/config/categories.yaml:2).
-
-### P1 — Settlement comparison does not verify claim identity or bill-total consistency
-
-`parse_settlement` extracts a claim reference, but `run_settlement_comparison` never compares it with the selected claim number. A settlement letter for a different claim can therefore be compared against the selected claim. When the letter includes its own bill total, the app also does not check that amount against the uploaded bill total; that settlement total then feeds `comparison.compare` while the expected patient share comes from claim rules. These mismatches can produce a misleading discrepancy result rather than a manual-review result.
-
-Evidence: [settlement.py](/C:/MediGaurd%20AI/settlement.py:113), [app.py](/C:/MediGaurd%20AI/app.py:1219), [comparison.py](/C:/MediGaurd%20AI/comparison.py:18).
-
-### P2 — Uploaded policy text can auto-confirm terms based on a keyword
-
-During policy ingestion, the app marks extracted required terms as confirmed when the policy text contains a broad keyword such as `synthetic` or `fictional` and the required term keys were extracted. That is not proof that the document is a trusted test fixture. A real policy containing one of those words could bypass reviewer confirmation of the extracted terms. Fixture detection should use trusted fixture provenance/configuration, not document text alone.
-
-Evidence: [app.py](/C:/MediGaurd%20AI/app.py:1017).
-
-### P2 — Settlement comparison is kept in Streamlit session state only
-
-The claim and document records are saved, but the comparison and parsed settlement result are assigned only to `st.session_state`. The claimant result view reads those session values and does not reload/recompute the comparison from persisted data. A new browser session or lost Streamlit session can therefore make a completed comparison disappear from the result screen. Reviewer comparison state has the same session-only behavior.
-
-Evidence: [app.py](/C:/MediGaurd%20AI/app.py:2147), [app.py](/C:/MediGaurd%20AI/app.py:1877), [app.py](/C:/MediGaurd%20AI/app.py:2337).
-
-### P2 — Password reset and reviewer invitation delivery is incomplete by default
-
-The app creates reset/invitation tokens and logs token-bearing URLs, but no email delivery mechanism is present. The UI only displays these links when `MEDIGUARD_DEV_SHOW_LINKS=true` (false in `.env.example`). With the default configuration, a user requesting a reset and an invited reviewer are not given a usable link. Accessing the URL through logs is not a sound delivery mechanism and risks exposing credentials if those logs are shared.
-
-Evidence: [app.py](/C:/MediGaurd%20AI/app.py:1599), [app.py](/C:/MediGaurd%20AI/app.py:1605), [app.py](/C:/MediGaurd%20AI/app.py:2472), [.env.example](/C:/MediGaurd%20AI/.env.example:6).
-
-### P2 — Legacy appeal draft can be offered without settlement-comparison evidence
-
-The README says appeal drafts are enabled only when the comparison finds a possible discrepancy. The claimant result page separately enables a legacy appeal-letter PDF for `partially_approved` or `rejected` statuses, using rules/workflow alone. That is inconsistent with the documented comparison-gated behavior and can present a general appeal draft without evidence that the insurer settlement was compared. Either gate it consistently or clearly distinguish and label the general appeal document.
-
-Evidence: [README.md](/C:/MediGaurd%20AI/README.md:68), [app.py](/C:/MediGaurd%20AI/app.py:1846), [reports.py](/C:/MediGaurd%20AI/reports.py:454).
+- **Room-limit context:** fixed by shared category normalization and regression coverage. ICU now has a separate category and daily cap.
+- **Settlement identity and bill total:** fixed. The claim reference is bound to the selected claim and a material bill-total mismatch blocks comparison. If a readable settlement omits its total, the uploaded bill total remains a proposal until the user confirms it.
+- **Fixture auto-confirmation:** document text keywords no longer establish trust. Demo auto-confirmation is limited to the explicit demo path and trusted fixture hashes.
+- **Comparison persistence:** comparison and parsed settlement data are saved and reloaded only while the saved settlement hash matches the currently attached document.
+- **Reset/invitation tokens:** token URLs are not written to logs. Email delivery is still not implemented; reset/invitation links have constrained in-app visibility.
+- **Appeal workflow:** generated comparison letters are gated on a reconciled `possible_discrepancy`; manual-review and no-discrepancy results cannot generate them.
 
 ## Working and verified
 
-- The repository has one root README, plus focused implementation history/decision notes under `docs/`.
-- The main pipeline is separated into modules for models, extraction, policy terms/indexing, deterministic rules, settlement parsing, comparison, explanations, reports, and the Streamlit app.
-- Claimant, reviewer, and administrator flows exist; the app uses role checks and claim ownership checks, and reviewer decisions are audited.
-- Uploaded-document path checks, file limits/signature validation, password hashing, login throttling, reset token hashing, and role-gated actions have corresponding implementation and/or tests.
-- HTML output that interpolates claim names and other user values escapes those values in the inspected helper paths. The `unsafe_allow_html` calls are mainly app-authored markup; this audit did not confirm an XSS issue.
-- Deterministic rule logic and parser/report behavior have dedicated test modules.
+- Settlement parser fixtures cover six fictional text layouts, numeric claim references, amount-label variants, and the missing-total case.
+- Date-window deductions are checked against same-category bill dates. Missing/out-of-stay dates require review; fully dated entries inside the stay are surfaced as an unexplained deduction with a note.
+- Policy comparison clauses are retrieved from the linked policy index, filtered for category and positive coverage wording, and discarded when exclusion wording appears.
+- ICU category and daily cap behavior use the deterministic rules path; an unstated cap requires review. Rules date parsing delegates to the bill extraction date parser.
+- LLM-derived claim fields use confidence 60.0 and remain flagged for human review. LLMs do not set financial outcomes.
+- All settlement fixtures are synthetic. End-to-end layout tests mock external model and vector-index services.
+- Source search finds no `_evaluate_claim_total_only` helper. The repository has one root `README.md`, plus scoped documentation under `docs/`.
 
-## Verification results
+## Verification
 
-- `\.venv\Scripts\python.exe -m pytest -q --basetemp=tmp/pytest_audit` — **61 passed**.
-- `\.venv\Scripts\python.exe -m compileall -q app.py agents.py comparison.py extraction.py models.py policy_index.py policy_terms.py reports.py rules.py settlement.py` — **passed** (no diagnostics).
-- Source search for `_evaluate_claim_total_only` — **no match**.
-- Source credential scan found no hardcoded published password.
-- `.env.example` sets `MEDIGUARD_CORE_DEMO=false`.
-- `app.py` contains 21 `unsafe_allow_html` uses; count alone is not a vulnerability finding. The inspected dynamic claim-card/auth markup escapes interpolated values.
-- `evaluation/run_system_evaluation.py --rules-only` — **not completed** during this audit; it loaded model weights and produced no completion output after several minutes, so it was stopped. The unit suite is the completed verification result.
-- No interactive browser/UI end-to-end test was run. The test suite does not establish real-world OCR, insurer-document accuracy, or correctness across actual policies and claims.
+- `.venv\Scripts\python.exe -m pytest -q --basetemp=.pytest-tmp` — **110 passed**.
+- `.venv\Scripts\python.exe -m compileall -q app.py agents.py category_names.py comparison.py extraction.py models.py policy_index.py policy_terms.py reports.py rules.py settlement.py ui tests` — passed.
+- `git diff --check` — passed after the documentation update.
+- No interactive browser acceptance test or real-document evaluation was performed in this audit.
 
-## Readiness limits and follow-up
+## Limits and follow-up
 
-- The README states that MFA is not implemented and the prototype is not suitable for production claims handling. Uploaded files and SQLite data are stored locally; encryption at rest and a production-grade operational deployment were not established by this audit.
-- `purge_expired_documents` exists as a helper, but the audit found no scheduled/application call path that applies `MEDIGUARD_RETENTION_DAYS`; retention is therefore not automatic.
-- README documents missing legacy `fixtures/phase4/` inputs for the older extraction evaluation runner and `run_full_evaluation.py`.
-- Fix and add regression tests for the P1 findings before using results beyond synthetic demonstrations. Add durable persistence for comparison results and a real secure reset/invitation delivery path before broader pilot use.
+- Use fictional data only. The prototype is not suitable for production claim decisions.
+- MFA and email delivery are not implemented. Uploaded files and SQLite records are local; encryption at rest and production operational controls were not established by this audit.
+- OCR, policy-retrieval relevance, model quality, and insurer-specific layout accuracy have not been established beyond synthetic tests.
+- Retention purging remains a manual administrator operation.
+- Some older evaluation commands require legacy fixtures under `fixtures/phase4/`; those inputs are not present. `evaluation/` and `evaluation/PAPER_RESULTS.md` were not modified as part of this implementation.
 
-## Repository hygiene observed
+## Repository hygiene
 
-The tracked project has a single top-level `README.md` and a focused `docs/` directory. At audit time the Git worktree also had two untracked items, `MediGuard_AI_implementation.zip` and `T/`; they were not part of the tracked source audit and were left unchanged. Review those separately before sharing a repository archive.
+The root contains a single `README.md`; changelog, decisions, and this audit report live under `docs/`. T1–T8 are separate commits on `finish-mini-prototype`. Generated data, environments, databases, uploads, and personal documents are excluded from the implementation commit set.

@@ -6,7 +6,9 @@ MediGuard AI is an academic prototype for reviewing medical bills against policy
 
 - Extracts claim fields and itemized charges from PDF and image bills and policy documents.
 - Applies deterministic coverage rules, including limits, co-payment, deductible, exclusions, and review flags.
-- Parses settlement letters in PDF or UTF-8 text and compares insurer deductions with the policy calculation.
+- Parses varied settlement-letter layouts in text-layer PDFs or UTF-8 text and compares insurer deductions with the policy calculation.
+- Checks an insurer's outside-window deduction against dated bill entries. Missing or out-of-stay dates require review; a total inferred from the bill also requires explicit user confirmation before comparison.
+- Gives LLM-extracted claim fields a confidence score of 60 and flags them for human review. The LLM does not decide claim amounts.
 - Shows category-level evidence and can generate conditional appeal-letter and hospital-note drafts in PDF and Word formats.
 - Provides claimant, reviewer, and administrator workflows in a Streamlit app.
 
@@ -30,7 +32,7 @@ Settlement letter -------------------------------> settlement.py ---------------
 | Streamlit application and persistence | `app.py` | Authentication, claim/document workflows, reviewer gate, upload checks, and SQLite access |
 | Typed pipeline contracts | `models.py` | Shared data classes for bills, policy terms, calculations, settlement data, and comparisons |
 | Extraction and policy evidence | `extraction.py`, `policy_terms.py`, `policy_index.py`, `config/categories.yaml` | OCR/text extraction, field review flags, candidate terms, and clause retrieval |
-| Deterministic calculation | `rules.py` | Coverage and patient/insurer share calculations |
+| Deterministic calculation | `rules.py`, `category_names.py` | Coverage and patient/insurer share calculations, including separate room and ICU limits |
 | Settlement and comparison | `settlement.py`, `comparison.py` | Settlement parsing, reconciliation, and category-level comparison |
 | Explanation and reports | `agents.py`, `reports.py` | Evidence-bounded explanations and review document generation |
 | Synthetic evaluations | `evaluation/`, `fixtures/claim_scenarios/` | Reproducible evaluation scripts, annotations, and fictional claim cases |
@@ -87,12 +89,15 @@ pip install -r requirements-dev.txt
 
 The tests cover deterministic rules, extraction validation, settlement parsing, comparison, generated reports, and app security behavior. Passing synthetic tests is not evidence of accuracy on real claims or any insurer's documents.
 
+Current verification: **110 tests passed** on 2026-10-10 with `python -m pytest -q`.
+
 ## Known limitations
 
 - No MFA is implemented.
 - Email delivery is out of scope; password-reset and reviewer setup links are not sent by email.
 - Use synthetic data only. Do not use real patient data or upload real patient documents.
-- Settlement parsing supports one settlement-letter layout, provided as a text-layer PDF or UTF-8 text, with an optional LLM fallback. Image-only settlement documents require manual review.
+- Settlement parsing is exercised against six fictional text layouts. It supports text-layer PDFs and UTF-8 text; image-only settlement documents require manual review. Broader insurer-specific layout coverage has not been validated.
+- ICU charges use a separate daily cap when the policy states one; without a stated cap, ICU lines require reviewer confirmation.
 - Results are estimates for human review, not insurer decisions or verified entitlements.
 - OCR, retrieval relevance, model quality, and expert validation have not been established beyond the synthetic checks described in `evaluation/PAPER_RESULTS.md`.
 
@@ -140,6 +145,7 @@ comparison.py                  Settlement-to-policy comparison
 config/categories.yaml         Extraction category keywords
 docs/                          Implementation changelog and decisions
 evaluation/                    Evaluation code, annotations, and results
+fixtures/settlements/          Fictional settlement layout examples
 fixtures/claim_scenarios/      Fictional end-to-end claim fixtures
 models.py                      Typed pipeline data structures
 policy_index.py                Policy clause indexing and retrieval

@@ -1241,29 +1241,38 @@ def evaluate_saved_claim(claim_id: str, user_id: str, normalized: dict) -> dict:
 
 def _claim_policy_clause_map(claim_id: str) -> dict[str, Clause]:
     clauses: dict[str, Clause] = {}
-    with db() as conn:
-        documents = conn.execute("SELECT extracted_json FROM documents WHERE claim_id=? AND document_type='policy'", (claim_id,)).fetchall()
-    for document in documents:
+    policy = active_policy_for_claim(claim_id, {})
+    policy_id = policy["version_id"] if policy else claim_id
+    category_terms = {
+        "PHARMACY": "medicine medicines pharmacy drug drugs",
+        "ROOM": "room rent accommodation boarding",
+        "DOCTOR_NURSING": "doctor nursing consultation professional charges",
+        "ADMISSION": "admission registration administrative charges",
+        "ICU": "ICU intensive care critical care",
+    }
+    category_match = {
+        "PHARMACY": re.compile(r"\b(?:medicine|medicines|pharmacy|drug|drugs)\b", re.I),
+        "ROOM": re.compile(r"\b(?:room|accommodation|boarding)\b", re.I),
+        "DOCTOR_NURSING": re.compile(r"\b(?:doctor|nursing|consultation|professional charges)\b", re.I),
+        "ADMISSION": re.compile(r"\b(?:admission|registration|administrative)\b", re.I),
+        "ICU": re.compile(r"\b(?:ICU|intensive care|critical care)\b", re.I),
+    }
+    coverage = re.compile(r"\b(?:cover(?:ed|s)?|payable|reimburs(?:e|ed|able|ement)|eligible)\b", re.I)
+    exclusions = re.compile(r"\b(?:exclu\w*|not\s+covered|not\s+payable|non[- ]payable)\b", re.I)
+    for category, terms in category_terms.items():
+        query = f"{terms} covered payable reimbursed under policy benefit"
         try:
-            payload = json.loads(document["extracted_json"] or "{}")
-        except (TypeError, json.JSONDecodeError):
+            evidence_rows = retrieve_indexed_policy_evidence(query, policy_id, limit=8)
+        except Exception:
             continue
-        for evidence in payload.get("evidence", []):
-            text = str(evidence.get("text") or "")
-            if not text:
+        for evidence in evidence_rows:
+            text = re.sub(r"\s+", " ", str(evidence.get("text") or "")).strip()
+            if not text or not category_match[category].search(text) or not coverage.search(text) or exclusions.search(text):
                 continue
-            match = re.search(r"(Clause\s+([A-Za-z0-9.]+)\s*[:.-]?\s*.*?)(?=Clause\s+[A-Za-z0-9.]+|\Z)", text, re.I | re.S)
-            if not match:
-                continue
-            clause_text = re.sub(r"\s+", " ", match.group(1)).strip()
-            clause = Clause(clause_text[:2000], int(evidence.get("page") or 1), match.group(2))
-            lowered = clause_text.lower()
-            if any(term in lowered for term in ("medicine", "medicines", "pharmacy", "drug")):
-                clauses["PHARMACY"] = clause
-            if "room" in lowered:
-                clauses.setdefault("ROOM", clause)
-            if "doctor" in lowered or "nursing" in lowered:
-                clauses.setdefault("DOCTOR_NURSING", clause)
+            match = re.search(r"\bClause\s+([A-Za-z0-9.]+)\b", text, re.I)
+            clause = Clause(text[:2000], int(evidence.get("page") or 1), match.group(1) if match else evidence.get("section"))
+            clauses[category] = clause
+            break
     return clauses
 
 

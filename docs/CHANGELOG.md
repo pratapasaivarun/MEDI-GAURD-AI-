@@ -2,6 +2,7 @@
 
 ## MediGuard prototype completion — 2026-10-09
 
+- T4: Comparison clause evidence is now retrieved from the active policy index with category and coverage terms. Results need positive coverage language and are discarded when exclusion language appears. Missing evidence uses a plain policy-check message. Retrieval tests mock the index. Full suite: **102 passed**.
 - T3: Settlement reasons that mention a hospitalization window now trigger a date check for matching bill categories. Missing/out-of-stay dates require manual review; fully dated entries inside admission/discharge are labeled `UNEXPLAINED_DEDUCTION`. Notes appear in comparison results and letters. Full suite: **101 passed**.
 - Fixed the extracted uppercase room category being skipped by the app's room-limit context, introduced shared case-insensitive category normalization, and use Decimal amounts for room-linked context. Hospital stay days use the date difference, matching the four-day room example for 10–14 August.
 - Added an app-context regression test. It failed before the fix because `room_charge` was absent, then passed; full suite after the task: **62 passed**.

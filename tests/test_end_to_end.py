@@ -40,6 +40,9 @@ def _run_demo_pipeline(monkeypatch, tmp_path, settlement_bytes):
     monkeypatch.setenv("MEDIGUARD_DEV_SHOW_LINKS", "false")
     monkeypatch.setattr(requests, "post", lambda *_args, **_kwargs: SimpleNamespace(status_code=503))
     monkeypatch.setattr(policy_index, "_client_and_collection", lambda: InMemoryPolicyCollection())
+    monkeypatch.setattr(app, "retrieve_indexed_policy_evidence", lambda query, policy_id, limit=8: [
+        {"text": "Clause 3.4: prescribed medicines are covered during hospitalization.", "page": 9, "section": "coverage"}
+    ] if "medicine" in query.lower() or "pharmacy" in query.lower() else [])
     app.init_db()
     user_id = str(uuid.uuid4())
     with app.db() as conn:

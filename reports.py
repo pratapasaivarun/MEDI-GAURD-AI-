@@ -523,7 +523,7 @@ def build_comparison_appeal_letter_text(
         date_window_note = f"Date-window check: {row.review_note}. " if row.review_note else ""
         clause = (
             f"Supporting policy text: {row.clause.text} (page {row.clause.page})."
-            if row.clause else "No supporting policy clause was available; reviewer confirmation is required."
+            if row.clause else "No supporting clause found; please check your policy."
         )
         details.append(
             f"- {row.category}: insurer deduction {_inr_indian(row.insurer_deducted)}; "

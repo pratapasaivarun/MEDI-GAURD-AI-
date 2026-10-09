@@ -2,6 +2,7 @@
 
 ## MediGuard prototype completion — 2026-10-10
 
+- T3 follow-up: The Suresh-style inside-window case now asserts the specified ₹20,400 patient share, ₹9,000 possible difference, page-9 clause, and flagged pharmacy deduction. Full suite: **110 passed**.
 - T4 follow-up: Coverage retrieval now accepts “included” and rejects passages containing “except” or “inadmissible,” in addition to exclusion/not-covered language. Added mocked tests for the extra cases and empty retrieval. Full suite: **110 passed**.
 - T5 follow-up: ICU line items now require `ICU_LIMIT_NOT_STATED` manual review when the linked policy provides no daily ICU limit. Added an explicit regression. Full suite: **108 passed**.
 - T9: Updated the single root README with current date-window, fallback-confirmation, ICU, LLM-confidence, and six-layout behavior. Refreshed the project audit from the old 61-test snapshot; confirmed no `_evaluate_claim_total_only` helper exists. Final full suite: **107 passed**.

@@ -37,10 +37,13 @@ def test_valid_llm_fields_are_always_flagged_for_review(monkeypatch):
     })
     claim = normalize_documents([{"text": "Unstructured fictional bill information without labeled fields."}])
     assert claim.patient_name.source == "llm"
+    assert claim.patient_name.confidence == 60.0
     assert claim.patient_name.needs_review is True
     assert claim.total_amount.source == "llm"
+    assert claim.total_amount.confidence == 60.0
     assert claim.total_amount.needs_review is True
     assert claim.line_items[0]["needs_review"] is True
+    assert claim.line_items[0]["confidence"] == 60.0
     assert claim.line_items[0]["category"] == "OTHER"
 
 

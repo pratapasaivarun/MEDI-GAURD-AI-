@@ -20,6 +20,7 @@ from typing import Any
 
 
 OCR_REVIEW_THRESHOLD = 70.0
+LLM_FIELD_CONFIDENCE = 60.0
 SUBMISSION_DEADLINE_DAYS = 30
 
 
@@ -645,23 +646,23 @@ def normalize_documents(documents: list[dict[str, Any]]) -> NormalizedClaim:
         llm_parsed = _llm_extract_claim_fallback(all_text)
         if llm_parsed and isinstance(llm_parsed, dict):
             if not claim.patient_name and llm_parsed.get("patient_name"):
-                claim.patient_name = _field("patient_name", str(llm_parsed["patient_name"]).strip(), best, confidence=90.0, source="llm", needs_review=True)
+                claim.patient_name = _field("patient_name", str(llm_parsed["patient_name"]).strip(), best, confidence=LLM_FIELD_CONFIDENCE, source="llm", needs_review=True)
             if not claim.hospital_name and llm_parsed.get("hospital_name"):
-                claim.hospital_name = _field("hospital_name", str(llm_parsed["hospital_name"]).strip(), best, confidence=90.0, source="llm", needs_review=True)
+                claim.hospital_name = _field("hospital_name", str(llm_parsed["hospital_name"]).strip(), best, confidence=LLM_FIELD_CONFIDENCE, source="llm", needs_review=True)
             if not claim.policy_number and llm_parsed.get("policy_number"):
-                claim.policy_number = _field("policy_number", str(llm_parsed["policy_number"]).strip(), best, confidence=90.0, source="llm", needs_review=True)
+                claim.policy_number = _field("policy_number", str(llm_parsed["policy_number"]).strip(), best, confidence=LLM_FIELD_CONFIDENCE, source="llm", needs_review=True)
             if not claim.claim_number and llm_parsed.get("claim_number"):
-                claim.claim_number = _field("claim_number", str(llm_parsed["claim_number"]).strip(), best, confidence=90.0, source="llm", needs_review=True)
+                claim.claim_number = _field("claim_number", str(llm_parsed["claim_number"]).strip(), best, confidence=LLM_FIELD_CONFIDENCE, source="llm", needs_review=True)
             if not claim.diagnosis and llm_parsed.get("diagnosis"):
-                claim.diagnosis = _field("diagnosis", str(llm_parsed["diagnosis"]).strip(), best, confidence=90.0, source="llm", needs_review=True)
+                claim.diagnosis = _field("diagnosis", str(llm_parsed["diagnosis"]).strip(), best, confidence=LLM_FIELD_CONFIDENCE, source="llm", needs_review=True)
             if not claim.admission_date and llm_parsed.get("admission_date"):
-                claim.admission_date = _field("admission_date", str(llm_parsed["admission_date"]).strip(), best, confidence=90.0, source="llm", needs_review=True)
+                claim.admission_date = _field("admission_date", str(llm_parsed["admission_date"]).strip(), best, confidence=LLM_FIELD_CONFIDENCE, source="llm", needs_review=True)
             if not claim.discharge_date and llm_parsed.get("discharge_date"):
-                claim.discharge_date = _field("discharge_date", str(llm_parsed["discharge_date"]).strip(), best, confidence=90.0, source="llm", needs_review=True)
+                claim.discharge_date = _field("discharge_date", str(llm_parsed["discharge_date"]).strip(), best, confidence=LLM_FIELD_CONFIDENCE, source="llm", needs_review=True)
             if not claim.total_amount and llm_parsed.get("total_amount") is not None:
                 parsed_tot = parse_amount(str(llm_parsed["total_amount"]))
                 if parsed_tot is not None and parsed_tot > 0:
-                    claim.total_amount = _field("total_amount", parsed_tot, best, confidence=90.0, source="llm", needs_review=True)
+                    claim.total_amount = _field("total_amount", parsed_tot, best, confidence=LLM_FIELD_CONFIDENCE, source="llm", needs_review=True)
 
             if not claim.line_items and llm_parsed.get("line_items"):
                 extracted_items = []
@@ -676,7 +677,7 @@ def normalize_documents(documents: list[dict[str, Any]]) -> NormalizedClaim:
                                 "category": _infer_line_category(desc),
                                 "cpt_codes": _extract_cpt_codes(desc),
                                 "date": None,
-                                "confidence": 90.0,
+                                "confidence": LLM_FIELD_CONFIDENCE,
                                 "needs_review": True,
                                 "evidence": [best.to_dict()] if best else [],
                             })

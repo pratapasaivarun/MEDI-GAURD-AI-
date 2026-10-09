@@ -2,6 +2,7 @@
 
 ## MediGuard prototype completion — 2026-10-09
 
+- T8: Added a real app-path integration covering all six fictional settlement layouts through parsing, claim binding, comparison, and neutral letter generation. The layout missing a bill total stays in manual review until explicit confirmation. External model and index calls are mocked. Full suite: **107 passed**.
 - T7: LLM-derived claim fields and line items now carry confidence **60.0** and remain flagged for review. Full suite: **106 passed**.
 - T6: `rules.parse_date_flexible` now delegates to `extraction.parse_bill_date`, so rule checks and extracted dates share accepted formats and day/month interpretation. Full suite: **106 passed**.
 - T5: ICU is now classified separately from room rent. Policy extraction and reviewed JSON carry a daily ICU cap into the shared typed rules path, with ICU stay days used for the cap and the result labeled `ICU_CAP`. Full suite: **105 passed**.

@@ -2,6 +2,7 @@
 
 ## 2026-10-10 mini-prototype completion
 
+- Settlement layout integration must pass through the saved-document parser and claim-bound comparison path. Test fixtures are fictional, and missing totals remain blocked until an explicit confirmation step.
 - LLM-derived claim values use confidence 60.0 and always require human review; a structurally valid model response is not a verified document fact.
 - Bill and rules date parsing must share `extraction.parse_bill_date`; do not maintain a second list of accepted formats or date-order rules.
 - ICU charges use their own category and daily limit, separate from the room-rent cap. If the policy stores the ICU limit as a sub-limit, interpret it as a daily ICU cap in this prototype, and use the hospitalization room-day count as the available ICU-day estimate.

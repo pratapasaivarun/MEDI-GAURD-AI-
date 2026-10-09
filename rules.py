@@ -251,8 +251,10 @@ def evaluate_line_item(item: dict, terms: PolicyTerms, claim_context: dict | Non
     is_icu = category == "icu" or "icu" in desc_lower or "intensive care" in desc_lower
     if is_icu:
         icu_limit = terms.icu_limit_per_day or terms.sub_limits.get("icu")
-        if claim_context.get("icu_limit_uncertain") is True or (icu_limit is None and claim_context.get("has_icu_stay") is True):
-            return {**result, "status": "needs_review", "applied_rule": "icu_limit", "calculation": "ICU limit information is unavailable or ambiguous; requires reviewer confirmation."}
+        if icu_limit is None:
+            return {**result, "status": "needs_review", "applied_rule": "icu_limit_not_stated", "calculation": "The policy does not state an ICU limit; reviewer confirmation is required."}
+        if claim_context.get("icu_limit_uncertain") is True:
+            return {**result, "status": "needs_review", "applied_rule": "icu_limit_not_stated", "calculation": "The ICU limit information is ambiguous; reviewer confirmation is required."}
         if icu_limit is not None:
             days = item.get("days") or item.get("quantity") or claim_context.get("icu_days") or 1
             allowed_icu = money(icu_limit) * int(days)
@@ -375,7 +377,8 @@ def evaluate_claim(
             reason_code = {
                 "non_payable": "NON_PAYABLE",
                 "room_limit": "ROOM_CAP",
-            "icu_limit": "ICU_CAP",
+                "icu_limit": "ICU_CAP",
+                "icu_limit_not_stated": "ICU_LIMIT_NOT_STATED",
                 "proportionate_deduction": "PROPORTIONATE",
                 "exclusion": "EXCLUSION",
                 "needs_review": "REVIEW",

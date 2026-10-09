@@ -27,6 +27,21 @@ def test_typed_policy_icu_limit_caps_daily_and_marks_rule():
     assert result.lines[0].reason_code == "ICU_CAP"
 
 
+def test_icu_without_stated_policy_cap_requires_manual_review():
+    bill = BillData(
+        patient_name="Fictional Patient", policy_number="POL-TEST",
+        admission_date=None, discharge_date=None, room_days=2,
+        total_amount=Decimal("30000"),
+        line_items=[LineItem("ICU intensive care charges", "ICU", Decimal("30000"))],
+    )
+    result = evaluate_claim(
+        bill,
+        TypedPolicyTerms(sum_insured=Decimal("500000"), room_rent_cap_per_day=Decimal("5000")),
+    )
+    assert result.status == "manual_review"
+    assert result.lines[0].reason_code == "ICU_LIMIT_NOT_STATED"
+
+
 def test_policy_icu_daily_cap_is_extracted_and_loaded_from_reviewed_json():
     extracted = extract_policy_terms("Annual limit INR 500000. Deductible: 0. Copay: 0%. ICU limit per day: INR 12000.")
     assert extracted["terms"].icu_limit_per_day == Decimal("12000")

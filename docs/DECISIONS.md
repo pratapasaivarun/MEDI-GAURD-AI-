@@ -2,10 +2,12 @@
 
 ## 2026-10-10 mini-prototype completion
 
+- Keep one root README as the current user guide; changelog, decisions, and the project audit are supporting records under `docs/`. Report the current verified test count rather than copying counts from older implementation phases.
 - Settlement layout integration must pass through the saved-document parser and claim-bound comparison path. Test fixtures are fictional, and missing totals remain blocked until an explicit confirmation step.
 - LLM-derived claim values use confidence 60.0 and always require human review; a structurally valid model response is not a verified document fact.
 - Bill and rules date parsing must share `extraction.parse_bill_date`; do not maintain a second list of accepted formats or date-order rules.
 - ICU charges use their own category and daily limit, separate from the room-rent cap. If the policy stores the ICU limit as a sub-limit, interpret it as a daily ICU cap in this prototype, and use the hospitalization room-day count as the available ICU-day estimate.
+- An ICU line with no stated or parseable policy limit cannot be assumed fully covered; mark the line `needs_review` with reason `ICU_LIMIT_NOT_STATED`.
 - Policy clauses attached to comparison rows must come from indexed evidence for the linked policy version, match the category, include coverage/payability wording, and not contain exclusion wording. Retrieval failure yields no clause rather than a guessed match.
 - A settlement's explicit outside/window/pre/post reason is not accepted as proof by itself. Compare same-category bill dates against admission/discharge dates; missing/out-of-range data stays in `REVIEW`, while dates entirely within the stay leave an unexplained deduction for neutral explanation. Surface the date-check note in results and letters.
 - Settlement claim identifiers must contain a digit. Hyphenated IDs and legacy spaced-numeric IDs are supported, while narrative phrases such as “Your claim has been processed” and adjacent dates are excluded.

@@ -1,7 +1,9 @@
 # Changelog
 
-## MediGuard prototype completion — 2026-10-09
+## MediGuard prototype completion — 2026-10-10
 
+- T5 follow-up: ICU line items now require `ICU_LIMIT_NOT_STATED` manual review when the linked policy provides no daily ICU limit. Added an explicit regression. Full suite: **108 passed**.
+- T9: Updated the single root README with current date-window, fallback-confirmation, ICU, LLM-confidence, and six-layout behavior. Refreshed the project audit from the old 61-test snapshot; confirmed no `_evaluate_claim_total_only` helper exists. Final full suite: **107 passed**.
 - T8: Added a real app-path integration covering all six fictional settlement layouts through parsing, claim binding, comparison, and neutral letter generation. The layout missing a bill total stays in manual review until explicit confirmation. External model and index calls are mocked. Full suite: **107 passed**.
 - T7: LLM-derived claim fields and line items now carry confidence **60.0** and remain flagged for review. Full suite: **106 passed**.
 - T6: `rules.parse_date_flexible` now delegates to `extraction.parse_bill_date`, so rule checks and extracted dates share accepted formats and day/month interpretation. Full suite: **106 passed**.
@@ -80,6 +82,6 @@
 - Comparison now reconciles co-pay deductions explicitly and calculates their patient-share effect without applying the co-pay percentage twice.
 - Moved the application stylesheet and reusable escaped presentation helpers into the `ui` package while retaining `app.py`'s current rendering API for compatibility.
 - Moved welcome/login screens into `ui/auth_pages.py` and claim/result/reviewer screens into `ui/claim_pages.py`; `app.main()` now routes to those pages. Kept `appeal_draft_available` in `app.py` as a compatibility helper used by tests and callers.
-- Added `.gitattributes` with LF text normalization and committed the renormalization separately. Appeal-letter insurer reasons now end as a sentence before the review point. README documents the prototype pipeline, manual retention purge, and known limitations: no MFA/email, synthetic data only, one supported settlement layout with fallback, and estimates only.
+- Added `.gitattributes` with LF text normalization and committed the renormalization separately. Appeal-letter insurer reasons now end as a sentence before the review point. README documents the prototype pipeline, manual retention purge, and known limitations: no MFA/email, synthetic data only, multiple fictional settlement layout examples, and estimates only.
 - Final verification added a stylesheet structure check and changed the end-to-end category assertion to use the shared category constant.
 

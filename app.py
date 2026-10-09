@@ -1257,8 +1257,8 @@ def _claim_policy_clause_map(claim_id: str) -> dict[str, Clause]:
         "ADMISSION": re.compile(r"\b(?:admission|registration|administrative)\b", re.I),
         "ICU": re.compile(r"\b(?:ICU|intensive care|critical care)\b", re.I),
     }
-    coverage = re.compile(r"\b(?:cover(?:ed|s)?|payable|reimburs(?:e|ed|able|ement)|eligible)\b", re.I)
-    exclusions = re.compile(r"\b(?:exclu\w*|not\s+covered|not\s+payable|non[- ]payable)\b", re.I)
+    coverage = re.compile(r"\b(?:cover(?:ed|s)?|payable|reimburs\w*|eligible|includ(?:ed|es))\b", re.I)
+    exclusions = re.compile(r"\b(?:exclu\w*|not\s+covered|not\s+payable|non[- ]payable|except|inadmissible)\b", re.I)
     for category, terms in category_terms.items():
         query = f"{terms} covered payable reimbursed under policy benefit"
         try:

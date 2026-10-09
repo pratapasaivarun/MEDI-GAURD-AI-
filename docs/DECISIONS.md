@@ -2,6 +2,7 @@
 
 ## 2026-10-10 mini-prototype completion
 
+- Retrieval evidence must have positive coverage wording (`covered`, `payable`, `reimbursed`, or `included`) and no exclusion qualifier (`exclude`, `not covered`, `not payable`, `except`, or `inadmissible`).
 - Keep one root README as the current user guide; changelog, decisions, and the project audit are supporting records under `docs/`. Report the current verified test count rather than copying counts from older implementation phases.
 - Settlement layout integration must pass through the saved-document parser and claim-bound comparison path. Test fixtures are fictional, and missing totals remain blocked until an explicit confirmation step.
 - LLM-derived claim values use confidence 60.0 and always require human review; a structurally valid model response is not a verified document fact.

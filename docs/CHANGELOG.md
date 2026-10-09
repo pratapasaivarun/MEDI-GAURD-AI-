@@ -2,6 +2,7 @@
 
 ## MediGuard prototype completion — 2026-10-10
 
+- T4 follow-up: Coverage retrieval now accepts “included” and rejects passages containing “except” or “inadmissible,” in addition to exclusion/not-covered language. Added mocked tests for the extra cases and empty retrieval. Full suite: **110 passed**.
 - T5 follow-up: ICU line items now require `ICU_LIMIT_NOT_STATED` manual review when the linked policy provides no daily ICU limit. Added an explicit regression. Full suite: **108 passed**.
 - T9: Updated the single root README with current date-window, fallback-confirmation, ICU, LLM-confidence, and six-layout behavior. Refreshed the project audit from the old 61-test snapshot; confirmed no `_evaluate_claim_total_only` helper exists. Final full suite: **107 passed**.
 - T8: Added a real app-path integration covering all six fictional settlement layouts through parsing, claim binding, comparison, and neutral letter generation. The layout missing a bill total stays in manual review until explicit confirmation. External model and index calls are mocked. Full suite: **107 passed**.

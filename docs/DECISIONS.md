@@ -1,5 +1,10 @@
 # Implementation decisions
 
+## 2026-10-10 mini-prototype completion
+
+- Settlement claim identifiers must contain a digit. Hyphenated IDs and legacy spaced-numeric IDs are supported, while narrative phrases such as “Your claim has been processed” and adjacent dates are excluded.
+- For settlement amount labels, explicit payment labels take precedence. `Claimed amount` and `Amount claimed` remain fallbacks for both the claim total and paid amount when no clearer paid label exists.
+
 ## 2026-10-09 completion work
 
 - Category matching uses `category_names.normalize_category` and uppercase shared constants at module boundaries. Room days are elapsed date days (`discharge - admission`), which gives four room days for 10–14 August and avoids counting the discharge date as an additional billed day.

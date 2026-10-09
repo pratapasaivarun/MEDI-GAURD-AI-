@@ -67,6 +67,8 @@
 - Final verification after implementation and documentation changes: `python -m pytest tests/ -q --basetemp=tmp/pytest_final`: **61 passed in 15.54s**; Python compilation succeeded; `git diff --check` is clean.
 # Unreleased
 
+- T1: Added six fictional settlement layouts and prioritized explicit paid-amount labels over the `claimed amount` fallback. Claim IDs now capture only a digit-bearing token (including legacy spaced-numeric IDs), and settlement totals/payments are not parsed as deduction rows. Baseline layout tests: **6 failed, 1 passed**; focused parser/binding/end-to-end tests: **22 passed**; full suite: **96 passed**.
+
 - Added a seven-case synthetic comparison evaluation and runner; its generated outcomes match the declared expectations.
 - Comparison now reconciles co-pay deductions explicitly and calculates their patient-share effect without applying the co-pay percentage twice.
 - Moved the application stylesheet and reusable escaped presentation helpers into the `ui` package while retaining `app.py`'s current rendering API for compatibility.

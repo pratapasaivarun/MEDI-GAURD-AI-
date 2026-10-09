@@ -44,7 +44,7 @@ def _run_comparison(monkeypatch, tmp_path, settlement_text, bill_total=Decimal("
 def test_wrong_claim_id_blocks_comparison(monkeypatch, tmp_path):
     result, settlement = _run_comparison(
         monkeypatch, tmp_path,
-        "Claim No: CLM-OTHER\nBill Total: INR 1,000\nDeductions\nAdmission | INR 1,000\nAmount Paid: INR 0",
+        "Claim No: CLM-OTHER-1\nBill Total: INR 1,000\nDeductions\nAdmission | INR 1,000\nAmount Paid: INR 0",
     )
     assert result.status == "manual_review"
     assert "CLAIM_ID_MISMATCH" in " ".join(result.review_reasons)

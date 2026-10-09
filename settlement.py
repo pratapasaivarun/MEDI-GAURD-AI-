@@ -111,10 +111,25 @@ def parse_settlement(file_bytes: bytes, filename: str) -> SettlementData:
         except UnicodeDecodeError as exc:
             raise ValueError("Settlement text must use UTF-8 encoding.") from exc
 
-    claim_match = re.search(r"\b(?:claim\s*(?:id|no\.?|number)?|claim\s*ref(?:erence)?)\s*[:#-]?\s*([A-Z0-9][A-Z0-9 /-]{3,})", text, re.I)
-    claim_id = claim_match.group(1).strip(".,;: ") if claim_match else None
-    amount_paid = _extract_labeled_amount(text, r"amount\s*(?:paid|settled)|settlement\s*amount|net\s*(?:amount\s*)?paid|approved\s*amount")
-    bill_total = _extract_labeled_amount(text, r"bill\s*total|total\s*(?:bill|billed|amount)")
+    claim_match = re.search(
+        r"\b(?:claim\s*(?:id|no\.?|number)?|claim\s*ref(?:erence)?)\s*[:#-]?\s*"
+        r"((?=[A-Z0-9-]*\d)[A-Z0-9]+(?:-[A-Z0-9]+)*|[A-Z]+\s+\d+(?:\s+\d+)*)\b",
+        text,
+        re.I,
+    )
+    claim_id = claim_match.group(1) if claim_match else None
+    amount_paid = _extract_labeled_amount(
+        text,
+        r"amount\s*(?:paid|settled|payable)|"
+        r"settlement\s*amount|net\s*(?:amount\s*)?(?:paid|payable)|"
+        r"approved\s*amount|payable\s+to\s+hospital",
+    )
+    if amount_paid is None:
+        amount_paid = _extract_labeled_amount(text, r"claimed\s*amount|amount\s*claimed")
+    bill_total = _extract_labeled_amount(
+        text,
+        r"bill\s*total|total\s*(?:bill|billed|amount)|claimed\s*amount|amount\s*claimed",
+    )
     copay = _extract_labeled_amount(text, r"co[- ]?pay(?:ment)?(?:\s+applied)?")
 
     rows: list[SettlementDeduction] = []
@@ -132,7 +147,12 @@ def parse_settlement(file_bytes: bytes, filename: str) -> SettlementData:
             continue
         if not in_deductions:
             continue
-        if re.search(r"(?:amount\s*(?:paid|settled)|net\s*(?:amount\s*)?paid)", lowered):
+        if re.search(
+            r"(?:amount\s*(?:paid|settled|claimed|payable)|claimed\s*amount|"
+            r"amount\s*claimed|settlement\s*amount|net\s*(?:amount\s*)?(?:paid|payable)|"
+            r"approved\s*amount|payable\s+to\s+hospital)",
+            lowered,
+        ):
             in_deductions = False
             continue
         if re.search(r"co[- ]?pay(?:ment)?", lowered):

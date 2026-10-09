@@ -114,7 +114,7 @@ def test_demo_pdfs_run_through_full_pipeline_and_support_the_letter(monkeypatch,
 @pytest.mark.parametrize(
     ("settlement_text", "expected_reason"),
     [
-        ("Claim ID: CLM-WRONG\nBill Total: INR 132000\nDeductions\nAdmission and registration | INR 2000\nAmount paid: INR 0", "CLAIM_ID_MISMATCH"),
+        ("Claim ID: CLM-WRONG-1\nBill Total: INR 132000\nDeductions\nAdmission and registration | INR 2000\nAmount paid: INR 0", "CLAIM_ID_MISMATCH"),
         ("Claim ID: CLM-2026-0417\nBill Total: INR 131000\nDeductions\nAdmission and registration | INR 2000\nAmount paid: INR 0", "BILL_TOTAL_MISMATCH"),
         ("Unreadable fictional settlement document", "SETTLEMENT_TOTAL_MISSING"),
     ],

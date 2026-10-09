@@ -33,7 +33,8 @@ class InMemoryPolicyCollection:
         return None
 
 
-def _run_demo_pipeline(monkeypatch, tmp_path, settlement_bytes):
+def _run_demo_pipeline(monkeypatch, tmp_path, settlement_bytes, *, include_pharmacy_date=False):
+    tmp_path.mkdir(parents=True, exist_ok=True)
     monkeypatch.setenv("MEDIGUARD_DB_PATH", str(tmp_path / "demo.db"))
     monkeypatch.setenv("MEDIGUARD_STORAGE_DIR", str(tmp_path / "storage"))
     monkeypatch.setenv("MEDIGUARD_TRUSTED_FIXTURES", "true")
@@ -58,10 +59,13 @@ def _run_demo_pipeline(monkeypatch, tmp_path, settlement_bytes):
     app.save_document(claim_id, user, Upload(settlement_name, settlement_bytes), "settlement")
 
     normalized = app.process_claim_documents(claim_id, user_id)
+    if include_pharmacy_date:
+        pharmacy = next(item for item in normalized["line_items"] if item.get("category") == "PHARMACY")
+        pharmacy["date"] = "12 Aug 2026"
     rules = app.evaluate_saved_claim(claim_id, user_id, normalized)
     comparison, settlement = app.run_settlement_comparison(claim_id, user_id, normalized, rules)
     claim = {
-        "claim_id": claim_id, "claim_number": "CLM-2026-0417", "patient_name": "Ravi Reddy",
+        "claim_id": claim_id, "user_id": user_id, "claim_number": "CLM-2026-0417", "patient_name": "Ravi Reddy",
         "hospital_name": "Fictional Hospital", "policy_number": "POL-558201", "stay_dates": "10-14 Aug 2026",
     }
     return normalized, rules, comparison, settlement, claim

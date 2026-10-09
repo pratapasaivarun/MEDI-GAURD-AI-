@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from decimal import Decimal, ROUND_HALF_UP
+import re
 
 from models import CategoryComparison, ClaimResult, ComparisonResult, PolicyTerms, SettlementData
 from category_names import OTHER_CATEGORY, normalize_category
@@ -61,7 +62,33 @@ def compare(claim: ClaimResult, settlement: SettlementData, terms: PolicyTerms) 
         insurer_amount = insurer_totals[category]
         difference = insurer_amount - engine_amount
         clause = clauses.get(category) or terms.clauses.get(category)
-        review = category == OTHER_CATEGORY or category in category_review or (difference > 0 and clause is None)
+        date_window_reason = any(
+            re.search(r"\b(?:outside|window|pre[- ]hospitalization|post[- ]hospitalization)\b", reason, re.I)
+            for reason in insurer_reasons[category]
+        )
+        category_items = [
+            row.item for row in claim.lines
+            if normalize_category(row.item.category) == category
+        ]
+        review_note = None
+        date_window_review = False
+        if date_window_reason:
+            if (
+                not category_items
+                or claim.admission_date is None
+                or claim.discharge_date is None
+                or any(
+                    item.date is None
+                    or item.date < claim.admission_date
+                    or item.date > claim.discharge_date
+                    for item in category_items
+                )
+            ):
+                date_window_review = True
+                review_note = "one or more bill entries are undated or outside the stay"
+            else:
+                review_note = "all dated entries fall inside the stay"
+        review = date_window_review or category == OTHER_CATEGORY or category in category_review or (difference > 0 and clause is None)
         if review:
             status = "REVIEW"
             payout_effect = Decimal("0")
@@ -72,7 +99,7 @@ def compare(claim: ClaimResult, settlement: SettlementData, terms: PolicyTerms) 
             status = "UNDER_DEDUCTION"
             payout_effect = Decimal("0")
         else:
-            status = "UNEXPLAINED_DEDUCTION" if engine_amount == 0 else "EXCESS_DEDUCTION"
+            status = "UNEXPLAINED_DEDUCTION" if review_note == "all dated entries fall inside the stay" or engine_amount == 0 else "EXCESS_DEDUCTION"
             # A co-pay difference is already a patient-share amount. Applying
             # the co-pay percentage to it again would understate its effect.
             payout_effect = difference.quantize(CENT, rounding=ROUND_HALF_UP) if category == "COPAY" else (difference * (Decimal("1") - terms.copay_percent / Decimal("100"))).quantize(CENT, rounding=ROUND_HALF_UP)
@@ -87,6 +114,7 @@ def compare(claim: ClaimResult, settlement: SettlementData, terms: PolicyTerms) 
             engine_reason="; ".join(engine_reasons[category]) or ("No rule supports a deduction in this category." if engine_amount == 0 else "The policy rule engine supports this disallowance."),
             clause=clause,
             payout_effect=payout_effect,
+            review_note=review_note,
         ))
 
     if possible_difference > Decimal("0") and abs(possible_difference - discrepancy_total) > Decimal("1"):

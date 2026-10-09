@@ -395,6 +395,8 @@ def evaluate_claim(
             insurer_share=insurer_share,
             status="manual_review" if output["status"] == "manual_review" else "computed",
             review_reasons=list(output.get("warnings", [])) if output["status"] == "manual_review" else [],
+            admission_date=bill.admission_date,
+            discharge_date=bill.discharge_date,
         )
 
     terms = terms or PolicyTerms()

@@ -69,6 +69,8 @@ class ClaimResult:
     insurer_share: Decimal
     status: Literal["computed", "manual_review"]
     review_reasons: list[str] = field(default_factory=list)
+    admission_date: date | None = None
+    discharge_date: date | None = None
 
 
 @dataclass
@@ -104,6 +106,7 @@ class CategoryComparison:
     engine_reason: str
     clause: Clause | None
     payout_effect: Decimal
+    review_note: str | None = None
 
 
 @dataclass

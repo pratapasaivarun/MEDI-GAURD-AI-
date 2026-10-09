@@ -303,6 +303,7 @@ def _render_settlement_comparison(
             'Difference': float(row.difference),
             'Result': row.status.replace('_', ' ').title(),
             'Insurer reason': row.insurer_reason,
+            'Note': row.review_note or '',
             'Policy evidence': f"{row.clause.section or 'Clause'} · page {row.clause.page}" if row.clause else 'Not linked',
         } for row in comparison.categories], hide_index=True)
     explanation = None

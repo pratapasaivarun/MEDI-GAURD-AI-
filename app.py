@@ -1383,6 +1383,8 @@ def run_settlement_comparison(
         insurer_share=Decimal(str(rules.get("payable_amount") or 0)),
         status="manual_review" if rules.get("status") == "manual_review" else "computed",
         review_reasons=list(rules.get("warnings") or []),
+        admission_date=admission,
+        discharge_date=discharge,
     )
     comparison = compare_claim_settlement(typed_claim, settlement, typed_terms)
     if len(settlement_docs) == 1:
@@ -1434,6 +1436,7 @@ def _load_comparison_result(payload: dict[str, Any]) -> ComparisonResult:
             str(row["category"]), Decimal(str(row["insurer_deducted"])), Decimal(str(row["engine_disallowed"])),
             Decimal(str(row["difference"])), str(row["status"]), str(row.get("insurer_reason", "")),
             str(row.get("engine_reason", "")), clause, Decimal(str(row["payout_effect"])),
+            row.get("review_note"),
         ))
     return ComparisonResult(
         Decimal(str(payload["expected_patient_share"])), Decimal(str(payload["actual_patient_share"])),

@@ -520,6 +520,7 @@ def build_comparison_appeal_letter_text(
         insurer_reason = row.insurer_reason or "No reason was recorded."
         if insurer_reason.rstrip()[-1:] not in {".", "!", "?"}:
             insurer_reason = insurer_reason.rstrip() + "."
+        date_window_note = f"Date-window check: {row.review_note}. " if row.review_note else ""
         clause = (
             f"Supporting policy text: {row.clause.text} (page {row.clause.page})."
             if row.clause else "No supporting policy clause was available; reviewer confirmation is required."
@@ -528,6 +529,7 @@ def build_comparison_appeal_letter_text(
             f"- {row.category}: insurer deduction {_inr_indian(row.insurer_deducted)}; "
             f"amount supported by rules {_inr_indian(row.engine_disallowed)}. "
             f"Insurer reason: {insurer_reason} "
+            f"{date_window_note}"
             f"Review point: {row.engine_reason} {clause}"
         )
     body = [

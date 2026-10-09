@@ -84,31 +84,20 @@ def test_demo_pdfs_run_through_full_pipeline_and_support_the_letter(monkeypatch,
     assert comparison.actual_patient_share == Decimal("29400.00")
     assert comparison.expected_insurer_payment == Decimal("111600")
     assert comparison.possible_difference == Decimal("9000")
-    assert comparison.status == "possible_discrepancy"
-    unexplained = [row for row in comparison.categories if row.status == "UNEXPLAINED_DEDUCTION"]
-    assert len(unexplained) == 1
-    assert unexplained[0].category == "PHARMACY"
+    # The settlement says the pharmacy deduction is outside the hospitalization
+    # window, but the demo bill has no pharmacy dates to verify that assertion.
+    # The date-window check therefore requires review and blocks an appeal draft.
+    assert comparison.status == "manual_review"
     pharmacy = next(row for row in comparison.categories if row.category == "PHARMACY")
     assert pharmacy.insurer_deducted == Decimal("10000.00")
-    assert pharmacy.payout_effect == Decimal("9000.00")
+    assert pharmacy.status == "REVIEW"
+    assert pharmacy.review_note == "one or more bill entries are undated or outside the stay"
     assert pharmacy.clause.section == "3.4"
     assert pharmacy.clause.page == 9
     assert normalized["patient_name"]["value"] == "Ravi Reddy"
     assert settlement.amount_paid == Decimal("102600.00")
 
-    letter = build_comparison_appeal_letter_text(claim, comparison, settlement)
-    for required in ("₹1,32,000", "₹1,02,600", "₹1,11,600", "₹9,000", "₹10,000"):
-        assert required in letter
-    assert not any(word in letter.lower() for word in FORBIDDEN_APPEAL_WORDS)
-    comparison_figures = {
-        comparison.billed_total, comparison.actual_insurer_payment, comparison.expected_insurer_payment,
-        comparison.possible_difference, comparison.expected_patient_share,
-        *(row.insurer_deducted for row in comparison.categories),
-        *(row.engine_disallowed for row in comparison.categories),
-        *(row.payout_effect for row in comparison.categories),
-    }
-    letter_figures = {Decimal(value.replace(",", "")) for value in re.findall(r"(?:INR\s+|₹)\s*([0-9,]+(?:\.[0-9]{2})?)", letter)}
-    assert letter_figures <= comparison_figures
+    assert app.appeal_draft_available(comparison) is False
 
 
 @pytest.mark.parametrize(

@@ -2,6 +2,7 @@
 
 ## 2026-10-10 mini-prototype completion
 
+- A settlement's explicit outside/window/pre/post reason is not accepted as proof by itself. Compare same-category bill dates against admission/discharge dates; missing/out-of-range data stays in `REVIEW`, while dates entirely within the stay leave an unexplained deduction for neutral explanation. Surface the date-check note in results and letters.
 - Settlement claim identifiers must contain a digit. Hyphenated IDs and legacy spaced-numeric IDs are supported, while narrative phrases such as “Your claim has been processed” and adjacent dates are excluded.
 - For settlement amount labels, explicit payment labels take precedence. `Claimed amount` and `Amount claimed` remain fallbacks for both the claim total and paid amount when no clearer paid label exists.
 - A missing bill total may use the extracted uploaded-bill total only as a proposed value. The first comparison stays manual-review until a user checks the confirmation box and submits it. The settlement and comparison are then persisted; separate parser uncertainty (for example, unreadable amount or deductions) remains blocking even after total confirmation.

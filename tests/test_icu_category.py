@@ -1,13 +1,14 @@
 from decimal import Decimal
 
 from extraction import _infer_line_category
+from category_names import ICU_CATEGORY
 from models import BillData, LineItem, PolicyTerms as TypedPolicyTerms
 from rules import evaluate_claim
 from policy_terms import extract_policy_terms, terms_from_json
 
 
 def test_icu_is_a_distinct_category_from_general_room_rent():
-    assert _infer_line_category("ICU intensive care daily charges") == "ICU"
+    assert _infer_line_category("ICU intensive care daily charges") == ICU_CATEGORY
     assert _infer_line_category("Private room rent") == "ROOM"
 
 

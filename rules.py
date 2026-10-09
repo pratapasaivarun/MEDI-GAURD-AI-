@@ -21,7 +21,7 @@ from models import (
 from category_names import (
     ROOM_CATEGORY, ROOM_RENT_CATEGORY, ACCOMMODATION_CATEGORY,
     DOCTOR_NURSING_CATEGORY, NURSING_CATEGORY, DOCTOR_CATEGORY,
-    CONSULTATION_CATEGORY, normalize_category,
+    CONSULTATION_CATEGORY, ICU_CATEGORY, normalize_category,
 )
 
 RULE_VERSION = "mvp-1.0"
@@ -248,7 +248,7 @@ def evaluate_line_item(item: dict, terms: PolicyTerms, claim_context: dict | Non
         return {**result, "status": "needs_review", "applied_rule": "exclusion", "calculation": "This item may match a policy exclusion and requires reviewer confirmation."}
 
     # ICU Limit Check
-    is_icu = category == "icu" or "icu" in desc_lower or "intensive care" in desc_lower
+    is_icu = category == ICU_CATEGORY.lower() or "icu" in desc_lower or "intensive care" in desc_lower
     if is_icu:
         icu_limit = terms.icu_limit_per_day or terms.sub_limits.get("icu")
         if icu_limit is None:
@@ -302,7 +302,7 @@ def evaluate_line_item(item: dict, terms: PolicyTerms, claim_context: dict | Non
 
     # Category Sub-Limits Validation
     matched_limit = next((limit for name, limit in terms.sub_limits.items() if name.lower() == category), None)
-    if category == "icu" and (terms.icu_limit_per_day or terms.sub_limits.get("icu")) is not None:
+    if category == ICU_CATEGORY.lower() and (terms.icu_limit_per_day or terms.sub_limits.get(ICU_CATEGORY.lower())) is not None:
         matched_limit = None  # ICU limits are daily and were applied with the ICU stay length above.
     if matched_limit is not None:
         remaining = money(claim_context.get("_sub_limit_remaining", matched_limit))

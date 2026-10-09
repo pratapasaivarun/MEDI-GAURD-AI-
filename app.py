@@ -1368,6 +1368,7 @@ def run_settlement_comparison(
     typed_terms = TypedPolicyTerms(
         sum_insured=parsed_terms.annual_limit if parsed_terms and parsed_terms.annual_limit is not None else Decimal("0"),
         room_rent_cap_per_day=parsed_terms.room_limit_per_day if parsed_terms else None,
+        icu_limit_per_day=parsed_terms.icu_limit_per_day if parsed_terms else None,
         copay_percent=parsed_terms.copay_percent if parsed_terms and parsed_terms.copay_percent is not None else Decimal("0"),
         non_payable_categories=list(non_payables or []),
         exclusions=list(exclusions or []),

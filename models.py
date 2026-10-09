@@ -49,6 +49,7 @@ class PolicyTerms:
     exclusions: list[str] = field(default_factory=list)
     clauses: dict[str, Clause] = field(default_factory=dict)
     proportionate_deduction: bool = True
+    icu_limit_per_day: Decimal | None = None
 
 
 @dataclass

@@ -1,5 +1,6 @@
 # Lowercase keyword lists; the first matching group determines the bill category.
-ROOM: [room, icu, bed, accommodation]
+ICU: [intensive care, critical care, icu]
+ROOM: [room, bed, accommodation]
 DOCTOR_NURSING: [doctor, nursing, nurse, physician, consultant]
 SURGERY_OT: [surgery, surgeon, operation, procedure, ot charges, theatre]
 PHARMACY: [pharmacy, medicine, medicines, drug, drugs, pharmacy]

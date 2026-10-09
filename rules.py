@@ -307,6 +307,8 @@ def evaluate_line_item(item: dict, terms: PolicyTerms, claim_context: dict | Non
 
     # Category Sub-Limits Validation
     matched_limit = next((limit for name, limit in terms.sub_limits.items() if name.lower() == category), None)
+    if category == "icu" and (terms.icu_limit_per_day or terms.sub_limits.get("icu")) is not None:
+        matched_limit = None  # ICU limits are daily and were applied with the ICU stay length above.
     if matched_limit is not None:
         remaining = money(claim_context.get("_sub_limit_remaining", matched_limit))
         eligible = min(amount, max(Decimal("0"), remaining))
@@ -345,11 +347,13 @@ def evaluate_claim(
             deductible=Decimal("0"),
             copay_percent=typed_terms.copay_percent,
             room_limit_per_day=typed_terms.room_rent_cap_per_day,
+            icu_limit_per_day=typed_terms.icu_limit_per_day,
             source=source,
             proportionate_deduction=typed_terms.proportionate_deduction,
         )
         context = dict(claim_context or {})
         context.setdefault("room_days", bill.room_days)
+        context.setdefault("icu_days", bill.room_days)
         typed_items = list(bill.line_items) or [TypedLineItem("Claim total", "OTHER", bill.total_amount, source="user")]
         for field_name, needs_review in bill.field_flags.items():
             if needs_review:
@@ -378,6 +382,7 @@ def evaluate_claim(
             reason_code = {
                 "non_payable": "NON_PAYABLE",
                 "room_limit": "ROOM_CAP",
+            "icu_limit": "ICU_CAP",
                 "proportionate_deduction": "PROPORTIONATE",
                 "exclusion": "EXCLUSION",
                 "needs_review": "REVIEW",

@@ -135,6 +135,10 @@ def extract_policy_terms(source: Any) -> dict[str, Any]:
         rf"room\s+(?:and\s+board\s+)?limit\s*(?:per\s*day)?\s*[:\-]?\s*{_MONEY}\s*(?:per\s*day)?",
         rf"room\s+rent\s*(?:limit)?\s*[:\-]?\s*{_MONEY}\s*(?:per\s*day)?",
     ], "room_limit_per_day", _number)
+    terms["icu_limit_per_day"] = _find(rows, [
+        rf"ICU\s+(?:daily\s+)?limit\s*(?:per\s*day)?\s*[:\-]?\s*{_MONEY}\s*(?:per\s*day)?",
+        rf"intensive\s+care\s+(?:unit\s+)?(?:daily\s+)?limit\s*(?:per\s*day)?\s*[:\-]?\s*{_MONEY}\s*(?:per\s*day)?",
+    ], "icu_limit_per_day", _number)
     terms["waiting_period_months"] = _find(rows, [r"waiting\s+period\s*[:\-]?\s*([0-9]+)\s*months?"], "waiting_period_months", int)
     # Capture simple category-specific limits such as "Surgery sub-limit: INR 100000".
     sub_limit_rows = []
@@ -206,7 +210,7 @@ def extract_policy_terms(source: Any) -> dict[str, Any]:
     present = {key: value for key, value in terms.items() if value is not None}
     missing = [key for key, value in terms.items() if value is None]
     validation_errors: list[str] = []
-    for name in ("annual_limit", "deductible", "copay_percent", "room_limit_per_day"):
+    for name in ("annual_limit", "deductible", "copay_percent", "room_limit_per_day", "icu_limit_per_day"):
         item = present.get(name)
         if item is not None and Decimal(str(item["value"])) < 0:
             validation_errors.append(f"{name} must not be negative")
@@ -223,6 +227,13 @@ def extract_policy_terms(source: Any) -> dict[str, Any]:
         room_limit_per_day=present["room_limit_per_day"]["value"] if "room_limit_per_day" in present else None,
         waiting_period_months=present["waiting_period_months"]["value"] if "waiting_period_months" in present else None,
         sub_limits={key: Decimal(str(value)) for key, value in present.get("sub_limits", {}).get("value", {}).items()} if present.get("sub_limits") else {},
+        icu_limit_per_day=(
+            Decimal(str(present["icu_limit_per_day"]["value"]))
+            if present.get("icu_limit_per_day") else next(
+                (Decimal(str(value)) for key, value in present.get("sub_limits", {}).get("value", {}).items() if str(key).strip().lower() in {"icu", "icu per day", "icu daily limit"}),
+                None,
+            )
+        ),
     )
     return {
         "terms": policy_terms,
@@ -255,8 +266,12 @@ def terms_from_json(payload: dict[str, Any] | None) -> tuple[PolicyTerms, list[s
     raw_sub_limits = value("sub_limits") or {}
     if not isinstance(raw_sub_limits, dict):
         raw_sub_limits = {}
+    raw_icu_limit = value("icu_limit_per_day")
+    if raw_icu_limit is None:
+        raw_icu_limit = next((raw for key, raw in raw_sub_limits.items() if str(key).strip().lower() in {"icu", "icu per day", "icu daily limit"}), None)
     return PolicyTerms(
         annual_limit=decimal_value("annual_limit"), deductible=decimal_value("deductible"), copay_percent=decimal_value("copay_percent"),
         room_limit_per_day=decimal_value("room_limit_per_day"), waiting_period_months=int(raw_waiting) if raw_waiting is not None else None,
         sub_limits={str(key): Decimal(str(raw)) for key, raw in raw_sub_limits.items()},
+        icu_limit_per_day=Decimal(str(raw_icu_limit)) if raw_icu_limit is not None else None,
     ), missing, confidence

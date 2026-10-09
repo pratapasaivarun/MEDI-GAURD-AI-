@@ -214,7 +214,7 @@ def _render_claimant_result(user: dict) -> None:
     comparison, settlement = get_comparison_for_view(claim_id, user)
     if comparison and settlement:
         with st.container(border=True):
-            _render_settlement_comparison(dict(claim), comparison, settlement)
+            _render_settlement_comparison(dict(claim), comparison, settlement, user, normalized, rules)
     else:
         st.info("Upload the insurer's settlement letter to compare it and enable a draft.")
     _render_claim_assistant(claim_id, normalized, result, workflow)
@@ -239,10 +239,50 @@ def appeal_draft_available(comparison: Any) -> bool:
     return comparison is not None and getattr(comparison, "status", None) == "possible_discrepancy"
 
 
-def _render_settlement_comparison(claim: dict[str, Any], comparison, settlement: SettlementData) -> None:
+def needs_bill_total_confirmation(settlement: SettlementData) -> bool:
+    return any(
+        str(reason).startswith("SETTLEMENT_TOTAL_FROM_BILL:")
+        and "user confirmation required" in str(reason).lower()
+        for reason in settlement.review_reasons
+    )
+
+
+def _render_settlement_comparison(
+    claim: dict[str, Any],
+    comparison,
+    settlement: SettlementData,
+    user: dict | None = None,
+    normalized: dict[str, Any] | None = None,
+    rules: dict[str, Any] | None = None,
+) -> None:
     """Render the same evidence-bounded settlement comparison for both roles."""
     st.markdown('### Settlement comparison')
     st.caption('This compares the settlement letter with a deterministic policy estimate. It is decision support, not an insurer determination.')
+    if needs_bill_total_confirmation(settlement):
+        st.warning('The settlement letter has no bill total. The uploaded hospital bill total is proposed; confirm it before relying on a comparison.')
+        checked = st.checkbox(
+            'I confirm the uploaded hospital bill total should be used for this comparison.',
+            key=f"confirm_bill_total_checkbox_{claim.get('claim_id', 'claim')}",
+        )
+        if st.button(
+            'Confirm bill total and compare',
+            type='primary',
+            disabled=not checked,
+            key=f"confirm_bill_total_button_{claim.get('claim_id', 'claim')}",
+        ):
+            if not user or not normalized or not rules:
+                st.error('The claim details are not available to complete this confirmation. Reopen the claim and try again.')
+            else:
+                try:
+                    confirmed_comparison, confirmed_settlement = run_settlement_comparison(
+                        claim['claim_id'], user['user_id'], normalized, rules,
+                        confirm_inferred_bill_total=True,
+                    )
+                    st.session_state[f"comparison_{claim['claim_id']}"] = confirmed_comparison
+                    st.session_state[f"settlement_{claim['claim_id']}"] = confirmed_settlement
+                    st.rerun()
+                except Exception as exc:
+                    st.error(f'Could not confirm the uploaded bill total: {exc}')
     metrics = st.columns(3, gap='medium')
     metrics[0].metric('Settlement payment', _inr(comparison.actual_insurer_payment), border=True)
     metrics[1].metric('Estimated insurer payment', _inr(comparison.expected_insurer_payment) if comparison.status != 'manual_review' else 'Pending review', border=True)
@@ -696,7 +736,7 @@ def _render_claim_review(user: dict) -> None:
                 st.error(f'Settlement comparison could not be completed: {exc}')
         comparison, settlement = get_comparison_for_view(claim_id, user)
         if comparison and settlement:
-            _render_settlement_comparison(dict(selected_claim), comparison, settlement)
+            _render_settlement_comparison(dict(selected_claim), comparison, settlement, user, normalized, rules)
     st.caption('Decision support only. Final determination must be confirmed by an authorized reviewer.')
 
 

@@ -2,6 +2,7 @@ from decimal import Decimal
 
 import app
 import uuid
+from ui.claim_pages import needs_bill_total_confirmation
 
 
 class Upload:
@@ -13,7 +14,7 @@ class Upload:
         return self._content
 
 
-def _run_comparison(monkeypatch, tmp_path, settlement_text, bill_total=Decimal("1000")):
+def _run_comparison(monkeypatch, tmp_path, settlement_text, bill_total=Decimal("1000"), with_context=False):
     monkeypatch.setenv("MEDIGUARD_DB_PATH", str(tmp_path / "settlement.db"))
     monkeypatch.setenv("MEDIGUARD_STORAGE_DIR", str(tmp_path / "storage"))
     app.init_db()
@@ -38,7 +39,8 @@ def _run_comparison(monkeypatch, tmp_path, settlement_text, bill_total=Decimal("
         "copayment": Decimal("0"),
         "line_item_results": [{"covered_amount": Decimal("0"), "applied_rule": "non_payable"}],
     }
-    return app.run_settlement_comparison(claim_id, user_id, normalized, rules)
+    result = app.run_settlement_comparison(claim_id, user_id, normalized, rules)
+    return (*result, (claim_id, user_id, normalized, rules)) if with_context else result
 
 
 def test_wrong_claim_id_blocks_comparison(monkeypatch, tmp_path):
@@ -64,9 +66,30 @@ def test_missing_settlement_bill_total_blocks_comparison(monkeypatch, tmp_path):
         monkeypatch, tmp_path,
         "Claim No: CLM-2026-0417\nDeductions\nAdmission | INR 1,000\nAmount Paid: INR 0",
     )
-    assert settlement.bill_total is None
+    assert settlement.bill_total == Decimal("1000")
     assert result.status == "manual_review"
-    assert "SETTLEMENT_TOTAL_MISSING" in " ".join(result.review_reasons)
+    assert "SETTLEMENT_TOTAL_FROM_BILL" in " ".join(result.review_reasons)
+    assert needs_bill_total_confirmation(settlement)
+
+
+def test_bill_total_fallback_requires_confirmation_then_comparison_runs(monkeypatch, tmp_path):
+    result, settlement, context = _run_comparison(
+        monkeypatch, tmp_path,
+        "Claim No: CLM-2026-0417\nDeductions\nAdmission | INR 1,000\nAmount Paid: INR 0",
+        with_context=True,
+    )
+    assert settlement.bill_total == Decimal("1000")
+    assert "SETTLEMENT_TOTAL_FROM_BILL" in " ".join(settlement.review_reasons)
+    assert result.status == "manual_review"
+
+    claim_id, user_id, normalized, rules = context
+    confirmed_result, confirmed_settlement = app.run_settlement_comparison(
+        claim_id, user_id, normalized, rules, confirm_inferred_bill_total=True,
+    )
+    assert confirmed_settlement.bill_total == Decimal("1000")
+    assert "confirmed by user" in " ".join(confirmed_settlement.review_reasons)
+    assert needs_bill_total_confirmation(confirmed_settlement) is False
+    assert confirmed_result.status == "no_discrepancy"
 
 
 def test_missing_claim_id_adds_review_reason(monkeypatch, tmp_path):

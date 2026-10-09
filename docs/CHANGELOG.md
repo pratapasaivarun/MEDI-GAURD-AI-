@@ -67,6 +67,7 @@
 - Final verification after implementation and documentation changes: `python -m pytest tests/ -q --basetemp=tmp/pytest_final`: **61 passed in 15.54s**; Python compilation succeeded; `git diff --check` is clean.
 # Unreleased
 
+- T2: When a readable settlement letter omits its bill total, comparison now uses the uploaded bill total but remains `manual_review` until the user explicitly confirms it in the claimant or reviewer UI. Confirmed values are persisted with the comparison; other parser review conditions still block it. Regression before fix: `bill_total` was `None`; targeted checks: **7 passed**; full suite: **98 passed**.
 - T1: Added six fictional settlement layouts and prioritized explicit paid-amount labels over the `claimed amount` fallback. Claim IDs now capture only a digit-bearing token (including legacy spaced-numeric IDs), and settlement totals/payments are not parsed as deduction rows. Baseline layout tests: **6 failed, 1 passed**; focused parser/binding/end-to-end tests: **22 passed**; full suite: **96 passed**.
 
 - Added a seven-case synthetic comparison evaluation and runner; its generated outcomes match the declared expectations.

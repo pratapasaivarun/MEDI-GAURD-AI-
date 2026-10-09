@@ -1267,7 +1267,14 @@ def _claim_policy_clause_map(claim_id: str) -> dict[str, Clause]:
     return clauses
 
 
-def run_settlement_comparison(claim_id: str, user_id: str, normalized: dict, rules: dict) -> tuple[Any, SettlementData]:
+def run_settlement_comparison(
+    claim_id: str,
+    user_id: str,
+    normalized: dict,
+    rules: dict,
+    *,
+    confirm_inferred_bill_total: bool = False,
+) -> tuple[Any, SettlementData]:
     """Build the typed comparison from saved claim documents and rule outputs."""
     user = get_user(user_id)
     claim = _claim_access(claim_id, user)
@@ -1290,7 +1297,22 @@ def run_settlement_comparison(claim_id: str, user_id: str, normalized: dict, rul
         if claim_key != settlement_key:
             settlement.needs_review = True
             settlement.review_reasons.append("CLAIM_ID_MISMATCH: settlement claim reference does not match the selected claim.")
-    if settlement.bill_total is None:
+    if settlement.bill_total is None and len(settlement_docs) == 1 and bill_total > 0:
+        settlement.bill_total = bill_total
+        if settlement.needs_review:
+            settlement.review_reasons.append(
+                "SETTLEMENT_TOTAL_MISSING: the settlement letter did not provide a readable total."
+            )
+        if confirm_inferred_bill_total:
+            settlement.review_reasons.append(
+                "SETTLEMENT_TOTAL_FROM_BILL: uploaded bill total confirmed by user."
+            )
+        else:
+            settlement.needs_review = True
+            settlement.review_reasons.append(
+                "SETTLEMENT_TOTAL_FROM_BILL: uploaded bill total proposed; user confirmation required."
+            )
+    elif settlement.bill_total is None:
         settlement.needs_review = True
         settlement.review_reasons.append("SETTLEMENT_TOTAL_MISSING: settlement bill total was not identified.")
     elif abs(settlement.bill_total - bill_total) > Decimal("1"):

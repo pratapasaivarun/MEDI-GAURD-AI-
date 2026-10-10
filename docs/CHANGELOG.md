@@ -2,6 +2,7 @@
 
 ## MediGuard follow-up — 2026-10-10
 
+- T12: Updated the single root README to the verified **116-test** count and documented that the broad `except`/`inadmissible` clause filter can reject payable passages and lead to manual review. Final full suite: **116 passed**.
 - T11: Removed the claimed-amount fallback for settlement payment. Missing payment stays `None`, comparison is gated to manual review, and the UI/report do not display an invented zero payment. Added parser and comparison regressions. Full suite: **116 passed**.
 - T10: Settlement claim IDs now preserve slash-separated insurer formats and plain numeric IDs. Claim binding normalizes spaces, slashes, and hyphens so equivalent references match. Added three fictional ID fixtures and binding coverage. Full suite: **114 passed**.
 

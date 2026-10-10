@@ -89,7 +89,7 @@ pip install -r requirements-dev.txt
 
 The tests cover deterministic rules, extraction validation, settlement parsing, comparison, generated reports, and app security behavior. Passing synthetic tests is not evidence of accuracy on real claims or any insurer's documents.
 
-Current verification: **110 tests passed** on 2026-10-10 with `python -m pytest -q`.
+Current verification: **116 tests passed** on 2026-10-10 with `python -m pytest -q`.
 
 ## Known limitations
 
@@ -97,6 +97,7 @@ Current verification: **110 tests passed** on 2026-10-10 with `python -m pytest 
 - Email delivery is out of scope; password-reset and reviewer setup links are not sent by email.
 - Use synthetic data only. Do not use real patient data or upload real patient documents.
 - Settlement parsing is exercised against six fictional text layouts. It supports text-layer PDFs and UTF-8 text; image-only settlement documents require manual review. Broader insurer-specific layout coverage has not been validated.
+- Clause retrieval drops any passage containing “except” or “inadmissible,” including some otherwise payable clauses with a legitimate exception qualifier; this can leave no supporting clause and send the result to manual review.
 - ICU charges use a separate daily cap when the policy states one; without a stated cap, ICU lines require reviewer confirmation.
 - Results are estimates for human review, not insurer decisions or verified entitlements.
 - OCR, retrieval relevance, model quality, and expert validation have not been established beyond the synthetic checks described in `evaluation/PAPER_RESULTS.md`.

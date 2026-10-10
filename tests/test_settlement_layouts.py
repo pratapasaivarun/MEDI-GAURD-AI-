@@ -53,3 +53,17 @@ def test_spaced_numeric_claim_id_remains_supported(monkeypatch):
         "spaced-claim-id.txt",
     )
     assert result.claim_id == "clm 2026 0417"
+
+
+@pytest.mark.parametrize(
+    ("filename", "expected_id"),
+    [
+        ("slash_claim_id.txt", "CLM/2026/0417"),
+        ("slash_insurer_claim_id.txt", "STAR/HI/2026/0417"),
+        ("numeric_claim_id.txt", "20260417"),
+    ],
+)
+def test_slash_and_plain_numeric_claim_ids_are_preserved(monkeypatch, filename, expected_id):
+    monkeypatch.setattr("settlement._llm_deductions", lambda _text: [])
+    result = parse_settlement((FIXTURES / filename).read_bytes(), filename)
+    assert result.claim_id == expected_id

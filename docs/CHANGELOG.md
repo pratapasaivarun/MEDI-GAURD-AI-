@@ -1,5 +1,9 @@
 # Changelog
 
+## MediGuard follow-up — 2026-10-10
+
+- T10: Settlement claim IDs now preserve slash-separated insurer formats and plain numeric IDs. Claim binding normalizes spaces, slashes, and hyphens so equivalent references match. Added three fictional ID fixtures and binding coverage. Full suite: **114 passed**.
+
 ## MediGuard prototype completion — 2026-10-10
 
 - T5 follow-up: Added the canonical `ICU_CATEGORY` constant and used it in rule matching so extraction, app, and calculations share the same category name. Full suite: **110 passed**.

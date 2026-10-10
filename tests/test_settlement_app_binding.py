@@ -108,3 +108,13 @@ def test_matching_claim_and_bill_total_comparison_succeeds(monkeypatch, tmp_path
     )
     assert settlement.needs_review is False
     assert result.status == "no_discrepancy"
+
+
+def test_slash_claim_reference_binds_to_hyphenated_claim_number(monkeypatch, tmp_path):
+    result, settlement = _run_comparison(
+        monkeypatch, tmp_path,
+        "Claim No: CLM/2026/0417\nBill Total: INR 1,000\nDeductions\nAdmission | INR 1,000\nAmount Paid: INR 0",
+    )
+    assert settlement.claim_id == "CLM/2026/0417"
+    assert "CLAIM_ID_MISMATCH" not in " ".join(result.review_reasons)
+    assert result.status == "no_discrepancy"

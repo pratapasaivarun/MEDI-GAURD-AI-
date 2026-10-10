@@ -1,5 +1,9 @@
 # Implementation decisions
 
+## 2026-10-10 follow-up
+
+- Preserve supported claim-reference separators during extraction; when comparing references, normalize whitespace, `/`, and `-` as equivalent separators without altering the displayed source ID.
+
 ## 2026-10-10 mini-prototype completion
 
 - Retrieval evidence must have positive coverage wording (`covered`, `payable`, `reimbursed`, or `included`) and no exclusion qualifier (`exclude`, `not covered`, `not payable`, `except`, or `inadmissible`).

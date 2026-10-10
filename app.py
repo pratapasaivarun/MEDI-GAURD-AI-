@@ -1301,8 +1301,8 @@ def run_settlement_comparison(
         settlement.needs_review = True
         settlement.review_reasons.append("CLAIM_ID_MISSING: settlement claim reference was not identified.")
     else:
-        claim_key = re.sub(r"[\s-]+", "", str(claim["claim_number"] or "")).casefold()
-        settlement_key = re.sub(r"[\s-]+", "", settlement.claim_id).casefold()
+        claim_key = re.sub(r"[\s/-]+", "", str(claim["claim_number"] or "")).casefold()
+        settlement_key = re.sub(r"[\s/-]+", "", settlement.claim_id).casefold()
         if claim_key != settlement_key:
             settlement.needs_review = True
             settlement.review_reasons.append("CLAIM_ID_MISMATCH: settlement claim reference does not match the selected claim.")

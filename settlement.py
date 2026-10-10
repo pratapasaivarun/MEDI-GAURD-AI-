@@ -113,7 +113,7 @@ def parse_settlement(file_bytes: bytes, filename: str) -> SettlementData:
 
     claim_match = re.search(
         r"\b(?:claim\s*(?:id|no\.?|number)?|claim\s*ref(?:erence)?)\s*[:#-]?\s*"
-        r"((?=[A-Z0-9-]*\d)[A-Z0-9]+(?:-[A-Z0-9]+)*|[A-Z]+\s+\d+(?:\s+\d+)*)\b",
+        r"((?=[A-Z0-9/-]*\d)[A-Z0-9]+(?:[-/][A-Z0-9]+)*|[A-Z]+\s+\d+(?:\s+\d+)*)\b",
         text,
         re.I,
     )

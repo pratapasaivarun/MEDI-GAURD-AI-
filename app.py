@@ -1430,7 +1430,7 @@ def _load_settlement_data(payload: dict[str, Any]) -> SettlementData:
         str(row["category"]), Decimal(str(row["amount"])), str(row.get("reason_text", "")), bool(row.get("needs_review", False))
     ) for row in payload.get("deductions", [])]
     return SettlementData(
-        payload.get("claim_id"), Decimal(str(payload.get("amount_paid", "0"))), deductions,
+        payload.get("claim_id"), Decimal(str(payload["amount_paid"])) if payload.get("amount_paid") is not None else None, deductions,
         Decimal(str(payload["copay_applied"])) if payload.get("copay_applied") is not None else None,
         bool(payload.get("needs_review", False)), list(payload.get("review_reasons", [])),
         Decimal(str(payload["bill_total"])) if payload.get("bill_total") is not None else None,
@@ -1452,7 +1452,7 @@ def _load_comparison_result(payload: dict[str, Any]) -> ComparisonResult:
         Decimal(str(payload["expected_patient_share"])), Decimal(str(payload["actual_patient_share"])),
         Decimal(str(payload["possible_difference"])), categories, str(payload["status"]),
         list(payload.get("review_reasons", [])), Decimal(str(payload.get("billed_total", "0"))),
-        Decimal(str(payload.get("actual_insurer_payment", "0"))), Decimal(str(payload.get("expected_insurer_payment", "0"))),
+        Decimal(str(payload["actual_insurer_payment"])) if payload.get("actual_insurer_payment") is not None else None, Decimal(str(payload.get("expected_insurer_payment", "0"))),
     )
 
 

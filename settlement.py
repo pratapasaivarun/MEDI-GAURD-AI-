@@ -124,8 +124,6 @@ def parse_settlement(file_bytes: bytes, filename: str) -> SettlementData:
         r"settlement\s*amount|net\s*(?:amount\s*)?(?:paid|payable)|"
         r"approved\s*amount|payable\s+to\s+hospital",
     )
-    if amount_paid is None:
-        amount_paid = _extract_labeled_amount(text, r"claimed\s*amount|amount\s*claimed")
     bill_total = _extract_labeled_amount(
         text,
         r"bill\s*total|total\s*(?:bill|billed|amount)|claimed\s*amount|amount\s*claimed",
@@ -203,4 +201,4 @@ def parse_settlement(file_bytes: bytes, filename: str) -> SettlementData:
         if abs(calculated - amount_paid) > Decimal("1"):
             needs_review = True
             review_reasons.append("Settlement totals do not reconcile within INR 1.")
-    return SettlementData(claim_id, amount_paid or Decimal("0"), rows, copay, needs_review, review_reasons, bill_total)
+    return SettlementData(claim_id, amount_paid, rows, copay, needs_review, review_reasons, bill_total)

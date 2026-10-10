@@ -202,7 +202,7 @@ def _comparison_money_values(comparison: ComparisonResult) -> set[str]:
     }
     for row in comparison.categories:
         values.update({row.insurer_deducted, row.engine_disallowed, row.difference, row.payout_effect})
-    return {str(value.quantize(Decimal("0.01"))) for value in values}
+    return {str(value.quantize(Decimal("0.01"))) for value in values if value is not None}
 
 
 def comparison_template_explanation(comparison: ComparisonResult) -> str:

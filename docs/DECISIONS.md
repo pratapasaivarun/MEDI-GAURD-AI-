@@ -3,6 +3,7 @@
 ## 2026-10-10 follow-up
 
 - Preserve supported claim-reference separators during extraction; when comparing references, normalize whitespace, `/`, and `-` as equivalent separators without altering the displayed source ID.
+- Only explicit settlement payment labels may populate `amount_paid`. A claimed bill amount is not evidence of an insurer payment; absent payment remains `None` and forces manual review.
 
 ## 2026-10-10 mini-prototype completion
 

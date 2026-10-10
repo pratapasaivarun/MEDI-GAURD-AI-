@@ -67,3 +67,15 @@ def test_slash_and_plain_numeric_claim_ids_are_preserved(monkeypatch, filename, 
     monkeypatch.setattr("settlement._llm_deductions", lambda _text: [])
     result = parse_settlement((FIXTURES / filename).read_bytes(), filename)
     assert result.claim_id == expected_id
+
+
+def test_claimed_amount_is_not_used_as_paid_amount(monkeypatch):
+    monkeypatch.setattr("settlement._llm_deductions", lambda _text: [])
+    result = parse_settlement(
+        b"Claim No: CLM/2026/0417\nClaimed Amount: 132000\nDeductions:\nRoom rent | 4000",
+        "missing-paid-amount.txt",
+    )
+
+    assert result.bill_total == Decimal("132000.00")
+    assert result.amount_paid is None
+    assert result.needs_review

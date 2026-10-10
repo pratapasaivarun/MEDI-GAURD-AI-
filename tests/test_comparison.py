@@ -79,6 +79,20 @@ def test_unreadable_settlement_and_claim_review_block_comparison():
     assert compare(claim, settlement, terms).status == "manual_review"
 
 
+def test_missing_paid_amount_blocks_comparison_without_inference():
+    claim, terms = _demo_claim()
+    settlement = SettlementData(
+        "CLM-2026-0417", None, [], needs_review=True,
+        review_reasons=["Settlement amount paid was not identified."],
+        bill_total=Decimal("132000"),
+    )
+
+    result = compare(claim, settlement, terms)
+
+    assert result.status == "manual_review"
+    assert "Settlement amount paid was not identified." in result.review_reasons
+
+
 def test_missing_clause_marks_category_for_review():
     claim, terms = _demo_claim()
     terms.clauses.clear()

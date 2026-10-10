@@ -536,7 +536,7 @@ def build_comparison_appeal_letter_text(
         f"To: Claims Review Team\nSubject: Request to review possible incorrect deduction - Claim {claim_id}",
         "Dear Claims Review Team,",
         f"I request a written review of the settlement for {patient}. Claim: {claim_id}. Policy: {policy}. Hospital: {hospital}. Hospital stay: {stay}.",
-        f"The bill total is {_inr_indian(comparison.billed_total)}. The settlement records payment of {_inr_indian(comparison.actual_insurer_payment)}. The rules-based estimate of insurer payment is {_inr_indian(comparison.expected_insurer_payment)}. The possible difference is {_inr_indian(comparison.possible_difference)}.",
+        f"The bill total is {_inr_indian(comparison.billed_total)}. The settlement records payment of {_inr_indian(comparison.actual_insurer_payment) if comparison.actual_insurer_payment is not None else 'an unidentified amount'}. The rules-based estimate of insurer payment is {_inr_indian(comparison.expected_insurer_payment)}. The possible difference is {_inr_indian(comparison.possible_difference)}.",
         "Items for review:",
         *details,
     ]

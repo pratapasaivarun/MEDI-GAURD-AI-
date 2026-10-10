@@ -85,7 +85,7 @@ class SettlementDeduction:
 @dataclass
 class SettlementData:
     claim_id: str | None
-    amount_paid: Decimal
+    amount_paid: Decimal | None
     deductions: list[SettlementDeduction] = field(default_factory=list)
     copay_applied: Decimal | None = None
     needs_review: bool = False
@@ -119,5 +119,5 @@ class ComparisonResult:
     status: Literal["no_discrepancy", "possible_discrepancy", "manual_review"] = "manual_review"
     review_reasons: list[str] = field(default_factory=list)
     billed_total: Decimal = Decimal("0")
-    actual_insurer_payment: Decimal = Decimal("0")
+    actual_insurer_payment: Decimal | None = Decimal("0")
     expected_insurer_payment: Decimal = Decimal("0")

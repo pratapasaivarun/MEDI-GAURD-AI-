@@ -284,7 +284,7 @@ def _render_settlement_comparison(
                 except Exception as exc:
                     st.error(f'Could not confirm the uploaded bill total: {exc}')
     metrics = st.columns(3, gap='medium')
-    metrics[0].metric('Settlement payment', _inr(comparison.actual_insurer_payment), border=True)
+    metrics[0].metric('Settlement payment', _inr(comparison.actual_insurer_payment) if comparison.actual_insurer_payment is not None else 'Not identified', border=True)
     metrics[1].metric('Estimated insurer payment', _inr(comparison.expected_insurer_payment) if comparison.status != 'manual_review' else 'Pending review', border=True)
     metrics[2].metric('Possible difference', _inr(comparison.possible_difference) if comparison.status != 'manual_review' else 'Pending review', border=True)
     if comparison.status == 'manual_review':

@@ -17,7 +17,8 @@ def compare(claim: ClaimResult, settlement: SettlementData, terms: PolicyTerms) 
     This function performs no I/O and never calls a model. Missing proof or
     unreconciled data yields ``manual_review`` and prevents a discrepancy claim.
     """
-    actual_patient = max(Decimal("0"), (settlement.bill_total or Decimal("0")) - settlement.amount_paid)
+    amount_paid = settlement.amount_paid
+    actual_patient = max(Decimal("0"), (settlement.bill_total or Decimal("0")) - (amount_paid or Decimal("0")))
     expected_patient = claim.patient_share
     possible_difference = actual_patient - expected_patient
     billed_total = settlement.bill_total or Decimal("0")
@@ -28,7 +29,7 @@ def compare(claim: ClaimResult, settlement: SettlementData, terms: PolicyTerms) 
             reasons.append("Bill total is required to compare the insurer payment.")
         if claim.status == "manual_review" and not reasons:
             reasons.append("Claim calculation requires confirmation.")
-        return ComparisonResult(expected_patient, actual_patient, possible_difference, status="manual_review", review_reasons=reasons, billed_total=billed_total, actual_insurer_payment=settlement.amount_paid, expected_insurer_payment=expected_insurer)
+        return ComparisonResult(expected_patient, actual_patient, possible_difference, status="manual_review", review_reasons=reasons, billed_total=billed_total, actual_insurer_payment=amount_paid, expected_insurer_payment=expected_insurer)
 
     engine_totals: dict[str, Decimal] = defaultdict(lambda: Decimal("0"))
     engine_reasons: dict[str, list[str]] = defaultdict(list)
@@ -121,9 +122,9 @@ def compare(claim: ClaimResult, settlement: SettlementData, terms: PolicyTerms) 
         return ComparisonResult(
             expected_patient, actual_patient, possible_difference, comparisons,
             "manual_review", ["UNRECONCILED_DIFFERENCE: category-level payout effects do not reconcile with the patient-share difference."],
-            billed_total, settlement.amount_paid, expected_insurer,
+            billed_total, amount_paid, expected_insurer,
         )
     if any(row.status == "REVIEW" for row in comparisons):
-        return ComparisonResult(expected_patient, actual_patient, possible_difference, comparisons, "manual_review", ["One or more comparison categories lack sufficient evidence."], billed_total, settlement.amount_paid, expected_insurer)
+        return ComparisonResult(expected_patient, actual_patient, possible_difference, comparisons, "manual_review", ["One or more comparison categories lack sufficient evidence."], billed_total, amount_paid, expected_insurer)
     status = "possible_discrepancy" if possible_difference > 0 and any(row.status in {"UNEXPLAINED_DEDUCTION", "EXCESS_DEDUCTION"} for row in comparisons) else "no_discrepancy"
-    return ComparisonResult(expected_patient, actual_patient, possible_difference, comparisons, status, [], billed_total, settlement.amount_paid, expected_insurer)
+    return ComparisonResult(expected_patient, actual_patient, possible_difference, comparisons, status, [], billed_total, amount_paid, expected_insurer)

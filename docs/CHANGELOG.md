@@ -1,5 +1,9 @@
 # Changelog
 
+## MediGuard project hygiene — 2026-10-17
+
+- T13: Audited the user-supplied ZIP against the Git branch; moved the implementation plan from `T/` into `docs/`, removed three unreferenced PDFs without a fictional-sample label, updated the project audit, and prepared a clean distributable excluding local secrets, environments, databases, caches, temporary outputs, and nested ZIPs. Full suite: **116 passed**.
+
 ## MediGuard follow-up — 2026-10-10
 
 - T12: Updated the single root README to the verified **116-test** count and documented that the broad `except`/`inadmissible` clause filter can reject payable passages and lead to manual review. Final full suite: **116 passed**.

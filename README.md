@@ -89,7 +89,7 @@ pip install -r requirements-dev.txt
 
 The tests cover deterministic rules, extraction validation, settlement parsing, comparison, generated reports, and app security behavior. Passing synthetic tests is not evidence of accuracy on real claims or any insurer's documents.
 
-Current verification: **116 tests passed** on 2026-10-10 with `python -m pytest -q`.
+Current verification: **116 tests passed** on 2026-10-17 with `python -m pytest -q`.
 
 ## Known limitations
 

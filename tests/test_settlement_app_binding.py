@@ -118,3 +118,49 @@ def test_slash_claim_reference_binds_to_hyphenated_claim_number(monkeypatch, tmp
     assert settlement.claim_id == "CLM/2026/0417"
     assert "CLAIM_ID_MISMATCH" not in " ".join(result.review_reasons)
     assert result.status == "no_discrepancy"
+
+
+def test_app_comparison_path_wires_deductible_into_typed_claim(monkeypatch, tmp_path):
+    monkeypatch.setenv("MEDIGUARD_DB_PATH", str(tmp_path / "deductible.db"))
+    monkeypatch.setenv("MEDIGUARD_STORAGE_DIR", str(tmp_path / "storage"))
+    app.init_db()
+    user_id = str(uuid.uuid4())
+    with app.db() as conn:
+        conn.execute(
+            "INSERT INTO users(user_id,email,display_name,role,password_hash,created_at) VALUES(?,?,?,?,?,?)",
+            (user_id, "deductible@example.test", "Deductible Test", "claimant", "test-hash", app.utc_now()),
+        )
+    user = app.get_user(user_id)
+    claim_id = app.create_claim(user_id, "CLM-2026-0417", "Ravi Reddy", "Hospital", "POL-558201", "2026-08-10")
+    text = """Claim No: CLM-2026-0417
+Bill Total: INR 41000
+Deductions:
+Room rent | 10000 | cap
+Deductible | 10000
+Co-pay | 2100
+Amount Paid: INR 18900
+"""
+    app.save_document(claim_id, user, Upload("settlement.txt", text.encode()), "settlement")
+    monkeypatch.setattr(app, "active_policy_for_claim", lambda *_: {"reviewed_policy_terms_json": '{"annual_limit":{"value":"500000"},"deductible":{"value":"10000"},"copay_percent":{"value":"10"},"room_limit_per_day":{"value":"5000"}}'})
+    monkeypatch.setattr(app, "saved_policy_text", lambda *_: "")
+    monkeypatch.setattr(app, "_claim_policy_clause_map", lambda *_: {})
+    normalized = {
+        "total_amount": {"value": 41000},
+        "line_items": [
+            {"description": "Room charges", "category": "ROOM", "amount": 30000},
+            {"description": "Pharmacy", "category": "PHARMACY", "amount": 8000},
+            {"description": "Lab tests", "category": "INVESTIGATION", "amount": 3000},
+        ],
+    }
+    rules = {
+        "status": "approved", "covered_amount": Decimal("31000"),
+        "payable_amount": Decimal("18900"), "copayment": Decimal("2100"),
+        "deductible": Decimal("10000"),
+        "line_item_results": [
+            {"covered_amount": Decimal("20000"), "applied_rule": "room_limit"},
+            {"covered_amount": Decimal("8000"), "applied_rule": ""},
+            {"covered_amount": Decimal("3000"), "applied_rule": ""},
+        ],
+    }
+    comparison, _settlement = app.run_settlement_comparison(claim_id, user_id, normalized, rules)
+    assert comparison.status == "no_discrepancy"

@@ -1405,6 +1405,7 @@ def run_settlement_comparison(
         lines=typed_lines,
         eligible_total=Decimal(str(rules.get("covered_amount") or 0)),
         copay=Decimal(str(rules.get("copayment") or 0)),
+        deductible=Decimal(str(rules.get("deductible") or 0)),
         patient_share=max(Decimal("0"), bill_total - Decimal(str(rules.get("payable_amount") or 0))),
         insurer_share=Decimal(str(rules.get("payable_amount") or 0)),
         status="manual_review" if rules.get("status") == "manual_review" else "computed",

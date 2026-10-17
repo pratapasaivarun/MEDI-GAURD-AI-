@@ -1673,10 +1673,11 @@ def _render_policy_management(user: dict) -> None:
                     except (TypeError, json.JSONDecodeError):
                         candidates, reviewed = {}, {}
                     st.write(f"Page count: {version['page_count'] or 'not recorded'} · Status: {version['terms_review_status']}")
-                    st.caption('Candidate terms from deterministic text matching (not reviewer-verified): ' + (', '.join(sorted(candidates)) if candidates else 'none found'))
+                    st.caption('Candidate terms from text matching are not reviewer-verified. LLM estimates are unverified and require a reviewer to confirm the policy value and enter its source page.')
                     for term_name, term_value in candidates.items():
                         if isinstance(term_value, dict):
-                            st.caption(f"{term_name.replace('_', ' ').title()}: {term_value.get('value')} · source page {term_value.get('source_page') or 'unknown'}")
+                            verification = 'UNVERIFIED LLM estimate' if term_value.get('method') == 'llm_fallback' or term_value.get('needs_review') else 'candidate'
+                            st.caption(f"{term_name.replace('_', ' ').title()}: {term_value.get('value')} · {verification} · source page {term_value.get('source_page') or 'unknown'}")
                     with st.form(f"policy_search_{version['version_id']}"):
                         policy_query = st.text_input('Search this policy', placeholder='For example: room limit, waiting period, or exclusions', key=f"policy_query_{version['version_id']}")
                         search_policy = st.form_submit_button('Find clauses')
@@ -1696,25 +1697,25 @@ def _render_policy_management(user: dict) -> None:
                         return str(current.get('value', ''))
                     def _page_default(name):
                         current = reviewed.get(name) or candidates.get(name) or {}
-                        return int(current.get('source_page') or 1)
+                        return int(current.get('source_page') or 0)
                     with st.form(f"policy_terms_review_{version['version_id']}"):
                         a,b,c = st.columns(3)
                         with a:
                             annual = st.text_input('Annual limit (INR)', value=_term_default('annual_limit'), key=f"annual_{version['version_id']}")
-                            annual_page = st.number_input('Annual limit source page', min_value=1, value=_page_default('annual_limit'), step=1, key=f"annual_page_{version['version_id']}")
+                            annual_page = st.number_input('Annual limit source page', min_value=0, value=_page_default('annual_limit'), step=1, key=f"annual_page_{version['version_id']}")
                             deductible = st.text_input('Deductible (INR)', value=_term_default('deductible'), key=f"deductible_{version['version_id']}")
-                            deductible_page = st.number_input('Deductible source page', min_value=1, value=_page_default('deductible'), step=1, key=f"deductible_page_{version['version_id']}")
+                            deductible_page = st.number_input('Deductible source page', min_value=0, value=_page_default('deductible'), step=1, key=f"deductible_page_{version['version_id']}")
                         with b:
                             copay = st.text_input('Co-payment (%)', value=_term_default('copay_percent'), key=f"copay_{version['version_id']}")
-                            copay_page = st.number_input('Co-payment source page', min_value=1, value=_page_default('copay_percent'), step=1, key=f"copay_page_{version['version_id']}")
+                            copay_page = st.number_input('Co-payment source page', min_value=0, value=_page_default('copay_percent'), step=1, key=f"copay_page_{version['version_id']}")
                             room_limit = st.text_input('Room limit per day (INR, optional)', value=_term_default('room_limit_per_day'), key=f"room_{version['version_id']}")
-                            room_page = st.number_input('Room limit source page', min_value=1, value=_page_default('room_limit_per_day'), step=1, key=f"room_page_{version['version_id']}")
+                            room_page = st.number_input('Room limit source page', min_value=0, value=_page_default('room_limit_per_day'), step=1, key=f"room_page_{version['version_id']}")
                         with c:
                             waiting = st.text_input('Waiting period (months, optional)', value=_term_default('waiting_period_months'), key=f"waiting_{version['version_id']}")
-                            waiting_page = st.number_input('Waiting period source page', min_value=1, value=_page_default('waiting_period_months'), step=1, key=f"waiting_page_{version['version_id']}")
+                            waiting_page = st.number_input('Waiting period source page', min_value=0, value=_page_default('waiting_period_months'), step=1, key=f"waiting_page_{version['version_id']}")
                             sub_default = (reviewed.get('sub_limits') or candidates.get('sub_limits') or {}).get('value', {})
                             sub_text = st.text_area('Sub-limits JSON (optional)', value=json.dumps(sub_default, ensure_ascii=False), key=f"sub_limits_{version['version_id']}")
-                            sub_page = st.number_input('Sub-limits source page', min_value=1, value=_page_default('sub_limits'), step=1, key=f"sub_page_{version['version_id']}")
+                            sub_page = st.number_input('Sub-limits source page', min_value=0, value=_page_default('sub_limits'), step=1, key=f"sub_page_{version['version_id']}")
                         submitted_terms = st.form_submit_button('Save and confirm policy terms', type='primary')
                     if submitted_terms:
                         try:

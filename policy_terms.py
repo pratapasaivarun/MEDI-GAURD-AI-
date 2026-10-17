@@ -183,27 +183,27 @@ def extract_policy_terms(source: Any) -> dict[str, Any]:
             src_page = rows[0].get("page") if rows else None
             if terms.get("annual_limit") is None and llm_terms.get("annual_limit") is not None:
                 try:
-                    terms["annual_limit"] = {"term": "annual_limit", "value": Decimal(str(llm_terms["annual_limit"])), "confidence": 0.90, "source_text": "extracted via LLM", "source_page": src_page, "source_name": src_name, "method": "llm_fallback"}
+                    terms["annual_limit"] = {"term": "annual_limit", "value": Decimal(str(llm_terms["annual_limit"])), "confidence": 0.60, "needs_review": True, "source_text": "extracted via LLM (unverified)", "source_page": src_page, "source_name": src_name, "method": "llm_fallback"}
                 except Exception:
                     pass
             if terms.get("deductible") is None and llm_terms.get("deductible") is not None:
                 try:
-                    terms["deductible"] = {"term": "deductible", "value": Decimal(str(llm_terms["deductible"])), "confidence": 0.90, "source_text": "extracted via LLM", "source_page": src_page, "source_name": src_name, "method": "llm_fallback"}
+                    terms["deductible"] = {"term": "deductible", "value": Decimal(str(llm_terms["deductible"])), "confidence": 0.60, "needs_review": True, "source_text": "extracted via LLM (unverified)", "source_page": src_page, "source_name": src_name, "method": "llm_fallback"}
                 except Exception:
                     pass
             if terms.get("copay_percent") is None and llm_terms.get("copay_percent") is not None:
                 try:
-                    terms["copay_percent"] = {"term": "copay_percent", "value": Decimal(str(llm_terms["copay_percent"])), "confidence": 0.90, "source_text": "extracted via LLM", "source_page": src_page, "source_name": src_name, "method": "llm_fallback"}
+                    terms["copay_percent"] = {"term": "copay_percent", "value": Decimal(str(llm_terms["copay_percent"])), "confidence": 0.60, "needs_review": True, "source_text": "extracted via LLM (unverified)", "source_page": src_page, "source_name": src_name, "method": "llm_fallback"}
                 except Exception:
                     pass
             if terms.get("room_limit_per_day") is None and llm_terms.get("room_limit_per_day") is not None:
                 try:
-                    terms["room_limit_per_day"] = {"term": "room_limit_per_day", "value": Decimal(str(llm_terms["room_limit_per_day"])), "confidence": 0.90, "source_text": "extracted via LLM", "source_page": src_page, "source_name": src_name, "method": "llm_fallback"}
+                    terms["room_limit_per_day"] = {"term": "room_limit_per_day", "value": Decimal(str(llm_terms["room_limit_per_day"])), "confidence": 0.60, "needs_review": True, "source_text": "extracted via LLM (unverified)", "source_page": src_page, "source_name": src_name, "method": "llm_fallback"}
                 except Exception:
                     pass
             if terms.get("waiting_period_months") is None and llm_terms.get("waiting_period_months") is not None:
                 try:
-                    terms["waiting_period_months"] = {"term": "waiting_period_months", "value": int(llm_terms["waiting_period_months"]), "confidence": 0.90, "source_text": "extracted via LLM", "source_page": src_page, "source_name": src_name, "method": "llm_fallback"}
+                    terms["waiting_period_months"] = {"term": "waiting_period_months", "value": int(llm_terms["waiting_period_months"]), "confidence": 0.60, "needs_review": True, "source_text": "extracted via LLM (unverified)", "source_page": src_page, "source_name": src_name, "method": "llm_fallback"}
                 except Exception:
                     pass
 

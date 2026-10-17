@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import sqlite3
 import sys
+import pytest
 
 from extraction import run_extraction
 
@@ -69,6 +70,15 @@ def test_real_policy_terms_are_not_used_until_reviewer_confirmed(tmp_path: Path,
     assert result["status"] == "manual_review"
     assert "policy-terms-review-required" == result["rule_version"]
     assert "reviewed_policy_terms" in result["policy_terms_missing"]
+
+    with pytest.raises(ValueError, match="Add the source page for annual limit"):
+        app.save_policy_terms_review(
+            "policy-test",
+            user["user_id"],
+            {"annual_limit": "100000"},
+            {"annual_limit": 0},
+            {},
+        )
 
     status = app.save_policy_terms_review(
         "policy-test",

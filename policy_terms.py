@@ -155,9 +155,26 @@ def extract_policy_terms(source: Any) -> dict[str, Any]:
         terms["preauthorization_required"] = {"term": "preauthorization_required", "value": True, "confidence": 0.90, "source_text": "pre-authorization requirement detected", "source_page": None, "source_name": rows[0].get("source_name", "policy"), "method": "deterministic_regex"}
     if re.search(r"network hospitals? only|in[- ]network only|network provider required", combined_text, re.IGNORECASE):
         terms["network_required"] = {"term": "network_required", "value": True, "confidence": 0.90, "source_text": "network restriction detected", "source_page": None, "source_name": rows[0].get("source_name", "policy"), "method": "deterministic_regex"}
-    exclusions = [row["text"].strip() for row in rows if re.search(r"exclusion|excluded|non[- ]payable", row["text"], re.IGNORECASE)]
+    exclusions: list[str] = []
+    exclusion_evidence = None
+    for row in rows:
+        for sentence in re.split(r"(?<=[.!?])\s+", row["text"].strip()):
+            match = re.search(
+                r"\b(?:the\s+)?(.+?)\s+(?:is|are)\s+(?:excluded|not\s+covered|non[- ]payable)\b",
+                sentence,
+                re.IGNORECASE,
+            )
+            if match:
+                phrase = re.sub(r"\s+", " ", match.group(1)).strip(" \t:;,.-")
+                phrase = re.sub(r"^(?:the\s+)?(?:charges?\s+for\s+|coverage\s+for\s+)", "", phrase, flags=re.I)
+                if phrase:
+                    exclusions.append(phrase.lower())
+                    exclusion_evidence = exclusion_evidence or row
+            elif re.search(r"exclusion|excluded|non[- ]payable", sentence, re.IGNORECASE):
+                exclusions.append(sentence.strip())
+                exclusion_evidence = exclusion_evidence or row
     if exclusions:
-        terms["exclusions"] = {"term": "exclusions", "value": exclusions[:20], "confidence": 0.85, "source_text": "\n".join(exclusions[:3]), "source_page": rows[0].get("page"), "source_name": rows[0].get("source_name", "policy"), "method": "deterministic_keyword"}
+        terms["exclusions"] = {"term": "exclusions", "value": list(dict.fromkeys(exclusions))[:20], "confidence": 0.85, "needs_review": True, "source_text": exclusion_evidence["text"].strip(), "source_page": exclusion_evidence.get("page"), "source_name": exclusion_evidence.get("source_name", "policy"), "method": "deterministic_keyword"}
 
     non_payable_categories = []
     non_payable_evidence = None

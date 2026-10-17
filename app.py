@@ -892,9 +892,24 @@ def save_policy_terms_review(version_id: str, reviewer_id: str, values: dict[str
         if policy is None:
             raise ValueError("Policy edition was not found.")
         reviewed = {}
-        for name in ("annual_limit", "deductible", "copay_percent", "room_limit_per_day", "waiting_period_months"):
+        for name in ("annual_limit", "deductible", "copay_percent", "room_limit_per_day", "waiting_period_months", "exclusions"):
             raw = values.get(name)
             if raw in (None, ""):
+                continue
+            if name == "exclusions":
+                exclusions = list(dict.fromkeys(
+                    phrase.strip().lower()
+                    for phrase in (raw if isinstance(raw, list) else str(raw).splitlines())
+                    if phrase.strip()
+                ))
+                if not exclusions:
+                    continue
+                page = int(source_pages.get(name) or 0)
+                if page < 1:
+                    raise ValueError("Add the source page for exclusions.")
+                if policy["page_count"] and page > int(policy["page_count"]):
+                    raise ValueError("The exclusions source page is beyond this policy document.")
+                reviewed[name] = {"term": name, "value": exclusions, "confidence": 1.0, "source_page": page, "source_name": policy["source_name"], "method": "reviewer_confirmed"}
                 continue
             parsed_number = parse_amount(str(raw))
             if parsed_number is None:
@@ -1716,6 +1731,9 @@ def _render_policy_management(user: dict) -> None:
                             sub_default = (reviewed.get('sub_limits') or candidates.get('sub_limits') or {}).get('value', {})
                             sub_text = st.text_area('Sub-limits JSON (optional)', value=json.dumps(sub_default, ensure_ascii=False), key=f"sub_limits_{version['version_id']}")
                             sub_page = st.number_input('Sub-limits source page', min_value=0, value=_page_default('sub_limits'), step=1, key=f"sub_page_{version['version_id']}")
+                            exclusion_default = (reviewed.get('exclusions') or candidates.get('exclusions') or {}).get('value', [])
+                            exclusion_text = st.text_area('Exclusions to confirm (one term per line)', value='\n'.join(map(str, exclusion_default)), key=f"exclusions_{version['version_id']}")
+                            exclusion_page = st.number_input('Exclusions source page', min_value=0, value=_page_default('exclusions'), step=1, key=f"exclusions_page_{version['version_id']}")
                         submitted_terms = st.form_submit_button('Save and confirm policy terms', type='primary')
                     if submitted_terms:
                         try:
@@ -1724,8 +1742,8 @@ def _render_policy_management(user: dict) -> None:
                                 raise ValueError('Sub-limits must be a JSON object of category to amount.')
                             review_status = save_policy_terms_review(
                                 version['version_id'], user['user_id'],
-                                {'annual_limit': annual, 'deductible': deductible, 'copay_percent': copay, 'room_limit_per_day': room_limit, 'waiting_period_months': waiting},
-                                {'annual_limit': int(annual_page), 'deductible': int(deductible_page), 'copay_percent': int(copay_page), 'room_limit_per_day': int(room_page), 'waiting_period_months': int(waiting_page), 'sub_limits': int(sub_page)},
+                                {'annual_limit': annual, 'deductible': deductible, 'copay_percent': copay, 'room_limit_per_day': room_limit, 'waiting_period_months': waiting, 'exclusions': exclusion_text},
+                                {'annual_limit': int(annual_page), 'deductible': int(deductible_page), 'copay_percent': int(copay_page), 'room_limit_per_day': int(room_page), 'waiting_period_months': int(waiting_page), 'sub_limits': int(sub_page), 'exclusions': int(exclusion_page)},
                                 sub_value,
                             )
                             if review_status == 'confirmed':

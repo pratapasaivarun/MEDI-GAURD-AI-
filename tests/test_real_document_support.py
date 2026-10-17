@@ -8,6 +8,7 @@ import sys
 import pytest
 
 from extraction import run_extraction
+from policy_terms import extract_policy_terms
 
 
 def test_bill_layout_labels_and_net_total_are_extracted() -> None:
@@ -80,11 +81,17 @@ def test_real_policy_terms_are_not_used_until_reviewer_confirmed(tmp_path: Path,
             {},
         )
 
+    exclusions = extract_policy_terms([
+        {"text": "Cosmetic surgery is excluded from coverage.", "page": 4}
+   ])["terms_json"]["exclusions"]
+    assert exclusions["value"] == ["cosmetic surgery"]
+    assert exclusions["needs_review"] is True
+
     status = app.save_policy_terms_review(
         "policy-test",
         user["user_id"],
-        {"annual_limit": "100000", "deductible": "5000", "copay_percent": "10"},
-        {"annual_limit": 5, "deductible": 6, "copay_percent": 7},
+        {"annual_limit": "100000", "deductible": "5000", "copay_percent": "10", "exclusions": "cosmetic surgery"},
+        {"annual_limit": 5, "deductible": 6, "copay_percent": 7, "exclusions": 4},
         {},
     )
     assert status == "confirmed"
@@ -92,10 +99,13 @@ def test_real_policy_terms_are_not_used_until_reviewer_confirmed(tmp_path: Path,
         saved = conn.execute("SELECT terms_review_status,reviewed_policy_terms_json,terms_reviewed_by FROM policy_versions WHERE version_id='policy-test'").fetchone()
     assert saved["terms_review_status"] == "confirmed"
     assert saved["terms_reviewed_by"] == user["user_id"]
-    assert set(json.loads(saved["reviewed_policy_terms_json"])) == {"annual_limit", "deductible", "copay_percent"}
+    reviewed_policy = json.loads(saved["reviewed_policy_terms_json"])
+    assert set(reviewed_policy) == {"annual_limit", "deductible", "copay_percent", "exclusions"}
+    assert reviewed_policy["exclusions"]["method"] == "reviewer_confirmed"
     calculated = app.evaluate_saved_claim(
         "claim-test",
         user["user_id"],
-        {"total_amount": {"value": 7500.0}, "line_items": [], "missing_fields": [], "review_fields": []},
+        {"total_amount": {"value": 50000.0}, "line_items": [{"description": "Cosmetic surgery", "category": "surgery", "amount": 50000.0}], "missing_fields": [], "review_fields": []},
     )
     assert calculated["rule_version"] != "policy-terms-review-required"
+    assert calculated["line_item_results"][0]["status"] == "excluded"

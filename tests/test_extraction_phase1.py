@@ -17,10 +17,33 @@ def test_tabular_line_uses_last_number_as_amount_and_does_not_invent_code():
     assert items[0]["cpt_codes"] == []
 
 
+def test_table_bill_amount_column_and_header_handling():
+    text = "Description Qty Rate Amount\nRoom charges 4 5000 20000\nPharmacy 1 8000 8000"
+    items = _extract_line_items(text, [Evidence("bill", "bill.pdf", 1, "pymupdf", text, 100)])
+    assert [(item["description"], item["amount"]) for item in items] == [
+        ("Room charges", 20000),
+        ("Pharmacy", 8000),
+    ]
+
+
+def test_five_digit_bill_total_is_not_a_procedure_code():
+    text = "Room charges 4 5000 10000"
+    items = _extract_line_items(text, [Evidence("bill", "bill.pdf", 1, "pymupdf", text, 100)])
+    assert items[0]["cpt_codes"] == []
+
+
 def test_explicit_grand_total_wins_over_subtotal(monkeypatch):
     monkeypatch.setattr(extraction, "_llm_extract_claim_fallback", lambda _text: None)
     claim = normalize_documents([{"text": "Subtotal: Rs. 5,000/-\nGrand Total: Rs. 6,000/-"}])
     assert claim.total_amount.value == 6000
+
+
+def test_grand_total_or_net_payable_beats_subtotal_and_discount(monkeypatch):
+    monkeypatch.setattr(extraction, "_llm_extract_claim_fallback", lambda _text: None)
+    grand_total_bill = normalize_documents([{"text": "Subtotal 31000\nDiscount 1000\nGrand Total 30000"}])
+    net_payable_bill = normalize_documents([{"text": "Subtotal 31000\nNet Payable 30000"}])
+    assert grand_total_bill.total_amount.value == 30000
+    assert net_payable_bill.total_amount.value == 30000
 
 
 def test_currency_suffix_and_line_item_date_are_parsed():
@@ -29,6 +52,11 @@ def test_currency_suffix_and_line_item_date_are_parsed():
     items = _extract_line_items(text, [Evidence("bill", "bill.pdf", 1, "pymupdf", text, 100)])
     assert items[0]["amount"] == 10000
     assert items[0]["date"] == "2026-03-05"
+
+
+def test_indian_grouping_and_rupee_suffix_amounts():
+    assert extraction.parse_amount("Rs. 5,000/-") == 5000.0
+    assert extraction.parse_amount("1,23,456.00") == 123456.0
 
 
 def test_category_matches_whole_words():

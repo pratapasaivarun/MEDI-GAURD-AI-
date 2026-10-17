@@ -630,8 +630,8 @@ def _render_claim_review(user: dict) -> None:
                 for item in normalized.get('line_items') or []:
                     evidence = item.get('evidence') or []
                     source_page = next((row.get('page') for row in evidence if isinstance(row, dict) and row.get('page')), 1)
-                    line_rows.append({'description': item.get('description',''), 'amount': item.get('amount',''), 'category': item.get('category','other'), 'source_page': int(source_page)})
-                edited_lines = st.data_editor(line_rows, hide_index=True, num_rows='dynamic', key=f'review_lines_editor_{claim_id}', column_config={'description': st.column_config.TextColumn('Description'), 'amount': st.column_config.NumberColumn('Amount (INR)', min_value=0.0, step=1.0), 'category': st.column_config.TextColumn('Category'), 'source_page': st.column_config.NumberColumn('Source page', min_value=1, step=1)})
+                    line_rows.append({'description': item.get('description',''), 'amount': item.get('amount',''), 'date': item.get('date') or '', 'category': item.get('category','other'), 'source_page': int(source_page)})
+                edited_lines = st.data_editor(line_rows, hide_index=True, num_rows='dynamic', key=f'review_lines_editor_{claim_id}', column_config={'description': st.column_config.TextColumn('Description'), 'amount': st.column_config.NumberColumn('Amount (INR)', min_value=0.0, step=1.0), 'date': st.column_config.TextColumn('Service date (DD/MM/YYYY)'), 'category': st.column_config.TextColumn('Category'), 'source_page': st.column_config.NumberColumn('Source page', min_value=1, step=1)})
                 if st.button('Save reviewer-confirmed bill details', type='primary', key=f'save_extraction_review_{claim_id}'):
                     try:
                         records = edited_fields.to_dict('records') if hasattr(edited_fields, 'to_dict') else edited_fields

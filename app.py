@@ -842,6 +842,10 @@ def save_claim_extraction_review(claim_id: str, reviewer_id: str, edits: dict[st
                         continue
                     if not description or amount is None or amount <= 0:
                         raise ValueError("Each reviewed bill line needs a description and a positive amount.")
+                    raw_item_date = str(item.get("date") or "").strip()
+                    parsed_item_date = parse_bill_date(raw_item_date) if raw_item_date else None
+                    if raw_item_date and parsed_item_date is None:
+                        raise ValueError("Enter a valid date for each reviewed bill line.")
                     item_page = int(item.get("source_page") or page)
                     if item_page < 1 or (document["page_count"] and item_page > int(document["page_count"])):
                         raise ValueError("A line-item source page is outside the bill.")
@@ -850,7 +854,7 @@ def save_claim_extraction_review(claim_id: str, reviewer_id: str, edits: dict[st
                         "amount": amount,
                         "category": str(item.get("category") or "other").strip().lower()[:40],
                         "cpt_codes": [],
-                        "date": None,
+                        "date": parsed_item_date.isoformat() if parsed_item_date else None,
                         "confidence": 100.0,
                         "needs_review": False,
                         "evidence": [{"document_id": edit.get("document_id"), "source_name": "Reviewer confirmation", "page": item_page, "method": "reviewer_confirmed", "text": "Line item confirmed by an authorized reviewer.", "confidence": 100.0}],

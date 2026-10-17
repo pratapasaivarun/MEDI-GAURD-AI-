@@ -143,12 +143,15 @@ def _first_match(patterns: list[str], text: str) -> tuple[str | None, str | None
 def parse_amount(raw: str | None) -> float | None:
     if not raw:
         return None
-    cleaned = re.sub(r"[^0-9,.]", "", raw)
+    numeric = re.search(r"\d[\d,.]*", raw)
+    if not numeric:
+        return None
+    cleaned = numeric.group(0)
     if not cleaned:
         return None
     if "," in cleaned and "." in cleaned:
         cleaned = cleaned.replace(",", "")
-    elif cleaned.count(",") == 1 and len(cleaned.rsplit(",", 1)[-1]) == 2:
+    elif cleaned.count(",") == 1 and len(cleaned.rsplit(",", 1)[-1]) == 2 and not re.search(r"/\s*-\s*$", raw):
         cleaned = cleaned.replace(",", ".")
     else:
         cleaned = cleaned.replace(",", "")
@@ -318,10 +321,30 @@ def extract_image_ocr(path: Path, document_id: str, source_name: str) -> tuple[l
 def extract_document(path: str | Path, document_id: str, source_name: str) -> tuple[list[Evidence], dict[str, str], int]:
     file_path = Path(path)
     if file_path.suffix.lower() == ".pdf":
-        evidence, raw, pages = extract_pdf_text(file_path, document_id, source_name)
-        if any(item.text.strip() for item in evidence):
-            return evidence, raw, pages
-        return extract_image_ocr(file_path, document_id, source_name)
+        import pymupdf
+        evidence: list[Evidence] = []
+        raw: dict[str, str] = {}
+        with pymupdf.open(file_path) as document:
+            pages = len(document)
+            for index, page in enumerate(document):
+                number = index + 1
+                text = page.get_text("text") or ""
+                if text.strip():
+                    item = _evidence(document_id, source_name, number, "pymupdf", text, 100.0)
+                else:
+                    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+                        tmp_path = Path(tmp.name)
+                    try:
+                        page.get_pixmap(matrix=pymupdf.Matrix(1.5, 1.5), alpha=False).save(str(tmp_path))
+                        item = _ocr_one_image(_get_ocr(), tmp_path, document_id, source_name, number)
+                    finally:
+                        tmp_path.unlink(missing_ok=True)
+                if item:
+                    evidence.append(item)
+                    raw[str(number)] = item.text
+                else:
+                    raw[str(number)] = text
+        return evidence, raw, pages
     return extract_image_ocr(file_path, document_id, source_name)
 
 
@@ -336,18 +359,15 @@ def _infer_line_category(description: str) -> str:
                 terms = [term.strip().strip("'\"").lower() for term in match.group(2).split(",") if term.strip()]
                 groups.append((match.group(1), terms))
     for category, terms in groups:
-        if category != "OTHER" and any(term in value for term in terms):
+        if category != "OTHER" and any(re.search(rf"(?<!\w){re.escape(term)}s?(?!\w)", value) for term in terms):
             return category
     return "OTHER"
 
 
 
-# Matches CPT / procedure codes in two forms:
-#   Labelled  – "CPT 99213", "ICD-10 Z00.00", "Procedure Code: 27447"
-#   Bare      – standalone 5-digit numeric code, e.g. "27447"
+# Match only labelled codes; bare numeric amounts often resemble procedure codes.
 _CPT_PATTERN = re.compile(
-    r"\b(?:CPT|ICD[-\s]?(?:10|9)|Procedure\s+Code)[:\s#-]*([A-Z0-9]{2,7}(?:\.[A-Z0-9]{1,4})?)"
-    r"|(?<![0-9])([0-9]{5})(?![0-9])",
+    r"\b(?:CPT|ICD[-\s]?(?:10|9)|Procedure\s+Code)[:\s#-]*([A-Z0-9]{2,7}(?:\.[A-Z0-9]{1,4})?)",
     re.IGNORECASE,
 )
 
@@ -357,7 +377,7 @@ def _extract_cpt_codes(text: str) -> list[str]:
     seen: set[str] = set()
     codes: list[str] = []
     for match in _CPT_PATTERN.finditer(text):
-        code = (match.group(1) or match.group(2) or "").strip().upper()
+        code = (match.group(1) or "").strip().upper()
         if code and code not in seen:
             seen.add(code)
             codes.append(code)
@@ -366,17 +386,32 @@ def _extract_cpt_codes(text: str) -> list[str]:
 
 def _extract_line_items(text: str, evidence: list[Evidence]) -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
-    pattern = re.compile(r"^\s*([A-Za-z][A-Za-z /&()'_-]{2,80})\s*[:\-]?\s*(?:INR|Rs\.?|₹|USD|\$)?\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)", re.IGNORECASE)
+    number_token = re.compile(r"(?:Rs\.?\s*|INR\s*|₹\s*|USD\s*|\$\s*)?\d[\d,]*(?:\.\d{1,2})?\s*(?:/-)?", re.IGNORECASE)
+    date_token = re.compile(r"\b(?:\d{1,4}[./-]\d{1,2}[./-]\d{2,4}|\d{1,2}[-/\s]+[A-Za-z]{3,9}[-/\s]+\d{2,4})\b")
     for line in text.splitlines():
-        match = pattern.match(line.strip())
-        if not match:
+        stripped = line.strip().strip("|")
+        if not stripped:
             continue
-        description = re.sub(r"\s+", " ", match.group(1)).strip()
-        if re.search(r"^(total|grand total|amount payable|net payable|subtotal|discount|tax|inr|rs|usd)\b", description, re.IGNORECASE) or description.lower() in {"inr", "rs", "usd"}:
+        if re.search(r"\b(?:subtotal|total\b|grand\s+total|amount\s+(?:paid|payable)|net\s+payable|tax|discount)\b", stripped, re.IGNORECASE):
             continue
-        if re.search(r"\b(?:policy|claim|member|patient|insured|certificate|uhid|invoice|bill|date|version|effective|period|page|code|number|term|value)\b", description, re.IGNORECASE) or re.match(r"^(?:POL|CLM)[-/]", description, re.IGNORECASE):
+        if re.search(r"\b(?:policy|claim|member|patient|insured|certificate|uhid|invoice|bill|version|effective|period|page|code|number|term|value)\b", stripped, re.IGNORECASE) or re.match(r"^(?:POL|CLM)[-/]", stripped, re.IGNORECASE):
             continue
-        amount = parse_amount(match.group(2))
+        date_match = date_token.search(stripped)
+        item_date = parse_bill_date(date_match.group(0)) if date_match else None
+        without_date = date_token.sub(" ", stripped) if date_match else stripped
+        # Ignore parenthesized notes (often date ranges) and trailing stay
+        # durations; they are metadata, not bill amount columns.
+        without_date = re.sub(r"\([^)]*\)", " ", without_date)
+        without_date = re.sub(r"\b\d+\s+days?\b", " ", without_date, flags=re.IGNORECASE)
+        matches = list(number_token.finditer(without_date))
+        if not matches:
+            continue
+        description = re.sub(r"[|:]+", " ", without_date[:matches[0].start()]).strip(" -\t")
+        description = re.sub(r"\s+", " ", description).strip()
+        if not re.match(r"^[A-Za-z][A-Za-z /&()'_-]{2,80}$", description):
+            continue
+        amount_match = matches[0] if len(matches) == 2 and re.search(r"\b\d+\s+days?\b", stripped, re.IGNORECASE) else matches[-1]
+        amount = parse_amount(amount_match.group(0))
         if amount is None or amount <= 0:
             continue
         source = next((item for item in evidence if line.strip().lower() in item.text.lower()), evidence[0] if evidence else None)
@@ -388,7 +423,7 @@ def _extract_line_items(text: str, evidence: list[Evidence]) -> list[dict[str, A
             "amount": amount,
             "category": _infer_line_category(description),
             "cpt_codes": cpt_codes,
-            "date": None,
+            "date": item_date.isoformat() if item_date else None,
             "confidence": confidence,
             "needs_review": confidence < OCR_REVIEW_THRESHOLD or _infer_line_category(description) == "OTHER",
             "evidence": [source.to_dict()] if source else [],
@@ -617,8 +652,12 @@ def normalize_documents(documents: list[dict[str, Any]]) -> NormalizedClaim:
             claim.discharge_date.needs_review = True
     claim.diagnosis = find([r"diagnosis\s*(?:[:#-]\s*)?([^\n]+)"], "diagnosis")
     claim.total_amount = find([
-        r"(?:net\s+bill\s+amount|gross\s+bill\s+amount|grand\s+total|total\s+amount|net\s+payable|amount\s+payable|invoice\s+total|bill\s+total|total)\s*(?:[:#-]\s*)?(?:rs\.?|inr|₹|\$)?\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)",
-        r"(?:net\s+bill\s+amount|gross\s+bill\s+amount|grand\s+total|total\s+amount|net\s+payable|amount\s+payable|invoice\s+total|bill\s+total|total)\s*(?:[:#-]\s*)?([0-9][0-9,]*(?:\.[0-9]{1,2})?)\s*(?:rs\.?|inr|₹|\$)?",
+        r"grand\s+total\s*(?:[:#-]\s*)?(?:rs\.?|inr|₹|\$)?\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)",
+        r"(?:net\s+bill\s+amount|gross\s+bill\s+amount|total\s+amount|net\s+payable|amount\s+payable|invoice\s+total|bill\s+total)\s*(?:[:#-]\s*)?(?:rs\.?|inr|₹|\$)?\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)",
+        r"(?<!sub)\btotal\b\s*(?:[:#-]\s*)?(?:rs\.?|inr|₹|\$)?\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)",
+        r"grand\s+total\s*(?:[:#-]\s*)?([0-9][0-9,]*(?:\.[0-9]{1,2})?)\s*(?:rs\.?|inr|₹|\$)?",
+        r"(?:net\s+bill\s+amount|gross\s+bill\s+amount|total\s+amount|net\s+payable|amount\s+payable|invoice\s+total|bill\s+total)\s*(?:[:#-]\s*)?([0-9][0-9,]*(?:\.[0-9]{1,2})?)\s*(?:rs\.?|inr|₹|\$)?",
+        r"(?<!sub)\btotal\b\s*(?:[:#-]\s*)?([0-9][0-9,]*(?:\.[0-9]{1,2})?)\s*(?:rs\.?|inr|₹|\$)?",
     ], "total_amount", amount=True)
     if claim.patient_name and isinstance(claim.patient_name.value, str):
         claim.patient_name.value = re.split(r"\s+(?:age|sex|uhid|ip|admission|discharge|diagnosis)\b", claim.patient_name.value, flags=re.IGNORECASE)[0].strip()

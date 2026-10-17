@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import date
 import re
 import uuid
 from pathlib import Path
@@ -124,3 +125,41 @@ def test_unbound_or_unreadable_settlement_never_enables_a_letter(monkeypatch, tm
     assert app.appeal_draft_available(comparison) is False
     with pytest.raises(ValueError, match="only for a possible discrepancy"):
         build_comparison_appeal_letter_text(claim, comparison, settlement)
+
+
+def test_app_date_window_lab_deduction_needs_dates_and_a_coverage_clause(monkeypatch, tmp_path):
+    settlement_text = """Claim ID: CLM-2026-0417
+Bill Total: INR 132000
+Deductions:
+Admission and registration | 2000 | Non-payable
+Room rent | 4000 | Room cap
+Doctor and nursing fees | 2000 | Proportionate deduction
+Lab tests | 3000 | Outside pre-hospitalization window
+Co-pay | 12100
+Amount Paid: INR 108900
+"""
+    normalized, rules, _initial, _settlement, claim = _run_demo_pipeline(
+        monkeypatch, tmp_path, settlement_text.encode("utf-8"),
+    )
+
+    def retrieve(query, _policy_id, limit=8):
+        if "diagnostic" in query.lower() or "lab" in query.lower():
+            return [{"text": "Clause 5.2: Lab tests and diagnostic investigations during hospitalization are payable.", "page": 11, "section": "5.2"}]
+        if "medicine" in query.lower() or "pharmacy" in query.lower():
+            return [{"text": "Clause 3.4: Pharmacy medicines during hospitalization are payable.", "page": 9, "section": "3.4"}]
+        return []
+
+    monkeypatch.setattr(app, "retrieve_indexed_policy_evidence", retrieve)
+    lab_item = next(item for item in normalized["line_items"] if item.get("category") == "INVESTIGATION")
+    lab_item["date"] = "2026-08-12"
+    comparison, _ = app.run_settlement_comparison(claim["claim_id"], claim["user_id"], normalized, rules)
+    lab = next(row for row in comparison.categories if row.category == "INVESTIGATION")
+    assert comparison.status == "possible_discrepancy", (comparison.review_reasons, lab)
+    assert lab.review_note == "all dated entries fall inside the stay"
+    assert lab.clause is not None and lab.clause.page == 11
+
+    lab_item["date"] = None
+    undated, _ = app.run_settlement_comparison(claim["claim_id"], claim["user_id"], normalized, rules)
+    undated_lab = next(row for row in undated.categories if row.category == "INVESTIGATION")
+    assert undated.status == "manual_review"
+    assert undated_lab.status == "REVIEW"

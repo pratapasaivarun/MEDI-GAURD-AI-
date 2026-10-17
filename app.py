@@ -1253,6 +1253,7 @@ def _claim_policy_clause_map(claim_id: str) -> dict[str, Clause]:
         "DOCTOR_NURSING": "doctor nursing consultation professional charges",
         "ADMISSION": "admission registration administrative charges",
         "ICU": "ICU intensive care critical care",
+        "INVESTIGATION": "lab laboratory diagnostic test investigation radiology",
     }
     category_match = {
         "PHARMACY": re.compile(r"\b(?:medicine|medicines|pharmacy|drug|drugs)\b", re.I),
@@ -1260,6 +1261,7 @@ def _claim_policy_clause_map(claim_id: str) -> dict[str, Clause]:
         "DOCTOR_NURSING": re.compile(r"\b(?:doctor|nursing|consultation|professional charges)\b", re.I),
         "ADMISSION": re.compile(r"\b(?:admission|registration|administrative)\b", re.I),
         "ICU": re.compile(r"\b(?:ICU|intensive care|critical care)\b", re.I),
+        "INVESTIGATION": re.compile(r"\b(?:lab|laboratory|diagnostic|tests?|investigations?|radiology)\b", re.I),
     }
     coverage = re.compile(r"\b(?:cover(?:ed|s)?|payable|reimburs\w*|eligible|includ(?:ed|es))\b", re.I)
     exclusions = re.compile(r"\b(?:exclu\w*|not\s+covered|not\s+payable|non[- ]payable|except|inadmissible)\b", re.I)

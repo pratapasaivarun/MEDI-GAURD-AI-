@@ -1404,7 +1404,7 @@ def run_settlement_comparison(
         non_payable_categories=list(non_payables or []),
         exclusions=list(exclusions or []),
         clauses=clauses,
-        proportionate_deduction=bool(re.search(r"proportionate|room[- ]linked", policy_text, re.I)),
+        proportionate_deduction=_policy_applies_proportionate_deduction(policy_text),
     )
 
     line_results = rules.get("line_item_results") or []
@@ -1515,6 +1515,19 @@ def get_comparison_for_view(claim_id: str, user: dict | sqlite3.Row, session_sta
             session_state[comparison_key] = comparison
             session_state[settlement_key] = settlement
     return comparison, settlement
+
+
+def _policy_applies_proportionate_deduction(policy_text: str) -> bool:
+    term = r"(?:proportionate(?:\s+deduction)?|room[- ]linked(?:\s+deduction)?)"
+    text = str(policy_text or "")
+    negative = re.search(
+        rf"\bno\s+{term}\b|\b{term}\b.{{0,40}}\b(?:does\s+not|doesn't|will\s+not|shall\s+not|should\s+not|not)\s+(?:be\s+)?appl(?:y|ied)\b|\b{term}\b.{{0,40}}\b(?:does\s+not|doesn't|will\s+not|shall\s+not|should\s+not)\s+apply\b",
+        text,
+        re.IGNORECASE,
+    )
+    if negative:
+        return False
+    return bool(re.search(rf"\b{term}\b.{{0,40}}\b(?:applies?|applied|applicable)\b", text, re.IGNORECASE))
 
 
 def saved_policy_text(claim_id: str) -> str:

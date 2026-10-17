@@ -164,3 +164,10 @@ Amount Paid: INR 18900
     }
     comparison, _settlement = app.run_settlement_comparison(claim_id, user_id, normalized, rules)
     assert comparison.status == "no_discrepancy"
+
+
+def test_proportionate_deduction_requires_positive_policy_wording():
+    assert app._policy_applies_proportionate_deduction("Proportionate deduction applies to linked charges.") is True
+    assert app._policy_applies_proportionate_deduction("No proportionate deduction applies.") is False
+    assert app._policy_applies_proportionate_deduction("Proportionate deduction does not apply.") is False
+    assert app._policy_applies_proportionate_deduction("Room-linked charges are mentioned.") is False

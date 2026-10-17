@@ -1271,10 +1271,20 @@ def _claim_policy_clause_map(claim_id: str) -> dict[str, Clause]:
             continue
         for evidence in evidence_rows:
             text = re.sub(r"\s+", " ", str(evidence.get("text") or "")).strip()
-            if not text or not category_match[category].search(text) or not coverage.search(text) or exclusions.search(text):
+            if not text:
                 continue
-            match = re.search(r"\bClause\s+([A-Za-z0-9.]+)\b", text, re.I)
-            clause = Clause(text[:2000], int(evidence.get("page") or 1), match.group(1) if match else evidence.get("section"))
+            qualified_sentences = [
+                sentence.strip()
+                for sentence in re.split(r"(?<=[.!?])\s+", text)
+                if category_match[category].search(sentence)
+                and coverage.search(sentence)
+                and not exclusions.search(sentence)
+            ]
+            if not qualified_sentences:
+                continue
+            clause_text = " ".join(qualified_sentences)
+            match = re.search(r"\bClause\s+([A-Za-z0-9.]+)\b", clause_text, re.I)
+            clause = Clause(clause_text[:2000], int(evidence.get("page") or 1), match.group(1) if match else evidence.get("section"))
             clauses[category] = clause
             break
     return clauses

@@ -48,3 +48,13 @@ def test_empty_qualified_retrieval_returns_no_clause(monkeypatch):
     monkeypatch.setattr(app, "retrieve_indexed_policy_evidence", lambda *_args, **_kwargs: [])
 
     assert app._claim_policy_clause_map("claim-1") == {}
+
+
+def test_coverage_sentence_survives_exclusion_in_later_sentence(monkeypatch):
+    monkeypatch.setattr(app, "active_policy_for_claim", lambda *_args: {"version_id": "policy-v1"})
+    monkeypatch.setattr(app, "retrieve_indexed_policy_evidence", lambda *_args, **_kwargs: [
+        {"text": "Clause 3.4: Pharmacy expenses are payable. Charges above the annual limit are excluded.", "page": 9, "section": "coverage"},
+    ])
+
+    clauses = app._claim_policy_clause_map("claim-1")
+    assert clauses["PHARMACY"].text == "Clause 3.4: Pharmacy expenses are payable."

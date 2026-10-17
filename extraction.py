@@ -415,8 +415,7 @@ def _extract_line_items(text: str, evidence: list[Evidence]) -> list[dict[str, A
         description = re.sub(r"\s+", " ", description).strip()
         if not re.match(r"^[A-Za-z][A-Za-z /&()'_-]{2,80}$", description):
             continue
-        amount_match = matches[0] if len(matches) == 2 and re.search(r"\b\d+\s+days?\b", stripped, re.IGNORECASE) else matches[-1]
-        amount = parse_amount(amount_match.group(0))
+        amount = parse_amount(matches[-1].group(0))
         if amount is None or amount <= 0:
             continue
         source = next((item for item in evidence if line.strip().lower() in item.text.lower()), evidence[0] if evidence else None)

@@ -26,6 +26,17 @@ def test_table_bill_amount_column_and_header_handling():
     ]
 
 
+def test_tabular_rows_with_days_column_use_final_amount():
+    rows = (
+        "Room charges | 4 days | 5000 | 20000",
+        "Room charges 4 days 5000 20000",
+    )
+    for row in rows:
+        items = _extract_line_items(row, [Evidence("bill", "bill.pdf", 1, "pymupdf", row, 100)])
+        assert len(items) == 1
+        assert items[0]["amount"] == 20000
+
+
 def test_five_digit_bill_total_is_not_a_procedure_code():
     text = "Room charges 4 5000 10000"
     items = _extract_line_items(text, [Evidence("bill", "bill.pdf", 1, "pymupdf", text, 100)])

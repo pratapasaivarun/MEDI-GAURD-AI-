@@ -391,7 +391,7 @@ def _extract_cpt_codes(text: str) -> list[str]:
 
 def _extract_line_items(text: str, evidence: list[Evidence]) -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
-    number_token = re.compile(r"(?:Rs\.?\s*|INR\s*|₹\s*|USD\s*|\$\s*)?\d[\d,]*(?:\.\d{1,2})?\s*(?:/-)?", re.IGNORECASE)
+    number_token = re.compile(r"(?<!\w)(?:(?:Rs\.?|INR|₹|USD|\$)\s*)?\d[\d,]*(?:\.\d{1,2})?\s*(?:/-)?", re.IGNORECASE)
     date_token = re.compile(r"\b(?:\d{1,4}[./-]\d{1,2}[./-]\d{2,4}|\d{1,2}[-/\s]+[A-Za-z]{3,9}[-/\s]+\d{2,4})\b")
     for line in text.splitlines():
         stripped = line.strip().strip("|")
@@ -413,7 +413,7 @@ def _extract_line_items(text: str, evidence: list[Evidence]) -> list[dict[str, A
             continue
         description = re.sub(r"[|:]+", " ", without_date[:matches[0].start()]).strip(" -\t")
         description = re.sub(r"\s+", " ", description).strip()
-        if not re.match(r"^[A-Za-z][A-Za-z /&()'_-]{2,80}$", description):
+        if not re.match(r"^[A-Za-z][A-Za-z0-9 /&()'_-]{2,80}$", description):
             continue
         amount = parse_amount(matches[-1].group(0))
         if amount is None or amount <= 0:

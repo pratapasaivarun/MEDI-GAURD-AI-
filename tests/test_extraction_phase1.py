@@ -43,6 +43,14 @@ def test_five_digit_bill_total_is_not_a_procedure_code():
     assert items[0]["cpt_codes"] == []
 
 
+def test_digit_in_service_description_is_preserved_before_amount_column():
+    text = "Vitamin B12 injection 500"
+    items = _extract_line_items(text, [Evidence("bill", "bill.pdf", 1, "pymupdf", text, 100)])
+    assert len(items) == 1
+    assert items[0]["description"] == "Vitamin B12 injection"
+    assert items[0]["amount"] == 500
+
+
 def test_explicit_grand_total_wins_over_subtotal(monkeypatch):
     monkeypatch.setattr(extraction, "_llm_extract_claim_fallback", lambda _text: None)
     claim = normalize_documents([{"text": "Subtotal: Rs. 5,000/-\nGrand Total: Rs. 6,000/-"}])

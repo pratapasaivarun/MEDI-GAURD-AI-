@@ -52,6 +52,13 @@ Amount Paid: INR 31000
     assert not any("do not reconcile" in reason for reason in result.review_reasons)
 
 
+def test_patient_payable_is_not_extracted_as_amount_paid(monkeypatch):
+    monkeypatch.setattr("settlement.requests.post", lambda *_args, **_kwargs: type("Response", (), {"status_code": 503})())
+    text = "Amount payable by patient: INR 13100\nAmount paid to hospital: INR 27900"
+    result = parse_settlement(text.encode(), "settlement.txt")
+    assert result.amount_paid == Decimal("27900.00")
+
+
 @pytest.mark.parametrize(
     ("filename", "content"),
     [("settlement.pdf", b"not a pdf"), ("settlement.exe", b"%PDF-1.4")],

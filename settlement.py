@@ -126,7 +126,7 @@ def parse_settlement(file_bytes: bytes, filename: str) -> SettlementData:
     claim_id = claim_match.group(1) if claim_match else None
     amount_paid = _extract_labeled_amount(
         text,
-        r"amount\s*(?:paid|settled|payable)|"
+        r"amount\s*(?:paid|settled|payable(?!\s+by\s+patient\b))|"
         r"settlement\s*amount|net\s*(?:amount\s*)?(?:paid|payable)|"
         r"approved\s*amount|payable\s+to\s+hospital",
     )

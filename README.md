@@ -125,7 +125,7 @@ Then score available human annotations and regenerate paper tables:
 .\.venv\Scripts\python.exe evaluation\generate_paper_tables.py
 ```
 
-`evaluation/annotations.json` is the annotation source. Retrieval quality, OCR text error, model quality, and expert validation remain unmeasured where verified ground truth is absent. See `evaluation/PAPER_RESULTS.md` for recorded synthetic results and their limits. The extraction evaluation runner currently expects legacy fixtures under `fixtures/phase4/`; those fixtures are not part of this repository, so that runner and `run_full_evaluation.py` need those inputs before use.
+`evaluation/annotations.json` is the annotation source. Retrieval quality, OCR text error, model quality, and expert validation remain unmeasured where verified ground truth is absent. See `evaluation/PAPER_RESULTS.md` for recorded synthetic results and their limits. The extraction runner reads `fixtures/phase4/ground_truth.json`, which is not included here; `evaluation/run_evaluation.py` therefore stops with `FileNotFoundError`, and `run_full_evaluation.py` stops before its later evaluation steps. These missing legacy fixtures are separate from the available pytest fixtures.
 
 Only add manually verified annotations. `evaluation/annotation_template.json` describes the annotation fields. Retrieval annotations need a query, its case ID, and manually confirmed relevant clause IDs. OCR annotations need a checked transcript and reviewer/date metadata. Evidence and appeal-quality scores require human review; blank or unverified labels should remain unevaluated. The retention purge function is available for an authorized administrator to run manually; automatic retention purging is not configured.
 

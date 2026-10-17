@@ -52,6 +52,19 @@ Amount Paid: INR 31000
     assert not any("do not reconcile" in reason for reason in result.review_reasons)
 
 
+def test_total_amount_deducted_summary_row_is_not_a_deduction():
+    text = """Bill Total: INR 41000
+Deductions:
+Room rent | 10000 | cap
+Total Amount Deducted | 10000
+Amount Paid: INR 31000
+"""
+    result = parse_settlement(text.encode(), "settlement.txt")
+    assert len(result.deductions) == 1
+    assert result.deductions[0].category == "ROOM"
+    assert not any("do not reconcile" in reason for reason in result.review_reasons)
+
+
 def test_patient_payable_is_not_extracted_as_amount_paid(monkeypatch):
     monkeypatch.setattr("settlement.requests.post", lambda *_args, **_kwargs: type("Response", (), {"status_code": 503})())
     for patient_label in ("Amount payable by patient: INR 13100", "Patient payable to hospital: INR 13100"):

@@ -95,6 +95,34 @@ def test_mixed_pdf_uses_text_layer_and_ocr_for_scanned_pages(tmp_path, monkeypat
     assert raw["2"] == "OCR scanned page"
 
 
+def test_scanned_pdf_page_is_flagged_for_review_when_ocr_is_unavailable(tmp_path, monkeypatch):
+    path = tmp_path / "mixed-no-ocr.pdf"
+    doc = pymupdf.open()
+    first = doc.new_page()
+    first.insert_text((72, 72), "Text layer page")
+    image_path = tmp_path / "scanned.png"
+    Image.new("RGB", (300, 400), "white").save(image_path)
+    second = doc.new_page()
+    second.insert_image(second.rect, filename=str(image_path))
+    doc.save(path)
+    doc.close()
+
+    class UnavailableOCR:
+        def predict(self, _path):
+            raise RuntimeError("Tesseract is unavailable")
+
+    monkeypatch.setattr(extraction, "_get_ocr", lambda: UnavailableOCR())
+    evidence, raw, page_count = extraction.extract_document(path, "no-ocr", "mixed-no-ocr.pdf")
+    assert page_count == 2
+    assert [(item.page, item.method) for item in evidence] == [(1, "pymupdf"), (2, "ocr_unavailable")]
+    assert raw["2"] == ""
+    normalized = normalize_documents([{
+        "document_type": "medical_bill", "text": "\n".join(item.text for item in evidence),
+        "evidence": [item.to_dict() for item in evidence], "raw_by_page": raw,
+    }])
+    assert "scanned_page_ocr" in normalized.review_fields
+
+
 def test_supported_line_item_date_formats():
     assert extraction.parse_bill_date("05-Mar-2026") == date(2026, 3, 5)
 

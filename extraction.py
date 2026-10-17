@@ -336,7 +336,12 @@ def extract_document(path: str | Path, document_id: str, source_name: str) -> tu
                         tmp_path = Path(tmp.name)
                     try:
                         page.get_pixmap(matrix=pymupdf.Matrix(1.5, 1.5), alpha=False).save(str(tmp_path))
-                        item = _ocr_one_image(_get_ocr(), tmp_path, document_id, source_name, number)
+                        try:
+                            item = _ocr_one_image(_get_ocr(), tmp_path, document_id, source_name, number)
+                        except Exception:
+                            # Preserve page provenance and route the claim to
+                            # review instead of aborting extraction for the PDF.
+                            item = _evidence(document_id, source_name, number, "ocr_unavailable", "", 0.0)
                     finally:
                         tmp_path.unlink(missing_ok=True)
                 if item:
@@ -730,6 +735,8 @@ def normalize_documents(documents: list[dict[str, Any]]) -> NormalizedClaim:
 
     claim.missing_fields = []
     claim.review_fields = []
+    if any(item.method == "ocr_unavailable" for item in evidence):
+        claim.review_fields.append("scanned_page_ocr")
     for required in ("patient_name", "hospital_name", "total_amount"):
         if getattr(claim, required) is None:
             claim.missing_fields.append(required)

@@ -43,6 +43,8 @@ def compare(claim: ClaimResult, settlement: SettlementData, terms: PolicyTerms) 
             clauses[category] = row.clause
     if claim.copay:
         engine_totals["COPAY"] += claim.copay
+    if claim.deductible:
+        engine_totals["DEDUCTIBLE"] += claim.deductible
     insurer_totals: dict[str, Decimal] = defaultdict(lambda: Decimal("0"))
     insurer_reasons: dict[str, list[str]] = defaultdict(list)
     category_review: set[str] = set()
@@ -103,7 +105,7 @@ def compare(claim: ClaimResult, settlement: SettlementData, terms: PolicyTerms) 
             status = "UNEXPLAINED_DEDUCTION" if review_note == "all dated entries fall inside the stay" or engine_amount == 0 else "EXCESS_DEDUCTION"
             # A co-pay difference is already a patient-share amount. Applying
             # the co-pay percentage to it again would understate its effect.
-            payout_effect = difference.quantize(CENT, rounding=ROUND_HALF_UP) if category == "COPAY" else (difference * (Decimal("1") - terms.copay_percent / Decimal("100"))).quantize(CENT, rounding=ROUND_HALF_UP)
+            payout_effect = difference.quantize(CENT, rounding=ROUND_HALF_UP) if category in {"COPAY", "DEDUCTIBLE"} else (difference * (Decimal("1") - terms.copay_percent / Decimal("100"))).quantize(CENT, rounding=ROUND_HALF_UP)
             discrepancy_total += payout_effect
         comparisons.append(CategoryComparison(
             category=category,

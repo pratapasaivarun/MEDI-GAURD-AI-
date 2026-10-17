@@ -50,6 +50,7 @@ class PolicyTerms:
     clauses: dict[str, Clause] = field(default_factory=dict)
     proportionate_deduction: bool = True
     icu_limit_per_day: Decimal | None = None
+    deductible: Decimal = Decimal("0")
 
 
 @dataclass
@@ -69,6 +70,7 @@ class ClaimResult:
     patient_share: Decimal
     insurer_share: Decimal
     status: Literal["computed", "manual_review"]
+    deductible: Decimal = Decimal("0")
     review_reasons: list[str] = field(default_factory=list)
     admission_date: date | None = None
     discharge_date: date | None = None

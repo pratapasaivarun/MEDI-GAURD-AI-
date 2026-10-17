@@ -339,7 +339,7 @@ def evaluate_claim(
         }
         legacy_terms = PolicyTerms(
             annual_limit=typed_terms.sum_insured,
-            deductible=Decimal("0"),
+            deductible=typed_terms.deductible,
             copay_percent=typed_terms.copay_percent,
             room_limit_per_day=typed_terms.room_rent_cap_per_day,
             icu_limit_per_day=typed_terms.icu_limit_per_day,
@@ -395,6 +395,7 @@ def evaluate_claim(
             patient_share=max(Decimal("0"), bill.total_amount - insurer_share),
             insurer_share=insurer_share,
             status="manual_review" if output["status"] == "manual_review" else "computed",
+            deductible=money(output["deductible"]),
             review_reasons=list(output.get("warnings", [])) if output["status"] == "manual_review" else [],
             admission_date=bill.admission_date,
             discharge_date=bill.discharge_date,

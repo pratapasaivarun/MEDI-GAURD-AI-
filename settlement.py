@@ -13,10 +13,16 @@ import requests
 
 from extraction import _infer_line_category, extract_pdf_text
 from models import SettlementData, SettlementDeduction
-from category_names import OTHER_CATEGORY, normalize_category
+from category_names import DEDUCTIBLE_CATEGORY, OTHER_CATEGORY, normalize_category
 
 CENT = Decimal("0.01")
 MAX_FILE_MB = int(os.getenv("MAX_FILE_MB", "15"))
+
+
+def _settlement_category(description: str) -> str:
+    if re.search(r"\bdeductible\b", description, re.IGNORECASE):
+        return DEDUCTIBLE_CATEGORY
+    return _infer_line_category(description)
 
 
 def _money(value: str | int | float | Decimal | None) -> Decimal | None:
@@ -167,7 +173,7 @@ def parse_settlement(file_bytes: bytes, filename: str) -> SettlementData:
             reason = " | ".join(parts[2:]) if len(parts) > 2 else ""
             amount = _money(raw_amount)
             if amount is not None and amount > 0 and description:
-                category = _infer_line_category(description)
+                category = _settlement_category(description)
                 rows.append(SettlementDeduction(category, amount, reason.strip(), normalize_category(category) == OTHER_CATEGORY))
             continue
         match = row_pattern.match(line)
@@ -177,7 +183,7 @@ def parse_settlement(file_bytes: bytes, filename: str) -> SettlementData:
         amount = _money(raw_amount)
         if amount is None or amount <= 0:
             continue
-        category = _infer_line_category(description)
+        category = _settlement_category(description)
         rows.append(SettlementDeduction(category, amount, (reason or "").strip(), normalize_category(category) == OTHER_CATEGORY))
 
     needs_review = False

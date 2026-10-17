@@ -118,3 +118,32 @@ def test_double_applied_copay_is_a_possible_discrepancy():
     assert copay.engine_disallowed == claim.copay
     assert copay.insurer_deducted == claim.copay * 2
     assert copay.payout_effect == claim.copay
+
+
+def test_deductible_is_compared_as_its_own_patient_share_category():
+    bill = BillData(
+        patient_name="Synthetic Patient", policy_number="POL-TEST",
+        admission_date=date(2026, 8, 10), discharge_date=date(2026, 8, 14),
+        room_days=4, total_amount=Decimal("41000"),
+        line_items=[
+            LineItem("Room charges", "ROOM", Decimal("30000")),
+            LineItem("Pharmacy", "PHARMACY", Decimal("8000")),
+            LineItem("Lab", "INVESTIGATION", Decimal("3000")),
+        ],
+    )
+    terms = PolicyTerms(
+        sum_insured=Decimal("500000"), room_rent_cap_per_day=Decimal("5000"),
+        deductible=Decimal("10000"), copay_percent=Decimal("10"),
+    )
+    claim = evaluate_claim(bill, terms)
+    letter = """Bill Total: INR 41000
+Deductions:
+Room rent | 10000 | cap
+Deductible | 10000
+Co-pay | 2100
+Amount Paid: 18900
+"""
+    settlement = parse_settlement(letter.encode(), "settlement.txt")
+    result = compare(claim, settlement, terms)
+    assert result.status == "no_discrepancy"
+    assert next(row for row in result.categories if row.category == "DEDUCTIBLE").insurer_deducted == Decimal("10000")

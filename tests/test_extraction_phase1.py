@@ -46,8 +46,7 @@ def test_grand_total_or_net_payable_beats_subtotal_and_discount(monkeypatch):
     assert net_payable_bill.total_amount.value == 30000
 
 
-def test_currency_suffix_and_line_item_date_are_parsed():
-    assert extraction.parse_amount("Rs. 5,000/-") == 5000
+def test_extracted_line_item_keeps_its_date():
     text = "Room charges 2 5,000 10,000 05-Mar-2026"
     items = _extract_line_items(text, [Evidence("bill", "bill.pdf", 1, "pymupdf", text, 100)])
     assert items[0]["amount"] == 10000

@@ -54,9 +54,10 @@ Amount Paid: INR 31000
 
 def test_patient_payable_is_not_extracted_as_amount_paid(monkeypatch):
     monkeypatch.setattr("settlement.requests.post", lambda *_args, **_kwargs: type("Response", (), {"status_code": 503})())
-    text = "Amount payable by patient: INR 13100\nAmount paid to hospital: INR 27900"
-    result = parse_settlement(text.encode(), "settlement.txt")
-    assert result.amount_paid == Decimal("27900.00")
+    for patient_label in ("Amount payable by patient: INR 13100", "Patient payable to hospital: INR 13100"):
+        text = f"{patient_label}\nAmount paid to hospital: INR 27900"
+        result = parse_settlement(text.encode(), "settlement.txt")
+        assert result.amount_paid == Decimal("27900.00")
 
 
 @pytest.mark.parametrize(

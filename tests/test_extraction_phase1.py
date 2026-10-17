@@ -57,6 +57,19 @@ def test_grand_total_or_net_payable_beats_subtotal_and_discount(monkeypatch):
     assert net_payable_bill.total_amount.value == 30000
 
 
+def test_total_label_priority_and_last_same_priority_value(monkeypatch):
+    monkeypatch.setattr(extraction, "_llm_extract_claim_fallback", lambda _text: None)
+    cases = (
+        ("Sub Total 31000\nTax 1550\nTotal 32550", 32550),
+        ("Sub Total 31000\nDiscount 1000\nNet Amount 30000", 30000),
+        ("Gross Bill Amount 31000\nNet Bill Amount 30000", 30000),
+        ("Total Amount 31000\nTotal Amount 30000", 30000),
+    )
+    for text, expected in cases:
+        claim = normalize_documents([{"text": text}])
+        assert claim.total_amount.value == expected
+
+
 def test_extracted_line_item_keeps_its_date():
     text = "Room charges 2 5,000 10,000 05-Mar-2026"
     items = _extract_line_items(text, [Evidence("bill", "bill.pdf", 1, "pymupdf", text, 100)])

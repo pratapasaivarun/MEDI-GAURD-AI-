@@ -655,14 +655,33 @@ def normalize_documents(documents: list[dict[str, Any]]) -> NormalizedClaim:
             claim.admission_date.needs_review = True
             claim.discharge_date.needs_review = True
     claim.diagnosis = find([r"diagnosis\s*(?:[:#-]\s*)?([^\n]+)"], "diagnosis")
-    claim.total_amount = find([
-        r"grand\s+total\s*(?:[:#-]\s*)?(?:rs\.?|inr|₹|\$)?\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)",
-        r"(?:net\s+bill\s+amount|gross\s+bill\s+amount|total\s+amount|net\s+payable|amount\s+payable|invoice\s+total|bill\s+total)\s*(?:[:#-]\s*)?(?:rs\.?|inr|₹|\$)?\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)",
-        r"(?<!sub)\btotal\b\s*(?:[:#-]\s*)?(?:rs\.?|inr|₹|\$)?\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)",
-        r"grand\s+total\s*(?:[:#-]\s*)?([0-9][0-9,]*(?:\.[0-9]{1,2})?)\s*(?:rs\.?|inr|₹|\$)?",
-        r"(?:net\s+bill\s+amount|gross\s+bill\s+amount|total\s+amount|net\s+payable|amount\s+payable|invoice\s+total|bill\s+total)\s*(?:[:#-]\s*)?([0-9][0-9,]*(?:\.[0-9]{1,2})?)\s*(?:rs\.?|inr|₹|\$)?",
-        r"(?<!sub)\btotal\b\s*(?:[:#-]\s*)?([0-9][0-9,]*(?:\.[0-9]{1,2})?)\s*(?:rs\.?|inr|₹|\$)?",
-    ], "total_amount", amount=True)
+    total_priorities = (
+        ("grand total",),
+        ("net bill amount", "net payable", "net amount"),
+        ("amount payable",),
+        ("total amount", "bill total", "invoice total"),
+        ("gross bill amount",),
+        ("total",),
+    )
+    claim.total_amount = None
+    for labels in total_priorities:
+        candidates = []
+        for label in labels:
+            label_pattern = re.escape(label).replace(r"\ ", r"\s+")
+            pattern = re.compile(
+                rf"(?<!\w){label_pattern}(?!\w)\s*(?:[:#-]\s*)?(?:rs\.?|inr|₹|\$)?\s*(?P<amount>[0-9][0-9,]*(?:\.[0-9]{{1,2}})?)(?:\s*(?:rs\.?|inr|₹|\$))?",
+                re.IGNORECASE,
+            )
+            for match in pattern.finditer(all_text):
+                if label == "total" and re.search(r"sub[\s-]*$", all_text[max(0, match.start() - 20):match.start()], re.IGNORECASE):
+                    continue
+                candidates.append(match)
+        if candidates:
+            matched = max(candidates, key=lambda match: match.start())
+            value = parse_amount(matched.group("amount"))
+            ev = next((item for item in evidence if matched.group(0).lower() in item.text.lower()), best)
+            claim.total_amount = _field("total_amount", value, ev)
+            break
     if claim.patient_name and isinstance(claim.patient_name.value, str):
         claim.patient_name.value = re.split(r"\s+(?:age|sex|uhid|ip|admission|discharge|diagnosis)\b", claim.patient_name.value, flags=re.IGNORECASE)[0].strip()
     if claim.hospital_name and isinstance(claim.hospital_name.value, str):

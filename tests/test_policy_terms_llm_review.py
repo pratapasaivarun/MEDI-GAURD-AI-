@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 import policy_terms
+import app
 
 
 def test_llm_policy_term_is_unverified_with_reduced_confidence(monkeypatch):
@@ -28,3 +29,8 @@ def test_excluded_sentence_yields_short_unverified_policy_term(monkeypatch):
     assert exclusion["value"] == ["cosmetic surgery"]
     assert exclusion["needs_review"] is True
     assert exclusion["source_page"] == 4
+
+
+def test_policy_review_labels_distinguish_llm_estimates_from_other_candidates():
+    assert app._policy_term_verification_label({"method": "llm_fallback", "needs_review": True}) == "UNVERIFIED LLM estimate"
+    assert app._policy_term_verification_label({"method": "deterministic_keyword", "needs_review": True}) == "UNVERIFIED policy candidate"

@@ -1530,6 +1530,14 @@ def _policy_applies_proportionate_deduction(policy_text: str) -> bool:
     return bool(re.search(rf"\b{term}\b.{{0,40}}\b(?:applies?|applied|applicable)\b", text, re.IGNORECASE))
 
 
+def _policy_term_verification_label(term: dict[str, Any]) -> str:
+    if term.get("method") == "llm_fallback":
+        return "UNVERIFIED LLM estimate"
+    if term.get("needs_review"):
+        return "UNVERIFIED policy candidate"
+    return "candidate"
+
+
 def saved_policy_text(claim_id: str) -> str:
     text_parts = []
     for doc in claim_documents(claim_id):
@@ -1704,7 +1712,7 @@ def _render_policy_management(user: dict) -> None:
                     st.caption('Candidate terms from text matching are not reviewer-verified. LLM estimates are unverified and require a reviewer to confirm the policy value and enter its source page.')
                     for term_name, term_value in candidates.items():
                         if isinstance(term_value, dict):
-                            verification = 'UNVERIFIED LLM estimate' if term_value.get('method') == 'llm_fallback' or term_value.get('needs_review') else 'candidate'
+                            verification = _policy_term_verification_label(term_value)
                             st.caption(f"{term_name.replace('_', ' ').title()}: {term_value.get('value')} · {verification} · source page {term_value.get('source_page') or 'unknown'}")
                     with st.form(f"policy_search_{version['version_id']}"):
                         policy_query = st.text_input('Search this policy', placeholder='For example: room limit, waiting period, or exclusions', key=f"policy_query_{version['version_id']}")

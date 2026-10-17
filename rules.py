@@ -248,7 +248,7 @@ def evaluate_line_item(item: dict, terms: PolicyTerms, claim_context: dict | Non
         return {**result, "status": "needs_review", "applied_rule": "exclusion", "calculation": "This item may match a policy exclusion and requires reviewer confirmation."}
 
     # ICU Limit Check
-    is_icu = category == ICU_CATEGORY.lower() or "icu" in desc_lower or "intensive care" in desc_lower
+    is_icu = category == ICU_CATEGORY.lower() or re.search(r"\bicu\b", desc_lower) is not None or re.search(r"\bintensive\s+care\b", desc_lower) is not None
     if is_icu:
         icu_limit = terms.icu_limit_per_day or terms.sub_limits.get("icu")
         if icu_limit is None:

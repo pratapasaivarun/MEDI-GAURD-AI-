@@ -3,7 +3,7 @@ from decimal import Decimal
 from extraction import _infer_line_category
 from category_names import ICU_CATEGORY
 from models import BillData, LineItem, PolicyTerms as TypedPolicyTerms
-from rules import evaluate_claim
+from rules import PolicyTerms, evaluate_claim, evaluate_line_item
 from policy_terms import extract_policy_terms, terms_from_json
 
 
@@ -41,6 +41,14 @@ def test_icu_without_stated_policy_cap_requires_manual_review():
     )
     assert result.status == "manual_review"
     assert result.lines[0].reason_code == "ICU_LIMIT_NOT_STATED"
+
+
+def test_articular_injection_is_not_misclassified_as_icu():
+    result = evaluate_line_item(
+        {"description": "Articular injection", "category": "other", "amount": 2000},
+        PolicyTerms(icu_limit_per_day=None),
+    )
+    assert result["applied_rule"] != "icu_limit_not_stated"
 
 
 def test_policy_icu_daily_cap_is_extracted_and_loaded_from_reviewed_json():

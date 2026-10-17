@@ -30,12 +30,10 @@ MONEY = Decimal("0.01")
 
 @dataclass
 class PolicyTerms:
-    # Defaults are retained only for backwards-compatible unit tests. The app
-    # passes terms extracted from the active policy edition.
-    annual_limit: Decimal | None = Decimal("500000")
-    deductible: Decimal | None = Decimal("10000")
-    copay_percent: Decimal | None = Decimal("10")
-    room_limit_per_day: Decimal | None = Decimal("5000")
+    annual_limit: Decimal | None = None
+    deductible: Decimal | None = None
+    copay_percent: Decimal | None = None
+    room_limit_per_day: Decimal | None = None
     icu_limit_per_day: Decimal | None = None
     pre_hospitalization_days: int | None = None
     post_hospitalization_days: int | None = None

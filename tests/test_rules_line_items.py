@@ -69,3 +69,11 @@ def test_typed_contract_uses_the_same_deterministic_rule_path():
     assert result.status == "computed"
     assert result.lines[0].allowed == Decimal("20000.00")
     assert result.lines[0].reason_code == "ROOM_CAP"
+
+
+def test_missing_policy_terms_default_to_manual_review():
+    result = evaluate_claim(Decimal("10000"))
+    assert result["status"] == "manual_review"
+    assert result["deductible"] == 0
+    assert result["payable_amount"] == 0
+    assert result["warnings"] == ["Required policy terms missing: annual_limit, deductible, copay_percent"]

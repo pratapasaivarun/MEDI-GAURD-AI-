@@ -151,6 +151,8 @@ def parse_settlement(file_bytes: bytes, filename: str) -> SettlementData:
             continue
         if not in_deductions:
             continue
+        if re.match(r"^\s*(?:total(?:\s+deductions?)?|deductions?\s+total)\s*(?:\||\t|:|\s{2,}|$)", lowered):
+            continue
         if re.search(
             r"(?:amount\s*(?:paid|settled|claimed|payable)|claimed\s*amount|"
             r"amount\s*claimed|settlement\s*amount|net\s*(?:amount\s*)?(?:paid|payable)|"

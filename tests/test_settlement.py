@@ -39,6 +39,19 @@ def test_settlement_reconciliation_failure_requires_review():
     assert any("do not reconcile" in reason for reason in result.review_reasons)
 
 
+def test_total_deductions_summary_row_is_not_a_deduction():
+    text = """Bill Total: INR 41000
+Deductions:
+Room rent | 10000 | cap
+Total deductions | 10000
+Amount Paid: INR 31000
+"""
+    result = parse_settlement(text.encode(), "settlement.txt")
+    assert len(result.deductions) == 1
+    assert result.deductions[0].category == "ROOM"
+    assert not any("do not reconcile" in reason for reason in result.review_reasons)
+
+
 @pytest.mark.parametrize(
     ("filename", "content"),
     [("settlement.pdf", b"not a pdf"), ("settlement.exe", b"%PDF-1.4")],

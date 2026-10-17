@@ -36,6 +36,11 @@ def test_category_matches_whole_words():
     assert _infer_line_category("ICU charges") == "ICU"
 
 
+def test_consultation_and_diagnostic_test_category_keywords():
+    assert _infer_line_category("Consultation - Dr Rao") == "DOCTOR_NURSING"
+    assert _infer_line_category("ECG") == "INVESTIGATION"
+
+
 def test_mixed_pdf_uses_text_layer_and_ocr_for_scanned_pages(tmp_path, monkeypatch):
     path = tmp_path / "mixed.pdf"
     doc = pymupdf.open()

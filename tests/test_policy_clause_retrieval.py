@@ -2,6 +2,8 @@ from contextlib import contextmanager
 from types import SimpleNamespace
 
 import app
+import pymupdf
+from policy_index import chunk_policy_text
 
 
 def test_claim_clause_map_uses_indexed_coverage_evidence_and_filters_exclusions(monkeypatch):
@@ -58,3 +60,17 @@ def test_coverage_sentence_survives_exclusion_in_later_sentence(monkeypatch):
 
     clauses = app._claim_policy_clause_map("claim-1")
     assert clauses["PHARMACY"].text == "Clause 3.4: Pharmacy expenses are payable."
+
+
+def test_demo_policy_pharmacy_query_returns_a_usable_coverage_clause(monkeypatch):
+    policy_path = app.Path(__file__).resolve().parents[1] / "demo_assets" / "partial_policy.pdf"
+    with pymupdf.open(policy_path) as document:
+        chunks = [chunk for page_number, page in enumerate(document, start=1) for chunk in chunk_policy_text(page.get_text(), page=page_number)]
+    monkeypatch.setattr(app, "active_policy_for_claim", lambda *_args: {"version_id": "demo-partial"})
+    monkeypatch.setattr(app, "retrieve_indexed_policy_evidence", lambda query, _policy_id, limit: [
+        {**chunk, "source_name": "partial_policy.pdf"} for chunk in chunks
+        if "pharmacy" in query.lower() and "pharmacy" in chunk["text"].lower()
+    ][:limit])
+
+    clauses = app._claim_policy_clause_map("claim-demo")
+    assert clauses["PHARMACY"].text == "Prescribed pharmacy medicines during hospitalization are payable within the annual limit."

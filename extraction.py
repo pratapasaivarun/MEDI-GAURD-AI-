@@ -110,7 +110,7 @@ def parse_bill_date(raw: Any) -> date | None:
             return date(year, second, first)
         except ValueError:
             return None
-    for fmt in ("%d-%b-%y", "%d-%B-%y", "%d-%b-%Y", "%d-%B-%Y", "%d %b %Y", "%d %B %Y"):
+    for fmt in ("%d-%b-%y", "%d-%B-%y", "%d-%b-%Y", "%d-%B-%Y", "%d %b %Y", "%d %B %Y", "%b %d, %Y", "%B %d, %Y"):
         try:
             return datetime.strptime(value, fmt).date()
         except ValueError:

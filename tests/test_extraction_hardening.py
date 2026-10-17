@@ -13,6 +13,11 @@ def test_supported_bill_date_formats_and_day_month_preference():
     assert parse_bill_date("03/04/2026") == date(2026, 4, 3)
 
 
+def test_supported_month_first_bill_date_formats():
+    assert parse_bill_date("Aug 10, 2026") == date(2026, 8, 10)
+    assert parse_bill_date("August 10, 2026") == date(2026, 8, 10)
+
+
 def test_rules_date_parser_uses_the_same_formats_and_interpretation():
     for raw in ("12/31/2026", "5-Mar-26", "05 Mar 2026", "2026-03-05", "03/04/2026"):
         assert parse_date_flexible(raw) == parse_bill_date(raw)

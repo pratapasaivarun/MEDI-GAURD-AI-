@@ -112,6 +112,14 @@ These are the expected values, not results from the software. Date cases assume 
 
 The prior paper numbers (79.17% extraction, 68.75% OCR fields and 21/21 core rules) describe an older dataset/run and are not comparable to these rebuilt three-document results. They will be marked outdated in the documentation cleanup phase.
 
+## Phase 5 — Playwright browser verification (partial)
+
+**What changed:** No application code changed for this browser check. Playwright opened the real Streamlit app, created a fictional claimant account, registered a fictional claim, uploaded the three fictional PDFs, submitted them, and captured the result page. After the refactor, the page showed Manual Review while the policy terms awaited reviewer confirmation. The settlement fixture also had a different claim ID from the test registration, so the app correctly added a claim-ID-mismatch review reason. Screenshots were saved outside the repository under `C:\Users\prata\mediguard-final-*.png`.
+
+**Verify command:** Start the app with `.\.venv\Scripts\python.exe -m streamlit run app.py --server.address 127.0.0.1 --server.port 8519 --server.headless true --server.fileWatcherType none`; use Playwright to register a fictional claim, attach `fixtures/demo_cases/a_match/{bill,policy,settlement}.pdf`, submit, and inspect Claim result.
+
+**Observed output:** Account creation, registration, upload, document extraction and Claim result screen worked. The result was Manual Review; the app did not show raw exception text or make up a payout. This was a single browser scenario. The three complete browser demo cases, live Ollama ON/OFF browser comparison, and five invalid-upload scenarios were **not** completed. Python workflow and upload validation tests cover related paths, but they do not replace this browser matrix. Phase 5 is therefore partial, not passed.
+
 ## Phase 6 — Structure and cleanup
 
 **What changed:** Added `services/auth.py`, `services/storage.py`, and `services/orchestration.py`, plus `ui/routing.py`; `app.py` now delegates password/role primitives, local DB/path/upload validation, assessment sequencing, and page routing through these modules. Claim and reviewer UI errors now log details and show friendly messages instead of raw exception text. `APP_BASE_URL` now defaults to Streamlit's documented port 8501 in code and `.env.example`; README and historical audit notes were updated. Added clean-worktree ignores for phase evidence and pytest scratch output. Added service-boundary regression tests.
@@ -121,3 +129,13 @@ The prior paper numbers (79.17% extraction, 68.75% OCR fields and 21/21 core rul
 **Expected output:** all tests pass with Ollama disabled; no internal exception details are sent to claim/reviewer error banners.
 
 **Observed output:** `198 passed in 29.81s`.
+
+## Phase 7 — Final report and closeout
+
+**What changed:** Added `FINAL_REPORT.md` and `docs/architecture.svg`. The report records the actual math, test, evaluation and browser evidence and names unverified areas rather than presenting them as complete.
+
+**Verify command:** `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe -m pytest -q --basetemp 'C:\Users\prata\mediguard_phase7_pytest'`.
+
+**Expected output:** all tests pass with Ollama disabled; the report's test count matches the final output.
+
+**Observed output:** `198 passed in 29.89s`. The report is 645 words, and `docs/architecture.svg` parses as valid XML. No `st.error(str(exc))` or `{exc}` raw-exception banners remain in `ui/claim_pages.py`.

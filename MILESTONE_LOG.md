@@ -96,3 +96,18 @@ These are the expected values, not results from the software. Date cases assume 
 **Expected output:** all tests pass with Ollama disabled; model failures select template explanation and rule results remain unchanged.
 
 **Observed output:** `192 passed in 32.04s`.
+
+## Phase 4 — Synthetic evaluation data and scores
+
+**What changed:** Restored `fixtures/phase4/ground_truth.json` from three labeled fictional bill fixtures and verified the field values against extraction output. Added a source-backed, synthetic policy retrieval query label. Updated the system evaluator to print end-to-end app-status agreement with a denominator and explicit scope; it keeps standalone core rule accuracy marked not evaluated when reviewer-confirmation gates prevent `rules.evaluate_claim` from running.
+
+**Verify commands:**
+- `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe evaluation/run_evaluation.py --repeats 1 --output evaluation/.phase4-extraction.json`
+- `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe evaluation/run_system_evaluation.py --rules-only --output evaluation/.phase4-system-final.json`
+- `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe -m pytest -q --basetemp 'C:\Users\prata\mediguard_phase4_pytest'`
+
+**Expected output:** Extraction runner exits 0 with a real field numerator/denominator; system runner exits 0 with a 24-case status comparison plus labeled retrieval metrics; full test suite passes.
+
+**Observed output:** Extraction `12/12` fields correct (100.00%) over 3 fictional bills. System app-status agreement `12/24` (50.00%); all 24 app evaluations stopped at the policy reviewer-confirmation gate, so standalone rule-engine accuracy remains honestly `Not Evaluated`. Retrieval query metrics: `1` annotated query, precision@1 `1.00`, precision@3 `0.33`, precision@5 `0.20`, recall@3/5 `1.00`; this is a tiny synthetic set. Full suite: `194 passed in 34.84s`.
+
+The prior paper numbers (79.17% extraction, 68.75% OCR fields and 21/21 core rules) describe an older dataset/run and are not comparable to these rebuilt three-document results. They will be marked outdated in the documentation cleanup phase.

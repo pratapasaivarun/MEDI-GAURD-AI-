@@ -383,6 +383,15 @@ def run() -> int:
                         "embedding_backend": policy_index.embedding_backend_status(),
                         "cpu_only_target": True},
         "models": all_model_results,
+        "system_status_agreement": {
+            name: {
+                "correct": sum(row.get("expected_rule_status") == row.get("rule_engine_status") for row in model_result.get("cases", [])),
+                "denominator": len(model_result.get("cases", [])),
+                "accuracy_percent": (100 * sum(row.get("expected_rule_status") == row.get("rule_engine_status") for row in model_result.get("cases", [])) / len(model_result.get("cases", [])) if model_result.get("cases") else None),
+                "scope": "End-to-end app status versus fictional case labels; includes fail-closed reviewer gates and is not a standalone rule-math score.",
+            }
+            for name, model_result in all_model_results.items()
+        },
         "retrieval_annotation_scores": retrieval_metric,
         "retrieval_runs_by_query_id": retrieval_runs,
         "retrieval_quality": PENDING if not retrieval_runs else "Scored only on explicitly annotated queries",
@@ -415,6 +424,7 @@ def run() -> int:
                                      "decision_agent", "report_generation", "end_to_end")}})
     print(json.dumps({"output": str(args.output), "csv": str(csv_path), "case_count": len(entries),
                       "models_run": list(all_model_results), "embedding_backend": result["environment"]["embedding_backend"],
+                      "system_status_agreement": result["system_status_agreement"],
                       "rule_accuracy": {name: model["scores"]["rule_engine"]["accuracy_percent"]
                                         for name, model in all_model_results.items()},
                       "decision_accuracy": {name: model["scores"]["decision_agent"]["accuracy_percent"]

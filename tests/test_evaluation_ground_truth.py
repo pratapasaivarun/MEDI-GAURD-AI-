@@ -1,0 +1,22 @@
+import json
+from pathlib import Path
+
+
+def test_phase4_ground_truth_contains_only_existing_fictional_bills():
+    root = Path(__file__).parents[1]
+    manifest = json.loads((root / "fixtures/phase4/ground_truth.json").read_text(encoding="utf-8"))
+    assert manifest["synthetic_only"] is True
+    assert manifest["label"] == "FICTIONAL SAMPLE"
+    assert len(manifest["fixtures"]) == 3
+    for fixture in manifest["fixtures"]:
+        assert fixture["label"] == "FICTIONAL SAMPLE"
+        assert (root / "fixtures/phase4" / fixture["file"]).is_file()
+        assert set(fixture["expected"]) == {"patient_name", "hospital_name", "policy_number", "total_amount"}
+
+
+def test_retrieval_labels_have_query_and_nonempty_source_clause_ids():
+    root = Path(__file__).parents[1]
+    annotations = json.loads((root / "evaluation/annotations.json").read_text(encoding="utf-8"))
+    queries = annotations["retrieval_queries"]
+    assert queries
+    assert all(q["query"].strip() and q["case_id"] and q["relevant_clause_ids"] for q in queries)

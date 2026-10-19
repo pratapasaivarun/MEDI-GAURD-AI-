@@ -1,13 +1,43 @@
 {
   "schema_version": 1,
-  "dataset_notice": "Only manually verified transcripts, clause relevance labels, and human review scores belong here. Existing synthetic case outcome labels are read directly from their case.json manifests.",
+  "dataset_notice": "Fictional-only annotations. Extraction field values are transcribed from fixture case manifests and checked against extraction output. Retrieval relevant clause IDs point to exact matching passages from a synthetic policy PDF. No OCR transcript or human expert judgment is labeled.",
   "ocr_transcripts": [
-    {"document_id": "bill_phone_photo.png", "reference_text": null, "verified_by": null, "verified_at": null},
-    {"document_id": "bill_low_light.jpg", "reference_text": null, "verified_by": null, "verified_at": null},
-    {"document_id": "bill_skewed_compressed.jpg", "reference_text": null, "verified_by": null, "verified_at": null},
-    {"document_id": "bill_scanned_image_only.pdf", "reference_text": null, "verified_by": null, "verified_at": null}
+    {
+      "document_id": "bill_phone_photo.png",
+      "reference_text": null,
+      "verified_by": null,
+      "verified_at": null
+    },
+    {
+      "document_id": "bill_low_light.jpg",
+      "reference_text": null,
+      "verified_by": null,
+      "verified_at": null
+    },
+    {
+      "document_id": "bill_skewed_compressed.jpg",
+      "reference_text": null,
+      "verified_by": null,
+      "verified_at": null
+    },
+    {
+      "document_id": "bill_scanned_image_only.pdf",
+      "reference_text": null,
+      "verified_by": null,
+      "verified_at": null
+    }
   ],
-  "retrieval_queries": [],
+  "retrieval_queries": [
+    {
+      "query_id": "01_standard_approved-room-limit",
+      "case_id": "01_standard_approved",
+      "query": "room limit per day",
+      "relevant_clause_ids": [
+        "32d35037b9f0b3dcf1febf9e78344e8cf105a9618cd2086280ed4602da3148e7"
+      ],
+      "relevance_basis": "The exact fictional policy passage text is INR 5000 in the room_limit_per_day section on page 1."
+    }
+  ],
   "case_ground_truth": [],
   "evidence_reviews": [],
   "appeal_reviews": []

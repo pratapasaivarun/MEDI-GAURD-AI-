@@ -14,7 +14,7 @@ from mediguard.reporting.reports import FORBIDDEN_APPEAL_WORDS, build_comparison
 from mediguard.engine.category_names import ROOM_CATEGORY, normalize_category
 
 
-FIXTURE_DIR = Path(__file__).parent / "fixtures" / "demo_case"
+FIXTURE_DIR = Path(__file__).resolve().parents[1] / "fixtures" / "demo_case"
 
 
 class Upload:

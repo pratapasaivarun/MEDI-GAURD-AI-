@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 def test_phase4_ground_truth_contains_only_existing_fictional_bills():
-    root = Path(__file__).parents[1]
+    root = Path(__file__).parents[2]
     manifest = json.loads((root / "fixtures/phase4/ground_truth.json").read_text(encoding="utf-8"))
     assert manifest["synthetic_only"] is True
     assert manifest["label"] == "FICTIONAL SAMPLE"
@@ -15,7 +15,7 @@ def test_phase4_ground_truth_contains_only_existing_fictional_bills():
 
 
 def test_retrieval_labels_have_query_and_nonempty_source_clause_ids():
-    root = Path(__file__).parents[1]
+    root = Path(__file__).parents[2]
     annotations = json.loads((root / "evaluation/annotations.json").read_text(encoding="utf-8"))
     queries = annotations["retrieval_queries"]
     assert len(queries) >= 20
@@ -27,7 +27,7 @@ def test_retrieval_labels_have_query_and_nonempty_source_clause_ids():
 
 
 def test_every_scenario_uses_explicit_fixture_reviewer_confirmed_terms():
-    root = Path(__file__).parents[1]
+    root = Path(__file__).parents[2]
     index = json.loads((root / "fixtures/claim_scenarios/case_index.json").read_text(encoding="utf-8"))
     review = json.loads((root / "evaluation/reviewer_confirmed_policy_terms.json").read_text(encoding="utf-8"))
     assert review["synthetic_only"] is True

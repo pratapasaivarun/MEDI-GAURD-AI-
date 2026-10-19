@@ -181,7 +181,7 @@ def test_reviewer_saved_line_item_keeps_confirmed_date(tmp_path, monkeypatch):
     monkeypatch.setenv("MEDIGUARD_DB_PATH", str(tmp_path / "review.sqlite"))
     monkeypatch.setenv("MEDIGUARD_STORAGE_DIR", str(tmp_path / "storage"))
     monkeypatch.setenv("CHROMA_DIR", str(tmp_path / "chroma"))
-    sys.path.insert(0, str(extraction.Path(__file__).resolve().parents[1]))
+    sys.path.insert(0, str(extraction.Path(__file__).resolve().parents[2]))
     import mediguard.services.application as app
 
     app.init_db()

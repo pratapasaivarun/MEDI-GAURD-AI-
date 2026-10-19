@@ -6,7 +6,7 @@ import pytest
 from mediguard.ingestion.settlement import parse_settlement
 
 
-FIXTURES = Path(__file__).parents[1] / "fixtures" / "settlements"
+FIXTURES = Path(__file__).parents[2] / "fixtures" / "settlements"
 EXPECTED_DEDUCTIONS = [
     ("ADMISSION", Decimal("2000.00")),
     ("ROOM", Decimal("4000.00")),

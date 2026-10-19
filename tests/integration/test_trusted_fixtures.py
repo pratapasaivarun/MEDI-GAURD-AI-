@@ -56,7 +56,7 @@ def test_fictional_word_does_not_confirm_uploaded_policy_when_setting_off(monkey
 
 
 def test_allowlisted_bundled_fixture_confirms_only_when_setting_on(monkeypatch, tmp_path):
-    fixture = Path(__file__).parents[1] / "fixtures" / "claim_scenarios" / "approved" / "01_standard_approved" / "policy.pdf"
+    fixture = Path(__file__).parents[2] / "fixtures" / "claim_scenarios" / "approved" / "01_standard_approved" / "policy.pdf"
     policy = _process_policy(
         monkeypatch, tmp_path, fixture.read_bytes(),
         "FICTIONAL SAMPLE policy with annual limit, deductible and copay.", True,

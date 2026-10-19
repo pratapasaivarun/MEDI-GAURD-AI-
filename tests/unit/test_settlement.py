@@ -8,7 +8,7 @@ import pymupdf
 from mediguard.ingestion.settlement import parse_settlement
 
 
-FIXTURE = Path(__file__).parent / "fixtures" / "settlement" / "settlement_demo.txt"
+FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "settlement" / "settlement_demo.txt"
 
 
 def test_fictional_text_settlement_parses_amounts_and_deductions():

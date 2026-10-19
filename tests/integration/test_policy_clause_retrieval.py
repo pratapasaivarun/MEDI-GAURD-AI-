@@ -63,7 +63,7 @@ def test_coverage_sentence_survives_exclusion_in_later_sentence(monkeypatch):
 
 
 def test_demo_policy_pharmacy_query_returns_a_usable_coverage_clause(monkeypatch):
-    policy_path = app.Path(__file__).resolve().parents[1] / "demo_assets" / "partial_policy.pdf"
+    policy_path = app.Path(__file__).resolve().parents[2] / "demo_assets" / "partial_policy.pdf"
     with pymupdf.open(policy_path) as document:
         chunks = [chunk for page_number, page in enumerate(document, start=1) for chunk in chunk_policy_text(page.get_text(), page=page_number)]
     monkeypatch.setattr(app, "active_policy_for_claim", lambda *_args: {"version_id": "demo-partial"})

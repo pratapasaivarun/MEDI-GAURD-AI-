@@ -57,7 +57,7 @@
 
 - Added the typed pipeline contracts in `models.py`; kept them independent of the existing runtime during this baseline phase.
 - Disabled core demo mode by default, removed published demo credentials, and made demo administrator creation require `MEDIGUARD_ADMIN_PASSWORD` through `run_demo.py` only.
-- Added the prototype/sample-data warning, corrected the MediGuard spelling in user-facing copy, pinned application dependencies, moved pytest to `requirements-dev.txt`, and replaced PyMuPDF's legacy `fitz` import.
+- Added the prototype/sample-data warning, corrected the MediGuard spelling in user-facing copy, pinned application dependencies, moved pytest to `tests/requirements-dev.txt`, and replaced PyMuPDF's legacy `fitz` import.
 - Removed duplicate `.gitignore` entries.
 - Tests: baseline `pytest tests/ -q --basetemp=tmp/pytest_baseline`: **32 passed in 69.72s**. No new tests in this phase.
 
@@ -114,7 +114,7 @@
 - Added a seven-case synthetic comparison evaluation and runner; its generated outcomes match the declared expectations.
 - Comparison now reconciles co-pay deductions explicitly and calculates their patient-share effect without applying the co-pay percentage twice.
 - Moved the application stylesheet and reusable escaped presentation helpers into the `ui` package while retaining `mediguard/services/application.py`'s current rendering API for compatibility.
-- Moved welcome/login screens into `mediguard/ui/auth_pages.py` and claim/result/reviewer screens into `mediguard/ui/claim_pages.py`; `mediguard.services.application.main()` now routes to those pages. Kept `appeal_draft_available` in `mediguard/services/application.py` as a compatibility helper used by tests and callers.
+- Moved welcome/login screens into `mediguard/mediguard/ui/auth_pages.py` and claim/result/reviewer screens into `mediguard/mediguard/ui/claim_pages.py`; `mediguard.services.application.main()` now routes to those pages. Kept `appeal_draft_available` in `mediguard/services/application.py` as a compatibility helper used by tests and callers.
 - Added `.gitattributes` with LF text normalization and committed the renormalization separately. Appeal-letter insurer reasons now end as a sentence before the review point. README documents the prototype pipeline, manual retention purge, and known limitations: no MFA/email, synthetic data only, multiple fictional settlement layout examples, and estimates only.
 - Final verification added a stylesheet structure check and changed the end-to-end category assertion to use the shared category constant.
 

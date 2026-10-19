@@ -47,7 +47,7 @@ def test_real_policy_terms_are_not_used_until_reviewer_confirmed(tmp_path: Path,
     monkeypatch.setenv("MEDIGUARD_DB_PATH", str(tmp_path / "review.sqlite"))
     monkeypatch.setenv("MEDIGUARD_STORAGE_DIR", str(tmp_path / "storage"))
     monkeypatch.setenv("CHROMA_DIR", str(tmp_path / "chroma"))
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
     import mediguard.services.application as app
 
     app.init_db()

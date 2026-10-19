@@ -24,4 +24,4 @@ All amounts are INR. Unless stated otherwise, policy terms are explicitly confir
 
 Date cases assume policy wording explicitly covers the stated pre-hospital window and inpatient dates. Proportional deduction is omitted because scope can depend on policy wording; uncertain terms require reviewer confirmation.
 
-**Verify after implementation:** `python -m pytest -q tests/test_golden_cases.py tests/test_comparison_golden_cases.py`.
+**Verify after implementation:** `python -m pytest -q tests/golden/test_golden_cases.py tests/golden/test_comparison_golden_cases.py`.

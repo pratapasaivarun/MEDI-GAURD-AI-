@@ -63,7 +63,7 @@ There is one root `README.md`. The source is partitioned sensibly around the cal
 
 ### Verification run on 2026-10-17
 
-- `.venv\\Scripts\\python.exe -m pytest -q --basetemp=.pytest-audit-final` — **116 passed** in 104.16 seconds after removing the unused fixtures.
+- `.venv\\Scripts\\python.exe -m pytest -q tests --basetemp=.pytest-audit-final` — **116 passed** in 104.16 seconds after removing the unused fixtures.
 - Python `compileall` for the app, business modules, UI, and tests — passed.
 - `git diff --check` — passed after report formatting was corrected.
 - The supplied ZIP was compared with the current Git checkout; all **173 tracked files matched**.

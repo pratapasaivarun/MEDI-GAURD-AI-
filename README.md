@@ -94,13 +94,13 @@ The image does not create an administrator by default. If administrator access i
 Install development dependencies and run the suite:
 
 ```powershell
-pip install -r requirements-dev.txt
+pip install -r tests/requirements-dev.txt
 .\.venv\Scripts\python.exe -m pytest tests/ -v --basetemp=tmp/pytest_tmp
 ```
 
 The tests cover deterministic rules, extraction validation, settlement parsing, comparison, generated reports, and app security behavior. Passing synthetic tests is not evidence of accuracy on real claims or any insurer's documents.
 
-Current verification is recorded in `MILESTONE_LOG.md` and `FINAL_REPORT.md`; run `python -m pytest -q` from the repository root to repeat it. Automated tests disable external Ollama calls unless they explicitly mock a response.
+Current verification is recorded in `MILESTONE_LOG.md` and `FINAL_REPORT.md`; run `python -m pytest -q tests` from the repository root to repeat it. Automated tests disable external Ollama calls unless they explicitly mock a response.
 
 ## Known limitations
 
@@ -161,7 +161,7 @@ docs/                          Architecture, math, evaluation and limitations
  evaluation/                   Evaluation scripts and labeled data
 fixtures/                      Fictional demo cases and settlement layouts
 demo_assets/                   Fictional sample bill and policy PDFs
-tests/                         Unit, integration, golden and fixture tests
+tests/                         Unit, integration, golden and shared fixtures
 ```
 
 For implementation history and recorded design choices, see `docs/CHANGELOG.md` and `docs/DECISIONS.md`.

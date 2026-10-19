@@ -7,6 +7,7 @@
 ## 2026-10-19 policy review provenance
 
 - Reviewer-confirmed financial terms, exclusions, and category sub-limits must name a source page from within the uploaded policy. Missing pages and page numbers beyond the document are rejected; extraction candidates without verified page references remain pending review.
+- Item-level exclusions from an `Exclusions:` list are split on semicolons and commas and still require reviewer confirmation. Aggregate annual-limit and sum-insured ceilings stay in annual-limit calculation; they are not turned into per-line-item exclusion phrases.
 
 ## 2026-10-19 settlement comparison messaging
 

@@ -31,6 +31,25 @@ def test_excluded_sentence_yields_short_unverified_policy_term(monkeypatch):
     assert exclusion["source_page"] == 4
 
 
+def test_exclusions_header_splits_multiple_items_into_short_terms(monkeypatch):
+    monkeypatch.setattr(policy_terms, "_llm_extract_policy_terms_fallback", lambda _rows: None)
+    result = policy_terms.extract_policy_terms([
+        {"text": "Exclusions: Cosmetic surgery; dental treatment; infertility treatment.", "page": 8}
+    ])
+    exclusion = result["terms_json"]["exclusions"]
+    assert exclusion["value"] == ["cosmetic surgery", "dental treatment", "infertility treatment"]
+    assert exclusion["needs_review"] is True
+    assert exclusion["source_page"] == 8
+
+
+def test_annual_limit_exclusion_is_not_misread_as_an_item_exclusion(monkeypatch):
+    monkeypatch.setattr(policy_terms, "_llm_extract_policy_terms_fallback", lambda _rows: None)
+    result = policy_terms.extract_policy_terms([
+        {"text": "Expenses exceeding the annual limit are not covered.", "page": 3}
+    ])
+    assert "exclusions" not in result["terms_json"]
+
+
 def test_policy_review_labels_distinguish_llm_estimates_from_other_candidates():
     assert app._policy_term_verification_label({"method": "llm_fallback", "needs_review": True}) == "UNVERIFIED LLM estimate"
     assert app._policy_term_verification_label({"method": "deterministic_keyword", "needs_review": True}) == "UNVERIFIED policy candidate"

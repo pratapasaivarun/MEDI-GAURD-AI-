@@ -269,3 +269,13 @@ The upload matrix rejected an empty PDF, a `.txt` uploaded as a bill, and a 15 M
 **Expected output:** all tests pass with Ollama disabled.
 
 **Observed output:** `200 passed in 33.33s`.
+
+## Part C — Main branch, default, and stale branch cleanup
+
+**What changed:** Merged `fix/prototype-completion` into a new `main` branch with merge commit `ba36909`. Before merging, inspected local `master`'s two commits ahead of `origin/master`: `fac501f Implement MediGuard settlement comparison plan` and `c687015 Consolidate project documentation into root README`; both are ancestors of the feature branch and remain in `main`. Pushed the feature branch and `main` without force. Set the GitHub default branch to `main` and verified the remote symbolic HEAD points to it. Confirmed ancestry into `main` before deleting `finish-mini-prototype`, `mediguard-prototype-implementation`, and the superseded `master` branch locally and on origin. The active `fix/prototype-completion` branch remains available.
+
+**Verify command:** `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe -m compileall -q app.py mediguard evaluation tests; .\.venv\Scripts\python.exe -m pytest -q tests --tb=short --basetemp 'C:\Users\prata\mediguard_main_merge_pytest'`
+
+**Expected output:** compilation succeeds and all tests pass with Ollama disabled.
+
+**Observed output:** compilation succeeded; `200 passed in 30.82s` on merged `main` commit `ba36909`.

@@ -4,6 +4,7 @@
 
 - Demo PDFs use synthetic names, claim IDs, amounts, and providers and carry a `FICTIONAL SAMPLE` banner. Case C includes a deliberately mismatched settlement total and a scanned bill page so the workflow must stay in manual review with appeal downloads disabled.
 - Case B combines an improperly rejected payable diagnostic line with a co-pay difference. The expected INR 2,700 patient-share difference is calculated after the co-pay adjustment, and a draft letter is available only for reviewer confirmation.
+- The automated demo tests exercise page-specific OCR with a deterministic stub and do not require a local Tesseract binary, Ollama service, Chroma store, or network access. Real browser captures are separate integration evidence.
 
 ## 2026-10-10 follow-up
 

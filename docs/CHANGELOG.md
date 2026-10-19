@@ -14,6 +14,7 @@
 - P3 exclusion follow-up: Split semicolon/comma-delimited `Exclusions:` lists into item-level terms and ignore generic annual-limit/sum-insured language in the item-exclusion list. Red tests: **2 failed**; focused tests after fix: **5 passed**.
 - QA follow-up: Promoted the 200 deterministic malformed settlement-input probe to a repeatable unit test. Settlement suite: **10 passed**.
 - Security QA: Added upload filename traversal checks for POSIX and Windows path separators; `_validated_upload` stores only the basename. Focused security suite: **6 passed**.
+- Security QA: Added admin-only retention tests proving expired document files/rows are removed, recent uploads are preserved, and invalid retention periods are rejected. Focused suite: **2 passed**.
 
 ## MediGuard project hygiene — 2026-10-17
 

@@ -2,7 +2,7 @@
 from decimal import Decimal
 import pytest
 
-from rules import (
+from mediguard.engine.rules import (
     PolicyTerms,
     evaluate_claim,
     evaluate_line_item,
@@ -257,7 +257,7 @@ def test_16_seemingly_covered_items_excluded():
 
 # 17. Policy-Clause Verification
 def test_17_policy_clause_verification():
-    from agents import policy_agent_node
+    from mediguard.ai.agents import policy_agent_node
     state = {
         "policy_text": "Section 4.1 Exclusions: Endo-GIA staplers and harmonic scalpels are non-payable items under this policy.",
         "policy_id": "policy-101",

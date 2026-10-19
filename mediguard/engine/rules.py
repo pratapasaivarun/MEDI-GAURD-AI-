@@ -11,14 +11,14 @@ from decimal import Decimal, ROUND_HALF_UP
 import re
 from typing import Any
 
-from models import (
+from mediguard.engine.models import (
     BillData,
     ClaimResult,
     LineItem as TypedLineItem,
     LineResult as TypedLineResult,
     PolicyTerms as TypedPolicyTerms,
 )
-from category_names import (
+from mediguard.engine.category_names import (
     ROOM_CATEGORY, ROOM_RENT_CATEGORY, ACCOMMODATION_CATEGORY,
     DOCTOR_NURSING_CATEGORY, NURSING_CATEGORY, DOCTOR_CATEGORY,
     CONSULTATION_CATEGORY, ICU_CATEGORY, normalize_category,
@@ -106,7 +106,7 @@ def verify_patient_name_match(bill_name: str | None, policy_name: str | None) ->
 
 
 def parse_date_flexible(date_str: Any) -> Any:
-    from extraction import parse_bill_date
+    from mediguard.ingestion.extraction import parse_bill_date
 
     return parse_bill_date(date_str)
 

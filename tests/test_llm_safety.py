@@ -3,7 +3,7 @@ from decimal import Decimal
 import pytest
 import requests
 
-import agents
+import mediguard.ai.agents as agents
 from test_comparison_reports import _comparison
 
 

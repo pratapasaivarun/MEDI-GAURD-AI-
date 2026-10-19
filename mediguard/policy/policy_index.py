@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 # Keep the configured local embedding weights available when the app runs
 # without network access. Callers can override this via HF_HOME.
 os.environ.setdefault("HF_HOME", str(PROJECT_ROOT / ".venv" / "hf-cache"))

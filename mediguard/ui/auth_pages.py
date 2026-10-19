@@ -1,6 +1,6 @@
 """Authentication and welcome screens. Loaded lazily from app.main."""
 
-import app as _app
+from mediguard.services import application as _app
 globals().update(vars(_app))
 
 def _render_welcome() -> None:

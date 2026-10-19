@@ -190,10 +190,10 @@ def run() -> int:
     os.environ["CHROMA_DIR"] = str(isolated / "chroma")
     os.environ["AGENT_METRICS_PATH"] = str(isolated / "agent_metrics.jsonl")
 
-    import app  # noqa: E402
-    import agents  # noqa: E402
-    import policy_index  # noqa: E402
-    from reports import build_appeal_letter, build_appeal_letter_pdf, build_decision_report  # noqa: E402
+    import mediguard.services.application as app  # noqa: E402
+    import mediguard.ai.agents as agents  # noqa: E402
+    import mediguard.policy.policy_index as policy_index  # noqa: E402
+    from mediguard.reporting.reports import build_appeal_letter, build_appeal_letter_pdf, build_decision_report  # noqa: E402
 
     @contextmanager
     def closing_db():
@@ -340,7 +340,7 @@ def run() -> int:
             # Build a stable case-scoped corpus for future clause annotations.
             policy_file = case_dir / "policy.pdf"
             if policy_file.exists() and manifest["case_id"] not in benchmark_policies:
-                from extraction import extract_document
+                from mediguard.ingestion.extraction import extract_document
                 evidence, raw, _ = extract_document(policy_file, policy_file.name, policy_file.name)
                 payload = {"document_id": policy_file.name, "source_name": policy_file.name,
                            "text": "\n".join(raw.values()), "evidence": [item.to_dict() for item in evidence]}

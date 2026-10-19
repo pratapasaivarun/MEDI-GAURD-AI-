@@ -1,8 +1,8 @@
 from decimal import Decimal
 from types import SimpleNamespace
 
-import ui.claim_pages as claim_pages
-from models import SettlementData
+import mediguard.ui.claim_pages as claim_pages
+from mediguard.engine.models import SettlementData
 
 
 class RerunRequested(BaseException):

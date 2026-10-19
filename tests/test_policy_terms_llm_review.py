@@ -1,7 +1,7 @@
 from decimal import Decimal
 
-import policy_terms
-import app
+import mediguard.policy.policy_terms as policy_terms
+from mediguard.services import application as app
 
 
 def test_llm_policy_term_is_unverified_with_reduced_confidence(monkeypatch):

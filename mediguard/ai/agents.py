@@ -15,7 +15,7 @@ import time
 from pathlib import Path
 from typing import Any, Callable, TypedDict
 
-from models import ComparisonResult
+from mediguard.engine.models import ComparisonResult
 
 import requests
 
@@ -336,7 +336,7 @@ def retrieve_policy_evidence(policy_text: str, normalized_claim: dict[str, Any],
     retrieval_query = " ".join(part for part in (query.strip(), claim_query) if part)
     if policy_id:
         try:
-            from policy_index import retrieve_policy_evidence as chroma_retrieve
+            from mediguard.policy.policy_index import retrieve_policy_evidence as chroma_retrieve
             semantic = chroma_retrieve(retrieval_query or "coverage deductible copayment limits required documents", policy_id, limit)
             if semantic:
                 return semantic

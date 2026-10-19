@@ -50,7 +50,7 @@
 - Removed the legacy status-based appeal PDF from claimant results. Appeal drafts now have a single comparison-gated path and are available only for `possible_discrepancy`; otherwise the UI asks the claimant to upload the insurer settlement letter. Added status-gate tests; full suite: **71 passed**.
 - Persisted settlement and comparison dataclasses as JSON with Decimal values encoded as strings, tied each result to its settlement document SHA-256, and added an idempotent SQLite table creation migration. Claimant/reviewer views hydrate empty session state from the saved result. A reload-state test passes.
 - Removed token-bearing reset/invitation URLs from logs. Issuance logs contain only the user ID; reset URLs stay hidden by default, and the created reviewer invite URL is displayed only in the admin panel/session. Added link visibility/log tests and documented email delivery as out of scope.
-- Audited all 21 `unsafe_allow_html` calls in `app.py`, extracted interpolated markup into testable helpers, and escaped dynamic claim/status values. Added seven payload-based rendering-helper tests and documented every call in `docs/XSS_AUDIT.md`.
+- Audited all 21 `unsafe_allow_html` calls in `mediguard/services/application.py`, extracted interpolated markup into testable helpers, and escaped dynamic claim/status values. Added seven payload-based rendering-helper tests and documented every call in `docs/XSS_AUDIT.md`.
 - Added the three requested, searchable fictional demo PDFs and a no-network end-to-end test through extraction, saved policy terms, app context, deterministic rules, settlement comparison, and appeal-letter generation. The first run exposed that admission non-payable wording was not entering the rule engine; policy-term extraction now records that supported deterministic category. The exact estimate, pharmacy discrepancy, page-9 clause, letter figures, forbidden wording check, and wrong/mismatched/unreadable settlement cases now pass.
 
 ## Phase 0 - Baseline and safe defaults
@@ -113,8 +113,8 @@
 
 - Added a seven-case synthetic comparison evaluation and runner; its generated outcomes match the declared expectations.
 - Comparison now reconciles co-pay deductions explicitly and calculates their patient-share effect without applying the co-pay percentage twice.
-- Moved the application stylesheet and reusable escaped presentation helpers into the `ui` package while retaining `app.py`'s current rendering API for compatibility.
-- Moved welcome/login screens into `ui/auth_pages.py` and claim/result/reviewer screens into `ui/claim_pages.py`; `app.main()` now routes to those pages. Kept `appeal_draft_available` in `app.py` as a compatibility helper used by tests and callers.
+- Moved the application stylesheet and reusable escaped presentation helpers into the `ui` package while retaining `mediguard/services/application.py`'s current rendering API for compatibility.
+- Moved welcome/login screens into `mediguard/ui/auth_pages.py` and claim/result/reviewer screens into `mediguard/ui/claim_pages.py`; `mediguard.services.application.main()` now routes to those pages. Kept `appeal_draft_available` in `mediguard/services/application.py` as a compatibility helper used by tests and callers.
 - Added `.gitattributes` with LF text normalization and committed the renormalization separately. Appeal-letter insurer reasons now end as a sentence before the review point. README documents the prototype pipeline, manual retention purge, and known limitations: no MFA/email, synthetic data only, multiple fictional settlement layout examples, and estimates only.
 - Final verification added a stylesheet structure check and changed the end-to-end category assertion to use the shared category constant.
 

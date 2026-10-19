@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-import app
+from mediguard.services import application as app
 
 
 class Upload:

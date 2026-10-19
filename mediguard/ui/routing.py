@@ -7,8 +7,8 @@ import streamlit as st
 
 
 def render_current_page(app_services: Any) -> None:
-    from ui.auth_pages import _render_welcome, _render_login
-    from ui.claim_pages import (
+    from mediguard.ui.auth_pages import _render_welcome, _render_login
+    from mediguard.ui.claim_pages import (
         _render_claimant_result, _render_claim_review, _render_claim_submission,
         _render_dashboard, _render_register,
     )

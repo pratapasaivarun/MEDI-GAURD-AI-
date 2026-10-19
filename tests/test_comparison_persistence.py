@@ -1,7 +1,7 @@
 from decimal import Decimal
 import uuid
 
-import app
+from mediguard.services import application as app
 
 
 class Upload:

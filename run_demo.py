@@ -17,7 +17,7 @@ os.environ.update({
 })
 if os.getenv('MEDIGUARD_ADMIN_PASSWORD'):
     # The launcher is the sole place that provisions the synthetic demo admin.
-    from app import _core_demo_user, init_db
+    from mediguard.services.application import _core_demo_user, init_db
     init_db()
     _core_demo_user()
 else:

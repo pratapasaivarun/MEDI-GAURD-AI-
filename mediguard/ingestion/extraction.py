@@ -355,7 +355,7 @@ def extract_document(path: str | Path, document_id: str, source_name: str) -> tu
 
 def _infer_line_category(description: str) -> str:
     value = description.lower()
-    category_path = Path(__file__).parent / "config" / "categories.yaml"
+    category_path = Path(__file__).resolve().parents[2] / "config" / "categories.yaml"
     groups: list[tuple[str, list[str]]] = []
     if category_path.exists():
         for raw_line in category_path.read_text(encoding="utf-8").splitlines():

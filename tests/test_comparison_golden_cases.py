@@ -1,8 +1,8 @@
 from datetime import date
 from decimal import Decimal
 
-from comparison import compare
-from models import ClaimResult, Clause, LineItem, LineResult, PolicyTerms, SettlementData, SettlementDeduction
+from mediguard.engine.comparison import compare
+from mediguard.engine.models import ClaimResult, Clause, LineItem, LineResult, PolicyTerms, SettlementData, SettlementDeduction
 
 
 def test_matching_settlement_agrees_with_rules_golden_case():

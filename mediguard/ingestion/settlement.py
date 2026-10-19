@@ -11,9 +11,9 @@ from typing import Any
 
 import requests
 
-from extraction import _infer_line_category, extract_pdf_text
-from models import SettlementData, SettlementDeduction
-from category_names import DEDUCTIBLE_CATEGORY, OTHER_CATEGORY, normalize_category
+from mediguard.ingestion.extraction import _infer_line_category, extract_pdf_text
+from mediguard.engine.models import SettlementData, SettlementDeduction
+from mediguard.engine.category_names import DEDUCTIBLE_CATEGORY, OTHER_CATEGORY, normalize_category
 
 CENT = Decimal("0.01")
 MAX_FILE_MB = int(os.getenv("MAX_FILE_MB", "15"))

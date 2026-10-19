@@ -1,9 +1,9 @@
 """Claimant and reviewer claim/result screens. Loaded from app.main."""
 
-import app as _app
+from mediguard.services import application as _app
 globals().update(vars(_app))
 import logging
-from services.orchestration import assess_claim
+from mediguard.services.orchestration import assess_claim
 
 logger = logging.getLogger(__name__)
 

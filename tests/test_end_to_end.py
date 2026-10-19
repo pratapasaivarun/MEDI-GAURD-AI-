@@ -8,10 +8,10 @@ from types import SimpleNamespace
 import pytest
 import requests
 
-import app
-import policy_index
-from reports import FORBIDDEN_APPEAL_WORDS, build_comparison_appeal_letter_text
-from category_names import ROOM_CATEGORY, normalize_category
+from mediguard.services import application as app
+import mediguard.policy.policy_index as policy_index
+from mediguard.reporting.reports import FORBIDDEN_APPEAL_WORDS, build_comparison_appeal_letter_text
+from mediguard.engine.category_names import ROOM_CATEGORY, normalize_category
 
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures" / "demo_case"

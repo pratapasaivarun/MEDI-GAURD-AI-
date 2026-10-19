@@ -18,8 +18,8 @@ def _json_value(value: Any) -> Any:
         return [_json_value(item) for item in value]
     return value
 
-from rules import PolicyTerms
-from category_names import ADMISSION_CATEGORY
+from mediguard.engine.rules import PolicyTerms
+from mediguard.engine.category_names import ADMISSION_CATEGORY
 
 _MONEY = r"(?:INR|Rs\.?|₹|USD|\$)?\s*([0-9][0-9,]*(?:\.\d+)?)"
 

@@ -1,7 +1,7 @@
 from decimal import Decimal
 
-from models import BillData, LineItem, PolicyTerms as TypedPolicyTerms
-from rules import PolicyTerms, evaluate_claim, verify_patient_name_match
+from mediguard.engine.models import BillData, LineItem, PolicyTerms as TypedPolicyTerms
+from mediguard.engine.rules import PolicyTerms, evaluate_claim, verify_patient_name_match
 
 
 def test_room_line_cap_and_proportionate_doctor_nursing_reduction():

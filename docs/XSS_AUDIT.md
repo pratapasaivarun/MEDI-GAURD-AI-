@@ -2,7 +2,7 @@
 
 **Updated:** 2026-10-19  
 **Current branch:** `fix/prototype-completion`  
-**Scope:** dynamic HTML rendered by the Streamlit app and shared helpers in `ui/components.py`.
+**Scope:** dynamic HTML rendered by the Streamlit app and shared helpers in `mediguard/ui/components.py`.
 
 The application-authored HTML still uses `unsafe_allow_html=True` for its visual shell. Dynamic claim, patient, policy, status, and attribute values pass through HTML escaping or a fixed allowlist before interpolation. The regression tests are `tests/test_xss_rendering.py` and `tests/test_app_security.py`.
 

@@ -7,8 +7,8 @@ import sqlite3
 import sys
 import pytest
 
-from extraction import run_extraction
-from policy_terms import extract_policy_terms
+from mediguard.ingestion.extraction import run_extraction
+from mediguard.policy.policy_terms import extract_policy_terms
 
 
 def test_bill_layout_labels_and_net_total_are_extracted() -> None:
@@ -48,7 +48,7 @@ def test_real_policy_terms_are_not_used_until_reviewer_confirmed(tmp_path: Path,
     monkeypatch.setenv("MEDIGUARD_STORAGE_DIR", str(tmp_path / "storage"))
     monkeypatch.setenv("CHROMA_DIR", str(tmp_path / "chroma"))
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-    import app
+    import mediguard.services.application as app
 
     app.init_db()
     user = app.get_or_create_user("reviewer@example.test", "Test Reviewer")

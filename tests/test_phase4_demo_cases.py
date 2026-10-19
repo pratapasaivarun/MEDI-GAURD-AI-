@@ -14,10 +14,10 @@ from types import SimpleNamespace
 import pytest
 import requests
 
-import app
-import extraction
-from agents import explain_comparison
-from reports import build_comparison_appeal_letter_docx, build_comparison_appeal_letter_pdf
+from mediguard.services import application as app
+import mediguard.ingestion.extraction as extraction
+from mediguard.ai.agents import explain_comparison
+from mediguard.reporting.reports import build_comparison_appeal_letter_docx, build_comparison_appeal_letter_pdf
 
 
 CASES = Path(__file__).parents[1] / "fixtures" / "demo_cases"

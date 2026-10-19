@@ -22,7 +22,7 @@ if str(ROOT) not in sys.path:
 
 def test_rules_module_imports():
     """rules.py must import and expose its key public API."""
-    import rules
+    import mediguard.engine.rules as rules
     assert hasattr(rules, "PolicyTerms"), "PolicyTerms dataclass missing"
     assert hasattr(rules, "evaluate_claim"), "evaluate_claim missing"
     assert hasattr(rules, "evaluate_line_item"), "evaluate_line_item missing"
@@ -35,28 +35,28 @@ def test_rules_module_imports():
 
 def test_policy_terms_module_imports():
     """policy_terms.py must import and expose extract_policy_terms."""
-    import policy_terms
+    import mediguard.policy.policy_terms as policy_terms
     assert hasattr(policy_terms, "extract_policy_terms"), "extract_policy_terms missing"
     assert hasattr(policy_terms, "terms_from_json"), "terms_from_json missing"
 
 
 def test_policy_index_module_imports():
     """policy_index.py must import and expose indexing and retrieval functions."""
-    import policy_index
+    import mediguard.policy.policy_index as policy_index
     assert hasattr(policy_index, "index_policy_documents"), "index_policy_documents missing"
     assert hasattr(policy_index, "retrieve_policy_evidence"), "retrieve_policy_evidence missing"
 
 
 def test_extraction_module_imports():
     """extraction.py must import cleanly."""
-    import extraction
+    import mediguard.ingestion.extraction as extraction
     assert hasattr(extraction, "extract_bill_data") or hasattr(extraction, "extract_document"), \
         "No extraction entry point found"
 
 
 def test_reports_module_imports():
     """reports.py must import cleanly."""
-    import reports
+    import mediguard.reporting.reports as reports
     # Should have at least one report generation function
     public_fns = [n for n in dir(reports) if not n.startswith("_")]
     assert len(public_fns) > 0, "reports.py exposes no public API"
@@ -67,7 +67,7 @@ def test_reports_module_imports():
 def test_phase6_business_rules():
     """Smoke test: rule engine produces a deterministic result for a basic claim."""
     from decimal import Decimal
-    from rules import PolicyTerms, evaluate_claim
+    from mediguard.engine.rules import PolicyTerms, evaluate_claim
 
     terms = PolicyTerms(
         annual_limit=Decimal("500000"),
@@ -85,7 +85,7 @@ def test_phase6_business_rules():
 def test_rule_engine_excludes_non_medical_items():
     """Rule engine must auto-exclude items matching policy exclusions."""
     from decimal import Decimal
-    from rules import PolicyTerms, evaluate_claim
+    from mediguard.engine.rules import PolicyTerms, evaluate_claim
 
     terms = PolicyTerms(
         annual_limit=Decimal("500000"),
@@ -109,7 +109,7 @@ def test_rule_engine_excludes_non_medical_items():
 def test_rule_engine_applies_room_rent_cap():
     """Room rent cap: when billed room exceeds limit, engine flags warning and routes to manual_review."""
     from decimal import Decimal
-    from rules import PolicyTerms, evaluate_claim
+    from mediguard.engine.rules import PolicyTerms, evaluate_claim
 
     terms = PolicyTerms(
         annual_limit=Decimal("500000"),

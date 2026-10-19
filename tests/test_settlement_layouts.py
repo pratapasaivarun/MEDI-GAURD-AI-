@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from settlement import parse_settlement
+from mediguard.ingestion.settlement import parse_settlement
 
 
 FIXTURES = Path(__file__).parents[1] / "fixtures" / "settlements"
@@ -27,7 +27,7 @@ EXPECTED_DEDUCTIONS = [
     ],
 )
 def test_six_fictional_settlement_layouts_parse_without_external_services(monkeypatch, filename, expected_total):
-    monkeypatch.setattr("settlement._llm_deductions", lambda _text: [])
+    monkeypatch.setattr("mediguard.ingestion.settlement._llm_deductions", lambda _text: [])
     result = parse_settlement((FIXTURES / filename).read_bytes(), filename)
 
     assert result.claim_id == "CLM-2026-0417"
@@ -38,7 +38,7 @@ def test_six_fictional_settlement_layouts_parse_without_external_services(monkey
 
 
 def test_claim_number_does_not_capture_the_date_and_narrative_is_not_an_id(monkeypatch):
-    monkeypatch.setattr("settlement._llm_deductions", lambda _text: [])
+    monkeypatch.setattr("mediguard.ingestion.settlement._llm_deductions", lambda _text: [])
     result = parse_settlement(
         b"Your claim has been processed. Claim Number: CLM-2026-0417 dated 12 Aug 2026\nAmount paid: 102600\nBill total: 132000",
         "claim-id.txt",
@@ -47,7 +47,7 @@ def test_claim_number_does_not_capture_the_date_and_narrative_is_not_an_id(monke
 
 
 def test_spaced_numeric_claim_id_remains_supported(monkeypatch):
-    monkeypatch.setattr("settlement._llm_deductions", lambda _text: [])
+    monkeypatch.setattr("mediguard.ingestion.settlement._llm_deductions", lambda _text: [])
     result = parse_settlement(
         b"Claim No: clm 2026 0417\nBill Total: 132000\nAmount Paid: 102600",
         "spaced-claim-id.txt",
@@ -64,13 +64,13 @@ def test_spaced_numeric_claim_id_remains_supported(monkeypatch):
     ],
 )
 def test_slash_and_plain_numeric_claim_ids_are_preserved(monkeypatch, filename, expected_id):
-    monkeypatch.setattr("settlement._llm_deductions", lambda _text: [])
+    monkeypatch.setattr("mediguard.ingestion.settlement._llm_deductions", lambda _text: [])
     result = parse_settlement((FIXTURES / filename).read_bytes(), filename)
     assert result.claim_id == expected_id
 
 
 def test_claimed_amount_is_not_used_as_paid_amount(monkeypatch):
-    monkeypatch.setattr("settlement._llm_deductions", lambda _text: [])
+    monkeypatch.setattr("mediguard.ingestion.settlement._llm_deductions", lambda _text: [])
     result = parse_settlement(
         b"Claim No: CLM/2026/0417\nClaimed Amount: 132000\nDeductions:\nRoom rent | 4000",
         "missing-paid-amount.txt",

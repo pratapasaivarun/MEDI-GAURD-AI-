@@ -195,3 +195,13 @@ The upload matrix rejected an empty PDF, a `.txt` uploaded as a bill, and a 15 M
 **Full-suite expected output:** all tests pass with Ollama disabled.
 
 **Full-suite observed output:** `199 passed in 34.81s`.
+
+## Part B — Application package move
+
+**What changed:** Moved application modules into the requested `mediguard/` package groups. `app.py` is now a thin Streamlit entry point; services and page modules are under `mediguard/services/` and `mediguard/ui/`. Updated package imports, the app's repository-root path calculation, category configuration lookup, model-cache path, README architecture/folder map, Docker `PYTHONPATH`, and CI `PYTHONPATH`. Existing fixtures and evaluation paths are unchanged in this group.
+
+**Verify command:** `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe -m pytest -q --tb=short --basetemp 'C:\Users\prata\mediguard_move_app_pytest3'`.
+
+**Expected output:** all tests pass with Ollama disabled.
+
+**Observed output:** `199 passed in 45.05s`. The initial run found outdated dynamic imports and monkeypatch paths; those were updated to package paths before this passing run.

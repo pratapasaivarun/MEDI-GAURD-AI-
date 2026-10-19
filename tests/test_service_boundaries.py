@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 
-from services.orchestration import assess_claim
-from services.storage import validate_upload
+from mediguard.services.orchestration import assess_claim
+from mediguard.services.storage import validate_upload
 
 
 class Upload:

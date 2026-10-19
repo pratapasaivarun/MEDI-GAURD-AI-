@@ -5,7 +5,7 @@ import random
 import pytest
 import pymupdf
 
-from settlement import parse_settlement
+from mediguard.ingestion.settlement import parse_settlement
 
 
 FIXTURE = Path(__file__).parent / "fixtures" / "settlement" / "settlement_demo.txt"
@@ -35,7 +35,7 @@ def test_fictional_pdf_settlement_parses_using_pdf_text_reader():
 
 
 def test_image_only_settlement_pdf_routes_to_manual_review_without_ocr(monkeypatch, tmp_path):
-    monkeypatch.setattr("settlement.requests.post", lambda *_args, **_kwargs: type("Response", (), {"status_code": 503})())
+    monkeypatch.setattr("mediguard.ingestion.settlement.requests.post", lambda *_args, **_kwargs: type("Response", (), {"status_code": 503})())
     image_path = tmp_path / "settlement-page.png"
     from PIL import Image
     Image.new("RGB", (300, 400), "white").save(image_path)
@@ -57,7 +57,7 @@ def test_image_only_settlement_pdf_routes_to_manual_review_without_ocr(monkeypat
 def test_parser_handles_two_hundred_deterministic_malformed_rows(monkeypatch):
     rng = random.Random(41)
     alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 |:/-.,\t"
-    monkeypatch.setattr("settlement.requests.post", lambda *_args, **_kwargs: type("Response", (), {"status_code": 503})())
+    monkeypatch.setattr("mediguard.ingestion.settlement.requests.post", lambda *_args, **_kwargs: type("Response", (), {"status_code": 503})())
 
     for index in range(200):
         noise = "".join(rng.choice(alphabet) for _ in range(rng.randrange(0, 500)))
@@ -104,7 +104,7 @@ Amount Paid: INR 31000
 
 
 def test_patient_payable_is_not_extracted_as_amount_paid(monkeypatch):
-    monkeypatch.setattr("settlement.requests.post", lambda *_args, **_kwargs: type("Response", (), {"status_code": 503})())
+    monkeypatch.setattr("mediguard.ingestion.settlement.requests.post", lambda *_args, **_kwargs: type("Response", (), {"status_code": 503})())
     for patient_label in ("Amount payable by patient: INR 13100", "Patient payable to hospital: INR 13100"):
         text = f"{patient_label}\nAmount paid to hospital: INR 27900"
         result = parse_settlement(text.encode(), "settlement.txt")

@@ -5,8 +5,8 @@ from collections import defaultdict
 from decimal import Decimal, ROUND_HALF_UP
 import re
 
-from models import CategoryComparison, ClaimResult, ComparisonResult, PolicyTerms, SettlementData
-from category_names import OTHER_CATEGORY, normalize_category
+from mediguard.engine.models import CategoryComparison, ClaimResult, ComparisonResult, PolicyTerms, SettlementData
+from mediguard.engine.category_names import OTHER_CATEGORY, normalize_category
 
 CENT = Decimal("0.01")
 

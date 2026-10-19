@@ -1,4 +1,4 @@
-from ui.styles import APP_CSS
+from mediguard.ui.styles import APP_CSS
 
 
 def test_stylesheet_is_a_single_well_formed_style_block():

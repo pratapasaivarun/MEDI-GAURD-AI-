@@ -1,8 +1,8 @@
 from decimal import Decimal
 
-import app
-from extraction import Evidence, _extract_line_items
-from rules import PolicyTerms, evaluate_claim
+from mediguard.services import application as app
+from mediguard.ingestion.extraction import Evidence, _extract_line_items
+from mediguard.engine.rules import PolicyTerms, evaluate_claim
 
 
 def test_extracted_room_category_reaches_app_context_and_room_cap(monkeypatch, tmp_path):

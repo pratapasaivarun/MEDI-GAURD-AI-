@@ -1,10 +1,10 @@
 from decimal import Decimal
 
-from extraction import _infer_line_category
-from category_names import ICU_CATEGORY
-from models import BillData, LineItem, PolicyTerms as TypedPolicyTerms
-from rules import PolicyTerms, evaluate_claim, evaluate_line_item
-from policy_terms import extract_policy_terms, terms_from_json
+from mediguard.ingestion.extraction import _infer_line_category
+from mediguard.engine.category_names import ICU_CATEGORY
+from mediguard.engine.models import BillData, LineItem, PolicyTerms as TypedPolicyTerms
+from mediguard.engine.rules import PolicyTerms, evaluate_claim, evaluate_line_item
+from mediguard.policy.policy_terms import extract_policy_terms, terms_from_json
 
 
 def test_icu_is_a_distinct_category_from_general_room_rent():

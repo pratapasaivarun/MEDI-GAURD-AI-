@@ -16,6 +16,7 @@ jobs:
       MEDIGUARD_DB_PATH: ${{ runner.temp }}/mediguard-test.db
       MEDIGUARD_STORAGE_DIR: ${{ runner.temp }}/mediguard-test-storage
       CHROMA_DIR: ${{ runner.temp }}/mediguard-test-chroma
+      PYTHONPATH: .
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

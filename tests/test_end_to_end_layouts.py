@@ -1,8 +1,8 @@
 from decimal import Decimal
 from pathlib import Path
 
-import app
-from reports import build_comparison_appeal_letter_text
+from mediguard.services import application as app
+from mediguard.reporting.reports import build_comparison_appeal_letter_text
 from test_end_to_end import _run_demo_pipeline
 
 

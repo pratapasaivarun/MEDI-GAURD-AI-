@@ -3,7 +3,7 @@ from decimal import Decimal
 
 import pytest
 
-from rules import PolicyTerms, evaluate_claim
+from mediguard.engine.rules import PolicyTerms, evaluate_claim
 
 
 def terms(**overrides):
@@ -49,6 +49,6 @@ def test_date_window_exact_discharge_edge_is_covered():
 
 
 def test_articular_injection_does_not_match_icu():
-    from rules import evaluate_line_item
+    from mediguard.engine.rules import evaluate_line_item
     result = evaluate_line_item({"description":"Articular injection", "category":"other", "amount":2000}, terms())
     assert result["applied_rule"] != "icu_limit_not_stated"

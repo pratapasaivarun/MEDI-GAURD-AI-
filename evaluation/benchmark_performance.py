@@ -8,7 +8,7 @@ print("=" * 70)
 
 # Step 1: Benchmark Document Processing
 start_ext = time.perf_counter()
-from extraction import extract_document, normalize_documents
+from mediguard.ingestion.extraction import extract_document, normalize_documents
 bill_file = Path("demo_assets/approved_bill.pdf")
 evidence, raw_by_page, page_count = extract_document(bill_file, "bench-1", bill_file.name)
 doc_payload = [{
@@ -28,7 +28,7 @@ print(f"   Line Items Extracted: {len(normalized.line_items)}")
 
 # Step 2: Benchmark Deterministic Rule Engine
 start_rules = time.perf_counter()
-from rules import evaluate_claim, PolicyTerms
+from mediguard.engine.rules import evaluate_claim, PolicyTerms
 from decimal import Decimal
 terms = PolicyTerms(
     annual_limit=Decimal("500000"),
@@ -50,7 +50,7 @@ print(f"   Payable Amount: INR {rule_result['payable_amount']}")
 
 # Step 3: Benchmark Vector Policy Retrieval (ChromaDB RAG)
 start_rag = time.perf_counter()
-from policy_index import index_policy_documents, retrieve_policy_evidence
+from mediguard.policy.policy_index import index_policy_documents, retrieve_policy_evidence
 policy_file = Path("demo_assets/approved_policy.pdf")
 p_evidence, p_raw, p_pages = extract_document(policy_file, "bench-pol-1", policy_file.name)
 policy_text_str = "\n".join(e.text for e in p_evidence)
@@ -71,7 +71,7 @@ print(f"   Clauses Retrieved: {len(retrieved_clauses)}")
 
 # Step 4: Benchmark Ollama Local LLM Decision Agent Call
 start_llm = time.perf_counter()
-from agents import run_claim_workflow, warm_ollama
+from mediguard.ai.agents import run_claim_workflow, warm_ollama
 warm_ollama()
 final_state = run_claim_workflow(
     normalized_claim=normalized.to_dict(),
@@ -90,7 +90,7 @@ print(f"   Confidence Score: {decision.get('confidence')}")
 
 # Step 5: Benchmark PDF Report Generation
 start_pdf = time.perf_counter()
-from reports import build_decision_report
+from mediguard.reporting.reports import build_decision_report
 report_pdf = build_decision_report(
     claim={"claim_id": "BENCH-001", "claim_number": "CLM-BENCH-001", "patient_name": "Ananya Rao", "policy_number": "POLDEMOAPPROVEDX"},
     normalized=normalized.to_dict(),

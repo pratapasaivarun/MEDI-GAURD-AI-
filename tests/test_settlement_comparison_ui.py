@@ -1,7 +1,7 @@
 from contextlib import nullcontext
 from types import SimpleNamespace
 
-import ui.claim_pages as claim_pages
+import mediguard.ui.claim_pages as claim_pages
 
 
 class FakeStreamlit:

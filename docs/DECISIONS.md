@@ -53,11 +53,11 @@
 - The comparison-based appeal workflow is the only claimant appeal-download path. A decision status alone does not establish a settlement discrepancy.
 - Persisted comparison results are only reused while a current settlement document with the saved SHA-256 remains attached to the same claim. Decimal values serialize as strings and are reconstructed as Decimal on load.
 - No email provider is included. Password-reset links remain disabled in the UI by default; reviewer setup links are surfaced once to the administrator who creates the invitation, in that authenticated admin session only. Tokens are never written to application logs.
-- `app.py` retains app-authored HTML only for the existing visual shell. Dynamic claim strings are escaped, status values are allowlisted and escaped, and `docs/XSS_AUDIT.md` records the per-call review and tests.
+- `mediguard/services/application.py` retains app-authored HTML only for the existing visual shell. Dynamic claim strings are escaped, status values are allowlisted and escaped, and `docs/XSS_AUDIT.md` records the per-call review and tests.
 - The demo policy uses deterministic admission non-payable extraction so the application calculation, not test-only hand-built rule terms, produces the fixture's INR 111,600 insurer estimate. The demo PDFs are searchable text PDFs and all contain a `FICTIONAL SAMPLE` label.
 - Co-pay is represented as its own comparison category. A difference in co-pay is already a patient-share difference, so it must not be multiplied by the co-pay percentage a second time.
 - The seven comparison scenarios are synthetic functional checks authored for this prototype; their agreement is not an accuracy metric or insurer validation.
-- Shared HTML widgets and styles live in `ui/`; authentication and claim/result pages are imported lazily by `app.main()` to avoid changing the established app module API during the split.
+- Shared HTML widgets and styles live in `mediguard/ui/`; authentication and claim/result pages are imported lazily by `mediguard.services.application.main()` to avoid changing the established app module API during the split.
 - Retention purge remains a manual administrator operation. It is not run automatically at startup, which avoids deleting active prototype records without an explicit administrator action.
 - Appeal-letter insurer reasons are terminated as sentences before the separate review point to avoid run-on text while preserving the source reason.
 - Repository text uses LF through `.gitattributes`; binary document fixtures remain detected as binary by Git's automatic text detection.

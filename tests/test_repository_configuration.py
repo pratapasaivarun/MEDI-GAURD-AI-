@@ -17,7 +17,7 @@ def test_evaluation_docs_describe_restored_fictional_phase4_ground_truth():
 
 
 def test_app_base_url_default_matches_documented_streamlit_port():
-    app_source = (ROOT / "app.py").read_text(encoding="utf-8")
+    app_source = (ROOT / "mediguard" / "services" / "application.py").read_text(encoding="utf-8")
     env_example = (ROOT / ".env.example").read_text(encoding="utf-8")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert '"http://localhost:8501"' in app_source

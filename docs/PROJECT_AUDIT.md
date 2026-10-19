@@ -15,11 +15,11 @@ The project source is organized into business-logic modules, a shared typed mode
 
 ## End-to-end workflow
 
-1. **Account and claim setup:** the Streamlit app provides claimant, reviewer, and administrator workflows. Authentication, role checks, claim ownership, reviewer assignment, and local SQLite persistence are coordinated in `app.py`.
+1. **Account and claim setup:** the Streamlit app provides claimant, reviewer, and administrator workflows. Authentication, role checks, claim ownership, reviewer assignment, and local SQLite persistence are coordinated in `mediguard/services/application.py`.
 2. **Upload validation and storage:** bill, policy, and settlement files are checked for allowed type, size, and file signature where applicable, then stored in the app's local data area.
 3. **Bill and policy processing:** `extraction.py` reads document text and OCR results into normalized fields and line items. `policy_terms.py` extracts candidate terms, while `policy_index.py` retrieves policy passages and page references. Extracted or ambiguous evidence can require reviewer confirmation.
 4. **Deterministic claim calculation:** `rules.py` calculates line-level allowed and disallowed amounts, room and ICU limits, co-pay, sum-insured effects, and patient/insurer shares using Decimal values. Uncertain inputs remain subject to manual review.
-5. **Settlement parsing and binding:** `settlement.py` extracts claim references, labeled payments, bill totals, co-pay, and deductions from text-layer PDFs or text files. `app.py` binds the settlement to the selected claim and checks the bill total before comparison. Missing paid amount, missing identity, or unreconciled totals block reliance.
+5. **Settlement parsing and binding:** `settlement.py` extracts claim references, labeled payments, bill totals, co-pay, and deductions from text-layer PDFs or text files. `mediguard/services/application.py` binds the settlement to the selected claim and checks the bill total before comparison. Missing paid amount, missing identity, or unreconciled totals block reliance.
 6. **Comparison and explanation:** `comparison.py` compares insurer deductions with rule-supported amounts and policy evidence. `agents.py` may explain the result, but validated or fallback wording cannot change the calculation or status.
 7. **Review and document generation:** claimant/reviewer screens show evidence and review reasons. `reports.py` creates neutral PDF/DOCX drafts; appeal drafts are gated on a supported possible discrepancy. A reviewer makes the final determination.
 8. **Persistence and reload:** parsed settlement and comparison data are saved in SQLite and tied to the settlement document hash so stale comparisons are not reused after the document changes.
@@ -38,7 +38,7 @@ settlement.py             Settlement-letter parsing and validation
 comparison.py             Pure settlement-versus-rules comparison
 agents.py                 Bounded explanations and fallback language
 reports.py                Neutral appeal and hospital-note outputs
-ui/                       Authentication, claimant/reviewer pages, shared components
+mediguard/ui/                       Authentication, claimant/reviewer pages, shared components
 config/                   Category and trusted-fixture configuration
 fixtures/, demo_assets/    Synthetic claim, policy, and settlement examples
 tests/                    Unit, integration, security, and workflow regression tests
@@ -47,7 +47,7 @@ docs/                     Changelog, decisions, audits, security notes, implemen
 requirements*.txt         Runtime and development dependency pins
 ```
 
-There is one root `README.md`. The source is partitioned sensibly around the calculation pipeline and UI. `app.py` remains a large orchestration module that also owns authentication and persistence; splitting those responsibilities into dedicated services is a reasonable future refactor, but doing so now would create broad behavioral risk without improving this audit deliverable.
+There is one root `README.md`. The source is partitioned sensibly around the calculation pipeline and UI. `mediguard/services/application.py` remains a large orchestration module that also owns authentication and persistence; splitting those responsibilities into dedicated services is a reasonable future refactor, but doing so now would create broad behavioral risk without improving this audit deliverable.
 
 ## What is implemented and verified
 

@@ -5,8 +5,8 @@ import sys
 import pymupdf
 from PIL import Image, ImageDraw
 
-import extraction
-from extraction import Evidence, _extract_line_items, _infer_line_category, normalize_documents
+import mediguard.ingestion.extraction as extraction
+from mediguard.ingestion.extraction import Evidence, _extract_line_items, _infer_line_category, normalize_documents
 
 
 def test_tabular_line_uses_last_number_as_amount_and_does_not_invent_code():
@@ -182,7 +182,7 @@ def test_reviewer_saved_line_item_keeps_confirmed_date(tmp_path, monkeypatch):
     monkeypatch.setenv("MEDIGUARD_STORAGE_DIR", str(tmp_path / "storage"))
     monkeypatch.setenv("CHROMA_DIR", str(tmp_path / "chroma"))
     sys.path.insert(0, str(extraction.Path(__file__).resolve().parents[1]))
-    import app
+    import mediguard.services.application as app
 
     app.init_db()
     user = app.get_or_create_user("phase1-reviewer@example.test", "Phase 1 Reviewer")

@@ -1,4 +1,4 @@
-import app
+from mediguard.services import application as app
 
 
 PAYLOAD = "<script>alert(1)</script>"

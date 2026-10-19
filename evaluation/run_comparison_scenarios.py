@@ -7,9 +7,9 @@ import json
 from pathlib import Path
 import re
 
-from comparison import compare
-from models import BillData, Clause, LineItem, PolicyTerms, SettlementData, SettlementDeduction
-from rules import evaluate_claim
+from mediguard.engine.comparison import compare
+from mediguard.engine.models import BillData, Clause, LineItem, PolicyTerms, SettlementData, SettlementDeduction
+from mediguard.engine.rules import evaluate_claim
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED = ROOT / "evaluation" / "comparison_expected.yaml"

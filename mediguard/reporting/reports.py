@@ -13,8 +13,8 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
-from agents import confidence_label, recommend_next_steps
-from models import ComparisonResult, SettlementData
+from mediguard.ai.agents import confidence_label, recommend_next_steps
+from mediguard.engine.models import ComparisonResult, SettlementData
 
 
 TEAL = colors.HexColor("#0F766E")
@@ -503,7 +503,7 @@ def build_comparison_appeal_letter_text(
     signature: str = "Claimant or authorized representative",
 ) -> str:
     """Build a fixed-template appeal draft using the comparison's financial facts."""
-    from agents import validate_comparison_explanation
+    from mediguard.ai.agents import validate_comparison_explanation
 
     if comparison.status != "possible_discrepancy":
         raise ValueError("An appeal draft is available only for a possible discrepancy.")

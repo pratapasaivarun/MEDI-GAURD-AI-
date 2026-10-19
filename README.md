@@ -19,22 +19,22 @@ Model-assisted extraction and explanations are optional and subject to validatio
 ## Architecture
 
 ```text
-Bill + policy --> extraction.py --> policy_terms.py / policy_index.py --> rules.py --+
-                                                                                     +--> comparison.py
-Settlement letter -------------------------------> settlement.py --------------------+
-                                                                                          |--> agents.py (bounded explanation)
-                                                                                          |--> reports.py (PDF/DOCX drafts)
-                                                                                          +--> app.py (claimant/reviewer UI)
+Bill + policy --> mediguard/ingestion/extraction.py --> mediguard/policy/terms + index --> mediguard/engine/rules.py --+
+                                                                                                                      +--> mediguard/engine/comparison.py
+Settlement letter --------------------------------------> mediguard/ingestion/settlement.py -----------------------+
+                                                                                                                       |--> mediguard/ai/agents.py (explanations)
+                                                                                                                       |--> mediguard/reporting/reports.py (drafts)
+                                                                                                                       +--> mediguard/ui/ (app workflow) --> app.py (launcher)
 ```
 
 | Area | Main files | Responsibility |
 |---|---|---|
-| Streamlit application and persistence | `app.py` | Authentication, claim/document workflows, reviewer gate, upload checks, and SQLite access |
-| Typed pipeline contracts | `models.py` | Shared data classes for bills, policy terms, calculations, settlement data, and comparisons |
-| Extraction and policy evidence | `extraction.py`, `policy_terms.py`, `policy_index.py`, `config/categories.yaml` | OCR/text extraction, field review flags, candidate terms, and clause retrieval |
-| Deterministic calculation | `rules.py`, `category_names.py` | Coverage and patient/insurer share calculations, including separate room and ICU limits |
-| Settlement and comparison | `settlement.py`, `comparison.py` | Settlement parsing, reconciliation, and category-level comparison |
-| Explanation and reports | `agents.py`, `reports.py` | Evidence-bounded explanations and review document generation |
+| Streamlit entry point and services | `app.py`, `mediguard/services/` | Thin launcher, authentication, claim/document workflows, reviewer gate, storage and orchestration |
+| Typed pipeline contracts | `mediguard/engine/models.py` | Shared data classes for bills, policy terms, calculations, settlement data, and comparisons |
+| Extraction and policy evidence | `mediguard/ingestion/`, `mediguard/policy/`, `config/categories.yaml` | OCR/text extraction, field review flags, candidate terms, and clause retrieval |
+| Deterministic calculation | `mediguard/engine/rules.py`, `mediguard/engine/category_names.py` | Coverage and patient/insurer share calculations, including separate room and ICU limits |
+| Settlement and comparison | `mediguard/ingestion/settlement.py`, `mediguard/engine/comparison.py` | Settlement parsing, reconciliation, and category-level comparison |
+| Explanation and reports | `mediguard/ai/`, `mediguard/reporting/` | Evidence-bounded explanations and review document generation |
 | Synthetic evaluations | `evaluation/`, `fixtures/claim_scenarios/` | Reproducible evaluation scripts, annotations, and fictional claim cases |
 
 ## Requirements
@@ -153,22 +153,15 @@ Only add manually verified annotations. `evaluation/annotation_template.json` de
 ## Repository layout
 
 ```text
-app.py                         Streamlit application
-services/                      Authentication, storage, orchestration and routing helpers
-agents.py                      Model-assisted workflow and explanations
-comparison.py                  Settlement-to-policy comparison
-config/categories.yaml         Extraction category keywords
-docs/                          Implementation changelog and decisions
-evaluation/                    Evaluation code, annotations, and results
-fixtures/settlements/          Fictional settlement layout examples
-fixtures/claim_scenarios/      Fictional end-to-end claim fixtures
-models.py                      Typed pipeline data structures
-policy_index.py                Policy clause indexing and retrieval
-policy_terms.py                Policy-term extraction and normalization
-reports.py                     Decision, appeal, and hospital documents
-rules.py                       Deterministic claim calculation
-settlement.py                  Settlement letter parser
-tests/                         Automated tests and test fixtures
+app.py                         Thin Streamlit entry point
+run_demo.py                    Isolated fictional-data launcher
+mediguard/                     Application package (ingestion, policy, engine, AI, UI, services)
+config/                        Categories and trusted fixture hashes
+docs/                          Architecture, math, evaluation and limitations
+ evaluation/                   Evaluation scripts and labeled data
+fixtures/                      Fictional demo cases and settlement layouts
+demo_assets/                   Fictional sample bill and policy PDFs
+tests/                         Unit, integration, golden and fixture tests
 ```
 
 For implementation history and recorded design choices, see `docs/CHANGELOG.md` and `docs/DECISIONS.md`.

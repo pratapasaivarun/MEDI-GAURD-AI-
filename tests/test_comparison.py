@@ -2,10 +2,10 @@ from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
-from comparison import compare
-from models import BillData, Clause, LineItem, PolicyTerms, SettlementData, SettlementDeduction
-from rules import evaluate_claim
-from settlement import parse_settlement
+from mediguard.engine.comparison import compare
+from mediguard.engine.models import BillData, Clause, LineItem, PolicyTerms, SettlementData, SettlementDeduction
+from mediguard.engine.rules import evaluate_claim
+from mediguard.ingestion.settlement import parse_settlement
 
 
 def _demo_claim():

@@ -28,7 +28,7 @@ DEFAULT_TESSERACT = Path(r"C:\Program Files\Tesseract-OCR\tesseract.exe")
 if "TESSERACT_CMD" not in os.environ and DEFAULT_TESSERACT.exists():
     os.environ["TESSERACT_CMD"] = str(DEFAULT_TESSERACT)
 
-from extraction import extract_document, run_extraction  # noqa: E402
+from mediguard.ingestion.extraction import extract_document, run_extraction  # noqa: E402
 from metric_calculators import character_error_rate, word_error_rate  # noqa: E402
 
 PENDING = "Not Evaluated — Ground Truth/Data Required"
@@ -175,8 +175,8 @@ def scenario_inventory() -> dict[str, Any]:
 
 def evaluate_rule_statuses() -> dict[str, Any]:
     """Compare deterministic rule output with fixture-reviewed scenario labels."""
-    from policy_terms import extract_policy_terms
-    from rules import evaluate_claim
+    from mediguard.policy.policy_terms import extract_policy_terms
+    from mediguard.engine.rules import evaluate_claim
 
     index = json.loads((ROOT / "fixtures" / "claim_scenarios" / "case_index.json").read_text(encoding="utf-8"))
     reviewed_path = ROOT / "evaluation" / "reviewer_confirmed_policy_terms.json"
@@ -205,7 +205,7 @@ def evaluate_rule_statuses() -> dict[str, Any]:
         confirmation = reviewed_terms["cases"].get(manifest["case_id"])
         if not confirmation or confirmation.get("review_status") != "confirmed":
             raise ValueError(f"Missing fixture reviewer confirmation for {manifest['case_id']}")
-        from policy_terms import terms_from_json
+        from mediguard.policy.policy_terms import terms_from_json
         policy["terms"], reviewed_missing, _ = terms_from_json(confirmation["terms"])
         policy["terms"].source = confirmation["terms"]
         missing_context = manifest.get("reviewer_context_required") or {}

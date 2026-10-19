@@ -1,9 +1,9 @@
 from contextlib import contextmanager
 from types import SimpleNamespace
 
-import app
+from mediguard.services import application as app
 import pymupdf
-from policy_index import chunk_policy_text
+from mediguard.policy.policy_index import chunk_policy_text
 
 
 def test_claim_clause_map_uses_indexed_coverage_evidence_and_filters_exclusions(monkeypatch):

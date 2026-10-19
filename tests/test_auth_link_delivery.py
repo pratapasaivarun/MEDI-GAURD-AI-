@@ -3,7 +3,7 @@ import uuid
 import pytest
 from streamlit.testing.v1 import AppTest
 
-import app
+from mediguard.services import application as app
 
 
 def test_reset_and_invitation_tokens_are_never_logged_and_default_reset_link_is_hidden(monkeypatch, tmp_path, caplog):

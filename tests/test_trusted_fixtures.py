@@ -1,8 +1,8 @@
 import uuid
 from pathlib import Path
 
-import app
-from extraction import Evidence
+from mediguard.services import application as app
+from mediguard.ingestion.extraction import Evidence
 
 
 class Upload:

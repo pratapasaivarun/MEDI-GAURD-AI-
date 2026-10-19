@@ -1,8 +1,8 @@
 from decimal import Decimal
 
-import agents
-from models import CategoryComparison, Clause, ComparisonResult, SettlementData
-from reports import (
+import mediguard.ai.agents as agents
+from mediguard.engine.models import CategoryComparison, Clause, ComparisonResult, SettlementData
+from mediguard.reporting.reports import (
     ESTIMATE_DISCLAIMER,
     build_comparison_appeal_letter_docx,
     build_comparison_appeal_letter_pdf,

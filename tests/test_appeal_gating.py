@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-import app
+from mediguard.services import application as app
 
 
 def test_manual_review_and_no_discrepancy_have_no_appeal_download():

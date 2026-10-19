@@ -1,9 +1,9 @@
 from decimal import Decimal
 import json
 
-import app
+from mediguard.services import application as app
 import uuid
-from ui.claim_pages import needs_bill_total_confirmation
+from mediguard.ui.claim_pages import needs_bill_total_confirmation
 
 
 class Upload:

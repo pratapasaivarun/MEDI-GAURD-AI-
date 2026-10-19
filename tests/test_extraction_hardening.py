@@ -1,8 +1,8 @@
 from datetime import date
 
-import extraction
-from extraction import normalize_documents, parse_bill_date
-from rules import parse_date_flexible
+import mediguard.ingestion.extraction as extraction
+from mediguard.ingestion.extraction import normalize_documents, parse_bill_date
+from mediguard.engine.rules import parse_date_flexible
 
 
 def test_supported_bill_date_formats_and_day_month_preference():

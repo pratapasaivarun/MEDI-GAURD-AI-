@@ -35,7 +35,7 @@ Settlement letter --------------------------------------> mediguard/ingestion/se
 | Deterministic calculation | `mediguard/engine/rules.py`, `mediguard/engine/category_names.py` | Coverage and patient/insurer share calculations, including separate room and ICU limits |
 | Settlement and comparison | `mediguard/ingestion/settlement.py`, `mediguard/engine/comparison.py` | Settlement parsing, reconciliation, and category-level comparison |
 | Explanation and reports | `mediguard/ai/`, `mediguard/reporting/` | Evidence-bounded explanations and review document generation |
-| Synthetic evaluations | `evaluation/`, `fixtures/claim_scenarios/` | Reproducible evaluation scripts, annotations, and fictional claim cases |
+| Synthetic evaluations | `evaluation/`, `samples/claim_scenarios/` | Reproducible evaluation scripts, annotations, and fictional claim cases |
 
 ## Requirements
 
@@ -117,7 +117,7 @@ Current verification is recorded in `MILESTONE_LOG.md` and `FINAL_REPORT.md`; ru
 
 ## Evaluation tools
 
-The scenario library in `fixtures/claim_scenarios/` contains fictional bill/policy PDFs, a `case.json` manifest per scenario, and a `case_index.json` index. Some cases require trusted reviewer context, such as confirmed network or preauthorization status.
+The scenario library in `samples/claim_scenarios/` contains fictional bill/policy PDFs, a `case.json` manifest per scenario, and a `case_index.json` index. Some cases require trusted reviewer context, such as confirmed network or preauthorization status.
 
 Run the isolated app workflow against those scenarios without calling an LLM:
 
@@ -138,7 +138,7 @@ Then score available human annotations and regenerate paper tables:
 .\.venv\Scripts\python.exe evaluation\generate_paper_tables.py
 ```
 
-`evaluation/annotations.json` is the annotation source. `fixtures/phase4/ground_truth.json` contains three fictional bills with field values checked against the extractor; this small set is not representative of real-world accuracy. `evaluation/run_evaluation.py` reports field accuracy and `evaluation/run_system_evaluation.py --rules-only` reports end-to-end app status agreement and any labeled retrieval metrics. The app-level status score includes human-review gates and is not a standalone math-accuracy score. Older results in `evaluation/PAPER_RESULTS.md` are marked as superseded. OCR text error, expert evidence review, and appeal quality remain unmeasured.
+`evaluation/annotations.json` is the annotation source. `evaluation/ground_truth.json` contains three fictional bills with field values checked against the extractor; this small set is not representative of real-world accuracy. `evaluation/run_evaluation.py` reports field accuracy and `evaluation/run_system_evaluation.py --rules-only` reports end-to-end app status agreement and any labeled retrieval metrics. The app-level status score includes human-review gates and is not a standalone math-accuracy score. Older results in `evaluation/PAPER_RESULTS.md` are marked as superseded. OCR text error, expert evidence review, and appeal quality remain unmeasured.
 
 Only add manually verified annotations. `evaluation/annotation_template.json` describes the annotation fields. Retrieval annotations need a query, its case ID, and manually confirmed relevant clause IDs. OCR annotations need a checked transcript and reviewer/date metadata. Evidence and appeal-quality scores require human review; blank or unverified labels should remain unevaluated. The retention purge function is available for an authorized administrator to run manually; automatic retention purging is not configured.
 
@@ -158,10 +158,10 @@ run_demo.py                    Isolated fictional-data launcher
 mediguard/                     Application package (ingestion, policy, engine, AI, UI, services)
 config/                        Categories and trusted fixture hashes
 docs/                          Architecture, math, evaluation and limitations
- evaluation/                   Evaluation scripts and labeled data
-fixtures/                      Fictional demo cases and settlement layouts
-demo_assets/                   Fictional sample bill and policy PDFs
-tests/                         Unit, integration, golden and shared fixtures
+evaluation/                    Evaluation scripts, ground truth and results
+samples/                       Fictional scenarios, demo cases and document layouts
+  assets/                       Fictional sample bill and policy PDFs
+tests/                          Unit, integration, golden and shared fixtures
 ```
 
 For implementation history and recorded design choices, see `docs/CHANGELOG.md` and `docs/DECISIONS.md`.

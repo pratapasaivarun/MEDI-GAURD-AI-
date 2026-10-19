@@ -99,7 +99,7 @@ These are the expected values, not results from the software. Date cases assume 
 
 ## Phase 4 — Synthetic evaluation data and scores
 
-**What changed:** Restored `fixtures/phase4/ground_truth.json` from three labeled fictional bill fixtures and verified the field values against extraction output. Added a source-backed, synthetic policy retrieval query label. Updated the system evaluator to print end-to-end app-status agreement with a denominator and explicit scope; it keeps standalone core rule accuracy marked not evaluated when reviewer-confirmation gates prevent `rules.evaluate_claim` from running.
+**What changed:** Restored `evaluation/ground_truth.json` from three labeled fictional bill fixtures and verified the field values against extraction output. Added a source-backed, synthetic policy retrieval query label. Updated the system evaluator to print end-to-end app-status agreement with a denominator and explicit scope; it keeps standalone core rule accuracy marked not evaluated when reviewer-confirmation gates prevent `rules.evaluate_claim` from running.
 
 **Verify commands:**
 - `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe evaluation/run_evaluation.py --repeats 1 --output evaluation/.phase4-extraction.json`
@@ -116,7 +116,7 @@ The prior paper numbers (79.17% extraction, 68.75% OCR fields and 21/21 core rul
 
 **What changed:** No application code changed for this browser check. Playwright opened the real Streamlit app, created a fictional claimant account, registered a fictional claim, uploaded the three fictional PDFs, submitted them, and captured the result page. After the refactor, the page showed Manual Review while the policy terms awaited reviewer confirmation. The settlement fixture also had a different claim ID from the test registration, so the app correctly added a claim-ID-mismatch review reason. Screenshots were saved outside the repository under `C:\Users\prata\mediguard-final-*.png`.
 
-**Verify command:** Start the app with `.\.venv\Scripts\python.exe -m streamlit run app.py --server.address 127.0.0.1 --server.port 8519 --server.headless true --server.fileWatcherType none`; use Playwright to register a fictional claim, attach `fixtures/demo_cases/a_match/{bill,policy,settlement}.pdf`, submit, and inspect Claim result.
+**Verify command:** Start the app with `.\.venv\Scripts\python.exe -m streamlit run app.py --server.address 127.0.0.1 --server.port 8519 --server.headless true --server.fileWatcherType none`; use Playwright to register a fictional claim, attach `samples/demo_cases/a_match/{bill,policy,settlement}.pdf`, submit, and inspect Claim result.
 
 **Observed output:** Account creation, registration, upload, document extraction and Claim result screen worked. The result was Manual Review; the app did not show raw exception text or make up a payout. This was a single browser scenario. The three complete browser demo cases, live Ollama ON/OFF browser comparison, and five invalid-upload scenarios were **not** completed. Python workflow and upload validation tests cover related paths, but they do not replace this browser matrix. Phase 5 is therefore partial, not passed.
 
@@ -184,7 +184,7 @@ All eight parity fields compared equal in all 3 cases. Ollama was reachable and 
 
 The upload matrix rejected an empty PDF, a `.txt` uploaded as a bill, and a 15 MB + 1 byte PDF through the friendly generic UI error without showing stack traces or paths. A malformed PDF with a `%PDF` signature passed upload validation, then extraction flagged it for review without exposing raw parser errors. With no settlement document, the comparison tab displayed the instruction to upload one. Screenshots for those screens are outside the repository at `C:\Users\prata\mediguard-browser-error-*.png`.
 
-**Verify command:** Start a clean local app with isolated paths, then use Playwright file inputs to run the three `fixtures/demo_cases/{a_match,b_wrongful_deduction,c_manual_review}` folders and the five error uploads. The saved screenshots listed above are the evidence from this run.
+**Verify command:** Start a clean local app with isolated paths, then use Playwright file inputs to run the three `samples/demo_cases/{a_match,b_wrongful_deduction,c_manual_review}` folders and the five error uploads. The saved screenshots listed above are the evidence from this run.
 
 **Expected output:** `no_discrepancy / ₹0 / no appeal`, `possible_discrepancy / ₹2,700 / appeal available`, `manual_review / no appeal`; invalid uploads are safely rejected or flagged and the missing-settlement screen asks for the document.
 
@@ -215,3 +215,15 @@ The upload matrix rejected an empty PDF, a `.txt` uploaded as a bill, and a 15 M
 **Expected output:** all unit, integration, and golden tests pass with Ollama disabled.
 
 **Observed output:** `199 passed in 55.79s`.
+
+## Part B — Fictional sample and evaluation data move
+
+**What changed:** Moved demo assets, demo cases, claim scenarios, settlement layouts, and shared test documents into `samples/`; moved the current extraction ground-truth file into `evaluation/ground_truth.json`. Updated test, evaluation, demo, and project paths while retaining the fictional fixture hashes and contents. Added a one-paragraph samples index. Fixed the synthetic case generator so newly generated cases also land in `samples/claim_scenarios/`.
+
+**Verify command:** `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe -m compileall -q app.py mediguard evaluation tests; .\.venv\Scripts\python.exe -m pytest -q tests --tb=short --basetemp 'C:\Users\prata\mediguard_move_samples_pytest'`
+
+**Expected output:** compilation succeeds and the full suite passes with Ollama disabled.
+
+**Observed output:** compilation succeeded; `199 passed in 48.85s`.
+
+**Evaluation path checks:** `.\.venv\Scripts\python.exe evaluation/run_evaluation.py --repeats 1 --output 'C:\Users\prata\mediguard-sample-eval.json'` exited 0: 12/12 extracted fields correct across 3 bills. `.\.venv\Scripts\python.exe evaluation/run_system_evaluation.py --rules-only --output 'C:\Users\prata\mediguard-sample-system.json'` exited 0: 12/24 end-to-end synthetic statuses agreed (50.0%); standalone rule and decision scores remain explicitly not evaluated. Ollama was unavailable by deliberate host setting at `127.0.0.1:1`; the app, pytest, and evaluation operated without it.

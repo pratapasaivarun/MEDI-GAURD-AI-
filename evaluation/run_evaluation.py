@@ -61,7 +61,7 @@ def timing_summary(values: list[float]) -> dict[str, float | None]:
 
 
 def evaluate_extraction(repeats: int, annotations: dict[str, Any] | None = None) -> dict[str, Any]:
-    manifest_path = ROOT / "fixtures" / "phase4" / "ground_truth.json"
+    manifest_path = ROOT / "evaluation" / "ground_truth.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     details: list[dict[str, Any]] = []
     durations: list[float] = []
@@ -74,7 +74,7 @@ def evaluate_extraction(repeats: int, annotations: dict[str, Any] | None = None)
     for fixture in manifest["fixtures"]:
         if fixture.get("type") != "medical_bill":
             continue
-        path = ROOT / "fixtures" / "phase4" / fixture["file"]
+        path = ROOT / "evaluation" / fixture["file"]
         expected = fixture.get("expected", {})
         latest: dict[str, Any] = {}
         raw_by_page: dict[str, str] = {}
@@ -135,7 +135,7 @@ def evaluate_extraction(repeats: int, annotations: dict[str, Any] | None = None)
     scored_cer = [row["cer"] for row in ocr_rows if isinstance(row.get("cer"), (float, int))]
     scored_wer = [row["wer"] for row in ocr_rows if isinstance(row.get("wer"), (float, int))]
     return {
-        "dataset": "fixtures/phase4/ground_truth.json (synthetic_only=true)",
+        "dataset": "evaluation/ground_truth.json (synthetic_only=true)",
         "documents_tested": len(details), "fields_evaluated": total,
         "correct_fields": correct, "incorrect_or_missing_fields": total - correct,
         "accuracy": correct / total if total else None,
@@ -158,18 +158,18 @@ def evaluate_extraction(repeats: int, annotations: dict[str, Any] | None = None)
 
 
 def scenario_inventory() -> dict[str, Any]:
-    index_path = ROOT / "fixtures" / "claim_scenarios" / "case_index.json"
+    index_path = ROOT / "samples" / "claim_scenarios" / "case_index.json"
     entries = json.loads(index_path.read_text(encoding="utf-8"))
     categories: dict[str, int] = {}
     cases = []
     for entry in entries:
-        manifest = json.loads((ROOT / "fixtures" / "claim_scenarios" / entry["path"] / "case.json").read_text(encoding="utf-8"))
+        manifest = json.loads((ROOT / "samples" / "claim_scenarios" / entry["path"] / "case.json").read_text(encoding="utf-8"))
         categories[entry["category"]] = categories.get(entry["category"], 0) + 1
         cases.append({"case_id": manifest["case_id"], "expected_decision": manifest["expected_status"],
                       "expected_bill_total": manifest.get("expected_bill_total"),
                       "reviewer_context_required": manifest.get("reviewer_context_required", {}),
-                      "case_manifest": str(Path("fixtures/claim_scenarios") / entry["path"] / "case.json")})
-    return {"synthetic_only": True, "source": "fixtures/claim_scenarios/case_index.json",
+                      "case_manifest": str(Path("samples/claim_scenarios") / entry["path"] / "case.json")})
+    return {"synthetic_only": True, "source": "samples/claim_scenarios/case_index.json",
             "scenario_count": len(cases), "category_counts": categories, "cases": cases}
 
 
@@ -178,7 +178,7 @@ def evaluate_rule_statuses() -> dict[str, Any]:
     from mediguard.policy.policy_terms import extract_policy_terms
     from mediguard.engine.rules import evaluate_claim
 
-    index = json.loads((ROOT / "fixtures" / "claim_scenarios" / "case_index.json").read_text(encoding="utf-8"))
+    index = json.loads((ROOT / "samples" / "claim_scenarios" / "case_index.json").read_text(encoding="utf-8"))
     reviewed_path = ROOT / "evaluation" / "reviewer_confirmed_policy_terms.json"
     reviewed_terms = json.loads(reviewed_path.read_text(encoding="utf-8"))
     if reviewed_terms.get("synthetic_only") is not True:
@@ -186,7 +186,7 @@ def evaluate_rule_statuses() -> dict[str, Any]:
     rows = []
     scored = correct = 0
     for entry in index:
-        case_dir = ROOT / "fixtures" / "claim_scenarios" / entry["path"]
+        case_dir = ROOT / "samples" / "claim_scenarios" / entry["path"]
         manifest = json.loads((case_dir / "case.json").read_text(encoding="utf-8"))
         bill_paths = sorted(case_dir.glob("medical_bill*.pdf"))
         policy_path = case_dir / "policy.pdf"

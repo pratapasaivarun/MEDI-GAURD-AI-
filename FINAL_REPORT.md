@@ -50,5 +50,5 @@ The sample is fictional and small. Policy interpretation, OCR, retrieval relevan
 
 1. From the repository root, create `.env` from `.env.example` and set a strong `MEDIGUARD_ADMIN_PASSWORD` only if an administrator login is needed.
 2. Activate `.venv`, then run `python -m streamlit run app.py` and open `http://127.0.0.1:8501`. For isolated synthetic demo storage, run `python run_demo.py` at port `8506`.
-3. Use only documents under `fixtures/demo_cases/`. A reviewer must confirm policy values and source pages before financial results are shown.
+3. Use only documents under `samples/demo_cases/`. A reviewer must confirm policy values and source pages before financial results are shown.
 4. Verify code with `python -m pytest -q`. See `docs/DEMO_GUIDE.md` for fixture paths and expected outcomes.

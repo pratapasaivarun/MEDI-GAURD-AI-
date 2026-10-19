@@ -20,7 +20,7 @@ from mediguard.ai.agents import explain_comparison
 from mediguard.reporting.reports import build_comparison_appeal_letter_docx, build_comparison_appeal_letter_pdf
 
 
-CASES = Path(__file__).parents[2] / "fixtures" / "demo_cases"
+CASES = Path(__file__).parents[2] / "samples" / "demo_cases"
 
 
 class Upload:

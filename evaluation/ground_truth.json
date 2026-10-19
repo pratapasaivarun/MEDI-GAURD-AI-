@@ -5,7 +5,7 @@
   "review_status": "Values copied from fictional case manifests and checked against deterministic extraction output on 2026-10-19; OCR transcript and expert labels are not claimed.",
   "fixtures": [
     {
-      "file": "../demo_cases/a_match/bill.pdf",
+      "file": "../samples/demo_cases/a_match/bill.pdf",
       "type": "medical_bill",
       "expected": {
         "patient_name": "Ananya Sample",
@@ -17,7 +17,7 @@
       "source_case": "a_match"
     },
     {
-      "file": "../demo_cases/b_wrongful_deduction/bill.pdf",
+      "file": "../samples/demo_cases/b_wrongful_deduction/bill.pdf",
       "type": "medical_bill",
       "expected": {
         "patient_name": "Bhavna Sample",
@@ -29,7 +29,7 @@
       "source_case": "b_wrongful_deduction"
     },
     {
-      "file": "../demo_cases/c_manual_review/bill.pdf",
+      "file": "../samples/demo_cases/c_manual_review/bill.pdf",
       "type": "medical_bill",
       "expected": {
         "patient_name": "Chandra Sample",

@@ -15,7 +15,7 @@
   },
   "dataset": {
     "synthetic_only": true,
-    "source": "fixtures/claim_scenarios/case_index.json",
+    "source": "samples/claim_scenarios/case_index.json",
     "scenario_count": 24,
     "category_counts": {
       "approved": 5,
@@ -29,42 +29,42 @@
         "expected_decision": "approved",
         "expected_bill_total": 80000,
         "reviewer_context_required": {},
-        "case_manifest": "fixtures\\claim_scenarios\\approved\\01_standard_approved\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\approved\\01_standard_approved\\case.json"
       },
       {
         "case_id": "02_annual_limit_boundary",
         "expected_decision": "approved",
         "expected_bill_total": 100000,
         "reviewer_context_required": {},
-        "case_manifest": "fixtures\\claim_scenarios\\approved\\02_annual_limit_boundary\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\approved\\02_annual_limit_boundary\\case.json"
       },
       {
         "case_id": "03_below_deductible",
         "expected_decision": "approved",
         "expected_bill_total": 3000,
         "reviewer_context_required": {},
-        "case_manifest": "fixtures\\claim_scenarios\\approved\\03_below_deductible\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\approved\\03_below_deductible\\case.json"
       },
       {
         "case_id": "04_zero_copayment",
         "expected_decision": "approved",
         "expected_bill_total": 80000,
         "reviewer_context_required": {},
-        "case_manifest": "fixtures\\claim_scenarios\\approved\\04_zero_copayment\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\approved\\04_zero_copayment\\case.json"
       },
       {
         "case_id": "05_zero_deductible",
         "expected_decision": "approved",
         "expected_bill_total": 80000,
         "reviewer_context_required": {},
-        "case_manifest": "fixtures\\claim_scenarios\\approved\\05_zero_deductible\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\approved\\05_zero_deductible\\case.json"
       },
       {
         "case_id": "01_annual_limit_exceeded",
         "expected_decision": "partially_approved",
         "expected_bill_total": 140000,
         "reviewer_context_required": {},
-        "case_manifest": "fixtures\\claim_scenarios\\partially_approved\\01_annual_limit_exceeded\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\partially_approved\\01_annual_limit_exceeded\\case.json"
       },
       {
         "case_id": "02_surgery_sublimit",
@@ -73,7 +73,7 @@
         "reviewer_context_required": {
           "coverage_category": "surgery"
         },
-        "case_manifest": "fixtures\\claim_scenarios\\partially_approved\\02_surgery_sublimit\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\partially_approved\\02_surgery_sublimit\\case.json"
       },
       {
         "case_id": "03_room_limit_proportional",
@@ -84,7 +84,7 @@
           "room_days": 3,
           "room_linked_charges": 50000
         },
-        "case_manifest": "fixtures\\claim_scenarios\\partially_approved\\03_room_limit_proportional\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\partially_approved\\03_room_limit_proportional\\case.json"
       },
       {
         "case_id": "04_waiting_period_partial",
@@ -96,7 +96,7 @@
           "unrelated_eligible_amount": 60000,
           "trusted": true
         },
-        "case_manifest": "fixtures\\claim_scenarios\\partially_approved\\04_waiting_period_partial\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\partially_approved\\04_waiting_period_partial\\case.json"
       },
       {
         "case_id": "05_combined_sublimit_costshare",
@@ -105,7 +105,7 @@
         "reviewer_context_required": {
           "coverage_category": "surgery"
         },
-        "case_manifest": "fixtures\\claim_scenarios\\partially_approved\\05_combined_sublimit_costshare\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\partially_approved\\05_combined_sublimit_costshare\\case.json"
       },
       {
         "case_id": "01_confirmed_exclusion",
@@ -117,7 +117,7 @@
             "confidence": 0.99
           }
         },
-        "case_manifest": "fixtures\\claim_scenarios\\rejected\\01_confirmed_exclusion\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\rejected\\01_confirmed_exclusion\\case.json"
       },
       {
         "case_id": "02_out_of_network",
@@ -127,42 +127,42 @@
           "network_status": "out_of_network",
           "trusted": true
         },
-        "case_manifest": "fixtures\\claim_scenarios\\rejected\\02_out_of_network\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\rejected\\02_out_of_network\\case.json"
       },
       {
         "case_id": "01_policy_number_mismatch",
         "expected_decision": "manual_review",
         "expected_bill_total": 80000,
         "reviewer_context_required": {},
-        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\01_policy_number_mismatch\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\01_policy_number_mismatch\\case.json"
       },
       {
         "case_id": "02_missing_policy_terms",
         "expected_decision": "manual_review",
         "expected_bill_total": 80000,
         "reviewer_context_required": {},
-        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\02_missing_policy_terms\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\02_missing_policy_terms\\case.json"
       },
       {
         "case_id": "03_invalid_bill_total",
         "expected_decision": "manual_review",
         "expected_bill_total": 0,
         "reviewer_context_required": {},
-        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\03_invalid_bill_total\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\03_invalid_bill_total\\case.json"
       },
       {
         "case_id": "04_incomplete_bill_fields",
         "expected_decision": "manual_review",
         "expected_bill_total": 80000,
         "reviewer_context_required": {},
-        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\04_incomplete_bill_fields\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\04_incomplete_bill_fields\\case.json"
       },
       {
         "case_id": "05_low_quality_scan",
         "expected_decision": "manual_review",
         "expected_bill_total": 80000,
         "reviewer_context_required": {},
-        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\05_low_quality_scan\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\05_low_quality_scan\\case.json"
       },
       {
         "case_id": "06_waiting_period_unconfirmed",
@@ -171,7 +171,7 @@
         "reviewer_context_required": {
           "waiting_period_status": "unknown"
         },
-        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\06_waiting_period_unconfirmed\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\06_waiting_period_unconfirmed\\case.json"
       },
       {
         "case_id": "07_preauthorization_unconfirmed",
@@ -181,7 +181,7 @@
           "preauthorization_status": "not_confirmed",
           "trusted": true
         },
-        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\07_preauthorization_unconfirmed\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\07_preauthorization_unconfirmed\\case.json"
       },
       {
         "case_id": "08_network_status_unknown",
@@ -190,7 +190,7 @@
         "reviewer_context_required": {
           "network_status": "unknown"
         },
-        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\08_network_status_unknown\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\08_network_status_unknown\\case.json"
       },
       {
         "case_id": "09_possible_exclusion",
@@ -202,7 +202,7 @@
             "confidence": 0.5
           }
         },
-        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\09_possible_exclusion\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\09_possible_exclusion\\case.json"
       },
       {
         "case_id": "10_room_basis_missing",
@@ -212,7 +212,7 @@
           "room_charge": 30000,
           "room_days": 3
         },
-        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\10_room_basis_missing\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\10_room_basis_missing\\case.json"
       },
       {
         "case_id": "11_multiple_bills_unconfirmed",
@@ -222,7 +222,7 @@
           "multiple_bills": true,
           "aggregation_confirmed": false
         },
-        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\11_multiple_bills_unconfirmed\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\11_multiple_bills_unconfirmed\\case.json"
       },
       {
         "case_id": "12_possible_duplicate_charge",
@@ -231,13 +231,13 @@
         "reviewer_context_required": {
           "duplicate_suspected": true
         },
-        "case_manifest": "fixtures\\claim_scenarios\\manual_review\\12_possible_duplicate_charge\\case.json"
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\12_possible_duplicate_charge\\case.json"
       }
     ]
   },
   "annotations_file": "evaluation\\annotations.json",
   "extraction": {
-    "dataset": "fixtures/phase4/ground_truth.json (synthetic_only=true)",
+    "dataset": "evaluation/ground_truth.json (synthetic_only=true)",
     "documents_tested": 6,
     "fields_evaluated": 24,
     "correct_fields": 19,

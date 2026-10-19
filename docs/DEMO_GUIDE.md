@@ -1,6 +1,6 @@
 # MediGuard AI demo guide
 
-All three cases in `fixtures/demo_cases/` use synthetic people, providers, policies, bills, and settlements. Every document is labelled **FICTIONAL SAMPLE**. Do not replace them with real patient data.
+All three cases in `samples/demo_cases/` use synthetic people, providers, policies, bills, and settlements. Every document is labelled **FICTIONAL SAMPLE**. Do not replace them with real patient data.
 
 ## Start the app
 

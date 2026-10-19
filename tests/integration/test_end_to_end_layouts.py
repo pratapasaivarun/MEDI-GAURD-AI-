@@ -6,7 +6,7 @@ from mediguard.reporting.reports import build_comparison_appeal_letter_text
 from test_end_to_end import _run_demo_pipeline
 
 
-FIXTURE_DIR = Path(__file__).parents[2] / "fixtures" / "settlements"
+FIXTURE_DIR = Path(__file__).parents[2] / "samples" / "settlements"
 LAYOUTS = (
     ("pipe_table.txt", Decimal("132000")),
     ("tab_table.txt", Decimal("132000")),

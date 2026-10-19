@@ -71,11 +71,11 @@ def select_models(installed: list[dict[str, Any]], requested: str | None) -> lis
 
 
 def load_case_entries() -> list[dict[str, Any]]:
-    return json.loads((ROOT / "fixtures" / "claim_scenarios" / "case_index.json").read_text(encoding="utf-8"))
+    return json.loads((ROOT / "samples" / "claim_scenarios" / "case_index.json").read_text(encoding="utf-8"))
 
 
 def read_case(entry: dict[str, Any]) -> tuple[Path, dict[str, Any]]:
-    directory = ROOT / "fixtures" / "claim_scenarios" / entry["path"]
+    directory = ROOT / "samples" / "claim_scenarios" / entry["path"]
     return directory, json.loads((directory / "case.json").read_text(encoding="utf-8"))
 
 
@@ -375,7 +375,7 @@ def run() -> int:
 
     result = {
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "dataset": "fixtures/claim_scenarios (synthetic-only)",
+        "dataset": "samples/claim_scenarios (synthetic-only)",
         "run_scope": "full workflow" if models else "app document processing and rule engine only",
         "environment": {"python": platform.python_version(), "ollama_inventory": inventory,
                         "requested_models_missing": missing_requested,

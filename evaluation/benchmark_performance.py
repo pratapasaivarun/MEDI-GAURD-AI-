@@ -9,7 +9,7 @@ print("=" * 70)
 # Step 1: Benchmark Document Processing
 start_ext = time.perf_counter()
 from mediguard.ingestion.extraction import extract_document, normalize_documents
-bill_file = Path("demo_assets/approved_bill.pdf")
+bill_file = Path("samples/assets/approved_bill.pdf")
 evidence, raw_by_page, page_count = extract_document(bill_file, "bench-1", bill_file.name)
 doc_payload = [{
     "document_id": "bench-1",
@@ -51,7 +51,7 @@ print(f"   Payable Amount: INR {rule_result['payable_amount']}")
 # Step 3: Benchmark Vector Policy Retrieval (ChromaDB RAG)
 start_rag = time.perf_counter()
 from mediguard.policy.policy_index import index_policy_documents, retrieve_policy_evidence
-policy_file = Path("demo_assets/approved_policy.pdf")
+policy_file = Path("samples/assets/approved_policy.pdf")
 p_evidence, p_raw, p_pages = extract_document(policy_file, "bench-pol-1", policy_file.name)
 policy_text_str = "\n".join(e.text for e in p_evidence)
 p_payload = [{

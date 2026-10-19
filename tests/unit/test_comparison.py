@@ -37,7 +37,7 @@ def _demo_claim():
 
 def test_fictional_demo_comparison_finds_one_pharmacy_discrepancy():
     claim, terms = _demo_claim()
-    fixture = Path(__file__).resolve().parents[1] / "fixtures" / "settlement" / "settlement_demo.txt"
+    fixture = Path(__file__).resolve().parents[2] / "samples" / "test_documents" / "settlement" / "settlement_demo.txt"
     settlement = parse_settlement(fixture.read_bytes(), fixture.name)
     result = compare(claim, settlement, terms)
     assert claim.insurer_share == Decimal("111600.00")

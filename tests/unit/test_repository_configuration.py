@@ -11,9 +11,9 @@ def test_unused_backup_key_and_crypto_dependency_are_removed():
 
 def test_evaluation_docs_describe_restored_fictional_phase4_ground_truth():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert "fixtures/phase4/ground_truth.json" in readme
+    assert "evaluation/ground_truth.json" in readme
     assert "three fictional bills" in readme
-    assert (ROOT / "fixtures/phase4/ground_truth.json").is_file()
+    assert (ROOT / "evaluation/ground_truth.json").is_file()
 
 
 def test_app_base_url_default_matches_documented_streamlit_port():

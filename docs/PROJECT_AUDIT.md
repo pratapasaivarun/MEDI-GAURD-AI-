@@ -40,7 +40,7 @@ agents.py                 Bounded explanations and fallback language
 reports.py                Neutral appeal and hospital-note outputs
 mediguard/ui/                       Authentication, claimant/reviewer pages, shared components
 config/                   Category and trusted-fixture configuration
-fixtures/, demo_assets/    Synthetic claim, policy, and settlement examples
+fixtures/, samples/assets/    Synthetic claim, policy, and settlement examples
 tests/                    Unit, integration, security, and workflow regression tests
 evaluation/               Synthetic evaluation runners and recorded outputs
 docs/                     Changelog, decisions, audits, security notes, implementation plan

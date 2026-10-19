@@ -19,7 +19,7 @@ from reportlab.lib.units import mm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 
-ROOT = Path(__file__).parent / "fixtures" / "claim_scenarios"
+ROOT = Path(__file__).resolve().parents[1] / "samples" / "claim_scenarios"
 STYLES = getSampleStyleSheet()
 
 

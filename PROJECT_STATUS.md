@@ -41,7 +41,7 @@ comparison.py           Settlement-to-rule comparison
 agents.py               Optional Ollama prompts, evidence-bound explanations
 reports.py              Appeal/hospital-note text, PDF and DOCX drafts
 config/                 Categories and trusted synthetic-fixture hashes
-fixtures/, demo_assets/  Fictional bills, policies, settlements and scenarios
+fixtures/, samples/assets/  Fictional bills, policies, settlements and scenarios
 tests/                  Unit, security, parser, comparison and workflow regressions
 evaluation/             Synthetic evaluation scripts, annotations and old outputs
 docs/                   Decisions, changelog, demo guide, audits and implementation plan
@@ -145,7 +145,7 @@ There is no `pyproject.toml`, `setup.py`, or `Makefile`; this is an app reposito
 | Three fictional Phase 4 cases | Done in tests | Match, possible discrepancy and manual-review cases are exercised by app-path tests; browser screenshots are earlier evidence, not a fresh run in this audit. |
 | CI | Partial | A GitHub Actions pytest workflow exists. The current GitHub Actions result was not checked. |
 | Docker deployment | Partial | Dockerfile and pinned direct requirements exist, but image build and container startup are unverified. |
-| Legacy extraction evaluation | Broken | Runner expects missing `fixtures/phase4/ground_truth.json`. |
+| Legacy extraction evaluation | Broken | Runner expects missing `evaluation/ground_truth.json`. |
 | Human accuracy/retrieval evaluation | Not started | No annotated retrieval queries or ground-truth extraction set is present. Current rules-only evaluator explicitly returns “Not Evaluated”. |
 | Production privacy/deployment | Not started | Project explicitly says synthetic data only; encryption, production hosting controls, operational retention and security review are not established. |
 | Automated data deletion/claim deletion | Partial / not started | Admin can delete documents and manually purge expired document rows; there is no claim-level cascade/delete workflow or automatic purge. |
@@ -157,7 +157,7 @@ No confirmed critical defect was found by this audit. These are the concrete iss
 | Severity | Finding | Cause / evidence |
 |---|---|---|
 | **High — deployment blocker** | Do not use this prototype with real patient records or make real claim decisions. | README and plan restrict it to fictional data. Local SQLite and uploads are not application-encrypted at rest; real-world OCR, retrieval and rule accuracy are not established. |
-| **High — evaluation blocker** | There is no current end-to-end accuracy score. | `fixtures/phase4/ground_truth.json` is missing and retrieval annotations contain zero labeled queries. The legacy evaluator crashes and the fresh rules-only evaluator reports “Not Evaluated”. Old saved evaluation numbers must not be presented as current validation. |
+| **High — evaluation blocker** | There is no current end-to-end accuracy score. | `evaluation/ground_truth.json` is missing and retrieval annotations contain zero labeled queries. The legacy evaluator crashes and the fresh rules-only evaluator reports “Not Evaluated”. Old saved evaluation numbers must not be presented as current validation. |
 | **Medium** | Generated invitation/reset links may point to the wrong local port. | `APP_BASE_URL` defaults to port 8505 in `app.py` and `.env.example`; README’s default Streamlit command uses 8501, while `run_demo.py` uses 8506. Link flows need a matching configured URL. |
 | **Medium** | The project audit documents are stale. | `docs/PROJECT_AUDIT.md` says it reviewed branch `finish-mini-prototype` and 116 tests; `docs/XSS_AUDIT.md` describes the old monolithic `app.py` markup layout. Current branch has 166 tests and presentation helpers under `ui/`. |
 | **Medium** | Full browser and deployment behavior remains unverified. | This audit checked only Streamlit’s health endpoint. Docker is unavailable here; the Playwright error-state matrix and a live end-to-end browser run were not repeated. |

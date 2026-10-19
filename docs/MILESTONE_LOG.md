@@ -239,3 +239,13 @@ The upload matrix rejected an empty PDF, a `.txt` uploaded as a bill, and a 15 M
 **Observed output:** compilation succeeded; `199 passed in 32.33s`.
 
 **Script path checks:** extraction evaluator exited 0 with 12/12 fields correct across 3 bills; system rules-only evaluator exited 0 with end-to-end status agreement `12/24 (50.0%)`; annotation scorer exited 0 with 24 retrieval queries scored. The configured BGE embedding backend loaded. Ollama was intentionally unavailable at `127.0.0.1:1`. Refreshed extraction, rules-only, and annotation JSON/CSV artifacts are in `evaluation/latest/`.
+
+## Part B — Numbered guides and archive
+
+**What changed:** Added the seven current guides in reading order: overview, architecture, demo instructions, golden math cases, LLM safety, evaluation results, and limitations. Moved historical audits, plans, decisions, changelog, old paper results, and superseded reports to `docs/archive/`. Moved the architecture SVG beside its guide and added short folder indexes for docs, configuration, archive, and GitHub workflow files. Updated the decision-history test path.
+
+**Verify command:** `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe -m pytest -q tests --tb=short --basetemp 'C:\Users\prata\mediguard_docs_pytest'`
+
+**Expected output:** all tests pass with Ollama disabled.
+
+**Observed output:** `199 passed in 29.08s`.

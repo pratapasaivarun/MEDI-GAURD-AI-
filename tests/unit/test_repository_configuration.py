@@ -26,7 +26,7 @@ def test_app_base_url_default_matches_documented_streamlit_port():
 
 
 def test_decision_log_says_claimed_amount_never_sets_paid_amount():
-    decisions = (ROOT / "docs" / "DECISIONS.md").read_text(encoding="utf-8")
+    decisions = (ROOT / "docs" / "archive" / "DECISIONS.md").read_text(encoding="utf-8")
     assert "`Claimed amount` and `Amount claimed` are not payment evidence" in decisions
     assert "remain fallbacks for both the claim total and paid amount" not in decisions
 

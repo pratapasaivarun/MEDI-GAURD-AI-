@@ -18,8 +18,12 @@ def test_retrieval_labels_have_query_and_nonempty_source_clause_ids():
     root = Path(__file__).parents[1]
     annotations = json.loads((root / "evaluation/annotations.json").read_text(encoding="utf-8"))
     queries = annotations["retrieval_queries"]
-    assert queries
+    assert len(queries) >= 20
     assert all(q["query"].strip() and q["case_id"] and q["relevant_clause_ids"] for q in queries)
+    assert all(q["relevant_clause_text"].strip() and q["relevant_page"] >= 1 for q in queries)
+    assert len({q["case_id"] for q in queries}) >= 20
+    assert len({q["query_id"].split("_")[1] for q in queries}) >= 3
+    assert all(len(q["relevant_clause_ids"][0]) == 64 for q in queries)
 
 
 def test_every_scenario_uses_explicit_fixture_reviewer_confirmed_terms():

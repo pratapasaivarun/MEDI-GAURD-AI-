@@ -149,3 +149,13 @@ The prior paper numbers (79.17% extraction, 68.75% OCR fields and 21/21 core rul
 **Expected output:** Extraction `12/12`; rules status agreement `13/24` (`54.17%`), with 11 mismatches retained in the JSON output. This is a small fictional benchmark, not real-world accuracy.
 
 **Observed output:** Extraction `12/12` (`100.00%`), 3 fictional bills; 24 rule cases scored, 13 correct (`54.17%`). Mismatches: surgery sub-limit, waiting-period partial, combined sub-limit/cost-share, confirmed exclusion, out-of-network, policy-number mismatch, low-quality scan, preauthorization unconfirmed, unknown network status, possible exclusion, and missing room basis. Ollama was intentionally unavailable at `127.0.0.1:1` for this deterministic scoring run. First pytest attempt had 167 passes and 32 Windows temp-folder setup errors; rerunning with a dedicated temp directory passed: `199 passed in 29.79s`.
+
+## Follow-up A2 — Labeled fictional policy retrieval set
+
+**What changed:** Added 24 query labels spanning 24 separate fictional policy PDFs. Labels cover annual limits, deductibles, co-payment percentages, and room limits; every record carries the exact indexed source chunk, its page number, and the chunk ID used by retrieval. Added checks for count, policy coverage, topic variety, and label structure.
+
+**Verify command:** `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe evaluation\run_system_evaluation.py --rules-only --output C:\Users\prata\mediguard-a2-system.json`
+
+**Expected output:** 24 case-scoped queries scored against BGE retrieval, with precision@1/3/5 and recall@3/5 printed in `retrieval_annotation_scores`.
+
+**Observed output:** 24/24 queries ran. Precision@1 `14/24` (`58.33%`); macro precision@3 `23/72` (`31.94%`); precision@5 `24/120` (`20.00%`); recall@3 `23/24` (`95.83%`); recall@5 `24/24` (`100%`). BGE (`BAAI/bge-small-en-v1.5`) loaded. The lower precision numbers show that relevant chunks often rank below unrelated chunks; this is not presented as strong retrieval quality. Full suite result is recorded with this step's commit.

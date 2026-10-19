@@ -174,15 +174,15 @@ def scenario_inventory() -> dict[str, Any]:
 
 
 def evaluate_rule_statuses() -> dict[str, Any]:
-    """Compare deterministic rule output to scenario outcome labels.
-
-    Cases that explicitly require trusted reviewer context are listed but not
-    scored because the repository does not contain those verified inputs.
-    """
+    """Compare deterministic rule output with fixture-reviewed scenario labels."""
     from policy_terms import extract_policy_terms
     from rules import evaluate_claim
 
     index = json.loads((ROOT / "fixtures" / "claim_scenarios" / "case_index.json").read_text(encoding="utf-8"))
+    reviewed_path = ROOT / "evaluation" / "reviewer_confirmed_policy_terms.json"
+    reviewed_terms = json.loads(reviewed_path.read_text(encoding="utf-8"))
+    if reviewed_terms.get("synthetic_only") is not True:
+        raise ValueError("Policy-term review inputs must be explicitly marked synthetic-only")
     rows = []
     scored = correct = 0
     for entry in index:
@@ -202,11 +202,19 @@ def evaluate_rule_statuses() -> dict[str, Any]:
         policy_evidence, _, _ = extract_document(policy_path, policy_path.name, policy_path.name)
         policy = extract_policy_terms(policy_evidence)
         normalized = run_extraction(bill_docs)
-        policy["terms"].source = policy["terms_json"]
-        multiple_unconfirmed = len(bill_docs) > 1
-        context = {"multiple_bills": multiple_unconfirmed, "aggregation_confirmed": False}
+        confirmation = reviewed_terms["cases"].get(manifest["case_id"])
+        if not confirmation or confirmation.get("review_status") != "confirmed":
+            raise ValueError(f"Missing fixture reviewer confirmation for {manifest['case_id']}")
+        from policy_terms import terms_from_json
+        policy["terms"], reviewed_missing, _ = terms_from_json(confirmation["terms"])
+        policy["terms"].source = confirmation["terms"]
+        missing_context = manifest.get("reviewer_context_required") or {}
+        context = dict(missing_context)
+        context.setdefault("multiple_bills", len(bill_docs) > 1)
+        context.setdefault("aggregation_confirmed", False)
         required_missing_terms = [name for name in ("annual_limit", "deductible", "copay_percent")
-                                  if name not in policy["terms_json"]]
+                                  if name not in confirmation["terms"]]
+        required_missing_terms.extend(reviewed_missing)
         required_missing_terms.extend(f"invalid_{name}" for name in policy["validation_errors"])
         actual = evaluate_claim(
             field_value(normalized, "total_amount"), terms=policy["terms"],
@@ -215,23 +223,21 @@ def evaluate_rule_statuses() -> dict[str, Any]:
             line_items=normalized.get("line_items"),
         )
         expected = manifest["expected_status"]
-        missing_context = manifest.get("reviewer_context_required") or {}
-        # This harness does not yet mirror all app-level safety gates (saved
-        # policy-number matching, selected-upload behavior, trusted context).
-        eligible = False
+        eligible = True
         is_correct = actual.get("status") == expected
         if eligible:
             scored += 1
             correct += int(is_correct)
         rows.append({"case_id": manifest["case_id"], "expected_decision": expected,
                      "rule_engine_status": actual.get("status"), "correct": is_correct if eligible else None,
-                     "scored": eligible, "reviewer_context_required": missing_context,
+                     "scored": eligible, "review_status": confirmation["review_status"],
+                     "reviewer_context_required": missing_context,
                      "rule_warnings": actual.get("warnings", [])})
     return {"status_accuracy": correct / scored if scored else None,
             "status_accuracy_percent": round(100 * correct / scored, 2) if scored else None,
             "scored_cases": scored, "correct_cases": correct,
             "excluded_context_required_cases": len(rows) - scored, "case_results": rows,
-            "note": "Rule-engine status only; not Decision Agent accuracy. All scenario statuses remain unscored until the harness mirrors app-level policy matching, upload selection, and trusted reviewer context."}
+            "note": "Rule-engine status for synthetic fixtures with separately recorded fixture reviewer-confirmed policy terms and explicit scenario contexts. Not real-world or independent expert accuracy."}
 
 
 def ollama_inventory() -> dict[str, Any]:
@@ -271,15 +277,12 @@ def main() -> int:
         "retrieval": {"precision_at_1": PENDING, "precision_at_3": PENDING,
                       "precision_at_5": PENDING, "recall_at_3": PENDING,
                       "recall_at_5": PENDING,
-                      "reason": "No case has manually annotated relevant policy clause/chunk IDs; retrieval scores would be unsupported."},
+                      "reason": "Retrieval is scored by run_system_evaluation.py against the labeled fictional query set."},
         "decision": {"test_cases": cases["scenario_count"], "expected_decisions_available": True,
-                     "rule_engine": {**rule_evaluation, "status_accuracy": PENDING,
-                                     "status_accuracy_percent": None,
-                                     "scored_cases": 0, "correct_cases": None,
-                                     "reason": "A direct rule-call prototype did not mirror the application's policy-number, upload-selection, and reviewer-context gates; case accuracy is therefore not reported."},
+                     "rule_engine_status_agreement": rule_evaluation,
                      "decision_agent_accuracy": PENDING,
                      "confusion_matrix": PENDING,
-                     "reason": "Scenario manifests label expected status, but they lack complete annotated rule inputs, expected rule traces, and per-run decision outputs."},
+                     "reason": "The rules score is status agreement on 24 synthetic cases using explicit fixture reviewer-confirmed policy terms and scenario context. The decision-agent score requires a live model run and separate decision labels."},
         "evidence_support": PENDING,
         "appeal_quality": {"score": PENDING, "rubric": {"0": "Incorrect", "1": "Partially correct", "2": "Correct"},
                            "reason": "Requires case-level factual/policy answer keys and expert review; no expert annotations are present."},

@@ -20,3 +20,16 @@ def test_retrieval_labels_have_query_and_nonempty_source_clause_ids():
     queries = annotations["retrieval_queries"]
     assert queries
     assert all(q["query"].strip() and q["case_id"] and q["relevant_clause_ids"] for q in queries)
+
+
+def test_every_scenario_uses_explicit_fixture_reviewer_confirmed_terms():
+    root = Path(__file__).parents[1]
+    index = json.loads((root / "fixtures/claim_scenarios/case_index.json").read_text(encoding="utf-8"))
+    review = json.loads((root / "evaluation/reviewer_confirmed_policy_terms.json").read_text(encoding="utf-8"))
+    assert review["synthetic_only"] is True
+    assert review["label"] == "FICTIONAL SAMPLE"
+    assert review["reviewer"] and review["review_date"]
+    assert set(review["cases"]) == {row["case_id"] for row in index}
+    assert all(row["review_status"] == "confirmed" for row in review["cases"].values())
+    assert all(item.get("source_page") and item.get("source_text") for row in review["cases"].values()
+               for item in row["terms"].values())

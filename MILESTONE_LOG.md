@@ -78,3 +78,11 @@ These are the expected values, not results from the software. Date cases assume 
 
 **Expected output:** all golden rule and comparison assertions pass; the test output reports the exact count when run.
 
+
+**Phase 2 verification:** Added 19 direct golden rule tests plus 2 direct comparison tests. The rule and comparison checks passed (`21 passed in 1.64s`). The full suite passed: `187 passed in 62.96s` with Ollama disabled.
+
+**Full-suite verify command:** `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe -m pytest -q --basetemp 'C:\Users\prata\mediguard_phase2_pytest'`.
+
+**Expected output:** 187 tests pass; no failures.
+
+**Result:** No mismatch with the arithmetic specification was found. The cases verify line caps and limits, then deductible and co-pay applied to the remaining covered amount.

@@ -69,6 +69,17 @@ Start the application:
 
 Open `http://127.0.0.1:8501`. Claimant accounts can be created from the sign-in screen. Reviewer access is invitation-based. For a local synthetic demonstration, run `run_demo.py`; it uses isolated demo storage and creates its demo administrator only when `MEDIGUARD_ADMIN_PASSWORD` is explicitly set.
 
+## Docker
+
+The Docker image uses the pinned Python requirements, installs Tesseract OCR, runs Streamlit as a non-root user, and stores SQLite, uploads, and Chroma data in `/app/data`. Keep that volume private and persistent. The BGE embedding model is not bundled in the image; it must be available in the Hugging Face cache or downloaded on first retrieval.
+
+```powershell
+docker build -t mediguard-ai .
+docker run --rm -p 8501:8501 -v mediguard-data:/app/data mediguard-ai
+```
+
+The image does not create an administrator by default. If administrator access is needed, provide `MEDIGUARD_ADMIN_EMAIL` and `MEDIGUARD_ADMIN_PASSWORD` through the runtime's secret mechanism; do not bake them into the image or commit them.
+
 ## Typical claim workflow
 
 1. Register a claim and upload the applicable policy and hospital bill.
@@ -89,7 +100,7 @@ pip install -r requirements-dev.txt
 
 The tests cover deterministic rules, extraction validation, settlement parsing, comparison, generated reports, and app security behavior. Passing synthetic tests is not evidence of accuracy on real claims or any insurer's documents.
 
-Current verification: **155 tests passed** on 2026-10-19 with `python -m pytest -q --basetemp="C:\MediGaurd AI\.pytest-temp"`.
+Current verification: **156 tests passed** on 2026-10-19 with `python -m pytest -q --basetemp="C:\MediGaurd AI\.pytest-temp"`.
 
 ## Known limitations
 
@@ -102,6 +113,7 @@ Current verification: **155 tests passed** on 2026-10-19 with `python -m pytest 
 - ICU charges use a separate daily cap when the policy states one; without a stated cap, ICU lines require reviewer confirmation.
 - Results are estimates for human review, not insurer decisions or verified entitlements.
 - OCR, retrieval relevance, model quality, and expert validation have not been established beyond the synthetic checks described in `evaluation/PAPER_RESULTS.md`.
+- A local app process using the cached Chroma/BGE backend peaked at about **640 MB RSS** in a single-process measurement. A 1 GB container may start, but this leaves little headroom for the OS, OCR, concurrent sessions, or larger documents; this is not a production capacity guarantee.
 
 ## Evaluation tools
 

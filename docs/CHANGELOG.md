@@ -8,6 +8,7 @@
 - P2.1 follow-up: Conflicting positive/negative or conditional proportionate-deduction wording now marks settlement comparison for manual review. Added failing-then-passing app-path regression and documented the wording limitation. Full suite: **154 passed**.
 - P4.19: Corrected the demo guide's case-B arithmetic to INR 2,700 after including the INR 300 co-pay under-application. Verified against the case manifest and current browser comparison.
 - P5.1 follow-up: The settlement comparison no longer tells a claimant to upload a letter when a letter exists but the outcome is manual review or no discrepancy. Added a focused renderer regression. Full suite: **155 passed**.
+- P5.5: Added a Python 3.13.1 Debian slim Dockerfile with pinned application requirements, Tesseract OCR, non-root runtime, persistent data volume, and Docker context exclusions. Documented the BGE cache and memory constraints; Docker Engine is unavailable here, so image build is not verified. Full suite: **156 passed**.
 
 ## MediGuard project hygiene — 2026-10-17
 

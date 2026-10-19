@@ -1,5 +1,9 @@
 # Implementation decisions
 
+## 2026-10-19 container preparation
+
+- Containerize with Python 3.13.1 slim and the existing pinned requirements. Install Tesseract through the OS package manager, run as a non-root account, and keep user documents, the SQLite database, Chroma collection, and cached model data in a mounted private volume. Do not put administrator credentials or model weights in the image.
+
 ## 2026-10-19 settlement comparison messaging
 
 - Show the missing-settlement upload prompt only when no settlement comparison exists. Manual-review and no-discrepancy results get status-specific messages, and neither can offer an appeal draft.

@@ -1,4 +1,4 @@
-from evaluation.run_comparison_scenarios import run_scenarios
+from evaluation.scripts.run_comparison_scenarios import run_scenarios
 
 
 def test_expected_comparison_scenarios_match_actual_results():

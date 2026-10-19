@@ -11,7 +11,7 @@ from mediguard.engine.comparison import compare
 from mediguard.engine.models import BillData, Clause, LineItem, PolicyTerms, SettlementData, SettlementDeduction
 from mediguard.engine.rules import evaluate_claim
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 EXPECTED = ROOT / "evaluation" / "comparison_expected.yaml"
 
 

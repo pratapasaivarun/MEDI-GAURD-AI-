@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 DEFAULT_TESSERACT = Path(r"C:\Program Files\Tesseract-OCR\tesseract.exe")
@@ -254,7 +254,7 @@ def ollama_inventory() -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repeats", type=int, default=3, help="Repeated extraction runs per document (default: 3)")
-    parser.add_argument("--output", type=Path, default=ROOT / "evaluation" / "results.json")
+    parser.add_argument("--output", type=Path, default=ROOT / "evaluation" / "latest" / "results.json")
     args = parser.parse_args()
     if args.repeats < 1:
         parser.error("--repeats must be at least 1")

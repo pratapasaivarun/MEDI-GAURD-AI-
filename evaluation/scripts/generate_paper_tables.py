@@ -6,8 +6,9 @@ import json
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 EVAL = ROOT / "evaluation"
+LATEST = EVAL / "latest"
 PENDING = "Not Evaluated — Ground Truth/Data Required"
 
 
@@ -37,10 +38,10 @@ def model_named(models: dict[str, Any], needle: str):
 
 
 def make_table() -> str:
-    extraction = read("results.json").get("extraction", {})
-    system = read("system_results.json")
-    rule_system = read("system_rules_only.json")
-    annotations = read("annotation_scores.json")
+    extraction = read("latest/results.json").get("extraction", {})
+    system = read("latest/system_results.json")
+    rule_system = read("latest/system_rules_only.json")
+    annotations = read("latest/annotation_scores.json")
     models = system.get("models", {})
     retrieval = annotations.get("retrieval", system.get("retrieval_annotation_scores", {}))
     extraction_timing = extraction.get("document_processing_timing", {})
@@ -49,7 +50,7 @@ def make_table() -> str:
     env = rule_system.get("environment", {})
     embedding = env.get("embedding_backend", {})
     ollama_models = [item.get("name") for item in env.get("ollama_inventory", {}).get("models", [])]
-    extraction_run_time = read("results.json").get("timestamp_utc", "not recorded")
+    extraction_run_time = read("latest/results.json").get("timestamp_utc", "not recorded")
     rule_run_time = rule_system.get("timestamp_utc", "not recorded")
 
     def get_model_score(model_name: str | None, group: str, key: str):

@@ -10,8 +10,9 @@ from pathlib import Path
 from statistics import mean
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "evaluation"))
+ROOT = Path(__file__).resolve().parents[2]
+EVAL = ROOT / "evaluation"
+sys.path.insert(0, str(EVAL / "scripts"))
 from metric_calculators import (  # noqa: E402
     PENDING,
     appeal_rubric_score,
@@ -28,10 +29,10 @@ def load_json(path: Path, default: Any):
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--annotations", type=Path, default=ROOT / "evaluation" / "annotations.json")
-    parser.add_argument("--extraction-results", type=Path, default=ROOT / "evaluation" / "results.json")
-    parser.add_argument("--system-results", type=Path, default=ROOT / "evaluation" / "system_results.json")
-    parser.add_argument("--output", type=Path, default=ROOT / "evaluation" / "annotation_scores.json")
+    parser.add_argument("--annotations", type=Path, default=EVAL / "annotations.json")
+    parser.add_argument("--extraction-results", type=Path, default=EVAL / "latest" / "results.json")
+    parser.add_argument("--system-results", type=Path, default=EVAL / "latest" / "system_results.json")
+    parser.add_argument("--output", type=Path, default=EVAL / "latest" / "annotation_scores.json")
     args = parser.parse_args()
 
     annotations = load_json(args.annotations, {})

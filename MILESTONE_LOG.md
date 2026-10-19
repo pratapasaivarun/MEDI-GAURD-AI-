@@ -227,3 +227,15 @@ The upload matrix rejected an empty PDF, a `.txt` uploaded as a bill, and a 15 M
 **Observed output:** compilation succeeded; `199 passed in 48.85s`.
 
 **Evaluation path checks:** `.\.venv\Scripts\python.exe evaluation/run_evaluation.py --repeats 1 --output 'C:\Users\prata\mediguard-sample-eval.json'` exited 0: 12/12 extracted fields correct across 3 bills. `.\.venv\Scripts\python.exe evaluation/run_system_evaluation.py --rules-only --output 'C:\Users\prata\mediguard-sample-system.json'` exited 0: 12/24 end-to-end synthetic statuses agreed (50.0%); standalone rule and decision scores remain explicitly not evaluated. Ollama was unavailable by deliberate host setting at `127.0.0.1:1`; the app, pytest, and evaluation operated without it.
+
+## Part B — Evaluation scripts and latest results
+
+**What changed:** Grouped evaluation Python tools under `evaluation/scripts/` and recorded outputs under `evaluation/latest/`. Updated project-root discovery, runner-to-runner paths, default output paths, tests, and the evaluation folder guide. Retained source labels and annotations at the evaluation root. Added the latest results index.
+
+**Verify command:** `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe -m compileall -q evaluation tests; .\.venv\Scripts\python.exe -m pytest -q tests --tb=short --basetemp 'C:\Users\prata\mediguard_move_eval_pytest'`
+
+**Expected output:** compilation succeeds and all tests pass.
+
+**Observed output:** compilation succeeded; `199 passed in 32.33s`.
+
+**Script path checks:** extraction evaluator exited 0 with 12/12 fields correct across 3 bills; system rules-only evaluator exited 0 with end-to-end status agreement `12/24 (50.0%)`; annotation scorer exited 0 with 24 retrieval queries scored. The configured BGE embedding backend loaded. Ollama was intentionally unavailable at `127.0.0.1:1`. Refreshed extraction, rules-only, and annotation JSON/CSV artifacts are in `evaluation/latest/`.

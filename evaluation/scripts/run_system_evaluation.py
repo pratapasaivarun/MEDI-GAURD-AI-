@@ -27,7 +27,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 PENDING = "Not Evaluated — Ground Truth/Data Required"
 DEFAULT_TESSERACT = Path(r"C:\Program Files\Tesseract-OCR\tesseract.exe")
@@ -167,7 +167,7 @@ def run() -> int:
     parser.add_argument("--rules-only", action="store_true", help="Run app document processing and deterministic rules without LLM/report stages")
     parser.add_argument("--limit", type=int, help="Run the first N synthetic cases; omit for all 24")
     parser.add_argument("--annotations", type=Path, default=ROOT / "evaluation" / "annotations.json")
-    parser.add_argument("--output", type=Path, default=ROOT / "evaluation" / "system_results.json")
+    parser.add_argument("--output", type=Path, default=ROOT / "evaluation" / "latest" / "system_results.json")
     args = parser.parse_args()
 
     installed, inventory = ollama_models()

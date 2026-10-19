@@ -1,0 +1,41 @@
+{
+  "label": "FICTIONAL SAMPLE",
+  "case_id": "b_wrongful_deduction",
+  "claim_number": "CLM-FICT-0418",
+  "patient_name": "Bhavna Sample",
+  "hospital_name": "Fictional City Hospital",
+  "policy_number": "POL-FICT-001",
+  "stay_dates": "10-14 Aug 2026",
+  "expected": {
+    "expected_status": "possible_discrepancy",
+    "bill_total": 47000,
+    "covered_before_cost_share": 35000,
+    "deductible": 10000,
+    "copay": 2500,
+    "expected_insurer_payment": 22500,
+    "actual_insurer_payment": 19800,
+    "expected_patient_share": 24500,
+    "actual_patient_share": 27200,
+    "possible_difference": 2700,
+    "appeal_available": true,
+    "supporting_clause_page": 1,
+    "insurer_copay_applied": 2200
+  },
+  "calculation": {
+    "billed_items": {
+      "room": 30000,
+      "doctor_and_nursing": 6000,
+      "pharmacy": 8000,
+      "diagnostic_lab": 3000
+    },
+    "room_allowable": 20000,
+    "proportionate_doctor_and_nursing_allowable": 4000,
+    "eligible_before_deductible": 35000,
+    "deductible": 10000,
+    "copay_rate_percent": 10,
+    "copay": 2500,
+    "insurer_estimate": 22500,
+    "patient_share": 24500,
+    "settlement_explanation": "The insurer under-applies co-pay by INR 300 and wrongly deducts the payable INR 3000 lab line. This reconciles to INR 2700 excess patient responsibility after the policy 10% share."
+  }
+}

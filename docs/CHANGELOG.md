@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- P4.17: Added three hand-calculated, fully fictional demo cases with itemized/date-bearing bill tables, policy and settlement PDFs, including a mixed text/scanned bill for manual review. Added `docs/DEMO_GUIDE.md`. Full suite at this checkpoint: **153 passed**.
+
 ## MediGuard project hygiene — 2026-10-17
 
 - T13: Audited the user-supplied ZIP against the Git branch; moved the implementation plan from `T/` into `docs/`, removed three unreferenced PDFs without a fictional-sample label, updated the project audit, and prepared a clean distributable excluding local secrets, environments, databases, caches, temporary outputs, and nested ZIPs. Full suite: **116 passed**.

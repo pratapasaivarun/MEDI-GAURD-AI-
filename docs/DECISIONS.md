@@ -1,5 +1,10 @@
 # Implementation decisions
 
+## 2026-10-19 Phase 4 demo cases
+
+- Demo PDFs use synthetic names, claim IDs, amounts, and providers and carry a `FICTIONAL SAMPLE` banner. Case C includes a deliberately mismatched settlement total and a scanned bill page so the workflow must stay in manual review with appeal downloads disabled.
+- Case B combines an improperly rejected payable diagnostic line with a co-pay difference. The expected INR 2,700 patient-share difference is calculated after the co-pay adjustment, and a draft letter is available only for reviewer confirmation.
+
 ## 2026-10-10 follow-up
 
 - Preserve supported claim-reference separators during extraction; when comparing references, normalize whitespace, `/`, and `-` as equivalent separators without altering the displayed source ID.

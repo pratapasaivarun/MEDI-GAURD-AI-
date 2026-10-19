@@ -10,6 +10,7 @@
 - P5.1 follow-up: The settlement comparison no longer tells a claimant to upload a letter when a letter exists but the outcome is manual review or no discrepancy. Added a focused renderer regression. Full suite: **155 passed**.
 - P5.5: Added a Python 3.13.1 Debian slim Dockerfile with pinned application requirements, Tesseract OCR, non-root runtime, persistent data volume, and Docker context exclusions. Documented the BGE cache and memory constraints; Docker Engine is unavailable here, so image build is not verified. Full suite: **156 passed**.
 - QA follow-up: Expanded reviewer source-page tests to cover every accepted policy term, exclusions, sub-limits, and pages beyond the uploaded document. Focused suite: **2 passed**; full suite: **156 passed**.
+- QA follow-up: Added a synthetic image-only settlement PDF regression. It confirms the text-only parser returns missing payment/deductions and routes the letter to manual review without OCR or an LLM. Focused settlement suite: **9 passed**.
 
 ## MediGuard project hygiene — 2026-10-17
 

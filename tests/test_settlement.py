@@ -2,6 +2,7 @@ from decimal import Decimal
 from pathlib import Path
 
 import pytest
+import pymupdf
 
 from settlement import parse_settlement
 
@@ -30,6 +31,26 @@ def test_fictional_pdf_settlement_parses_using_pdf_text_reader():
     result = parse_settlement(fixture.read_bytes(), fixture.name)
     assert result.amount_paid == Decimal("102600.00")
     assert len(result.deductions) == 4
+
+
+def test_image_only_settlement_pdf_routes_to_manual_review_without_ocr(monkeypatch, tmp_path):
+    monkeypatch.setattr("settlement.requests.post", lambda *_args, **_kwargs: type("Response", (), {"status_code": 503})())
+    image_path = tmp_path / "settlement-page.png"
+    from PIL import Image
+    Image.new("RGB", (300, 400), "white").save(image_path)
+    document = pymupdf.open()
+    page = document.new_page()
+    page.insert_image(page.rect, filename=str(image_path))
+    pdf_path = tmp_path / "image-only.pdf"
+    document.save(pdf_path)
+    document.close()
+
+    result = parse_settlement(pdf_path.read_bytes(), "image-only.pdf")
+
+    assert result.amount_paid is None
+    assert result.deductions == []
+    assert result.needs_review is True
+    assert any("could not be read" in reason for reason in result.review_reasons)
 
 
 def test_settlement_reconciliation_failure_requires_review():

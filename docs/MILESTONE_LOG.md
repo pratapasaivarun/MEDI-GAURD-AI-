@@ -279,3 +279,21 @@ The upload matrix rejected an empty PDF, a `.txt` uploaded as a bill, and a 15 M
 **Expected output:** compilation succeeds and all tests pass with Ollama disabled.
 
 **Observed output:** compilation succeeded; `200 passed in 30.82s` on merged `main` commit `ba36909`.
+
+## Part C — Fresh clone verification
+
+**What changed:** No application code changed. Cloned the pushed remote `main` branch to `C:\Users\prata\mediguard-ai-fresh-clone-20261020`, created a new Python 3.13.1 virtual environment, installed both requirement files, and copied `.env.example` to the clone-local ignored `.env`.
+
+**Verify commands:** Run from the fresh clone:
+
+- `py -3.13 -m venv .venv`
+- ` .\.venv\Scripts\python.exe -m pip install --upgrade pip` then ` .\.venv\Scripts\python.exe -m pip install -r requirements.txt -r tests/requirements-dev.txt`
+- `Copy-Item .env.example .env`
+- `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe -m pytest -q tests`
+- ` .\.venv\Scripts\python.exe -m streamlit run app.py --server.port 8501` — health endpoint `/_stcore/health`
+- `$env:MEDIGUARD_ADMIN_PASSWORD='(local throwaway password)'; .\.venv\Scripts\python.exe run_demo.py` — health endpoint `/_stcore/health`
+- The three evaluation commands in the root README.
+
+**Observed output:** Dependency installation completed. The clean-clone suite passed: `200 passed in 85.43s (0:01:25)`. Regular app on port 8501 and demo on port 8506 each returned HTTP `200`, body `ok`. Extraction evaluation exited 0 with 12/12 fields correct; rules-only evaluation exited 0 with 12/24 (50.0%) end-to-end status agreement and BGE active; annotation scoring exited 0 with 24 labeled retrieval queries. Ollama was deliberately unavailable at `127.0.0.1:1`. Tesseract was available on this machine; no real patient records were used.
+
+**Tag note:** `v1.0-prototype` points to the verified implementation merge `0b39a43`. This log-only commit records the separate clean-clone verification performed from that exact source commit; no code changed after tagging.

@@ -86,3 +86,13 @@ These are the expected values, not results from the software. Date cases assume 
 **Expected output:** 187 tests pass; no failures.
 
 **Result:** No mismatch with the arithmetic specification was found. The cases verify line caps and limits, then deductible and co-pay applied to the remaining covered amount.
+
+## Phase 3 — LLM safety
+
+**What changed:** The explanation validator now checks every number in model-written text against deterministic comparison amounts and the cited clause page/section. Added fallback regressions for Ollama down, timeout, malformed output, fabricated numbers, and proof that valid explanatory text cannot mutate the comparison object. The 8.8B Granite model is installed and the local Ollama tag endpoint responded, but these automated tests deliberately use disabled/mocked model responses. Live three-case on/off UI equivalence remains for the browser phase; no claim is made yet that a full live-model demo was run.
+
+**Verify command:** `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe -m pytest -q --basetemp 'C:\Users\prata\mediguard_phase3_pytest'`.
+
+**Expected output:** all tests pass with Ollama disabled; model failures select template explanation and rule results remain unchanged.
+
+**Observed output:** `192 passed in 32.04s`.

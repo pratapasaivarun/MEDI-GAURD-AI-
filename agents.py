@@ -225,12 +225,20 @@ def validate_comparison_explanation(text: str, comparison: ComparisonResult) -> 
     if not isinstance(text, str) or not text.strip() or len(text.split()) > 120:
         return False
     allowed = _comparison_money_values(comparison)
-    for match in re.finditer(r"(?:INR|Rs\.?|₹)\s*([0-9][0-9,]*(?:\.\d{1,2})?)", text, re.I):
+    # Validate every numeric literal, not only currency-prefixed amounts. This
+    # blocks fabricated percentages, counts, years, and other figures too.
+    allowed_numbers = set(allowed)
+    for row in comparison.categories:
+        if row.clause:
+            allowed_numbers.add(str(Decimal(row.clause.page).quantize(Decimal("0.01"))))
+            for section_number in re.findall(r"\d+(?:\.\d+)?", str(row.clause.section or "")):
+                allowed_numbers.add(str(Decimal(section_number).quantize(Decimal("0.01"))))
+    for match in re.finditer(r"(?<![A-Za-z])\d[\d,]*(?:\.\d+)?", text):
         try:
-            amount = Decimal(match.group(1).replace(",", "")).quantize(Decimal("0.01"))
+            amount = Decimal(match.group(0).replace(",", "")).quantize(Decimal("0.01"))
         except Exception:
             return False
-        if str(amount) not in allowed:
+        if str(amount) not in allowed_numbers:
             return False
     clauses = [row.clause.text for row in comparison.categories if row.clause]
     quoted = re.findall(r"[\"“](.+?)[\"”]", text)

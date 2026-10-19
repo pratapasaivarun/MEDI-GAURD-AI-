@@ -326,8 +326,10 @@ def _render_settlement_comparison(
             st.text(build_comparison_appeal_letter_text(claim, comparison, settlement, explanation))
         with st.expander('Preview hospital note'):
             st.text(build_hospital_note_text(claim, comparison))
+    elif comparison.status == 'manual_review':
+        st.info('An appeal draft is not available while this comparison needs manual review. An authorized reviewer must confirm the source values and policy evidence.')
     else:
-        st.info("Upload the insurer's settlement letter to compare it and enable a draft.")
+        st.info('No appeal draft is available because no possible settlement discrepancy was identified.')
 
 
 def _claim_answer_from_saved_data(question: str, result: dict[str, Any], normalized: dict[str, Any], evidence: list[dict[str, Any]]) -> str | None:

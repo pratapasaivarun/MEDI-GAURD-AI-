@@ -7,6 +7,7 @@
 - P0.3: Added GitHub Actions on pushes and pull requests using pinned Python dependencies, isolated temporary storage, and Ollama disabled. Local full suite: **153 passed**.
 - P2.1 follow-up: Conflicting positive/negative or conditional proportionate-deduction wording now marks settlement comparison for manual review. Added failing-then-passing app-path regression and documented the wording limitation. Full suite: **154 passed**.
 - P4.19: Corrected the demo guide's case-B arithmetic to INR 2,700 after including the INR 300 co-pay under-application. Verified against the case manifest and current browser comparison.
+- P5.1 follow-up: The settlement comparison no longer tells a claimant to upload a letter when a letter exists but the outcome is manual review or no discrepancy. Added a focused renderer regression. Full suite: **155 passed**.
 
 ## MediGuard project hygiene — 2026-10-17
 

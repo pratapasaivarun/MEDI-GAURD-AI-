@@ -1,5 +1,9 @@
 # Implementation decisions
 
+## 2026-10-19 settlement comparison messaging
+
+- Show the missing-settlement upload prompt only when no settlement comparison exists. Manual-review and no-discrepancy results get status-specific messages, and neither can offer an appeal draft.
+
 ## 2026-10-19 proportionate wording
 
 - A positive and negative proportionate-deduction statement in the same policy, or conditional wording such as “may apply,” is not resolved by choosing either statement. The comparison is forced to manual review with a stable non-sensitive reason.

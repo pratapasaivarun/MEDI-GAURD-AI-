@@ -1,4 +1,4 @@
-> **Historical numbers — superseded (2026-10-19).** The tables below report earlier runs against a different six-bill fixture set and a different trusted-context harness. They are not the current evaluation. The current extraction run measured 12/12 fields (three fictional bills); the current full app status comparison measured 12/24 labels because the app correctly withheld calculation until policy terms had reviewer confirmation. This app status figure is not a math-accuracy score. One synthetic retrieval query was evaluated; it is too small to support a general retrieval-quality claim. See `MILESTONE_LOG.md` and `docs/archive/ARCHIVED_PROJECT_REPORT_2026-10-19.md` for current commands, denominators and limits.
+> **Historical tables — outdated.** The tables below report earlier runs against a different fixture set. Current checks are 12/12 extracted bill fields, 13/24 direct rules status agreement with reviewer-confirmed terms, 12/24 end-to-end app status agreement including review gates, and 24 labeled retrieval questions. See `../06_EVALUATION_RESULTS.md` and `../MILESTONE_LOG.md` for current denominators and limits.
 
 # Paper-ready quantitative results
 

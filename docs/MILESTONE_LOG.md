@@ -297,3 +297,13 @@ The upload matrix rejected an empty PDF, a `.txt` uploaded as a bill, and a 15 M
 **Observed output:** Dependency installation completed. The clean-clone suite passed: `200 passed in 85.43s (0:01:25)`. Regular app on port 8501 and demo on port 8506 each returned HTTP `200`, body `ok`. Extraction evaluation exited 0 with 12/12 fields correct; rules-only evaluation exited 0 with 12/24 (50.0%) end-to-end status agreement and BGE active; annotation scoring exited 0 with 24 labeled retrieval queries. Ollama was deliberately unavailable at `127.0.0.1:1`. Tesseract was available on this machine; no real patient records were used.
 
 **Tag note:** `v1.0-prototype` points to the verified implementation merge `0b39a43`. This log-only commit records the separate clean-clone verification performed from that exact source commit; no code changed after tagging.
+
+## CI follow-up — Workflow validation and rules-score correction
+
+**What changed:** GitHub rejected `.github/workflows/tests.yml` because its job-wide environment referenced the `runner` context, which is unavailable there. Moved the temporary database, storage, and Chroma paths to the test step environment, where that context is supported. Also corrected the evaluation summary to show the measured direct rules agreement separately from the end-to-end app score: 13/24 (54.17%) and 12/24 (50.00%), respectively.
+
+**Verify command:** `$env:OLLAMA_HOST='http://127.0.0.1:1'; $env:MEDIGUARD_DB_PATH=(Join-Path (Get-Location) '.pytest-temp\mediguard-test.db'); $env:MEDIGUARD_STORAGE_DIR=(Join-Path (Get-Location) '.pytest-temp\storage'); $env:CHROMA_DIR=(Join-Path (Get-Location) '.pytest-temp\chroma'); New-Item -ItemType Directory -Force -Path .pytest-temp\pytest | Out-Null; py -3.13 -m pytest -q tests --basetemp (Join-Path (Get-Location) '.pytest-temp\pytest') --tb=short`
+
+**Expected output:** all tests pass with Ollama disabled.
+
+**Observed output:** `200 passed in 32.61s`. An initial run using the machine-wide pytest temporary directory failed during fixture setup because Windows denied access to that shared temp folder; the isolated repository-local temporary directory resolved it. GitHub Actions run status is pending the pushed workflow correction.

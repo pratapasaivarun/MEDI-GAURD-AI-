@@ -129,6 +129,7 @@ Latest recorded fictional-data checks (2026-10-20; evaluation files last refresh
 
 - Automated suite: **200 passed** with Ollama disabled.
 - Extraction: **12/12 fields (100%)** across three fictional bills.
+- Direct deterministic rules status agreement: **13/24 (54.17%)**, using source-page-backed reviewer-confirmed terms across the 24 fictional scenarios; 11 labels differ.
 - End-to-end status agreement: **12/24 (50%)** across fictional scenarios. This includes reviewer gates and is not a standalone math accuracy score.
 - Retrieval: **24 labeled queries**; precision@1 **14/24 (58.33%)**, precision@3 **23/72 (31.94%)**, precision@5 **24/120 (20.00%)**, recall@3 **23/24 (95.83%)**, recall@5 **24/24 (100%)**.
 - The three demo cases produced the expected match, supported discrepancy, and manual-review outcomes in the browser. Live Ollama on/off checks kept the financial amounts and decisions identical.

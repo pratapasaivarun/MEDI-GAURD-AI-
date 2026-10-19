@@ -1396,6 +1396,12 @@ def run_settlement_comparison(
     if isinstance(exclusions, str):
         exclusions = [exclusions]
     clauses = _claim_policy_clause_map(claim_id)
+    proportionate_deduction = _policy_applies_proportionate_deduction(policy_text)
+    comparison_review_reasons = list(rules.get("warnings") or [])
+    if proportionate_deduction is None:
+        comparison_review_reasons.append(
+            "PROPORTIONATE_WORDING_CONFLICT: policy text has conflicting proportionate-deduction wording; reviewer confirmation is required."
+        )
     typed_terms = TypedPolicyTerms(
         sum_insured=parsed_terms.annual_limit if parsed_terms and parsed_terms.annual_limit is not None else Decimal("0"),
         room_rent_cap_per_day=parsed_terms.room_limit_per_day if parsed_terms else None,
@@ -1404,7 +1410,7 @@ def run_settlement_comparison(
         non_payable_categories=list(non_payables or []),
         exclusions=list(exclusions or []),
         clauses=clauses,
-        proportionate_deduction=_policy_applies_proportionate_deduction(policy_text),
+        proportionate_deduction=bool(proportionate_deduction),
     )
 
     line_results = rules.get("line_item_results") or []
@@ -1423,8 +1429,8 @@ def run_settlement_comparison(
         deductible=Decimal(str(rules.get("deductible") or 0)),
         patient_share=max(Decimal("0"), bill_total - Decimal(str(rules.get("payable_amount") or 0))),
         insurer_share=Decimal(str(rules.get("payable_amount") or 0)),
-        status="manual_review" if rules.get("status") == "manual_review" else "computed",
-        review_reasons=list(rules.get("warnings") or []),
+        status="manual_review" if rules.get("status") == "manual_review" or proportionate_deduction is None else "computed",
+        review_reasons=comparison_review_reasons,
         admission_date=admission,
         discharge_date=discharge,
     )
@@ -1517,17 +1523,29 @@ def get_comparison_for_view(claim_id: str, user: dict | sqlite3.Row, session_sta
     return comparison, settlement
 
 
-def _policy_applies_proportionate_deduction(policy_text: str) -> bool:
+def _policy_applies_proportionate_deduction(policy_text: str) -> bool | None:
     term = r"(?:proportionate(?:\s+deduction)?|room[- ]linked(?:\s+deduction)?)"
     text = str(policy_text or "")
-    negative = re.search(
-        rf"\bno\s+{term}\b|\b{term}\b.{{0,40}}\b(?:does\s+not|doesn't|will\s+not|shall\s+not|should\s+not|not)\s+(?:be\s+)?appl(?:y|ied)\b|\b{term}\b.{{0,40}}\b(?:does\s+not|doesn't|will\s+not|shall\s+not|should\s+not)\s+apply\b",
-        text,
-        re.IGNORECASE,
-    )
-    if negative:
+    applies = rf"\b{term}\b.{{0,40}}\b(?:applies?|applied|applicable)\b"
+    negatives = rf"\bno\s+{term}\b|\b{term}\b.{{0,40}}\b(?:does\s+not|doesn't|will\s+not|shall\s+not|should\s+not|not)\s+(?:be\s+)?appl(?:y|ied)\b|\b{term}\b.{{0,40}}\b(?:does\s+not|doesn't|will\s+not|shall\s+not|should\s+not)\s+apply\b"
+    clauses = re.split(r"[.!?;]|\b(?:but|however|although)\b", text, flags=re.IGNORECASE)
+    has_positive = False
+    has_negative = False
+    has_ambiguous = False
+    for clause in clauses:
+        if not re.search(rf"\b{term}\b", clause, re.IGNORECASE):
+            continue
+        if re.search(negatives, clause, re.IGNORECASE):
+            has_negative = True
+        elif re.search(applies, clause, re.IGNORECASE):
+            has_positive = True
+        elif re.search(r"\b(?:may|might|could|possibly|subject\s+to|depending\s+on)\b", clause, re.IGNORECASE):
+            has_ambiguous = True
+    if has_ambiguous or (has_positive and has_negative):
+        return None
+    if has_negative:
         return False
-    return bool(re.search(rf"\b{term}\b.{{0,40}}\b(?:applies?|applied|applicable)\b", text, re.IGNORECASE))
+    return has_positive
 
 
 def _policy_term_verification_label(term: dict[str, Any]) -> str:

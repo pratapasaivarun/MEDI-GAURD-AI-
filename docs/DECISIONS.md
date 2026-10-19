@@ -1,5 +1,9 @@
 # Implementation decisions
 
+## 2026-10-19 proportionate wording
+
+- A positive and negative proportionate-deduction statement in the same policy, or conditional wording such as “may apply,” is not resolved by choosing either statement. The comparison is forced to manual review with a stable non-sensitive reason.
+
 ## 2026-10-19 Phase 4 demo cases
 
 - Demo PDFs use synthetic names, claim IDs, amounts, and providers and carry a `FICTIONAL SAMPLE` banner. Case C includes a deliberately mismatched settlement total and a scanned bill page so the workflow must stay in manual review with appeal downloads disabled.

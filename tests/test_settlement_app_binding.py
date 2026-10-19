@@ -1,4 +1,5 @@
 from decimal import Decimal
+import json
 
 import app
 import uuid
@@ -171,3 +172,27 @@ def test_proportionate_deduction_requires_positive_policy_wording():
     assert app._policy_applies_proportionate_deduction("No proportionate deduction applies.") is False
     assert app._policy_applies_proportionate_deduction("Proportionate deduction does not apply.") is False
     assert app._policy_applies_proportionate_deduction("Room-linked charges are mentioned.") is False
+    assert app._policy_applies_proportionate_deduction("Proportionate deduction may apply to linked charges.") is None
+
+
+def test_conflicting_proportionate_wording_requires_comparison_review(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        app, "saved_policy_text",
+        lambda _claim_id: "No proportionate deduction applies to ICU. Proportionate deduction applies to room-linked charges.",
+    )
+    monkeypatch.setattr(app, "_claim_policy_clause_map", lambda *_: {})
+    monkeypatch.setattr(app, "active_policy_for_claim", lambda *_: {
+        "policy_number": "POL-558201",
+        "version_label": "fictional test policy",
+        "reviewed_policy_terms_json": json.dumps({
+            "annual_limit": {"value": "500000"},
+            "deductible": {"value": "0"},
+            "copay_percent": {"value": "0"},
+        }),
+    })
+    result, _settlement = _run_comparison(
+        monkeypatch, tmp_path,
+        "Claim No: CLM-2026-0417\nBill Total: INR 1,000\nDeductions\nAdmission | INR 1,000\nAmount Paid: INR 0",
+    )
+    assert result.status == "manual_review"
+    assert "PROPORTIONATE_WORDING_CONFLICT" in " ".join(result.review_reasons)

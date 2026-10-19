@@ -15,6 +15,7 @@
 - QA follow-up: Promoted the 200 deterministic malformed settlement-input probe to a repeatable unit test. Settlement suite: **10 passed**.
 - Security QA: Added upload filename traversal checks for POSIX and Windows path separators; `_validated_upload` stores only the basename. Focused security suite: **6 passed**.
 - Security QA: Added admin-only retention tests proving expired document files/rows are removed, recent uploads are preserved, and invalid retention periods are rejected. Focused suite: **2 passed**.
+- Extraction QA: Added explicit regressions for repeated bill table headers and low-confidence OCR line items. Focused Phase 1 suite: **18 passed**.
 
 ## MediGuard project hygiene — 2026-10-17
 

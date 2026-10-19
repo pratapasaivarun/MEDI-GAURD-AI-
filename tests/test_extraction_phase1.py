@@ -26,6 +26,24 @@ def test_table_bill_amount_column_and_header_handling():
     ]
 
 
+def test_repeated_table_headers_are_skipped_between_item_rows():
+    header = "Description Qty Rate Amount"
+    text = f"{header}\nRoom charges 4 5000 20000\n{header}\nPharmacy 1 8000 8000"
+    items = _extract_line_items(text, [Evidence("bill", "bill.pdf", 1, "pymupdf", text, 100)])
+    assert [(item["description"], item["amount"]) for item in items] == [
+        ("Room charges", 20000), ("Pharmacy", 8000),
+    ]
+
+
+def test_low_confidence_ocr_line_item_is_flagged_for_review():
+    text = "Pharmacy 1 8000 8000"
+    items = _extract_line_items(text, [Evidence("bill", "bill.pdf", 2, "tesseract", text, 45)])
+    assert len(items) == 1
+    assert items[0]["amount"] == 8000
+    assert items[0]["confidence"] == 45
+    assert items[0]["needs_review"] is True
+
+
 def test_tabular_rows_with_days_column_use_final_amount():
     rows = (
         "Room charges | 4 days | 5000 | 20000",

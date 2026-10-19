@@ -12,6 +12,7 @@
 - QA follow-up: Expanded reviewer source-page tests to cover every accepted policy term, exclusions, sub-limits, and pages beyond the uploaded document. Focused suite: **2 passed**; full suite: **156 passed**.
 - QA follow-up: Added a synthetic image-only settlement PDF regression. It confirms the text-only parser returns missing payment/deductions and routes the letter to manual review without OCR or an LLM. Focused settlement suite: **9 passed**.
 - P3 exclusion follow-up: Split semicolon/comma-delimited `Exclusions:` lists into item-level terms and ignore generic annual-limit/sum-insured language in the item-exclusion list. Red tests: **2 failed**; focused tests after fix: **5 passed**.
+- QA follow-up: Promoted the 200 deterministic malformed settlement-input probe to a repeatable unit test. Settlement suite: **10 passed**.
 
 ## MediGuard project hygiene — 2026-10-17
 

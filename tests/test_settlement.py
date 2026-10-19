@@ -1,5 +1,6 @@
 from decimal import Decimal
 from pathlib import Path
+import random
 
 import pytest
 import pymupdf
@@ -51,6 +52,22 @@ def test_image_only_settlement_pdf_routes_to_manual_review_without_ocr(monkeypat
     assert result.deductions == []
     assert result.needs_review is True
     assert any("could not be read" in reason for reason in result.review_reasons)
+
+
+def test_parser_handles_two_hundred_deterministic_malformed_rows(monkeypatch):
+    rng = random.Random(41)
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 |:/-.,\t"
+    monkeypatch.setattr("settlement.requests.post", lambda *_args, **_kwargs: type("Response", (), {"status_code": 503})())
+
+    for index in range(200):
+        noise = "".join(rng.choice(alphabet) for _ in range(rng.randrange(0, 500)))
+        payload = (
+            f"Claim ID: CLM-{index:04d}\nBill Total: INR 41000\n"
+            f"Deductions:\n{noise}\nAmount Paid: INR 30000"
+        ).encode("utf-8")
+        parsed = parse_settlement(payload, "fuzz.txt")
+        assert parsed.amount_paid == Decimal("30000.00")
+        assert parsed.needs_review is True
 
 
 def test_settlement_reconciliation_failure_requires_review():

@@ -33,7 +33,7 @@ A more detailed architecture image is [docs/architecture.svg](C:/MediGaurd%20AI/
 
 ## Verification results
 
-- **Math:** 17 hand-calculated rules cases and 2 comparison cases are documented in `docs/GOLDEN_CASES.md`. Direct tests cover deductible, co-pay, room/ICU caps, exclusions, sub-limits, annual limit, zero/boundary amounts and date windows. All passed; no expected arithmetic was changed to accommodate the implementation.
+- **Math:** 17 hand-calculated rules cases and 2 comparison cases are documented in `docs/04_MATH_GOLDEN_CASES.md`. Direct tests cover deductible, co-pay, room/ICU caps, exclusions, sub-limits, annual limit, zero/boundary amounts and date windows. All passed; no expected arithmetic was changed to accommodate the implementation.
 - **Automated tests:** `199 passed` with Ollama explicitly disabled; the latest complete run is recorded in `MILESTONE_LOG.md`.
 - **Extraction evaluation:** `12/12` field values matched (`100%`) across three fictional bills. This is a small fixture check, not a real-world accuracy estimate.
 - **Rules status agreement:** `13/24` expected labels matched (`54.17%`) on the 24 fictional scenarios after the evaluator began supplying separately recorded, source-page-backed fixture reviewer-confirmed terms and scenario context. This is a measured status agreement score, not real-world or independent-expert accuracy. Eleven expected/actual mismatches remain and are listed in the evaluation output.
@@ -51,4 +51,4 @@ The sample is fictional and small. Policy interpretation, OCR, retrieval relevan
 1. From the repository root, create `.env` from `.env.example` and set a strong `MEDIGUARD_ADMIN_PASSWORD` only if an administrator login is needed.
 2. Activate `.venv`, then run `python -m streamlit run app.py` and open `http://127.0.0.1:8501`. For isolated synthetic demo storage, run `python run_demo.py` at port `8506`.
 3. Use only documents under `samples/demo_cases/`. A reviewer must confirm policy values and source pages before financial results are shown.
-4. Verify code with `python -m pytest -q`. See `docs/DEMO_GUIDE.md` for fixture paths and expected outcomes.
+4. Verify code with `python -m pytest -q`. See `docs/03_RUNNING_THE_DEMO.md` for fixture paths and expected outcomes.

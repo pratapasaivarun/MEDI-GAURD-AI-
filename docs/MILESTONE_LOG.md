@@ -102,8 +102,8 @@ These are the expected values, not results from the software. Date cases assume 
 **What changed:** Restored `evaluation/ground_truth.json` from three labeled fictional bill fixtures and verified the field values against extraction output. Added a source-backed, synthetic policy retrieval query label. Updated the system evaluator to print end-to-end app-status agreement with a denominator and explicit scope; it keeps standalone core rule accuracy marked not evaluated when reviewer-confirmation gates prevent `rules.evaluate_claim` from running.
 
 **Verify commands:**
-- `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe evaluation/run_evaluation.py --repeats 1 --output evaluation/.phase4-extraction.json`
-- `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe evaluation/run_system_evaluation.py --rules-only --output evaluation/.phase4-system-final.json`
+- `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe evaluation/scripts/run_evaluation.py --repeats 1 --output evaluation/.phase4-extraction.json`
+- `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe evaluation/scripts/run_system_evaluation.py --rules-only --output evaluation/.phase4-system-final.json`
 - `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe -m pytest -q tests --basetemp 'C:\Users\prata\mediguard_phase4_pytest'`
 
 **Expected output:** Extraction runner exits 0 with a real field numerator/denominator; system runner exits 0 with a 24-case status comparison plus labeled retrieval metrics; full test suite passes.
@@ -132,7 +132,7 @@ The prior paper numbers (79.17% extraction, 68.75% OCR fields and 21/21 core rul
 
 ## Phase 7 — Final report and closeout
 
-**What changed:** Added `FINAL_REPORT.md` and `docs/architecture.svg`. The report records the actual math, test, evaluation and browser evidence and names unverified areas rather than presenting them as complete.
+**What changed:** Added `docs/archive/ARCHIVED_PROJECT_REPORT_2026-10-19.md` and `docs/architecture.svg`. The report records the actual math, test, evaluation and browser evidence and names unverified areas rather than presenting them as complete.
 
 **Verify command:** `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe -m pytest -q tests --basetemp 'C:\Users\prata\mediguard_phase7_pytest'`.
 
@@ -142,7 +142,7 @@ The prior paper numbers (79.17% extraction, 68.75% OCR fields and 21/21 core rul
 
 ## Follow-up A1 — Reviewer-confirmed fixture terms and honest rules score
 
-**What changed:** Added `evaluation/reviewer_confirmed_policy_terms.json` with source text and page-backed confirmed term values for each of the 24 fictional scenario policies. The direct rules evaluator now uses that file as its input, includes the scenario's explicitly labeled reviewer context, scores all 24 cases, and stores every mismatch. `FINAL_REPORT.md` replaces the misleading old `12/24` app-gate figure with the actual direct rules status-agreement result. Missing required terms in the deliberately incomplete fixture remain missing and produce Manual Review.
+**What changed:** Added `evaluation/reviewer_confirmed_policy_terms.json` with source text and page-backed confirmed term values for each of the 24 fictional scenario policies. The direct rules evaluator now uses that file as its input, includes the scenario's explicitly labeled reviewer context, scores all 24 cases, and stores every mismatch. `docs/archive/ARCHIVED_PROJECT_REPORT_2026-10-19.md` replaces the misleading old `12/24` app-gate figure with the actual direct rules status-agreement result. Missing required terms in the deliberately incomplete fixture remain missing and produce Manual Review.
 
 **Verify command:** `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe evaluation\run_evaluation.py --repeats 1 --output C:\Users\prata\mediguard-a1-evaluation.json`
 
@@ -226,7 +226,7 @@ The upload matrix rejected an empty PDF, a `.txt` uploaded as a bill, and a 15 M
 
 **Observed output:** compilation succeeded; `199 passed in 48.85s`.
 
-**Evaluation path checks:** `.\.venv\Scripts\python.exe evaluation/run_evaluation.py --repeats 1 --output 'C:\Users\prata\mediguard-sample-eval.json'` exited 0: 12/12 extracted fields correct across 3 bills. `.\.venv\Scripts\python.exe evaluation/run_system_evaluation.py --rules-only --output 'C:\Users\prata\mediguard-sample-system.json'` exited 0: 12/24 end-to-end synthetic statuses agreed (50.0%); standalone rule and decision scores remain explicitly not evaluated. Ollama was unavailable by deliberate host setting at `127.0.0.1:1`; the app, pytest, and evaluation operated without it.
+**Evaluation path checks:** `.\.venv\Scripts\python.exe evaluation/scripts/run_evaluation.py --repeats 1 --output 'C:\Users\prata\mediguard-sample-eval.json'` exited 0: 12/12 extracted fields correct across 3 bills. `.\.venv\Scripts\python.exe evaluation/scripts/run_system_evaluation.py --rules-only --output 'C:\Users\prata\mediguard-sample-system.json'` exited 0: 12/24 end-to-end synthetic statuses agreed (50.0%); standalone rule and decision scores remain explicitly not evaluated. Ollama was unavailable by deliberate host setting at `127.0.0.1:1`; the app, pytest, and evaluation operated without it.
 
 ## Part B — Evaluation scripts and latest results
 
@@ -249,3 +249,13 @@ The upload matrix rejected an empty PDF, a `.txt` uploaded as a bill, and a 15 M
 **Expected output:** all tests pass with Ollama disabled.
 
 **Observed output:** `199 passed in 29.08s`.
+
+## Part B — Root guide and repository hygiene
+
+**What changed:** Replaced the old root guide with the requested ordered README sections, using current fictional-data scores and Windows PowerShell commands. Corrected Streamlit's configured port from 8505 to 8501. Expanded `.gitignore` for additional model, browser, and test artifacts. Updated stale guide links and the evaluation script paths. Added a test that verifies the README points to real evaluation commands and that the Streamlit configured port matches the documented port. Kept `.streamlit/`, `.dockerignore`, and `.gitattributes` because the first contains the app theme/default, the second prevents local secrets/data from entering Docker build contexts, and the third preserves predictable text diffs.
+
+**Verify command:** `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe -m compileall -q app.py mediguard evaluation tests; .\.venv\Scripts\python.exe -m pytest -q tests --tb=short --basetemp 'C:\Users\prata\mediguard_cleanup_pytest'`
+
+**Expected output:** compilation succeeds and all 200 tests pass.
+
+**Observed output:** the first full run found the old repository-guide test expected a sentence removed by the new README; the README was updated to document the three labeled bills. The next run passed: `200 passed in 29.42s`.

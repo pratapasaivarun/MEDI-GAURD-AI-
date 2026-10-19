@@ -6,9 +6,9 @@ temporary directory. It uses the app's own processing, rule, agent-node, and
 report functions; no production workspace data is modified.
 
 Examples:
-    .venv/Scripts/python.exe evaluation/run_system_evaluation.py --rules-only
-    .venv/Scripts/python.exe evaluation/run_system_evaluation.py
-    .venv/Scripts/python.exe evaluation/run_system_evaluation.py --models ibm/granite4.1:8b,org/model:3b
+    .venv/Scripts/python.exe evaluation/scripts/run_system_evaluation.py --rules-only
+    .venv/Scripts/python.exe evaluation/scripts/run_system_evaluation.py
+    .venv/Scripts/python.exe evaluation/scripts/run_system_evaluation.py --models ibm/granite4.1:8b,org/model:3b
 """
 from __future__ import annotations
 

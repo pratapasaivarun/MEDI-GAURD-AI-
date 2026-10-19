@@ -2,7 +2,7 @@
 """Run reproducible synthetic-fixture evaluations for MediGuard AI.
 
 Run from the repository root with:
-    .venv/Scripts/python.exe evaluation/run_evaluation.py --repeats 3
+    .venv/Scripts/python.exe evaluation/scripts/run_evaluation.py --repeats 3
 
 No external claim decisions are inferred here. Metrics without suitable
 ground-truth annotations are emitted as Not Evaluated — Ground Truth/Data Required.

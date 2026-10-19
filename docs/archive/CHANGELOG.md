@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- P4.17: Added three hand-calculated, fully fictional demo cases with itemized/date-bearing bill tables, policy and settlement PDFs, including a mixed text/scanned bill for manual review. Added `docs/DEMO_GUIDE.md`. Full suite at this checkpoint: **153 passed**.
+- P4.17: Added three hand-calculated, fully fictional demo cases with itemized/date-bearing bill tables, policy and settlement PDFs, including a mixed text/scanned bill for manual review. Added `docs/03_RUNNING_THE_DEMO.md`. Full suite at this checkpoint: **153 passed**.
 - P4.18: Added three app-path acceptance tests for extraction, reviewer-confirmed terms, deterministic rules, settlement comparison, clause page, status, amount, letter gating, and offline template explanation. Ollama and OCR are stubbed; policy indexing/retrieval is isolated. Full suite: **153 passed**.
 - P0.3: Added GitHub Actions on pushes and pull requests using pinned Python dependencies, isolated temporary storage, and Ollama disabled. Local full suite: **153 passed**.
 - P2.1 follow-up: Conflicting positive/negative or conditional proportionate-deduction wording now marks settlement comparison for manual review. Added failing-then-passing app-path regression and documented the wording limitation. Full suite: **154 passed**.
@@ -50,7 +50,7 @@
 - Removed the legacy status-based appeal PDF from claimant results. Appeal drafts now have a single comparison-gated path and are available only for `possible_discrepancy`; otherwise the UI asks the claimant to upload the insurer settlement letter. Added status-gate tests; full suite: **71 passed**.
 - Persisted settlement and comparison dataclasses as JSON with Decimal values encoded as strings, tied each result to its settlement document SHA-256, and added an idempotent SQLite table creation migration. Claimant/reviewer views hydrate empty session state from the saved result. A reload-state test passes.
 - Removed token-bearing reset/invitation URLs from logs. Issuance logs contain only the user ID; reset URLs stay hidden by default, and the created reviewer invite URL is displayed only in the admin panel/session. Added link visibility/log tests and documented email delivery as out of scope.
-- Audited all 21 `unsafe_allow_html` calls in `mediguard/services/application.py`, extracted interpolated markup into testable helpers, and escaped dynamic claim/status values. Added seven payload-based rendering-helper tests and documented every call in `docs/XSS_AUDIT.md`.
+- Audited all 21 `unsafe_allow_html` calls in `mediguard/services/application.py`, extracted interpolated markup into testable helpers, and escaped dynamic claim/status values. Added seven payload-based rendering-helper tests and documented every call in `docs/archive/XSS_AUDIT.md`.
 - Added the three requested, searchable fictional demo PDFs and a no-network end-to-end test through extraction, saved policy terms, app context, deterministic rules, settlement comparison, and appeal-letter generation. The first run exposed that admission non-payable wording was not entering the rule engine; policy-term extraction now records that supported deterministic category. The exact estimate, pharmacy discrepancy, page-9 clause, letter figures, forbidden wording check, and wrong/mismatched/unreadable settlement cases now pass.
 
 ## Phase 0 - Baseline and safe defaults

@@ -22,7 +22,7 @@ flowchart TD
   I --> V[(Local Chroma policy index)]
 ```
 
-![MediGuard architecture](02_ARCHITECTURE.svg)
+![MediGuard architecture](architecture.svg)
 
 The rules and comparison modules use Decimal-based Python calculations. Policy retrieval uses a local Chroma vector index and the configured sentence-transformer embedding model. OCR uses local Tesseract when installed. Optional explanations use a local Ollama model. SQLite stores claim and review records; uploaded files and model/index data stay in local storage. The app does not require a remote service for its deterministic rules path.
 

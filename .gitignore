@@ -72,3 +72,16 @@ final_regression_*/
 scenario_check_*/
 debug_line_*/
 verify_*/
+
+# Additional local tooling output and model caches
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+chroma_store/
+model_cache/
+hf_cache/
+playwright-report/
+test-results/
+screenshots/
+*.zip

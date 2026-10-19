@@ -5,7 +5,7 @@
 **Branch reviewed:** `finish-mini-prototype` (historical; current implementation branch is `fix/prototype-completion`)
 **Scope:** supplied project ZIP, tracked repository contents, documented architecture, local test suite, compilation, and packaging hygiene. This is a prototype review, not a clinical, legal, privacy, or penetration assessment.
 
-> This report describes the earlier supplied ZIP and is superseded for current branch status, test results, and evaluation by `PROJECT_STATUS.md` and `FINAL_REPORT.md` (2026-10-19). The old ZIP inventory and findings below are retained as historical context.
+> This report describes the earlier supplied ZIP and is superseded for current branch status, test results, and evaluation by `docs/archive/PROJECT_STATUS_2026-10-19.md` and `docs/archive/ARCHIVED_PROJECT_REPORT_2026-10-19.md` (2026-10-19). The old ZIP inventory and findings below are retained as historical context.
 
 ## Executive summary
 
@@ -90,6 +90,6 @@ The supplied `MediGaurd AI.zip` is about **1.86 GB compressed** and expands to a
 - `tmp/` with about **1,025 generated files** and more than **22 MB** of test/runtime artifacts, along with pytest caches and bytecode caches.
 - Nested ZIP backups, including a roughly **320 MB** implementation archive.
 
-The original ZIP was left untouched. The implementation-plan PDF was moved from the stray `T/` folder into `docs/IMPLEMENTATION_PLAN.pdf` so its role is clear and it remains available with the project. The clean project ZIP contains the repository source, synthetic fixtures, tests, docs, and shallow Git metadata while excluding `.env`, `.venv`, databases, user uploads, caches, temporary outputs, and nested archives. The unused PDFs described above are not included.
+The original ZIP was left untouched. The implementation-plan PDF was moved from the stray `T/` folder into `docs/archive/IMPLEMENTATION_PLAN.pdf` so its role is clear and it remains available with the project. The clean project ZIP contains the repository source, synthetic fixtures, tests, docs, and shallow Git metadata while excluding `.env`, `.venv`, databases, user uploads, caches, temporary outputs, and nested archives. The unused PDFs described above are not included.
 
 The local Git database is also unusually large because the repository history contains old archive content and loose objects. Do not rewrite published history to shrink it; the clean deliverable can use a shallow branch clone with Git metadata while preserving the complete current source tree.

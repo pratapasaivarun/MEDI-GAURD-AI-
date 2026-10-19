@@ -23,6 +23,17 @@ def test_app_base_url_default_matches_documented_streamlit_port():
     assert '"http://localhost:8501"' in app_source
     assert "APP_BASE_URL=http://localhost:8501" in env_example
     assert "http://127.0.0.1:8501" in readme
+    assert 'port = 8501' in (ROOT / ".streamlit" / "config.toml").read_text(encoding="utf-8")
+
+
+def test_readme_commands_point_to_existing_evaluation_scripts():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "evaluation/scripts/run_evaluation.py" in readme
+    assert "evaluation/scripts/run_system_evaluation.py" in readme
+    assert "evaluation/scripts/score_annotations.py" in readme
+    assert (ROOT / "evaluation/scripts/run_evaluation.py").is_file()
+    assert (ROOT / "evaluation/scripts/run_system_evaluation.py").is_file()
+    assert (ROOT / "evaluation/scripts/score_annotations.py").is_file()
 
 
 def test_decision_log_says_claimed_amount_never_sets_paid_amount():

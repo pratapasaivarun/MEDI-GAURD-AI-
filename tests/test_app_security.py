@@ -52,6 +52,16 @@ def test_upload_filename_path_components_are_removed_before_storage():
         assert stored_name == "outside.pdf"
 
 
+def test_upload_size_empty_body_and_image_signatures_are_validated(monkeypatch):
+    monkeypatch.setattr(app, "MAX_FILE_MB", 1)
+    with pytest.raises(ValueError, match="uploaded file is empty"):
+        app._validated_upload(Upload("bill.pdf", b""))
+    with pytest.raises(ValueError, match="exceeds the 1 MB limit"):
+        app._validated_upload(Upload("bill.pdf", b"%PDF" + b"x" * (1024 * 1024)))
+    with pytest.raises(ValueError, match="PNG.*signature is invalid"):
+        app._validated_upload(Upload("bill.png", b"not-a-png"))
+
+
 def test_user_derived_claim_name_is_html_escaped():
     markup = app.claim_context_html(
         {"claim_number": "CLM-1", "patient_name": "<script>alert(1)</script>", "policy_number": "POL-1"},

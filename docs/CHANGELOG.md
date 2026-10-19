@@ -18,6 +18,7 @@
 - Extraction QA: Added explicit regressions for repeated bill table headers and low-confidence OCR line items. Focused Phase 1 suite: **18 passed**.
 - Security QA: Added upload rejection checks for empty bodies, configured size limits, and invalid image signatures. Focused security suite: **7 passed**.
 - P3 follow-up: Preserved named item exclusions when the same list also mentions annual-limit ceilings. Regression: **1 failed before fix**; focused policy-term suite: **5 passed**.
+- Final QA checkpoint: **166 passed in 33.17s** with Ollama disabled. Added tests cover source-page validation, image-only settlement review, 200 malformed settlement inputs, exclusion-list parsing, upload traversal/size/signature validation, admin-only document retention, repeated bill headers, and low-confidence OCR. Docker image build and destructive claim deletion remain unverified/not implemented.
 
 ## MediGuard project hygiene — 2026-10-17
 

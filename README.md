@@ -100,7 +100,7 @@ pip install -r requirements-dev.txt
 
 The tests cover deterministic rules, extraction validation, settlement parsing, comparison, generated reports, and app security behavior. Passing synthetic tests is not evidence of accuracy on real claims or any insurer's documents.
 
-Current verification: **156 tests passed** on 2026-10-19 with `python -m pytest -q --basetemp="C:\MediGaurd AI\.pytest-temp"`.
+Current verification: **166 tests passed** on 2026-10-19 with `python -m pytest -q --basetemp="C:\Users\prata\agent_medigaurd_pytest_readme_final"`; Ollama was disabled for the run.
 
 ## Known limitations
 

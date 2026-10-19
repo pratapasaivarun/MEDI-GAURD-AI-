@@ -81,6 +81,25 @@ def test_real_policy_terms_are_not_used_until_reviewer_confirmed(tmp_path: Path,
             {},
         )
 
+    # Every reviewer-confirmed term, including category sub-limits, must cite
+    # a page inside the uploaded policy rather than inheriting an unknown page.
+    page_required_cases = (
+        ({"deductible": "5000"}, {"deductible": 0}, {}),
+        ({"copay_percent": "10"}, {"copay_percent": 0}, {}),
+        ({"room_limit_per_day": "5000"}, {"room_limit_per_day": 0}, {}),
+        ({"waiting_period_months": "12"}, {"waiting_period_months": 0}, {}),
+        ({"exclusions": "cosmetic surgery"}, {"exclusions": 0}, {}),
+        ({}, {"sub_limits": 0}, {"surgery": "10000"}),
+    )
+    for values, source_pages, sub_limits in page_required_cases:
+        with pytest.raises(ValueError, match="source page"):
+            app.save_policy_terms_review("policy-test", user["user_id"], values, source_pages, sub_limits)
+
+    with pytest.raises(ValueError, match="beyond this policy document"):
+        app.save_policy_terms_review(
+            "policy-test", user["user_id"], {"annual_limit": "100000"}, {"annual_limit": 37}, {}
+        )
+
     exclusions = extract_policy_terms([
         {"text": "Cosmetic surgery is excluded from coverage.", "page": 4}
    ])["terms_json"]["exclusions"]

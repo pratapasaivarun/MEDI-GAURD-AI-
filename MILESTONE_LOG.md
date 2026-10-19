@@ -177,3 +177,21 @@ The prior paper numbers (79.17% extraction, 68.75% OCR fields and 21/21 core rul
 | c_manual_review | partially_approved / 22500.00 | manual_review | 24500.00 | 23500.00 | -1000.00 | No | No model call in either mode because manual review uses the template |
 
 All eight parity fields compared equal in all 3 cases. Ollama was reachable and the model responded. The lower precision explanation of the mismatch case was discarded safely rather than affecting the financial result. Full suite with Ollama disabled: `199 passed in 42.61s`.
+
+## Follow-up A4 — Playwright demo and upload error matrix
+
+**What changed:** No application code changed. Used Playwright against the real Streamlit app with Ollama disabled and an isolated SQLite, upload and Chroma store outside the repository. Registered fictional claims with the same IDs used by their settlement fixtures, uploaded each case's bill, policy and settlement through the browser file inputs, confirmed the policy terms and source page in the reviewer UI, and ran extraction, deterministic rules and comparison. Screenshots were saved outside the repository in `C:\Users\prata\` as `mediguard-browser-a-match-comparison.png`, `mediguard-browser-b-comparison-final2.png`, `mediguard-browser-c-comparison-final.png`, plus upload/extraction/rules screenshots. The final browser outcomes matched the hand-calculated cases: A Match — no discrepancy, ₹22,500 settlement and estimated payment, ₹0 difference, no appeal; B Wrongful Deduction — possible discrepancy, ₹19,800 paid vs ₹22,500 estimated, ₹2,700 difference, appeal available; C Manual Review — bill/settlement total mismatch with a scanned bill page, comparison withheld and no appeal. The reviewer-confirmed policy was linked before rules ran. A stale local Chroma directory initially returned no supporting clause and correctly gated B to manual review; re-running with a clean isolated Chroma store indexed the policy under its version ID and produced the expected supported discrepancy. This shows stale runtime indexes should be cleared/rebuilt after policy re-indexing.
+
+The upload matrix rejected an empty PDF, a `.txt` uploaded as a bill, and a 15 MB + 1 byte PDF through the friendly generic UI error without showing stack traces or paths. A malformed PDF with a `%PDF` signature passed upload validation, then extraction flagged it for review without exposing raw parser errors. With no settlement document, the comparison tab displayed the instruction to upload one. Screenshots for those screens are outside the repository at `C:\Users\prata\mediguard-browser-error-*.png`.
+
+**Verify command:** Start a clean local app with isolated paths, then use Playwright file inputs to run the three `fixtures/demo_cases/{a_match,b_wrongful_deduction,c_manual_review}` folders and the five error uploads. The saved screenshots listed above are the evidence from this run.
+
+**Expected output:** `no_discrepancy / ₹0 / no appeal`, `possible_discrepancy / ₹2,700 / appeal available`, `manual_review / no appeal`; invalid uploads are safely rejected or flagged and the missing-settlement screen asks for the document.
+
+**Observed output:** All three demo outcomes and all five error paths behaved as expected after using a clean, isolated Chroma index. No browser-visible stack trace or local filesystem path was shown. The malformed PDF is flagged during extraction rather than rejected at upload because upload validation checks its PDF signature, not full file integrity.
+
+**Full-suite command:** `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe -m pytest -q --basetemp 'C:\Users\prata\mediguard_a4_pytest'`.
+
+**Full-suite expected output:** all tests pass with Ollama disabled.
+
+**Full-suite observed output:** `199 passed in 34.81s`.

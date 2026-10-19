@@ -45,6 +45,13 @@ def test_settlement_upload_requires_text_or_pdf_extension_and_signature():
         app._validated_upload(Upload("settlement.exe", b"%PDF-1.4"), "settlement")
 
 
+def test_upload_filename_path_components_are_removed_before_storage():
+    for hostile_name in ("../../outside.pdf", r"..\..\outside.pdf"):
+        content, stored_name = app._validated_upload(Upload(hostile_name, b"%PDF-1.4"))
+        assert content == b"%PDF-1.4"
+        assert stored_name == "outside.pdf"
+
+
 def test_user_derived_claim_name_is_html_escaped():
     markup = app.claim_context_html(
         {"claim_number": "CLM-1", "patient_name": "<script>alert(1)</script>", "policy_number": "POL-1"},

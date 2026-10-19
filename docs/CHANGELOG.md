@@ -13,6 +13,7 @@
 - QA follow-up: Added a synthetic image-only settlement PDF regression. It confirms the text-only parser returns missing payment/deductions and routes the letter to manual review without OCR or an LLM. Focused settlement suite: **9 passed**.
 - P3 exclusion follow-up: Split semicolon/comma-delimited `Exclusions:` lists into item-level terms and ignore generic annual-limit/sum-insured language in the item-exclusion list. Red tests: **2 failed**; focused tests after fix: **5 passed**.
 - QA follow-up: Promoted the 200 deterministic malformed settlement-input probe to a repeatable unit test. Settlement suite: **10 passed**.
+- Security QA: Added upload filename traversal checks for POSIX and Windows path separators; `_validated_upload` stores only the basename. Focused security suite: **6 passed**.
 
 ## MediGuard project hygiene — 2026-10-17
 

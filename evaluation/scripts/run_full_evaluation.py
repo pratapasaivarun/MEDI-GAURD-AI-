@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run extraction, full app scenarios, annotation scoring, and paper tables."""
+"""Run extraction, app scenarios, and labeled annotation scoring."""
 from __future__ import annotations
 
 import argparse
@@ -33,8 +33,9 @@ def main() -> int:
     if args.limit is not None:
         system.extend(["--limit", str(args.limit)])
     commands.append(system)
-    commands.append(base + [str(scripts / "score_annotations.py")])
-    commands.append(base + [str(scripts / "generate_paper_tables.py")])
+    system_results = latest / ("system_rules_only.json" if args.rules_only else "system_results.json")
+    commands.append(base + [str(scripts / "score_annotations.py"),
+                            "--system-results", str(system_results)])
     for command in commands:
         subprocess.run(command, cwd=ROOT, check=True)
     return 0

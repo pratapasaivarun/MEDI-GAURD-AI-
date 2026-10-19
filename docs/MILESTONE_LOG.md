@@ -259,3 +259,13 @@ The upload matrix rejected an empty PDF, a `.txt` uploaded as a bill, and a 15 M
 **Expected output:** compilation succeeds and all 200 tests pass.
 
 **Observed output:** the first full run found the old repository-guide test expected a sentence removed by the new README; the README was updated to document the three labeled bills. The next run passed: `200 passed in 29.42s`.
+
+## Part B — Remove obsolete paper-table generator
+
+**What changed:** Removed the obsolete evaluation-to-paper table generator, which emitted stale claims about missing retrieval labels and would have rewritten an archived paper-results file. The combined evaluation runner now passes the current rules-only or model-run results explicitly to the annotation scorer. Updated the root README note about text line endings.
+
+**Verify command:** `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe -m pytest -q tests --tb=short --basetemp 'C:\Users\prata\mediguard_eval_cleanup_pytest'`
+
+**Expected output:** all tests pass with Ollama disabled.
+
+**Observed output:** `200 passed in 33.33s`.

@@ -53,7 +53,7 @@ docs/                           Numbered guides and archived project records
 .github/                       Automated test workflow
 ```
 
-The small `.streamlit/config.toml` file sets the app theme and local server defaults. `.dockerignore` keeps secrets and local data out of any future image build; Docker/hosting are outside the current scope.
+The small `.streamlit/config.toml` file sets the app theme and local server defaults. `.dockerignore` keeps secrets and local data out of any future image build; `.gitattributes` keeps text line endings predictable. Docker/hosting are outside the current scope.
 
 ## Requirements
 

@@ -29,5 +29,22 @@ $env:OLLAMA_HOST='http://127.0.0.1:1'
 
 **Expected output:** 166 tests pass; no failed tests. Ollama is disabled for the run.
 
+**Observed output:** `166 passed in 46.72s`.
+
 **Observed output:** `166 passed in 59.10s`.
+
+## Phase 1 — Baseline
+
+**Branch:** `fix/prototype-completion`  
+**Commit at baseline:** `a3f5bca` — `docs: record phase 0 architecture check`  
+**What changed:** Recorded the current branch and baseline. No application behavior changed.
+
+**Verify command:**
+
+```powershell
+$env:OLLAMA_HOST='http://127.0.0.1:1'
+.\.venv\Scripts\python.exe -m pytest -q --basetemp 'C:\Users\prata\mediguard_phase1_pytest'
+```
+
+**Expected output:** 166 tests pass; no failed tests. Ollama is disabled for the run.
 

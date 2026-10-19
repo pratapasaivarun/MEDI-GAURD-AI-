@@ -159,3 +159,21 @@ The prior paper numbers (79.17% extraction, 68.75% OCR fields and 21/21 core rul
 **Expected output:** 24 case-scoped queries scored against BGE retrieval, with precision@1/3/5 and recall@3/5 printed in `retrieval_annotation_scores`.
 
 **Observed output:** 24/24 queries ran. Precision@1 `14/24` (`58.33%`); macro precision@3 `23/72` (`31.94%`); precision@5 `24/120` (`20.00%`); recall@3 `23/24` (`95.83%`); recall@5 `24/24` (`100%`). BGE (`BAAI/bge-small-en-v1.5`) loaded. The lower precision numbers show that relevant chunks often rank below unrelated chunks; this is not presented as strong retrieval quality. Full suite result is recorded with this step's commit.
+
+## Follow-up A3 — Live Ollama explanation parity
+
+**What changed:** Ran each of the three fictional demo cases through the app's upload, extraction, reviewer-confirmation, rules, settlement-comparison, and appeal-availability functions twice: with Ollama explanation disabled and with the installed Ollama `ibm/granite4.1:8b` enabled. The actual app rule/comparison outputs are recorded; only explanation generation calls the model.
+
+**Verify command:** Compare the isolated results recorded below; automated safety tests can be rerun with `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe -m pytest -q`.
+
+**Expected output:** Statuses and monetary outputs remain identical between modes; Ollama cannot change them. If its explanation is invalid, the template is used.
+
+**Observed output (ON | OFF):**
+
+| Case | Rule status / payable | Comparison status | Expected patient share | Actual patient share | Difference | Appeal | Explanation behavior |
+| --- | --- | --- | ---: | ---: | ---: | --- | --- |
+| a_match | partially_approved / 22500.00 | no_discrepancy | 24500.00 | 24500.00 | 0.00 | No | ON used validated model explanation; OFF used template |
+| b_wrongful_deduction | partially_approved / 22500.00 | possible_discrepancy | 24500.00 | 27200.00 | 2700.00 | Yes | ON response was rejected by grounding validation and fell back to template; OFF used template |
+| c_manual_review | partially_approved / 22500.00 | manual_review | 24500.00 | 23500.00 | -1000.00 | No | No model call in either mode because manual review uses the template |
+
+All eight parity fields compared equal in all 3 cases. Ollama was reachable and the model responded. The lower precision explanation of the mismatch case was discarded safely rather than affecting the financial result. Full suite with Ollama disabled: `199 passed in 42.61s`.

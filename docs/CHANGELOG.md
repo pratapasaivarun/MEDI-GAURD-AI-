@@ -17,6 +17,7 @@
 - Security QA: Added admin-only retention tests proving expired document files/rows are removed, recent uploads are preserved, and invalid retention periods are rejected. Focused suite: **2 passed**.
 - Extraction QA: Added explicit regressions for repeated bill table headers and low-confidence OCR line items. Focused Phase 1 suite: **18 passed**.
 - Security QA: Added upload rejection checks for empty bodies, configured size limits, and invalid image signatures. Focused security suite: **7 passed**.
+- P3 follow-up: Preserved named item exclusions when the same list also mentions annual-limit ceilings. Regression: **1 failed before fix**; focused policy-term suite: **5 passed**.
 
 ## MediGuard project hygiene — 2026-10-17
 

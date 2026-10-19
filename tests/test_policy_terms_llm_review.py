@@ -49,6 +49,11 @@ def test_annual_limit_exclusion_is_not_misread_as_an_item_exclusion(monkeypatch)
     ])
     assert "exclusions" not in result["terms_json"]
 
+    mixed = policy_terms.extract_policy_terms([
+        {"text": "Exclusions: Cosmetic surgery; expenses above annual limit.", "page": 3}
+    ])
+    assert mixed["terms_json"]["exclusions"]["value"] == ["cosmetic surgery"]
+
 
 def test_policy_review_labels_distinguish_llm_estimates_from_other_candidates():
     assert app._policy_term_verification_label({"method": "llm_fallback", "needs_review": True}) == "UNVERIFIED LLM estimate"

@@ -159,17 +159,19 @@ def extract_policy_terms(source: Any) -> dict[str, Any]:
     exclusion_evidence = None
     for row in rows:
         for sentence in re.split(r"(?<=[.!?])\s+", row["text"].strip()):
-            # Aggregate financial ceilings belong to annual_limit, not to the
-            # item-level exclusion matcher used by claim rules.
-            if re.search(r"annual\s+limit|sum[ -]?insured", sentence, re.IGNORECASE):
-                continue
             listed = re.match(r"\s*exclusions?\s*[:\-]\s*(.+?)\s*$", sentence, re.IGNORECASE)
             if listed:
                 for phrase in re.split(r"\s*[;,]\s*", listed.group(1)):
                     phrase = re.sub(r"\s+", " ", phrase).strip(" \t:;,.-").lower()
-                    if phrase:
+                    # Aggregate financial ceilings belong to annual_limit,
+                    # not the item-level exclusion matcher used by claim rules.
+                    if phrase and not re.search(r"annual\s+limit|sum[ -]?insured", phrase, re.IGNORECASE):
                         exclusions.append(phrase)
                         exclusion_evidence = exclusion_evidence or row
+                continue
+            # Aggregate financial ceilings belong to annual_limit, not to the
+            # item-level exclusion matcher used by claim rules.
+            if re.search(r"annual\s+limit|sum[ -]?insured", sentence, re.IGNORECASE):
                 continue
             match = re.search(
                 r"\b(?:the\s+)?(.+?)\s+(?:is|are)\s+(?:excluded|not\s+covered|non[- ]payable)\b",

@@ -1,0 +1,10 @@
+FICTIONAL SAMPLE SETTLEMENT
+Claim ID: CLM-2026-0417
+Bill Total: INR 132000
+Deductions:
+Admission and registration: INR 2000
+Room rent: INR 4000
+Doctor and nursing fees: INR 2000
+Medicines: INR 10000
+Co-payment applied: INR 11400
+Settlement amount: INR 102600

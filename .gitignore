@@ -25,6 +25,7 @@ venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.pytest-temp/
 .mypy_cache/
 
 # Streamlit secrets and logs
@@ -44,6 +45,8 @@ REPOSITORY_AUDIT_REPORT.txt
 *_results.json
 *_metrics*.json
 *.pid
+/.phase4-*
+evaluation/.phase4-*
 sample_documents/
 sample_*.pdf
 sample_*.png
@@ -69,3 +72,16 @@ final_regression_*/
 scenario_check_*/
 debug_line_*/
 verify_*/
+
+# Additional local tooling output and model caches
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+chroma_store/
+model_cache/
+hf_cache/
+playwright-report/
+test-results/
+screenshots/
+*.zip

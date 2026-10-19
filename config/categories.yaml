@@ -1,9 +1,10 @@
 # Lowercase keyword lists; the first matching group determines the bill category.
-ROOM: [room, icu, bed, accommodation]
-DOCTOR_NURSING: [doctor, nursing, nurse, physician, consultant]
+ICU: [intensive care, critical care, icu]
+ROOM: [room, bed, accommodation]
+DOCTOR_NURSING: [doctor, nursing, nurse, physician, consultant, consultation]
 SURGERY_OT: [surgery, surgeon, operation, procedure, ot charges, theatre]
 PHARMACY: [pharmacy, medicine, medicines, drug, drugs, pharmacy]
-INVESTIGATION: [lab, laboratory, investigation, test, scan, x-ray, radiology, diagnostic]
+INVESTIGATION: [lab, laboratory, investigation, test, scan, x-ray, radiology, diagnostic, ecg, ct, mri, ultrasound, ultrasonography, pathology]
 ADMISSION: [admission, registration, registration fee]
 CONSUMABLE: [consumable, gloves, syringe, dressing, catheter]
 OTHER: []

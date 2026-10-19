@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "synthetic_only": true,
+  "label": "FICTIONAL SAMPLE",
+  "review_status": "Values copied from fictional case manifests and checked against deterministic extraction output on 2026-10-19; OCR transcript and expert labels are not claimed.",
+  "fixtures": [
+    {
+      "file": "../samples/demo_cases/a_match/bill.pdf",
+      "type": "medical_bill",
+      "expected": {
+        "patient_name": "Ananya Sample",
+        "hospital_name": "Fictional City Hospital",
+        "policy_number": "POL-FICT-001",
+        "total_amount": 47000
+      },
+      "label": "FICTIONAL SAMPLE",
+      "source_case": "a_match"
+    },
+    {
+      "file": "../samples/demo_cases/b_wrongful_deduction/bill.pdf",
+      "type": "medical_bill",
+      "expected": {
+        "patient_name": "Bhavna Sample",
+        "hospital_name": "Fictional City Hospital",
+        "policy_number": "POL-FICT-001",
+        "total_amount": 47000
+      },
+      "label": "FICTIONAL SAMPLE",
+      "source_case": "b_wrongful_deduction"
+    },
+    {
+      "file": "../samples/demo_cases/c_manual_review/bill.pdf",
+      "type": "medical_bill",
+      "expected": {
+        "patient_name": "Chandra Sample",
+        "hospital_name": "Fictional City Hospital",
+        "policy_number": "POL-FICT-001",
+        "total_amount": 47000
+      },
+      "label": "FICTIONAL SAMPLE",
+      "source_case": "c_manual_review"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+FICTIONAL SAMPLE SETTLEMENT
+Claim ID: CLM-2026-0417
+Total Billed: INR 132,000
+Deductions
+Description	Amount	Reason
+Admission and registration	2,000	Non-payable
+Room rent	4,000	Room limit
+Doctor and nursing fees	2,000	Proportionate reduction
+Medicines	10,000	Outside hospitalization window
+Co-pay applied: 11,400
+Net amount paid: 102,600

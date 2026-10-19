@@ -1,0 +1,10 @@
+FICTIONAL SAMPLE SETTLEMENT
+Claim Number: CLM-2026-0417
+Claimed Amount: ₹1,32,000
+Deductions:
+Admission and registration | ₹2,000
+Room rent | ₹4,000
+Doctor and nursing fees | ₹2,000
+Medicines | ₹10,000
+Co-pay applied: ₹11,400
+Payable to Hospital: ₹1,02,600

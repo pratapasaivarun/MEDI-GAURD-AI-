@@ -1,0 +1,339 @@
+{
+  "timestamp_utc": "2026-10-19T18:25:35.513630+00:00",
+  "synthetic_or_human_review_only": true,
+  "ocr_cer_wer": {
+    "documents_scored": 0,
+    "per_document": [],
+    "mean_cer": "Not Evaluated — Ground Truth/Data Required",
+    "mean_wer": "Not Evaluated — Ground Truth/Data Required"
+  },
+  "retrieval": {
+    "annotated_query_count": 24,
+    "precision_at_1": 0.5833333333333334,
+    "precision_at_3": 0.3194444444444444,
+    "precision_at_5": 0.2,
+    "recall_at_3": 0.9583333333333334,
+    "recall_at_5": 1.0,
+    "per_query": [
+      {
+        "query_id": "fictional_annual_limit_01",
+        "relevant_count": 1,
+        "precision_at_1": 1.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_deductible_02",
+        "relevant_count": 1,
+        "precision_at_1": 0.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_copayment_03",
+        "relevant_count": 1,
+        "precision_at_1": 0.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_room_limit_04",
+        "relevant_count": 1,
+        "precision_at_1": 1.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_annual_limit_05",
+        "relevant_count": 1,
+        "precision_at_1": 1.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_deductible_06",
+        "relevant_count": 1,
+        "precision_at_1": 0.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_copayment_07",
+        "relevant_count": 1,
+        "precision_at_1": 0.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_room_limit_08",
+        "relevant_count": 1,
+        "precision_at_1": 1.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_annual_limit_09",
+        "relevant_count": 1,
+        "precision_at_1": 1.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_deductible_10",
+        "relevant_count": 1,
+        "precision_at_1": 0.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_copayment_11",
+        "relevant_count": 1,
+        "precision_at_1": 0.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_room_limit_12",
+        "relevant_count": 1,
+        "precision_at_1": 1.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_annual_limit_13",
+        "relevant_count": 1,
+        "precision_at_1": 1.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_room_limit_14",
+        "relevant_count": 1,
+        "precision_at_1": 1.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_copayment_15",
+        "relevant_count": 1,
+        "precision_at_1": 0.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_room_limit_16",
+        "relevant_count": 1,
+        "precision_at_1": 1.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_annual_limit_17",
+        "relevant_count": 1,
+        "precision_at_1": 1.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_deductible_18",
+        "relevant_count": 1,
+        "precision_at_1": 0.0,
+        "precision_at_3": 0.0,
+        "recall_at_3": 0.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_copayment_19",
+        "relevant_count": 1,
+        "precision_at_1": 1.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_room_limit_20",
+        "relevant_count": 1,
+        "precision_at_1": 1.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_annual_limit_21",
+        "relevant_count": 1,
+        "precision_at_1": 1.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_deductible_22",
+        "relevant_count": 1,
+        "precision_at_1": 0.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_copayment_23",
+        "relevant_count": 1,
+        "precision_at_1": 0.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      },
+      {
+        "query_id": "fictional_room_limit_24",
+        "relevant_count": 1,
+        "precision_at_1": 1.0,
+        "precision_at_3": 0.3333333333333333,
+        "recall_at_3": 1.0,
+        "precision_at_5": 0.2,
+        "recall_at_5": 1.0
+      }
+    ]
+  },
+  "model_case_scores": {
+    "rules-only": {
+      "rule_engine": {
+        "cases_scored": 24,
+        "correct": 12,
+        "accuracy": 0.5,
+        "accuracy_percent": 50.0,
+        "confusion_matrix_expected_rows_actual_columns": {
+          "approved": {
+            "approved": 0,
+            "partially_approved": 0,
+            "rejected": 0,
+            "manual_review": 5
+          },
+          "partially_approved": {
+            "approved": 0,
+            "partially_approved": 0,
+            "rejected": 0,
+            "manual_review": 5
+          },
+          "rejected": {
+            "approved": 0,
+            "partially_approved": 0,
+            "rejected": 0,
+            "manual_review": 2
+          },
+          "manual_review": {
+            "approved": 0,
+            "partially_approved": 0,
+            "rejected": 0,
+            "manual_review": 12
+          }
+        }
+      },
+      "decision_agent": {
+        "cases_scored": 0,
+        "correct": 0,
+        "accuracy": "Not Evaluated — Ground Truth/Data Required",
+        "accuracy_percent": "Not Evaluated — Ground Truth/Data Required",
+        "confusion_matrix_expected_rows_actual_columns": {
+          "approved": {
+            "approved": 0,
+            "partially_approved": 0,
+            "rejected": 0,
+            "manual_review": 0
+          },
+          "partially_approved": {
+            "approved": 0,
+            "partially_approved": 0,
+            "rejected": 0,
+            "manual_review": 0
+          },
+          "rejected": {
+            "approved": 0,
+            "partially_approved": 0,
+            "rejected": 0,
+            "manual_review": 0
+          },
+          "manual_review": {
+            "approved": 0,
+            "partially_approved": 0,
+            "rejected": 0,
+            "manual_review": 0
+          }
+        }
+      }
+    }
+  },
+  "evidence_correctness": {
+    "decision_support": {
+      "scored": 0,
+      "supported": 0,
+      "percentage": "Not Evaluated — Ground Truth/Data Required"
+    },
+    "rule_consistency": {
+      "scored": 0,
+      "supported": 0,
+      "percentage": "Not Evaluated — Ground Truth/Data Required"
+    },
+    "review_count": 0,
+    "unsupported_claims_reported": 0
+  },
+  "appeal_quality": {
+    "letters_scored": 0,
+    "scale": "0-2 per rubric item; maximum mean 2",
+    "mean_overall": "Not Evaluated — Ground Truth/Data Required",
+    "mean_by_rubric_item": {
+      "factual_consistency": "Not Evaluated — Ground Truth/Data Required",
+      "policy_consistency": "Not Evaluated — Ground Truth/Data Required",
+      "disputed_items_relevant": "Not Evaluated — Ground Truth/Data Required",
+      "completeness": "Not Evaluated — Ground Truth/Data Required",
+      "fabrication_absent": "Not Evaluated — Ground Truth/Data Required",
+      "clarity": "Not Evaluated — Ground Truth/Data Required",
+      "usefulness": "Not Evaluated — Ground Truth/Data Required"
+    }
+  },
+  "expert_validation": {
+    "status": "Not Evaluated — Ground Truth/Data Required",
+    "qualifying_review_count": 0,
+    "distinct_reviewer_count": 0
+  },
+  "model_comparison": "Not Evaluated — Ground Truth/Data Required",
+  "model_comparison_reason": "A matched 8B and 3B system_results.json run is required. Human-scored quality stays pending until model-specific reviews are entered."
+}

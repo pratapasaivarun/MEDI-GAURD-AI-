@@ -1,0 +1,1015 @@
+{
+  "schema_version": 1,
+  "synthetic_only": true,
+  "label": "FICTIONAL SAMPLE",
+  "reviewer": "Codex fixture review: values checked against source text/page in fictional policy PDFs",
+  "review_date": "2026-10-19",
+  "cases": {
+    "01_standard_approved": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-AP01-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-AP01-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-AP01-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-AP01-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "02_annual_limit_boundary": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-AP02-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-AP02-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-AP02-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-AP02-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "03_below_deductible": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-AP03-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-AP03-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-AP03-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-AP03-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "04_zero_copayment": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-AP04-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n0%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-AP04-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n0%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "0",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-AP04-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n0%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-AP04-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n0%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "05_zero_deductible": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-AP05-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 0\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "0",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-AP05-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 0\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-AP05-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 0\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-AP05-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 0\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "01_annual_limit_exceeded": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA01-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA01-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA01-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA01-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "02_surgery_sublimit": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA02-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nSurgery sub-limit\nINR 60000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA02-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nSurgery sub-limit\nINR 60000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA02-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nSurgery sub-limit\nINR 60000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA02-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nSurgery sub-limit\nINR 60000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "sub_limits": {
+          "term": "sub_limits",
+          "value": {
+            "surgery": "60000"
+          },
+          "confidence": 0.9,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA02-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nSurgery sub-limit\nINR 60000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "03_room_limit_proportional": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA03-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA03-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA03-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA03-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "04_waiting_period_partial": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA04-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nWaiting period\n12 months\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA04-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nWaiting period\n12 months\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA04-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nWaiting period\n12 months\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA04-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nWaiting period\n12 months\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "waiting_period_months": {
+          "term": "waiting_period_months",
+          "value": 12,
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA04-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nWaiting period\n12 months\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "05_combined_sublimit_costshare": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA05-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nSurgery sub-limit\nINR 70000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA05-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nSurgery sub-limit\nINR 70000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA05-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nSurgery sub-limit\nINR 70000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA05-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nSurgery sub-limit\nINR 70000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "sub_limits": {
+          "term": "sub_limits",
+          "value": {
+            "surgery": "70000"
+          },
+          "confidence": 0.9,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-PA05-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nSurgery sub-limit\nINR 70000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "01_confirmed_exclusion": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-RJ01-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nExclusion\nCosmetic surgery is excluded.\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-RJ01-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nExclusion\nCosmetic surgery is excluded.\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-RJ01-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nExclusion\nCosmetic surgery is excluded.\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-RJ01-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nExclusion\nCosmetic surgery is excluded.\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "02_out_of_network": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-RJ02-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nNetwork provider required\nyes\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-RJ02-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nNetwork provider required\nyes\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-RJ02-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nNetwork provider required\nyes\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-RJ02-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nNetwork provider required\nyes\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "01_policy_number_mismatch": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR01-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR01-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR01-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR01-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "02_missing_policy_terms": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR02-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR02-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "03_invalid_bill_total": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR03-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR03-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR03-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR03-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "04_incomplete_bill_fields": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR04-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR04-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR04-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR04-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "05_low_quality_scan": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR05-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR05-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR05-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR05-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "06_waiting_period_unconfirmed": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR06-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nWaiting period\n12 months\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR06-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nWaiting period\n12 months\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR06-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nWaiting period\n12 months\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR06-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nWaiting period\n12 months\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "waiting_period_months": {
+          "term": "waiting_period_months",
+          "value": 12,
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR06-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nWaiting period\n12 months\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "07_preauthorization_unconfirmed": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR07-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nPreauthorization required\nyes\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR07-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nPreauthorization required\nyes\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR07-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nPreauthorization required\nyes\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR07-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nPreauthorization required\nyes\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "08_network_status_unknown": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR08-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nNetwork provider required\nyes\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR08-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nNetwork provider required\nyes\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR08-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nNetwork provider required\nyes\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR08-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nNetwork provider required\nyes\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "09_possible_exclusion": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR09-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nExclusion\nCosmetic surgery is excluded.\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR09-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nExclusion\nCosmetic surgery is excluded.\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR09-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nExclusion\nCosmetic surgery is excluded.\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR09-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nExclusion\nCosmetic surgery is excluded.\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "10_room_basis_missing": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR10-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR10-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR10-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR10-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "11_multiple_bills_unconfirmed": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR11-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR11-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR11-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR11-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    },
+    "12_possible_duplicate_charge": {
+      "review_status": "confirmed",
+      "terms": {
+        "annual_limit": {
+          "term": "annual_limit",
+          "value": "100000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR12-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "deductible": {
+          "term": "deductible",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR12-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "copay_percent": {
+          "term": "copay_percent",
+          "value": "10",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR12-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        },
+        "room_limit_per_day": {
+          "term": "room_limit_per_day",
+          "value": "5000",
+          "confidence": 0.95,
+          "source_text": "Synthetic Insurance Policy\nField / evidence\nValue\nSYNTHETIC POLICY\nDOCUMENT - FOR ACADEMIC\nTESTING ONLY\nPolicy number\nPOL-SYN-MR12-2026\nPolicy version\nSynthetic Test Edition 2026\nEffective date\n2026-01-01\nAnnual limit\nINR 100000\nDeductible\nINR 5000\nCopayment\n10%\nRoom limit per day\nINR 5000\nThis fictional document is not an\ninsurance contract.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "deterministic_regex"
+        }
+      }
+    }
+  }
+}

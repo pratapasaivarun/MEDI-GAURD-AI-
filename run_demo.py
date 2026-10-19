@@ -11,12 +11,13 @@ os.environ.update({
     'MEDIGUARD_STORAGE_DIR': str(storage),
     'CHROMA_DIR': str(storage / 'chroma'),
     'MEDIGUARD_CORE_DEMO': 'true',
+    'MEDIGUARD_TRUSTED_FIXTURES': 'true',
     'APP_ENV': 'development',
     'MEDIGUARD_ADMIN_EMAIL': '',
 })
 if os.getenv('MEDIGUARD_ADMIN_PASSWORD'):
     # The launcher is the sole place that provisions the synthetic demo admin.
-    from app import _core_demo_user, init_db
+    from mediguard.services.application import _core_demo_user, init_db
     init_db()
     _core_demo_user()
 else:

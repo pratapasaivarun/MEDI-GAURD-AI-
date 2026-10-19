@@ -1,0 +1,11 @@
+FICTIONAL SAMPLE SETTLEMENT
+Claim Number: CLM-2026-0417 dated 12 Aug 2026
+Bill Total: INR 132,000
+Deductions:
+Category | Amount | Reason
+Admission and registration | INR 2,000 | Non-payable
+Room rent | INR 4,000 | Room limit
+Doctor and nursing fees | INR 2,000 | Proportionate reduction
+Medicines | INR 10,000 | Outside hospitalization window
+Co-pay applied: INR 11,400
+Amount Paid: INR 102,600

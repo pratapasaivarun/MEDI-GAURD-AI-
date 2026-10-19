@@ -1,0 +1,775 @@
+{
+  "timestamp_utc": "2026-10-19T18:24:04.439251+00:00",
+  "evaluation_type": "synthetic prototype evaluation; not real-world performance",
+  "environment": {
+    "python": "3.13.1",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "configured_ollama_model": "ibm/granite4.1:8b",
+    "ollama": {
+      "available": false,
+      "models": [],
+      "error": "HTTPConnectionPool(host='127.0.0.1', port=1): Max retries exceeded with url: /api/tags (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=1): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
+    },
+    "tesseract_cmd": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
+  },
+  "dataset": {
+    "synthetic_only": true,
+    "source": "samples/claim_scenarios/case_index.json",
+    "scenario_count": 24,
+    "category_counts": {
+      "approved": 5,
+      "partially_approved": 5,
+      "rejected": 2,
+      "manual_review": 12
+    },
+    "cases": [
+      {
+        "case_id": "01_standard_approved",
+        "expected_decision": "approved",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {},
+        "case_manifest": "samples\\claim_scenarios\\approved\\01_standard_approved\\case.json"
+      },
+      {
+        "case_id": "02_annual_limit_boundary",
+        "expected_decision": "approved",
+        "expected_bill_total": 100000,
+        "reviewer_context_required": {},
+        "case_manifest": "samples\\claim_scenarios\\approved\\02_annual_limit_boundary\\case.json"
+      },
+      {
+        "case_id": "03_below_deductible",
+        "expected_decision": "approved",
+        "expected_bill_total": 3000,
+        "reviewer_context_required": {},
+        "case_manifest": "samples\\claim_scenarios\\approved\\03_below_deductible\\case.json"
+      },
+      {
+        "case_id": "04_zero_copayment",
+        "expected_decision": "approved",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {},
+        "case_manifest": "samples\\claim_scenarios\\approved\\04_zero_copayment\\case.json"
+      },
+      {
+        "case_id": "05_zero_deductible",
+        "expected_decision": "approved",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {},
+        "case_manifest": "samples\\claim_scenarios\\approved\\05_zero_deductible\\case.json"
+      },
+      {
+        "case_id": "01_annual_limit_exceeded",
+        "expected_decision": "partially_approved",
+        "expected_bill_total": 140000,
+        "reviewer_context_required": {},
+        "case_manifest": "samples\\claim_scenarios\\partially_approved\\01_annual_limit_exceeded\\case.json"
+      },
+      {
+        "case_id": "02_surgery_sublimit",
+        "expected_decision": "partially_approved",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {
+          "coverage_category": "surgery"
+        },
+        "case_manifest": "samples\\claim_scenarios\\partially_approved\\02_surgery_sublimit\\case.json"
+      },
+      {
+        "case_id": "03_room_limit_proportional",
+        "expected_decision": "partially_approved",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {
+          "room_charge": 30000,
+          "room_days": 3,
+          "room_linked_charges": 50000
+        },
+        "case_manifest": "samples\\claim_scenarios\\partially_approved\\03_room_limit_proportional\\case.json"
+      },
+      {
+        "case_id": "04_waiting_period_partial",
+        "expected_decision": "partially_approved",
+        "expected_bill_total": 100000,
+        "reviewer_context_required": {
+          "waiting_period_status": "not_satisfied",
+          "waiting_period_affected_amount": 40000,
+          "unrelated_eligible_amount": 60000,
+          "trusted": true
+        },
+        "case_manifest": "samples\\claim_scenarios\\partially_approved\\04_waiting_period_partial\\case.json"
+      },
+      {
+        "case_id": "05_combined_sublimit_costshare",
+        "expected_decision": "partially_approved",
+        "expected_bill_total": 100000,
+        "reviewer_context_required": {
+          "coverage_category": "surgery"
+        },
+        "case_manifest": "samples\\claim_scenarios\\partially_approved\\05_combined_sublimit_costshare\\case.json"
+      },
+      {
+        "case_id": "01_confirmed_exclusion",
+        "expected_decision": "rejected",
+        "expected_bill_total": 100000,
+        "reviewer_context_required": {
+          "exclusion_match": {
+            "matched": true,
+            "confidence": 0.99
+          }
+        },
+        "case_manifest": "samples\\claim_scenarios\\rejected\\01_confirmed_exclusion\\case.json"
+      },
+      {
+        "case_id": "02_out_of_network",
+        "expected_decision": "rejected",
+        "expected_bill_total": 100000,
+        "reviewer_context_required": {
+          "network_status": "out_of_network",
+          "trusted": true
+        },
+        "case_manifest": "samples\\claim_scenarios\\rejected\\02_out_of_network\\case.json"
+      },
+      {
+        "case_id": "01_policy_number_mismatch",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {},
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\01_policy_number_mismatch\\case.json"
+      },
+      {
+        "case_id": "02_missing_policy_terms",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {},
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\02_missing_policy_terms\\case.json"
+      },
+      {
+        "case_id": "03_invalid_bill_total",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 0,
+        "reviewer_context_required": {},
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\03_invalid_bill_total\\case.json"
+      },
+      {
+        "case_id": "04_incomplete_bill_fields",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {},
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\04_incomplete_bill_fields\\case.json"
+      },
+      {
+        "case_id": "05_low_quality_scan",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {},
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\05_low_quality_scan\\case.json"
+      },
+      {
+        "case_id": "06_waiting_period_unconfirmed",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {
+          "waiting_period_status": "unknown"
+        },
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\06_waiting_period_unconfirmed\\case.json"
+      },
+      {
+        "case_id": "07_preauthorization_unconfirmed",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {
+          "preauthorization_status": "not_confirmed",
+          "trusted": true
+        },
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\07_preauthorization_unconfirmed\\case.json"
+      },
+      {
+        "case_id": "08_network_status_unknown",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {
+          "network_status": "unknown"
+        },
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\08_network_status_unknown\\case.json"
+      },
+      {
+        "case_id": "09_possible_exclusion",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 100000,
+        "reviewer_context_required": {
+          "exclusion_match": {
+            "matched": false,
+            "confidence": 0.5
+          }
+        },
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\09_possible_exclusion\\case.json"
+      },
+      {
+        "case_id": "10_room_basis_missing",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 30000,
+        "reviewer_context_required": {
+          "room_charge": 30000,
+          "room_days": 3
+        },
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\10_room_basis_missing\\case.json"
+      },
+      {
+        "case_id": "11_multiple_bills_unconfirmed",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {
+          "multiple_bills": true,
+          "aggregation_confirmed": false
+        },
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\11_multiple_bills_unconfirmed\\case.json"
+      },
+      {
+        "case_id": "12_possible_duplicate_charge",
+        "expected_decision": "manual_review",
+        "expected_bill_total": 80000,
+        "reviewer_context_required": {
+          "duplicate_suspected": true
+        },
+        "case_manifest": "samples\\claim_scenarios\\manual_review\\12_possible_duplicate_charge\\case.json"
+      }
+    ]
+  },
+  "annotations_file": "evaluation\\annotations.json",
+  "extraction": {
+    "dataset": "evaluation/ground_truth.json (synthetic_only=true)",
+    "documents_tested": 3,
+    "fields_evaluated": 12,
+    "correct_fields": 12,
+    "incorrect_or_missing_fields": 0,
+    "accuracy": 1.0,
+    "accuracy_percent": 100.0,
+    "ocr_field_accuracy": {
+      "correct_fields": 4,
+      "fields_evaluated": 4,
+      "accuracy_percent": 100.0
+    },
+    "digital_pdf_field_accuracy": {
+      "correct_fields": 8,
+      "fields_evaluated": 8,
+      "accuracy_percent": 100.0
+    },
+    "field_scope": [
+      "patient_name",
+      "hospital_name",
+      "policy_number",
+      "total_amount"
+    ],
+    "field_details": [
+      {
+        "document": "../samples/demo_cases/a_match/bill.pdf",
+        "extraction_methods": [
+          "pymupdf"
+        ],
+        "ocr_attempted": false,
+        "field_results": {
+          "patient_name": {
+            "expected": "Ananya Sample",
+            "actual": "Ananya Sample",
+            "correct": true
+          },
+          "hospital_name": {
+            "expected": "Fictional City Hospital",
+            "actual": "Fictional City Hospital",
+            "correct": true
+          },
+          "policy_number": {
+            "expected": "POL-FICT-001",
+            "actual": "POL-FICT-001",
+            "correct": true
+          },
+          "total_amount": {
+            "expected": 47000,
+            "actual": 47000.0,
+            "correct": true
+          }
+        },
+        "field_count": 4,
+        "correct_fields": 4,
+        "timing": {
+          "mean_seconds": 0.083389,
+          "median_seconds": 0.083389,
+          "min_seconds": 0.083389,
+          "max_seconds": 0.083389
+        }
+      },
+      {
+        "document": "../samples/demo_cases/b_wrongful_deduction/bill.pdf",
+        "extraction_methods": [
+          "pymupdf"
+        ],
+        "ocr_attempted": false,
+        "field_results": {
+          "patient_name": {
+            "expected": "Bhavna Sample",
+            "actual": "Bhavna Sample",
+            "correct": true
+          },
+          "hospital_name": {
+            "expected": "Fictional City Hospital",
+            "actual": "Fictional City Hospital",
+            "correct": true
+          },
+          "policy_number": {
+            "expected": "POL-FICT-001",
+            "actual": "POL-FICT-001",
+            "correct": true
+          },
+          "total_amount": {
+            "expected": 47000,
+            "actual": 47000.0,
+            "correct": true
+          }
+        },
+        "field_count": 4,
+        "correct_fields": 4,
+        "timing": {
+          "mean_seconds": 0.001983,
+          "median_seconds": 0.001983,
+          "min_seconds": 0.001983,
+          "max_seconds": 0.001983
+        }
+      },
+      {
+        "document": "../samples/demo_cases/c_manual_review/bill.pdf",
+        "extraction_methods": [
+          "pymupdf",
+          "tesseract"
+        ],
+        "ocr_attempted": true,
+        "field_results": {
+          "patient_name": {
+            "expected": "Chandra Sample",
+            "actual": "Chandra Sample",
+            "correct": true
+          },
+          "hospital_name": {
+            "expected": "Fictional City Hospital",
+            "actual": "Fictional City Hospital",
+            "correct": true
+          },
+          "policy_number": {
+            "expected": "POL-FICT-001",
+            "actual": "POL-FICT-001",
+            "correct": true
+          },
+          "total_amount": {
+            "expected": 47000,
+            "actual": 47000.0,
+            "correct": true
+          }
+        },
+        "field_count": 4,
+        "correct_fields": 4,
+        "timing": {
+          "mean_seconds": 1.085771,
+          "median_seconds": 1.085771,
+          "min_seconds": 1.085771,
+          "max_seconds": 1.085771
+        }
+      }
+    ],
+    "document_processing_timing": {
+      "mean_seconds": 0.390381,
+      "median_seconds": 0.083389,
+      "min_seconds": 0.001983,
+      "max_seconds": 1.085771
+    },
+    "ocr_document_count": 1,
+    "ocr_timing": {
+      "mean_seconds": 1.085771,
+      "median_seconds": 1.085771,
+      "min_seconds": 1.085771,
+      "max_seconds": 1.085771
+    },
+    "ocr_cer": "Not Evaluated — Ground Truth/Data Required",
+    "ocr_wer": "Not Evaluated — Ground Truth/Data Required",
+    "ocr_documents_scored_for_text": 0,
+    "ocr_metric_normalization": "Unicode NFC; whitespace collapsed; CER is case-sensitive; WER tokenization is case-insensitive.",
+    "ocr_note": "CER/WER are scored only when annotations.json contains a manually verified reference_text for that document.",
+    "ocr_documents": [
+      {
+        "document": "../samples/demo_cases/c_manual_review/bill.pdf",
+        "ground_truth_text": null,
+        "ocr_text": "FICTIONAL SAMPLE - CLAIM INVOICE\nPatient: Chandra Sample\nHospital: Fictional City Hospital\nPolicy No: POL-FICT-001\nClaim No: CLM-FICT-0419\nAdmission Date: 10-Aug-2026\nDischarge Date: 14-Aug-2026\nDescription | Qty | Rate | Amount | Date\nRoom charges | 4 | 7500 | 30000 | 10-Aug-2026\nDoctor nursing | 1 | 6000 | 6000 | 11-Aug-2026\nPharmacy medicines | 1 | 8000 | 8000 | 12-Aug-2026\nSub Total: INR 47000\nTax: INR 0\nGrand Total: INR 47000\nFIV TMINAL SAVIFLE - SUANINEY DILL FAGE\nPatient: Chandra Sample\nDiagnostic lab tests | Qty 1 | Rate 3000 | Amount 3000 | Date 13-Aug-2026\nGrand Total: INR 47000",
+        "cer": null,
+        "wer": null,
+        "status": "Not Evaluated — Ground Truth/Data Required"
+      }
+    ]
+  },
+  "retrieval": {
+    "precision_at_1": "Not Evaluated — Ground Truth/Data Required",
+    "precision_at_3": "Not Evaluated — Ground Truth/Data Required",
+    "precision_at_5": "Not Evaluated — Ground Truth/Data Required",
+    "recall_at_3": "Not Evaluated — Ground Truth/Data Required",
+    "recall_at_5": "Not Evaluated — Ground Truth/Data Required",
+    "reason": "Retrieval is scored by run_system_evaluation.py against the labeled fictional query set."
+  },
+  "decision": {
+    "test_cases": 24,
+    "expected_decisions_available": true,
+    "rule_engine_status_agreement": {
+      "status_accuracy": 0.5416666666666666,
+      "status_accuracy_percent": 54.17,
+      "scored_cases": 24,
+      "correct_cases": 13,
+      "excluded_context_required_cases": 0,
+      "case_results": [
+        {
+          "case_id": "01_standard_approved",
+          "expected_decision": "approved",
+          "rule_engine_status": "approved",
+          "correct": true,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {},
+          "rule_warnings": []
+        },
+        {
+          "case_id": "02_annual_limit_boundary",
+          "expected_decision": "approved",
+          "rule_engine_status": "approved",
+          "correct": true,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {},
+          "rule_warnings": []
+        },
+        {
+          "case_id": "03_below_deductible",
+          "expected_decision": "approved",
+          "rule_engine_status": "approved",
+          "correct": true,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {},
+          "rule_warnings": []
+        },
+        {
+          "case_id": "04_zero_copayment",
+          "expected_decision": "approved",
+          "rule_engine_status": "approved",
+          "correct": true,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {},
+          "rule_warnings": []
+        },
+        {
+          "case_id": "05_zero_deductible",
+          "expected_decision": "approved",
+          "rule_engine_status": "approved",
+          "correct": true,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {},
+          "rule_warnings": []
+        },
+        {
+          "case_id": "01_annual_limit_exceeded",
+          "expected_decision": "partially_approved",
+          "rule_engine_status": "partially_approved",
+          "correct": true,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {},
+          "rule_warnings": [
+            "annual_limit_exceeded"
+          ]
+        },
+        {
+          "case_id": "02_surgery_sublimit",
+          "expected_decision": "partially_approved",
+          "rule_engine_status": "approved",
+          "correct": false,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {
+            "coverage_category": "surgery"
+          },
+          "rule_warnings": []
+        },
+        {
+          "case_id": "03_room_limit_proportional",
+          "expected_decision": "partially_approved",
+          "rule_engine_status": "partially_approved",
+          "correct": true,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {
+            "room_charge": 30000,
+            "room_days": 3,
+            "room_linked_charges": 50000
+          },
+          "rule_warnings": [
+            "room_limit_applied",
+            "room_limit_proportional_applied"
+          ]
+        },
+        {
+          "case_id": "04_waiting_period_partial",
+          "expected_decision": "partially_approved",
+          "rule_engine_status": "manual_review",
+          "correct": false,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {
+            "waiting_period_status": "not_satisfied",
+            "waiting_period_affected_amount": 40000,
+            "unrelated_eligible_amount": 60000,
+            "trusted": true
+          },
+          "rule_warnings": []
+        },
+        {
+          "case_id": "05_combined_sublimit_costshare",
+          "expected_decision": "partially_approved",
+          "rule_engine_status": "approved",
+          "correct": false,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {
+            "coverage_category": "surgery"
+          },
+          "rule_warnings": []
+        },
+        {
+          "case_id": "01_confirmed_exclusion",
+          "expected_decision": "rejected",
+          "rule_engine_status": "approved",
+          "correct": false,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {
+            "exclusion_match": {
+              "matched": true,
+              "confidence": 0.99
+            }
+          },
+          "rule_warnings": []
+        },
+        {
+          "case_id": "02_out_of_network",
+          "expected_decision": "rejected",
+          "rule_engine_status": "approved",
+          "correct": false,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {
+            "network_status": "out_of_network",
+            "trusted": true
+          },
+          "rule_warnings": []
+        },
+        {
+          "case_id": "01_policy_number_mismatch",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "approved",
+          "correct": false,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {},
+          "rule_warnings": []
+        },
+        {
+          "case_id": "02_missing_policy_terms",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "manual_review",
+          "correct": true,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {},
+          "rule_warnings": [
+            "Required policy terms missing: deductible, copay_percent, deductible, copay_percent"
+          ]
+        },
+        {
+          "case_id": "03_invalid_bill_total",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "manual_review",
+          "correct": true,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {},
+          "rule_warnings": [
+            "total_amount_missing_or_invalid"
+          ]
+        },
+        {
+          "case_id": "04_incomplete_bill_fields",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "manual_review",
+          "correct": true,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {},
+          "rule_warnings": [
+            "total_amount_missing_or_invalid"
+          ]
+        },
+        {
+          "case_id": "05_low_quality_scan",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "approved",
+          "correct": false,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {},
+          "rule_warnings": []
+        },
+        {
+          "case_id": "06_waiting_period_unconfirmed",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "manual_review",
+          "correct": true,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {
+            "waiting_period_status": "unknown"
+          },
+          "rule_warnings": []
+        },
+        {
+          "case_id": "07_preauthorization_unconfirmed",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "approved",
+          "correct": false,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {
+            "preauthorization_status": "not_confirmed",
+            "trusted": true
+          },
+          "rule_warnings": []
+        },
+        {
+          "case_id": "08_network_status_unknown",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "approved",
+          "correct": false,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {
+            "network_status": "unknown"
+          },
+          "rule_warnings": []
+        },
+        {
+          "case_id": "09_possible_exclusion",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "approved",
+          "correct": false,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {
+            "exclusion_match": {
+              "matched": false,
+              "confidence": 0.5
+            }
+          },
+          "rule_warnings": []
+        },
+        {
+          "case_id": "10_room_basis_missing",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "partially_approved",
+          "correct": false,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {
+            "room_charge": 30000,
+            "room_days": 3
+          },
+          "rule_warnings": [
+            "room_limit_applied",
+            "room_limit_proportional_applied"
+          ]
+        },
+        {
+          "case_id": "11_multiple_bills_unconfirmed",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "manual_review",
+          "correct": true,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {
+            "multiple_bills": true,
+            "aggregation_confirmed": false
+          },
+          "rule_warnings": [
+            "Multiple bills require reviewer confirmation before aggregation."
+          ]
+        },
+        {
+          "case_id": "12_possible_duplicate_charge",
+          "expected_decision": "manual_review",
+          "rule_engine_status": "manual_review",
+          "correct": true,
+          "scored": true,
+          "review_status": "confirmed",
+          "reviewer_context_required": {
+            "duplicate_suspected": true
+          },
+          "rule_warnings": [
+            "Possible duplicate charges require reviewer confirmation; charges were not removed automatically."
+          ]
+        }
+      ],
+      "note": "Rule-engine status for synthetic fixtures with separately recorded fixture reviewer-confirmed policy terms and explicit scenario contexts. Not real-world or independent expert accuracy."
+    },
+    "decision_agent_accuracy": "Not Evaluated — Ground Truth/Data Required",
+    "confusion_matrix": "Not Evaluated — Ground Truth/Data Required",
+    "reason": "The rules score is status agreement on 24 synthetic cases using explicit fixture reviewer-confirmed policy terms and scenario context. The decision-agent score requires a live model run and separate decision labels."
+  },
+  "evidence_support": "Not Evaluated — Ground Truth/Data Required",
+  "appeal_quality": {
+    "score": "Not Evaluated — Ground Truth/Data Required",
+    "rubric": {
+      "0": "Incorrect",
+      "1": "Partially correct",
+      "2": "Correct"
+    },
+    "reason": "Requires case-level factual/policy answer keys and expert review; no expert annotations are present."
+  },
+  "latency": {
+    "document_processing": {
+      "mean_seconds": 0.390381,
+      "median_seconds": 0.083389,
+      "min_seconds": 0.001983,
+      "max_seconds": 1.085771
+    },
+    "ocr": {
+      "mean_seconds": 1.085771,
+      "median_seconds": 1.085771,
+      "min_seconds": 1.085771,
+      "max_seconds": 1.085771
+    },
+    "retrieval": "Not Evaluated — Ground Truth/Data Required",
+    "rule_engine": "Not Evaluated — Ground Truth/Data Required",
+    "decision_agent": "Not Evaluated — Ground Truth/Data Required",
+    "report_generation": "Not Evaluated — Ground Truth/Data Required",
+    "end_to_end": "Not Evaluated — Ground Truth/Data Required",
+    "reason": "Only extraction/document-processing timing is measured by this runner; no isolated reproducible full workflow harness is in the repository."
+  },
+  "model_comparison": {
+    "8b": "Not Evaluated — Ground Truth/Data Required",
+    "3b": "Not Evaluated — Ground Truth/Data Required",
+    "reason": "Only the configured 8B model is present in Ollama; matched 8B/3B scoring requires both models and quality annotations."
+  },
+  "expert_validation": "Not Evaluated — Ground Truth/Data Required",
+  "limitations": [
+    "synthetic dataset",
+    "limited claim scenarios",
+    "OCR sensitivity to document quality",
+    "policy wording varies across insurers",
+    "CPU-only target configuration",
+    "no large-scale expert validation",
+    "3B model unavailable for matched comparison",
+    "sentence-transformers unavailable; BGE retrieval evaluation not run"
+  ]
+}

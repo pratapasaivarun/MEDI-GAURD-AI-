@@ -1,14 +1,300 @@
 {
   "schema_version": 1,
-  "dataset_notice": "Only manually verified transcripts, clause relevance labels, and human review scores belong here. Existing synthetic case outcome labels are read directly from their case.json manifests.",
+  "dataset_notice": "Fictional-only annotations. Extraction field values are transcribed from fixture case manifests and checked against extraction output. Retrieval relevant clause IDs point to exact matching passages from a synthetic policy PDF. No OCR transcript or human expert judgment is labeled.",
   "ocr_transcripts": [
-    {"document_id": "bill_phone_photo.png", "reference_text": null, "verified_by": null, "verified_at": null},
-    {"document_id": "bill_low_light.jpg", "reference_text": null, "verified_by": null, "verified_at": null},
-    {"document_id": "bill_skewed_compressed.jpg", "reference_text": null, "verified_by": null, "verified_at": null},
-    {"document_id": "bill_scanned_image_only.pdf", "reference_text": null, "verified_by": null, "verified_at": null}
+    {
+      "document_id": "bill_phone_photo.png",
+      "reference_text": null,
+      "verified_by": null,
+      "verified_at": null
+    },
+    {
+      "document_id": "bill_low_light.jpg",
+      "reference_text": null,
+      "verified_by": null,
+      "verified_at": null
+    },
+    {
+      "document_id": "bill_skewed_compressed.jpg",
+      "reference_text": null,
+      "verified_by": null,
+      "verified_at": null
+    },
+    {
+      "document_id": "bill_scanned_image_only.pdf",
+      "reference_text": null,
+      "verified_by": null,
+      "verified_at": null
+    }
   ],
-  "retrieval_queries": [],
+  "retrieval_queries": [
+    {
+      "query_id": "fictional_annual_limit_01",
+      "case_id": "01_standard_approved",
+      "query": "What does the policy specify for the annual limit?",
+      "relevant_clause_ids": [
+        "4f3164088079a7dcd9f415bb0217ead3519d35160371b232ecbbc45418919917"
+      ],
+      "relevant_clause_text": "Synthetic Insurance Policy Field / evidence Value SYNTHETIC POLICY DOCUMENT - FOR ACADEMIC TESTING ONLY Policy number POL-SYN-AP01-2026 Policy version Synthetic Test Edition 2026 Effective date 2026-01-01 Annual limit INR 100000",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the annual limit; the source chunk is labeled under section general and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_deductible_02",
+      "case_id": "02_annual_limit_boundary",
+      "query": "What does the policy specify for the deductible?",
+      "relevant_clause_ids": [
+        "14abdc22a5d020b06a4040d1d91bacca99788fc8dfd856e6c831815d43d675d2"
+      ],
+      "relevant_clause_text": "INR 5000",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the deductible; the source chunk is labeled under section deductible and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_copayment_03",
+      "case_id": "03_below_deductible",
+      "query": "What does the policy specify for the co-payment?",
+      "relevant_clause_ids": [
+        "20a634eb290291e312f9b2ffd36b99c01ed913b83d71fd826578fa7927907423"
+      ],
+      "relevant_clause_text": "10% Room limit per day INR 5000 This fictional document is not an insurance contract.",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the co-payment; the source chunk is labeled under section copayment and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_room_limit_04",
+      "case_id": "04_zero_copayment",
+      "query": "What does the policy specify for the room limit per day?",
+      "relevant_clause_ids": [
+        "d57a13b87293d04f3b094e4160a7e586d81048f4718fe5d427cbef1388b2f3cc"
+      ],
+      "relevant_clause_text": "0% Room limit per day INR 5000 This fictional document is not an insurance contract.",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the room limit per day; the source chunk is labeled under section copayment and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_annual_limit_05",
+      "case_id": "05_zero_deductible",
+      "query": "What does the policy specify for the annual limit?",
+      "relevant_clause_ids": [
+        "d8d44697b36cf124127cc92a66413705ae5f3c7c9aa13244fa2d50737ddc54b2"
+      ],
+      "relevant_clause_text": "Synthetic Insurance Policy Field / evidence Value SYNTHETIC POLICY DOCUMENT - FOR ACADEMIC TESTING ONLY Policy number POL-SYN-AP05-2026 Policy version Synthetic Test Edition 2026 Effective date 2026-01-01 Annual limit INR 100000",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the annual limit; the source chunk is labeled under section general and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_deductible_06",
+      "case_id": "01_annual_limit_exceeded",
+      "query": "What does the policy specify for the deductible?",
+      "relevant_clause_ids": [
+        "8fe8dbd75e8114afd1da927cb8e79788c3ce3dca831c8cb6f5437cda6e68cc05"
+      ],
+      "relevant_clause_text": "INR 5000",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the deductible; the source chunk is labeled under section deductible and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_copayment_07",
+      "case_id": "02_surgery_sublimit",
+      "query": "What does the policy specify for the co-payment?",
+      "relevant_clause_ids": [
+        "2a4d3c02bb44e9c96ed59a6ebdd2fab18ebac3c7e58e2307728752fc89210e8d"
+      ],
+      "relevant_clause_text": "10% Room limit per day INR 5000 Surgery sub-limit INR 60000 This fictional document is not an insurance contract.",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the co-payment; the source chunk is labeled under section copayment and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_room_limit_08",
+      "case_id": "03_room_limit_proportional",
+      "query": "What does the policy specify for the room limit per day?",
+      "relevant_clause_ids": [
+        "87dfb943816717fe7da07174f5afcec96b1c19fa57d4c005b5845f907f69846d"
+      ],
+      "relevant_clause_text": "10% Room limit per day INR 5000 This fictional document is not an insurance contract.",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the room limit per day; the source chunk is labeled under section copayment and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_annual_limit_09",
+      "case_id": "04_waiting_period_partial",
+      "query": "What does the policy specify for the annual limit?",
+      "relevant_clause_ids": [
+        "5e25025e4944afd28f536e8e7060f304fb8d10272506be2f2c1e4c8eb91f020a"
+      ],
+      "relevant_clause_text": "Synthetic Insurance Policy Field / evidence Value SYNTHETIC POLICY DOCUMENT - FOR ACADEMIC TESTING ONLY Policy number POL-SYN-PA04-2026 Policy version Synthetic Test Edition 2026 Effective date 2026-01-01 Annual limit INR 100000",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the annual limit; the source chunk is labeled under section general and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_deductible_10",
+      "case_id": "05_combined_sublimit_costshare",
+      "query": "What does the policy specify for the deductible?",
+      "relevant_clause_ids": [
+        "b8ea75084b393fd6ee0bceeea0e62eea8c3b24d0f5e8b9d9ece8bdbfd7dd52a1"
+      ],
+      "relevant_clause_text": "INR 5000",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the deductible; the source chunk is labeled under section deductible and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_copayment_11",
+      "case_id": "01_confirmed_exclusion",
+      "query": "What does the policy specify for the co-payment?",
+      "relevant_clause_ids": [
+        "4d306947252239da7068c1a59b5ab929a6f19d174f4baaf50d17b0f0c9767ebc"
+      ],
+      "relevant_clause_text": "10% Room limit per day INR 5000",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the co-payment; the source chunk is labeled under section copayment and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_room_limit_12",
+      "case_id": "02_out_of_network",
+      "query": "What does the policy specify for the room limit per day?",
+      "relevant_clause_ids": [
+        "4542acc8cf628e68b56118794e4f77b693f29e1d984e643688d74798626769d2"
+      ],
+      "relevant_clause_text": "10% Room limit per day INR 5000 Network provider required yes This fictional document is not an insurance contract.",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the room limit per day; the source chunk is labeled under section copayment and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_annual_limit_13",
+      "case_id": "01_policy_number_mismatch",
+      "query": "What does the policy specify for the annual limit?",
+      "relevant_clause_ids": [
+        "f02c370727bb240812c6112401a7ae5796e94ee36eed16afed04738e02c96143"
+      ],
+      "relevant_clause_text": "Synthetic Insurance Policy Field / evidence Value SYNTHETIC POLICY DOCUMENT - FOR ACADEMIC TESTING ONLY Policy number POL-SYN-MR01-2026 Policy version Synthetic Test Edition 2026 Effective date 2026-01-01 Annual limit INR 100000",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the annual limit; the source chunk is labeled under section general and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_room_limit_14",
+      "case_id": "02_missing_policy_terms",
+      "query": "What does the policy specify for the room limit per day?",
+      "relevant_clause_ids": [
+        "df0c6dff1a876471fd52260ad58e32c903b74c2b86586aecf0f49c40a51fc54f"
+      ],
+      "relevant_clause_text": "Synthetic Insurance Policy Field / evidence Value SYNTHETIC POLICY DOCUMENT - FOR ACADEMIC TESTING ONLY Policy number POL-SYN-MR02-2026 Policy version Synthetic Test Edition 2026 Effective date 2026-01-01 Annual limit INR 100000 Room limit per day INR 5000 This fictional document is not an insurance contract.",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the room limit per day; the source chunk is labeled under section general and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_copayment_15",
+      "case_id": "03_invalid_bill_total",
+      "query": "What does the policy specify for the co-payment?",
+      "relevant_clause_ids": [
+        "78342c03d30428042de60bfa35ade78594084379992746445bb9db79c5628213"
+      ],
+      "relevant_clause_text": "10% Room limit per day INR 5000 This fictional document is not an insurance contract.",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the co-payment; the source chunk is labeled under section copayment and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_room_limit_16",
+      "case_id": "04_incomplete_bill_fields",
+      "query": "What does the policy specify for the room limit per day?",
+      "relevant_clause_ids": [
+        "082c5a35e6046a961db29224924a80765957543fe8ef86871b2d2ec673e6933c"
+      ],
+      "relevant_clause_text": "10% Room limit per day INR 5000 This fictional document is not an insurance contract.",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the room limit per day; the source chunk is labeled under section copayment and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_annual_limit_17",
+      "case_id": "05_low_quality_scan",
+      "query": "What does the policy specify for the annual limit?",
+      "relevant_clause_ids": [
+        "64ebc1a0016206614d30d1a4160279bb5d79d86ebd624f4322afecb703a05059"
+      ],
+      "relevant_clause_text": "Synthetic Insurance Policy Field / evidence Value SYNTHETIC POLICY DOCUMENT - FOR ACADEMIC TESTING ONLY Policy number POL-SYN-MR05-2026 Policy version Synthetic Test Edition 2026 Effective date 2026-01-01 Annual limit INR 100000",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the annual limit; the source chunk is labeled under section general and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_deductible_18",
+      "case_id": "06_waiting_period_unconfirmed",
+      "query": "What does the policy specify for the deductible?",
+      "relevant_clause_ids": [
+        "baf7d26d4f5836386a0eedc1ed32a177b0d326ce782ede74871bc3551eaa514f"
+      ],
+      "relevant_clause_text": "INR 5000",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the deductible; the source chunk is labeled under section deductible and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_copayment_19",
+      "case_id": "07_preauthorization_unconfirmed",
+      "query": "What does the policy specify for the co-payment?",
+      "relevant_clause_ids": [
+        "e6820d080b4e6683a8b2c4eace6178d1cd8eb725f872ec54d87575be7ca42554"
+      ],
+      "relevant_clause_text": "10% Room limit per day INR 5000 Preauthorization required yes This fictional document is not an insurance contract.",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the co-payment; the source chunk is labeled under section copayment and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_room_limit_20",
+      "case_id": "08_network_status_unknown",
+      "query": "What does the policy specify for the room limit per day?",
+      "relevant_clause_ids": [
+        "effaafe87432d99aa883638c2b59c6722b0c51c7ee506bfe6574c4ed5a7f38df"
+      ],
+      "relevant_clause_text": "10% Room limit per day INR 5000 Network provider required yes This fictional document is not an insurance contract.",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the room limit per day; the source chunk is labeled under section copayment and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_annual_limit_21",
+      "case_id": "09_possible_exclusion",
+      "query": "What does the policy specify for the annual limit?",
+      "relevant_clause_ids": [
+        "730086bea99cbbb94157363612da128442f3461d1cd6e6f1db98db15623fff97"
+      ],
+      "relevant_clause_text": "Synthetic Insurance Policy Field / evidence Value SYNTHETIC POLICY DOCUMENT - FOR ACADEMIC TESTING ONLY Policy number POL-SYN-MR09-2026 Policy version Synthetic Test Edition 2026 Effective date 2026-01-01 Annual limit INR 100000",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the annual limit; the source chunk is labeled under section general and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_deductible_22",
+      "case_id": "10_room_basis_missing",
+      "query": "What does the policy specify for the deductible?",
+      "relevant_clause_ids": [
+        "f8efc878105e1bc3c7a8152ae701f317e4cf6feb9394a1e8056c5982f1353553"
+      ],
+      "relevant_clause_text": "INR 5000",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the deductible; the source chunk is labeled under section deductible and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_copayment_23",
+      "case_id": "11_multiple_bills_unconfirmed",
+      "query": "What does the policy specify for the co-payment?",
+      "relevant_clause_ids": [
+        "2e0bc37e13f65792d41e47e236a09412403811f2b3658e1dabcc4855d30c4724"
+      ],
+      "relevant_clause_text": "10% Room limit per day INR 5000 This fictional document is not an insurance contract.",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the co-payment; the source chunk is labeled under section copayment and contains the relevant fixture policy value."
+    },
+    {
+      "query_id": "fictional_room_limit_24",
+      "case_id": "12_possible_duplicate_charge",
+      "query": "What does the policy specify for the room limit per day?",
+      "relevant_clause_ids": [
+        "ce6a281c3df1998fef1ef4c8331bed4e70da7210a6de992d8b51df60041d013a"
+      ],
+      "relevant_clause_text": "10% Room limit per day INR 5000 This fictional document is not an insurance contract.",
+      "relevant_page": 1,
+      "relevance_basis": "The question asks for the room limit per day; the source chunk is labeled under section copayment and contains the relevant fixture policy value."
+    }
+  ],
   "case_ground_truth": [],
   "evidence_reviews": [],
-  "appeal_reviews": []
+  "appeal_reviews": [],
+  "annotation_note": "24 fictional policy retrieval labels across 24 separate policies, covering annual limits, deductibles, co-payment percentages, and room limits. Each label records the exact source chunk, page, and stable indexing ID."
 }

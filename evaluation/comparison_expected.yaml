@@ -1,0 +1,22 @@
+scenarios:
+  - id: insurer_matches_rules
+    expected_status: no_discrepancy
+    expected_letter: false
+  - id: pharmacy_outside_stay_and_deducted
+    expected_status: no_discrepancy
+    expected_letter: false
+  - id: copay_applied_twice
+    expected_status: possible_discrepancy
+    expected_letter: true
+  - id: insurer_deducts_less_than_rules
+    expected_status: no_discrepancy
+    expected_letter: false
+  - id: unreadable_settlement
+    expected_status: manual_review
+    expected_letter: false
+  - id: diagnosis_excluded
+    expected_status: manual_review
+    expected_letter: false
+  - id: different_claim_settlement
+    expected_status: manual_review
+    expected_letter: false

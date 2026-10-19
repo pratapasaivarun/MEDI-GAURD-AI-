@@ -306,4 +306,4 @@ The upload matrix rejected an empty PDF, a `.txt` uploaded as a bill, and a 15 M
 
 **Expected output:** all tests pass with Ollama disabled.
 
-**Observed output:** `200 passed in 32.61s`. An initial run using the machine-wide pytest temporary directory failed during fixture setup because Windows denied access to that shared temp folder; the isolated repository-local temporary directory resolved it. GitHub Actions run status is pending the pushed workflow correction.
+**Observed output:** `200 passed in 32.61s`. An initial run using the machine-wide pytest temporary directory failed during fixture setup because Windows denied access to that shared temp folder; the isolated repository-local temporary directory resolved it. The workflow YAML is now accepted by GitHub, dependencies install, and the hosted pytest step runs, but that step exits 1. The public job-log endpoint returned HTTP 403 (`Must have admin rights to Repository`), so the hosted test failure cannot be identified from this session. Local Windows tests pass; hosted Linux CI remains unresolved pending the pytest output from the linked Actions run.

@@ -9,11 +9,20 @@ def test_unused_backup_key_and_crypto_dependency_are_removed():
     assert "cryptography" not in (ROOT / "requirements.txt").read_text(encoding="utf-8").lower()
 
 
-def test_evaluation_docs_explain_legacy_phase4_fixture_gap():
+def test_evaluation_docs_describe_restored_fictional_phase4_ground_truth():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "fixtures/phase4/ground_truth.json" in readme
-    assert "FileNotFoundError" in readme
-    assert "pytest fixtures" in readme
+    assert "three fictional bills" in readme
+    assert (ROOT / "fixtures/phase4/ground_truth.json").is_file()
+
+
+def test_app_base_url_default_matches_documented_streamlit_port():
+    app_source = (ROOT / "app.py").read_text(encoding="utf-8")
+    env_example = (ROOT / ".env.example").read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert '"http://localhost:8501"' in app_source
+    assert "APP_BASE_URL=http://localhost:8501" in env_example
+    assert "http://127.0.0.1:8501" in readme
 
 
 def test_decision_log_says_claimed_amount_never_sets_paid_amount():

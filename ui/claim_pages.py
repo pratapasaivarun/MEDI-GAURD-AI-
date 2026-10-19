@@ -2,6 +2,10 @@
 
 import app as _app
 globals().update(vars(_app))
+import logging
+from services.orchestration import assess_claim
+
+logger = logging.getLogger(__name__)
 
 def _claimant_result_for_claim(claim_id: str, user: dict) -> dict[str, Any] | None:
     """Return only claimant-safe amounts and explanation; hide raw agent/reviewer data."""
@@ -281,8 +285,9 @@ def _render_settlement_comparison(
                     st.session_state[f"comparison_{claim['claim_id']}"] = confirmed_comparison
                     st.session_state[f"settlement_{claim['claim_id']}"] = confirmed_settlement
                     st.rerun()
-                except Exception as exc:
-                    st.error(f'Could not confirm the uploaded bill total: {exc}')
+                except Exception:
+                    logger.exception("Bill-total confirmation failed")
+                    st.error('The bill total could not be confirmed. Check the source page and try again.')
     metrics = st.columns(3, gap='medium')
     metrics[0].metric('Settlement payment', _inr(comparison.actual_insurer_payment) if comparison.actual_insurer_payment is not None else 'Not identified', border=True)
     metrics[1].metric('Estimated insurer payment', _inr(comparison.expected_insurer_payment) if comparison.status != 'manual_review' else 'Pending review', border=True)
@@ -520,22 +525,23 @@ def _render_claim_submission(user: dict) -> None:
                     for uploaded, kind in files:
                         save_document(claim_id, user, uploaded, kind)
                     st.success('Documents saved. Submit them when you are ready for assessment.')
-                except (ValueError, PermissionError) as exc:
-                    st.error(str(exc))
+                except (ValueError, PermissionError):
+                    logger.exception("Claim document upload was rejected")
+                    st.error('One or more files could not be saved. Check the supported file type, size and file contents.')
     documents = claim_documents(claim_id, user)
     if documents:
         st.caption(f'{len(documents)} document(s) ready for assessment.')
         if st.button('Submit claim for assessment', type='primary', icon=':material/send:'):
             with st.status('Checking your documents and policy…', expanded=True) as status:
                 try:
-                    normalized = process_claim_documents(claim_id, user['user_id'])
-                    rules = evaluate_saved_claim(claim_id, user['user_id'], normalized)
+                    assessment = assess_claim(_app, claim_id, user['user_id'])
+                    normalized = assessment['normalized']
+                    rules = assessment['rules']
                     st.session_state[f'normalized_{claim_id}'] = normalized
                     st.session_state[f'rules_{claim_id}'] = rules
-                    if any(doc['document_type'] == 'settlement' for doc in claim_documents(claim_id, user)):
-                        comparison, settlement = run_settlement_comparison(claim_id, user['user_id'], normalized, rules)
-                        st.session_state[f'comparison_{claim_id}'] = comparison
-                        st.session_state[f'settlement_{claim_id}'] = settlement
+                    if 'comparison' in assessment:
+                        st.session_state[f'comparison_{claim_id}'] = assessment['comparison']
+                        st.session_state[f'settlement_{claim_id}'] = assessment['settlement']
                     else:
                         status.write('Upload the settlement letter to compare the insurer payment with the policy estimate.')
                     if rules['status'] == 'manual_review':
@@ -546,9 +552,10 @@ def _render_claim_submission(user: dict) -> None:
                         status.update(label='Assessment complete.', state='complete')
                     st.session_state.page = 'Claim result'
                     st.rerun()
-                except Exception as exc:
+                except Exception:
+                    logger.exception("Claim assessment failed")
                     status.update(label='Assessment needs attention.', state='error')
-                    st.error('We could not complete the assessment. Your claim has been kept for review. ' + str(exc))
+                    st.error('We could not complete the assessment. Your claim has been kept for review. Check the documents and try again.')
     else:
         st.info('Upload a policy and a medical bill to begin.')
 
@@ -587,7 +594,9 @@ def _render_claim_review(user: dict) -> None:
                 try:
                     for uploaded, kind in files: save_document(claim_id, user, uploaded, kind)
                     st.success(f'Saved {len(files)} document(s).'); st.rerun()
-                except (ValueError, PermissionError) as exc: st.error(str(exc))
+                except (ValueError, PermissionError):
+                    logger.exception("Reviewer document upload was rejected")
+                    st.error('One or more files could not be saved. Check the supported file type, size and file contents.')
         docs = claim_documents(claim_id, user)
         if docs: st.dataframe([{'File':d['original_name'],'Type':d['document_type'].replace('_',' ').title(),'Status':_status_badge(d['processing_status'])} for d in docs], hide_index=True)
         else: st.info('Your saved documents will appear here.')
@@ -598,7 +607,10 @@ def _render_claim_review(user: dict) -> None:
             with st.status('Reading documents and normalizing fields...', expanded=True) as status:
                 try:
                     normalized = process_claim_documents(claim_id, user['user_id']); st.session_state[f'normalized_{claim_id}'] = normalized; status.update(label='Extraction complete', state='complete')
-                except Exception as exc: status.update(label='Extraction failed', state='error'); st.error(str(exc))
+                except Exception:
+                    logger.exception("Reviewer document extraction failed")
+                    status.update(label='Extraction failed', state='error')
+                    st.error('Document extraction did not finish. Check the uploaded files and try again.')
         if normalized:
             missing = normalized.get('missing_fields',[]) + normalized.get('review_fields',[])
             if missing: st.warning('Some fields need your input before analysis: ' + ', '.join(missing))
@@ -655,8 +667,9 @@ def _render_claim_review(user: dict) -> None:
                         st.session_state.pop(f'workflow_{claim_id}', None)
                         st.success(f"Saved reviewer confirmations for {len(edits)} field groups.")
                         st.rerun()
-                    except Exception as exc:
-                        st.error(f'Could not save reviewer-confirmed bill details: {exc}')
+                    except Exception:
+                        logger.exception("Reviewer bill-detail confirmation failed")
+                        st.error('The confirmed bill details could not be saved. Check the values and source page.')
         else: st.info('Run extraction after saving documents.')
     with tabs[3]:
         normalized = st.session_state.get(f'normalized_{claim_id}')
@@ -677,8 +690,9 @@ def _render_claim_review(user: dict) -> None:
                         link_policy_version_to_claim(claim_id, user['user_id'], labels[chosen_policy])
                         st.success('Policy edition linked to this claim.')
                         st.rerun()
-                    except Exception as exc:
-                        st.error(str(exc))
+                    except Exception:
+                        logger.exception("Policy edition could not be linked to the claim")
+                        st.error('The policy edition could not be linked. Check your access and selected policy.')
                 linked_policy = next((edition for edition in editions if edition['version_id'] == linked_id), None)
                 if linked_policy:
                     st.caption(f"Linked edition: {linked_policy['version_label']} · Term review: {linked_policy['terms_review_status']}")
@@ -689,7 +703,10 @@ def _render_claim_review(user: dict) -> None:
         if st.button('Run deterministic coverage rules', type='primary'):
             with st.status('Applying policy rules...', expanded=True) as status:
                 try: rules=evaluate_saved_claim(claim_id,user['user_id'],normalized); st.session_state[f'rules_{claim_id}']=rules; status.update(label='Rules complete',state='complete')
-                except Exception as exc: status.update(label='Rules failed',state='error'); st.error(str(exc))
+                except Exception:
+                    logger.exception("Claim rules evaluation failed")
+                    status.update(label='Rules failed',state='error')
+                    st.error('The policy calculation could not be completed. Review the confirmed policy terms and bill details.')
         if rules:
             result_status = _safe_status(rules['status'])
             st.markdown(deterministic_result_header_html(result_status), unsafe_allow_html=True)
@@ -706,7 +723,10 @@ def _render_claim_review(user: dict) -> None:
                     st.caption('Local AI processing can take 1–2 minutes on CPU. Keep this page open while it completes.')
                     try:
                         started=time.perf_counter(); workflow=run_agents_for_claim(claim_id,user['user_id'],normalized,rules,progress_callback=lambda msg: status.write(msg)); workflow['elapsed_seconds']=round(time.perf_counter()-started,2); st.session_state[f'workflow_{claim_id}']=workflow; status.update(label='Two-agent analysis complete',state='complete')
-                    except Exception as exc: status.update(label='Agent workflow failed',state='error'); st.error(str(exc))
+                    except Exception:
+                        logger.exception("Claim explanation workflow failed")
+                        status.update(label='Agent workflow failed',state='error')
+                        st.error('The explanation service is unavailable. The deterministic calculation remains available for review.')
             if workflow:
                 decision=workflow.get('decision',{}); decision_status = _safe_status(decision.get('status','manual_review')); st.markdown(evidence_recommendation_header_html(decision_status), unsafe_allow_html=True)
                 for reason in decision.get('reasons',[]): st.write(f'• {reason}')
@@ -735,8 +755,9 @@ def _render_claim_review(user: dict) -> None:
                 comparison, settlement = run_settlement_comparison(claim_id, user['user_id'], normalized, rules)
                 st.session_state[f'comparison_{claim_id}'] = comparison
                 st.session_state[f'settlement_{claim_id}'] = settlement
-            except Exception as exc:
-                st.error(f'Settlement comparison could not be completed: {exc}')
+            except Exception:
+                logger.exception("Settlement comparison failed")
+                st.error('The settlement comparison could not be completed. Check the settlement amount and deductions.')
         comparison, settlement = get_comparison_for_view(claim_id, user)
         if comparison and settlement:
             _render_settlement_comparison(dict(selected_claim), comparison, settlement, user, normalized, rules)

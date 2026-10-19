@@ -111,3 +111,13 @@ These are the expected values, not results from the software. Date cases assume 
 **Observed output:** Extraction `12/12` fields correct (100.00%) over 3 fictional bills. System app-status agreement `12/24` (50.00%); all 24 app evaluations stopped at the policy reviewer-confirmation gate, so standalone rule-engine accuracy remains honestly `Not Evaluated`. Retrieval query metrics: `1` annotated query, precision@1 `1.00`, precision@3 `0.33`, precision@5 `0.20`, recall@3/5 `1.00`; this is a tiny synthetic set. Full suite: `194 passed in 34.84s`.
 
 The prior paper numbers (79.17% extraction, 68.75% OCR fields and 21/21 core rules) describe an older dataset/run and are not comparable to these rebuilt three-document results. They will be marked outdated in the documentation cleanup phase.
+
+## Phase 6 — Structure and cleanup
+
+**What changed:** Added `services/auth.py`, `services/storage.py`, and `services/orchestration.py`, plus `ui/routing.py`; `app.py` now delegates password/role primitives, local DB/path/upload validation, assessment sequencing, and page routing through these modules. Claim and reviewer UI errors now log details and show friendly messages instead of raw exception text. `APP_BASE_URL` now defaults to Streamlit's documented port 8501 in code and `.env.example`; README and historical audit notes were updated. Added clean-worktree ignores for phase evidence and pytest scratch output. Added service-boundary regression tests.
+
+**Verify command:** `$env:OLLAMA_HOST='http://127.0.0.1:1'; .\.venv\Scripts\python.exe -m pytest -q --basetemp 'C:\Users\prata\mediguard_phase6_full'`.
+
+**Expected output:** all tests pass with Ollama disabled; no internal exception details are sent to claim/reviewer error banners.
+
+**Observed output:** `198 passed in 29.81s`.

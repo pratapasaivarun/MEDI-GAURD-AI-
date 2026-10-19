@@ -1,6 +1,4 @@
-import base64
 import hashlib
-import hmac
 import html
 import json
 import logging
@@ -37,6 +35,8 @@ from comparison import compare as compare_claim_settlement
 from models import (CategoryComparison, ClaimResult, Clause, ComparisonResult, LineItem,
                     LineResult, PolicyTerms as TypedPolicyTerms, SettlementData, SettlementDeduction)
 from settlement import parse_settlement
+from services.auth import hash_password as _hash_password, verify_password as _verify_password, require_role
+from services.storage import database_path, open_database, storage_path, validate_upload
 from ui.components import (
     _brand_header, _claimant_progress, _line_item_status_label, _page_header,
     _safe_status, _status_badge, _status_color, auth_portal_html, claim_context_html,
@@ -51,17 +51,17 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "ibm/granite4.1:8b")
 MAX_PAGES = int(os.getenv("MAX_DOCUMENT_PAGES", "10"))
 MAX_FILE_MB = int(os.getenv("MAX_FILE_MB", "15"))
 APP_ENV = os.getenv("APP_ENV", "development").lower()
-APP_BASE_URL = os.getenv("APP_BASE_URL", "http://localhost:8505").rstrip("/")
+APP_BASE_URL = os.getenv("APP_BASE_URL", "http://localhost:8501").rstrip("/")
 # The academic prototype uses a local demo identity; production authentication is deferred.
 ALLOWED_ROLES = {"claimant", "reviewer", "admin"}
 
 
 def get_db_path() -> Path:
-    return Path(os.getenv("MEDIGUARD_DB_PATH", str(DATA_DIR / "mediguard.db"))).resolve()
+    return database_path(DATA_DIR)
 
 
 def get_storage_dir() -> Path:
-    return Path(os.getenv("MEDIGUARD_STORAGE_DIR", str(DATA_DIR))).resolve()
+    return storage_path(DATA_DIR)
 
 
 def get_upload_dir() -> Path:
@@ -123,38 +123,7 @@ def utc_now() -> str:
 
 
 def db() -> sqlite3.Connection:
-    db_path = get_db_path()
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
-def _hash_password(password: str, salt: bytes | None = None) -> str:
-    if len(password) < 10:
-        raise ValueError("Password must be at least 10 characters.")
-    salt = salt or secrets.token_bytes(16)
-    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 310_000)
-    return "pbkdf2_sha256$310000$" + base64.urlsafe_b64encode(salt).decode() + "$" + base64.urlsafe_b64encode(digest).decode()
-
-
-def _verify_password(password: str, encoded: str | None) -> bool:
-    try:
-        algorithm, rounds, salt_text, digest_text = (encoded or "").split("$", 3)
-        if algorithm != "pbkdf2_sha256":
-            return False
-        salt = base64.urlsafe_b64decode(salt_text.encode())
-        expected = base64.urlsafe_b64decode(digest_text.encode())
-        actual = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, int(rounds))
-        return hmac.compare_digest(actual, expected)
-    except (ValueError, TypeError):
-        return False
-
-
-def require_role(user: dict | sqlite3.Row, *roles: str) -> None:
-    role = user["role"] if user else None
-    if role not in set(roles):
-        raise PermissionError("You do not have permission to perform this action.")
+    return open_database(get_db_path())
 
 
 def _claim_access(claim_id: str, user: dict | sqlite3.Row, write: bool = False) -> sqlite3.Row:
@@ -574,29 +543,7 @@ def create_claim(user_id: str, claim_number: str, patient_name: str, hospital: s
 
 
 def _validated_upload(uploaded_file, document_type: str | None = None) -> tuple[bytes, str]:
-    original_name = Path(uploaded_file.name).name
-    extension = Path(original_name).suffix.lower()
-    allowed = {".pdf", ".txt"} if document_type == "settlement" else {".pdf", ".png", ".jpg", ".jpeg"}
-    if extension not in allowed:
-        message = "Settlement letter must be a PDF or UTF-8 text file." if document_type == "settlement" else "Unsupported file type. Upload a PDF, PNG, JPG, or JPEG file."
-        raise ValueError(message)
-    content = uploaded_file.getvalue()
-    if len(content) > MAX_FILE_MB * 1024 * 1024:
-        raise ValueError(f"File exceeds the {MAX_FILE_MB} MB limit.")
-    if not content:
-        raise ValueError("The uploaded file is empty.")
-    if extension == ".pdf" and not content.startswith(b"%PDF"):
-        raise ValueError("The file extension is PDF, but the file signature is invalid.")
-    if extension in {".png"} and not content.startswith(b"\x89PNG"):
-        raise ValueError("The file extension is PNG, but the file signature is invalid.")
-    if extension in {".jpg", ".jpeg"} and not content.startswith(b"\xff\xd8"):
-        raise ValueError("The file extension is JPG/JPEG, but the file signature is invalid.")
-    if document_type == "settlement" and extension == ".txt":
-        try:
-            content.decode("utf-8-sig")
-        except UnicodeDecodeError as exc:
-            raise ValueError("Settlement text must use UTF-8 encoding.") from exc
-    return content, original_name
+    return validate_upload(uploaded_file, document_type, MAX_FILE_MB)
 
 
 def save_document(claim_id: str, user: dict | sqlite3.Row, uploaded_file, document_type: str) -> None:
@@ -1705,7 +1652,9 @@ def _render_policy_management(user: dict) -> None:
             try:
                 if not policy_file or not policy_number.strip() or not version_label.strip(): raise ValueError('Policy file, policy number and version label are required.')
                 result=ingest_policy_version(policy_file,policy_number,version_label,insurer,str(effective_date),user=user); st.success(f"Active edition created with {result['chunks_indexed']} evidence chunks."); st.rerun()
-            except Exception as exc: st.error(f'Policy ingestion failed: {exc}')
+            except Exception:
+                logging.getLogger(__name__).exception("Policy ingestion failed")
+                st.error('The policy edition could not be added. Check the file and required policy details.')
     versions=policy_versions()
     with st.container(border=True):
         st.markdown('### Policy Editions')
@@ -1744,8 +1693,9 @@ def _render_policy_management(user: dict) -> None:
                                 with st.container(border=True):
                                     st.caption(f"Page {hit.get('page', '?')} · {hit.get('section', 'policy')} · relevance distance {hit.get('distance'):.3f}" if isinstance(hit.get('distance'), (int, float)) else f"Page {hit.get('page', '?')} · {hit.get('section', 'policy')}")
                                     st.write(hit.get('text', ''))
-                        except Exception as exc:
-                            st.error(f'Policy search failed: {exc}')
+                        except Exception:
+                            logging.getLogger(__name__).exception("Policy clause search failed")
+                            st.error('Policy search is temporarily unavailable. Please try again.')
                     def _term_default(name):
                         current = reviewed.get(name) or candidates.get(name) or {}
                         return str(current.get('value', ''))
@@ -1790,8 +1740,9 @@ def _render_policy_management(user: dict) -> None:
                             else:
                                 st.warning('Saved as pending. Add annual limit, deductible, co-payment, and the source page for each before running rules.')
                             st.rerun()
-                        except Exception as exc:
-                            st.error(f'Policy terms were not saved: {exc}')
+                        except Exception:
+                            logging.getLogger(__name__).exception("Policy terms review could not be saved")
+                            st.error('Policy terms could not be saved. Check each value and its source page.')
             active=[v for v in versions if v['status']=='active']
             if active and user['role']=='admin':
                 chosen=st.selectbox('Archive an active edition',['Select an edition']+[f"{v['policy_number']} — {v['version_label']}" for v in active])
@@ -1811,7 +1762,9 @@ def _render_admin_panel(user: dict) -> None:
                 link=reviewer_invitation_link(user, invite)
                 st.session_state['pending_reviewer_invite'] = {'link': link, 'user_id': invite['user_id'], 'expires_at': invite['expires_at']}
                 st.success('Reviewer invitation created.')
-            except Exception as exc: st.error(str(exc))
+            except Exception:
+                logging.getLogger(__name__).exception("Reviewer invitation could not be created")
+                st.error("The invitation could not be created. Check the email address and try again.")
         pending_invite = st.session_state.get('pending_reviewer_invite')
         if pending_invite:
             require_role(user, 'admin')
@@ -1836,21 +1789,9 @@ def main() -> None:
     st.markdown(APP_CSS, unsafe_allow_html=True)
     init_db(); validate_security_config(); bootstrap_admin_from_env()
     st.warning("Prototype. Uses sample data. Not for real patient information. Estimates are not insurer decisions.")
-    from ui.auth_pages import _render_welcome, _render_login
-    from ui.claim_pages import _render_dashboard, _render_register, _render_claim_submission, _render_claim_review, _render_claimant_result
-    if not st.session_state.get('welcome_seen') and not (st.query_params.get('reset_token') or st.query_params.get('setup_token')):
-        _render_welcome()
-        return
-    if 'user' not in st.session_state:
-        _render_login(); return
-    user=st.session_state.user; page=_render_sidebar(user)
-    if page=='Dashboard': _render_dashboard(user)
-    elif page=='Register claim': _render_register(user)
-    elif page=='Submit documents': _render_claim_submission(user)
-    elif page=='Claim review': _render_claim_review(user)
-    elif page=='Claim result': _render_claimant_result(user)
-    elif page=='Policy management': _render_policy_management(user)
-    elif page=='Admin panel': _render_admin_panel(user)
+    import sys
+    from ui.routing import render_current_page
+    render_current_page(sys.modules[__name__])
 
 
 if __name__ == '__main__':

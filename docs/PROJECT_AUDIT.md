@@ -1,9 +1,11 @@
-# MediGuard AI end-to-end project report
+# MediGuard AI end-to-end project report (historical ZIP audit)
 
 **Audit date:** 2026-10-17
 **Repository:** `MediGaurd_AI`
-**Branch reviewed:** `finish-mini-prototype`
+**Branch reviewed:** `finish-mini-prototype` (historical; current implementation branch is `fix/prototype-completion`)
 **Scope:** supplied project ZIP, tracked repository contents, documented architecture, local test suite, compilation, and packaging hygiene. This is a prototype review, not a clinical, legal, privacy, or penetration assessment.
+
+> This report describes the earlier supplied ZIP and is superseded for current branch status, test results, and evaluation by `PROJECT_STATUS.md` and `FINAL_REPORT.md` (2026-10-19). The old ZIP inventory and findings below are retained as historical context.
 
 ## Executive summary
 

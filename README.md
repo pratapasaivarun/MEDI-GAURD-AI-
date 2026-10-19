@@ -100,7 +100,7 @@ pip install -r requirements-dev.txt
 
 The tests cover deterministic rules, extraction validation, settlement parsing, comparison, generated reports, and app security behavior. Passing synthetic tests is not evidence of accuracy on real claims or any insurer's documents.
 
-Current verification: **166 tests passed** on 2026-10-19 with `python -m pytest -q --basetemp="C:\Users\prata\agent_medigaurd_pytest_readme_final"`; Ollama was disabled for the run.
+Current verification is recorded in `MILESTONE_LOG.md` and `FINAL_REPORT.md`; run `python -m pytest -q` from the repository root to repeat it. Automated tests disable external Ollama calls unless they explicitly mock a response.
 
 ## Known limitations
 
@@ -138,7 +138,7 @@ Then score available human annotations and regenerate paper tables:
 .\.venv\Scripts\python.exe evaluation\generate_paper_tables.py
 ```
 
-`evaluation/annotations.json` is the annotation source. Retrieval quality, OCR text error, model quality, and expert validation remain unmeasured where verified ground truth is absent. See `evaluation/PAPER_RESULTS.md` for recorded synthetic results and their limits. The extraction runner reads `fixtures/phase4/ground_truth.json`, which is not included here; `evaluation/run_evaluation.py` therefore stops with `FileNotFoundError`, and `run_full_evaluation.py` stops before its later evaluation steps. These missing legacy fixtures are separate from the available pytest fixtures.
+`evaluation/annotations.json` is the annotation source. `fixtures/phase4/ground_truth.json` contains three fictional bills with field values checked against the extractor; this small set is not representative of real-world accuracy. `evaluation/run_evaluation.py` reports field accuracy and `evaluation/run_system_evaluation.py --rules-only` reports end-to-end app status agreement and any labeled retrieval metrics. The app-level status score includes human-review gates and is not a standalone math-accuracy score. Older results in `evaluation/PAPER_RESULTS.md` are marked as superseded. OCR text error, expert evidence review, and appeal quality remain unmeasured.
 
 Only add manually verified annotations. `evaluation/annotation_template.json` describes the annotation fields. Retrieval annotations need a query, its case ID, and manually confirmed relevant clause IDs. OCR annotations need a checked transcript and reviewer/date metadata. Evidence and appeal-quality scores require human review; blank or unverified labels should remain unevaluated. The retention purge function is available for an authorized administrator to run manually; automatic retention purging is not configured.
 
@@ -154,6 +154,7 @@ Only add manually verified annotations. `evaluation/annotation_template.json` de
 
 ```text
 app.py                         Streamlit application
+services/                      Authentication, storage, orchestration and routing helpers
 agents.py                      Model-assisted workflow and explanations
 comparison.py                  Settlement-to-policy comparison
 config/categories.yaml         Extraction category keywords

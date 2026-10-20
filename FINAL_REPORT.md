@@ -36,4 +36,4 @@ Playwright passed all 8 scenarios. A real navigation state bug had reset a newly
 
 The set is small, fictional, and hand-labeled. OCR, retrieval, policies, layouts, and model wording are not representative of real insurer documents. The LLM-on path is much slower and has a multi-gigabyte model process footprint. The 30-case evaluation and 10-case adversarial/parser checks cover different layers and must not be combined into one accuracy percentage. The historical 12/24 app result and 13/24 rules-only result were different measures on an older 24-case set; details are in the evaluation report.
 
-Use the exact PowerShell setup and demo commands in [`README.md`](README.md). Run tests with `python -m pytest -q tests`; run the evaluation with `python -m evaluation.run_all`. Use only fictional or de-identified documents. Deployment is out of scope.
+Use the exact PowerShell setup and demo commands in [`README.md`](README.md). Use the unique pytest temp-folder command from the README to avoid stale Windows temp permissions; run the evaluation with `python -m evaluation.run_all`. Use only fictional or de-identified documents. Deployment is out of scope.

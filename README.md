@@ -112,7 +112,8 @@ Create the environment as described above. The tests and offline evaluation run 
 $env:OLLAMA_HOST = 'http://127.0.0.1:1'
 $env:MEDIGUARD_EVAL_LIVE = 'false'
 $env:MEDIGUARD_EVAL_BROWSER = 'false'
-.\.venv\Scripts\python.exe -m pytest -q tests
+$testTemp = Join-Path $env:TEMP ("mediguard-pytest-" + [guid]::NewGuid().ToString("N"))
+.\.venv\Scripts\python.exe -m pytest -q tests --basetemp $testTemp
 .\.venv\Scripts\python.exe -m evaluation.run_all
 ```
 

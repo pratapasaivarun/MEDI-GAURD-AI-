@@ -34,7 +34,16 @@ jobs:
           MEDIGUARD_DB_PATH: ${{ runner.temp }}/mediguard-test.db
           MEDIGUARD_STORAGE_DIR: ${{ runner.temp }}/mediguard-test-storage
           CHROMA_DIR: ${{ runner.temp }}/mediguard-test-chroma
-        run: python -m pytest -q tests --basetemp="${{ runner.temp }}/pytest"
+        run: |
+          set +e
+          python -m pytest -q tests --tb=short --basetemp="${{ runner.temp }}/pytest" > "${RUNNER_TEMP}/pytest.log" 2>&1
+          result=$?
+          cat "${RUNNER_TEMP}/pytest.log"
+          if [ "$result" -ne 0 ]; then
+            summary=$(grep -E '^(FAILED|ERROR)|^E[[:space:]]' "${RUNNER_TEMP}/pytest.log" | tail -n 20 | tr '\n' ';')
+            echo "::error title=pytest failure summary::${summary:-No failure summary found; inspect pytest.log}"
+          fi
+          exit "$result"
       - name: Run fast fictional evaluation suite
         env:
           MEDIGUARD_DB_PATH: ${{ runner.temp }}/mediguard-eval.db

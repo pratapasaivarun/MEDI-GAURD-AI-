@@ -30,6 +30,12 @@ def test_explanation_rejects_any_number_not_in_rules_or_clause_output():
     assert agents.validate_comparison_explanation("The difference is INR 9,000.00; see page 9.", comparison)
 
 
+def test_grounding_validator_accepts_clause_prose_with_a_supported_page():
+    comparison = _comparison()
+    text = "The difference is INR 9,000.00. The supporting clause is on page 9."
+    assert agents.validate_comparison_explanation(text, comparison)
+
+
 def test_valid_model_explanation_does_not_change_claim_comparison(monkeypatch):
     comparison = _comparison()
     original = (comparison.status, comparison.possible_difference, comparison.expected_patient_share)

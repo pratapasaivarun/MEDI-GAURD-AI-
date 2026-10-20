@@ -245,7 +245,10 @@ def validate_comparison_explanation(text: str, comparison: ComparisonResult) -> 
     if any(not any(quote in clause for clause in clauses) for quote in quoted):
         return False
     allowed_citations = {row.clause.section for row in comparison.categories if row.clause and row.clause.section}
-    for citation in re.findall(r"\bClause\s+([A-Za-z0-9.]+)", text, re.I):
+    # Require a citation token beginning with a letter prefix plus a digit or
+    # with a digit. Otherwise ordinary prose such as "the clause is on page 9"
+    # is misread as a citation named "is" and incorrectly rejected.
+    for citation in re.findall(r"\bClause\s+([A-Z]?\d[A-Za-z0-9.]*|[A-Z]\.\d[A-Za-z0-9.]*)", text, re.I):
         if citation not in allowed_citations:
             return False
     return True

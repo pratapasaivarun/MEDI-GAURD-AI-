@@ -106,3 +106,22 @@ The ten fictional adversarial cases were labeled and committed before they were 
 **Result: 10/10 cases and 61/61 labeled field checks; macro line-item precision 1.00 and recall 1.00 (10 synthetic cases).** The machine-readable run is `evaluation/latest/adversarial_results.json`; reproduce it with `python -m evaluation.scripts.score_adversarial_cases`. The low-resolution case used Tesseract OCR. This score is a small targeted regression set, not a general accuracy estimate.
 
 The run initially found six parser defects: pipe-separated total labels were missed; `Claim Ref` and `Paid to hospital` were not recognized; “for 4 days” was discarded from a charge description; explicit above-limit deductions outside a Deductions heading were dropped; non-medical charges were classified as ordinary items; and a missing settlement reference did not request review. Regression tests were added for each behavior. The hand-labeled values were not changed to make the parser pass.
+
+## Explanation quality (live Ollama)
+
+Ten fictional deductible-discrepancy comparisons were sent through `explain_comparison` with Ollama enabled. Each earns one point for grounded numbers, one for identifying the matching deductible term and page (currency punctuation is normalized), and one for avoiding unsupported certainty or reversed payout direction. `template_fallback_used` is shown so a fallback is not misreported as model quality.
+
+| Case | Numbers | Clause and page | No overclaim | Template fallback | Score / 3 |
+|---|---|---|---|---:|---:|
+| discrepancy_01 | yes | yes (p. 1) | yes | no | 3/3 |
+| discrepancy_02 | yes | yes (p. 1) | yes | no | 3/3 |
+| discrepancy_03 | yes | yes (p. 1) | yes | no | 3/3 |
+| discrepancy_04 | yes | yes (p. 1) | yes | no | 3/3 |
+| discrepancy_05 | yes | yes (p. 1) | yes | no | 3/3 |
+| discrepancy_06 | yes | yes (p. 1) | yes | no | 3/3 |
+| discrepancy_07 | yes | yes (p. 1) | yes | no | 3/3 |
+| discrepancy_08 | yes | yes (p. 1) | yes | no | 3/3 |
+| discrepancy_09 | yes | yes (p. 1) | yes | no | 3/3 |
+| discrepancy_10 | yes | yes (p. 1) | yes | no | 3/3 |
+
+**Score: 30/30 checks (100.0%).** Validated on ten synthetic explanations only. Full text and per-check results: `evaluation/latest/explanation_quality.json`.

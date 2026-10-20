@@ -1,0 +1,192 @@
+{
+  "dataset": "samples/evaluation_cases/ground_truth.json (first 10 discrepancy cases)",
+  "synthetic_only": true,
+  "model": "ibm/granite4.1:8b",
+  "ollama_host": "http://127.0.0.1:11434",
+  "case_count": 10,
+  "check_count": 30,
+  "earned_checks": 30,
+  "score": 1.0,
+  "results": [
+    {
+      "case": "discrepancy_01",
+      "status": "possible_discrepancy",
+      "possible_difference": "1000.00",
+      "expected_insurer_payment": "8100.00",
+      "actual_insurer_payment": "7100.00",
+      "supporting_clause": "Deductible: INR 1000",
+      "supporting_clause_page": 1,
+      "explanation": "The comparison reveals a discrepancy in the deductible category. The insurer deducted INR 2000 from the patient's share, while the engine only allowed a deduction of INR 1000, resulting in an excess deduction of INR 1000. This aligns with the policy clause stating 'Deductible: INR 1000' on page 1. The total expected patient share was INR 1900.00, but the actual patient share was INR 2900.00, indicating a possible error in the insurer's deduction process.",
+      "template_fallback_used": false,
+      "comparison_unchanged": true,
+      "checks": {
+        "correct_numbers": true,
+        "correct_clause_cited": true,
+        "no_unsupported_claim": true
+      },
+      "score": 3
+    },
+    {
+      "case": "discrepancy_02",
+      "status": "possible_discrepancy",
+      "possible_difference": "1000.00",
+      "expected_insurer_payment": "18000.00",
+      "actual_insurer_payment": "17000.00",
+      "supporting_clause": "Deductible: INR 0",
+      "supporting_clause_page": 1,
+      "explanation": "The comparison reveals a possible discrepancy between the expected and actual patient shares. The expected patient share is \u20b92000.00, but the actual patient share is \u20b93000.00, resulting in a difference of \u20b91000.00. Within the categories, the COPAY category matches exactly with no discrepancy. However, the DEDUCTIBLE category shows an unexplained deduction: the insurer deducted \u20b91000.00, yet the policy clause on page 1 states 'Deductible: INR 0', indicating no deductible should have been applied. This unexplained deduction accounts for the \u20b91000.00 difference, leading to the actual patient share exceeding the expected amount. The INVESTIGATION category matches with no discrepancy.",
+      "template_fallback_used": false,
+      "comparison_unchanged": true,
+      "checks": {
+        "correct_numbers": true,
+        "correct_clause_cited": true,
+        "no_unsupported_claim": true
+      },
+      "score": 3
+    },
+    {
+      "case": "discrepancy_03",
+      "status": "possible_discrepancy",
+      "possible_difference": "1000.00",
+      "expected_insurer_payment": "14000.00",
+      "actual_insurer_payment": "13000.00",
+      "supporting_clause": "Deductible: INR 1000",
+      "supporting_clause_page": 1,
+      "explanation": "The comparison reveals a possible discrepancy in the deductible category. The insurer deducted INR 2000 from the patient's share, while the engine disallowed only INR 1000, resulting in an excess deduction of INR 1000. According to the policy clause 'Deductible: INR 1000' on page 1, the expected patient share should be INR 1000, but the actual patient share was INR 2000, leading to the discrepancy. The investigation category matches with no differences.",
+      "template_fallback_used": false,
+      "comparison_unchanged": true,
+      "checks": {
+        "correct_numbers": true,
+        "correct_clause_cited": true,
+        "no_unsupported_claim": true
+      },
+      "score": 3
+    },
+    {
+      "case": "discrepancy_04",
+      "status": "possible_discrepancy",
+      "possible_difference": "1000.00",
+      "expected_insurer_payment": "10000.00",
+      "actual_insurer_payment": "9000.00",
+      "supporting_clause": "Deductible: INR 2000",
+      "supporting_clause_page": 1,
+      "explanation": "The comparison reveals a possible discrepancy in the deductible category. The insurer deducted INR 3000, exceeding the policy clause deductible of INR 2000 (page 1), resulting in an excess deduction of INR 1000. Consequently, the patient's share is higher by INR 1000 compared to the expected patient share of INR 2000. The actual patient share is INR 3000. No discrepancy is noted in the investigation category.",
+      "template_fallback_used": false,
+      "comparison_unchanged": true,
+      "checks": {
+        "correct_numbers": true,
+        "correct_clause_cited": true,
+        "no_unsupported_claim": true
+      },
+      "score": 3
+    },
+    {
+      "case": "discrepancy_05",
+      "status": "possible_discrepancy",
+      "possible_difference": "1000.00",
+      "expected_insurer_payment": "22500.00",
+      "actual_insurer_payment": "21500.00",
+      "supporting_clause": "Deductible: INR 5000",
+      "supporting_clause_page": 1,
+      "explanation": "The expected patient share is \u20b97,500.00, but the actual patient share is \u20b98,500.00, resulting in a higher patient share by \u20b91,000.00. In the DEDUCTIBLE category, the insurer deducted \u20b96,000.00 while the engine disallowed \u20b95,000.00, leading to an excess deduction of \u20b91,000.00. This discrepancy aligns with the deductible clause of INR 5,000 on page 1. The COPAY and INVESTIGATION categories match without discrepancies.",
+      "template_fallback_used": false,
+      "comparison_unchanged": true,
+      "checks": {
+        "correct_numbers": true,
+        "correct_clause_cited": true,
+        "no_unsupported_claim": true
+      },
+      "score": 3
+    },
+    {
+      "case": "discrepancy_06",
+      "status": "possible_discrepancy",
+      "possible_difference": "1000.00",
+      "expected_insurer_payment": "8000.00",
+      "actual_insurer_payment": "7000.00",
+      "supporting_clause": "Deductible: INR 0",
+      "supporting_clause_page": 1,
+      "explanation": "The expected patient share is 0, but the actual patient share is 1000.00, resulting in a difference of 1000.00. This discrepancy is noted under the DEDUCTIBLE category. The insurer deducted INR 1000.00, while the engine disallowed INR 0, leading to an unexplained deduction. The deductible clause states 'Deductible: INR 0' on page 1, indicating a possible inconsistency between the policy and the insurer's action. No such discrepancy exists in the INVESTIGATION category, where both the insurer's deduction and the engine's disallowance are 0, matching each other.",
+      "template_fallback_used": false,
+      "comparison_unchanged": true,
+      "checks": {
+        "correct_numbers": true,
+        "correct_clause_cited": true,
+        "no_unsupported_claim": true
+      },
+      "score": 3
+    },
+    {
+      "case": "discrepancy_07",
+      "status": "possible_discrepancy",
+      "possible_difference": "1000.00",
+      "expected_insurer_payment": "16000.00",
+      "actual_insurer_payment": "15000.00",
+      "supporting_clause": "Deductible: INR 5000",
+      "supporting_clause_page": 1,
+      "explanation": "The actual patient share is higher than the expected patient share by 1000.00, indicating a possible discrepancy. In the DEDUCTIBLE category, the insurer deducted INR 6000, but the engine disallowed only INR 5000, resulting in an excess deduction of INR 1000. This aligns with the clause 'Deductible: INR 5000' on page 1. The COPAY and INVESTIGATION categories match without discrepancies.",
+      "template_fallback_used": false,
+      "comparison_unchanged": true,
+      "checks": {
+        "correct_numbers": true,
+        "correct_clause_cited": true,
+        "no_unsupported_claim": true
+      },
+      "score": 3
+    },
+    {
+      "case": "discrepancy_08",
+      "status": "possible_discrepancy",
+      "possible_difference": "1000.00",
+      "expected_insurer_payment": "27000.00",
+      "actual_insurer_payment": "26000.00",
+      "supporting_clause": "Deductible: INR 10000",
+      "supporting_clause_page": 1,
+      "explanation": "The actual patient share is higher than the expected patient share by 1,000.00. This discrepancy arises primarily in the DEDUCTIBLE category, where the insurer deducted INR 11,000, exceeding the policy clause of INR 10,000 (page 1). The COPAY category matches exactly, and the INVESTIGATION category has no discrepancy. Therefore, the excess deduction of INR 1,000 is the identified discrepancy.",
+      "template_fallback_used": false,
+      "comparison_unchanged": true,
+      "checks": {
+        "correct_numbers": true,
+        "correct_clause_cited": true,
+        "no_unsupported_claim": true
+      },
+      "score": 3
+    },
+    {
+      "case": "discrepancy_09",
+      "status": "possible_discrepancy",
+      "possible_difference": "1000.00",
+      "expected_insurer_payment": "13500.00",
+      "actual_insurer_payment": "12500.00",
+      "supporting_clause": "Deductible: INR 3000",
+      "supporting_clause_page": 1,
+      "explanation": "The comparison reveals a possible discrepancy between the expected and actual patient shares. The expected patient share is \u20b94500.00, while the actual patient share is \u20b95500.00, resulting in a difference of \u20b91000.00. The discrepancy arises in the DEDUCTIBLE category, where the insurer deducted \u20b94000.00, but the engine disallowed only \u20b93000.00 as per the clause 'Deductible: INR 3000' on page 1, leading to an excess deduction of \u20b91000.00. All other categories match without discrepancies.",
+      "template_fallback_used": false,
+      "comparison_unchanged": true,
+      "checks": {
+        "correct_numbers": true,
+        "correct_clause_cited": true,
+        "no_unsupported_claim": true
+      },
+      "score": 3
+    },
+    {
+      "case": "discrepancy_10",
+      "status": "possible_discrepancy",
+      "possible_difference": "1000.00",
+      "expected_insurer_payment": "40500.00",
+      "actual_insurer_payment": "39500.00",
+      "supporting_clause": "Deductible: INR 5000",
+      "supporting_clause_page": 1,
+      "explanation": "The expected patient share is \u20b99,500.00, but the actual patient share is \u20b910,500.00, resulting in a higher patient share by \u20b91,000.00. In the DEDUCTIBLE category, the insurer deducted \u20b96,000.00, while the engine disallowed \u20b95,000.00, leading to an excess deduction of \u20b91,000.00. This discrepancy aligns with the deductible clause of INR 5,000 on page 1. The COPAY and INVESTIGATION categories match without discrepancies.",
+      "template_fallback_used": false,
+      "comparison_unchanged": true,
+      "checks": {
+        "correct_numbers": true,
+        "correct_clause_cited": true,
+        "no_unsupported_claim": true
+      },
+      "score": 3
+    }
+  ]
+}

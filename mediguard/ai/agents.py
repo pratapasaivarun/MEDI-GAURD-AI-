@@ -282,7 +282,7 @@ def explain_comparison(comparison: ComparisonResult, use_llm: bool = True) -> st
     schema = {"type": "object", "properties": {"explanation": {"type": "string"}}, "required": ["explanation"]}
     try:
         response = _ollama_json(
-            "Explain the supplied comparison in plain English in no more than 120 words. The figures and policy clauses are fixed facts: do not change them, add figures, or infer a decision. Return only the requested JSON.",
+            "Explain the supplied comparison in plain English in no more than 120 words. The figures and policy clauses are fixed facts: do not change them, add figures, or infer a decision. When a supporting clause is supplied, identify its correct term and page. Describe a difference as a possible discrepancy; do not claim fraud, illegality, guaranteed entitlement, or a guaranteed appeal outcome. If the actual patient share is higher than the expected patient share, say the patient's share is higher by the supplied difference; never call that positive, beneficial, or an increase in insurer payment. Return only the requested JSON.",
             json.dumps(prompt),
             agent_name="comparison_explainer",
             response_schema=schema,

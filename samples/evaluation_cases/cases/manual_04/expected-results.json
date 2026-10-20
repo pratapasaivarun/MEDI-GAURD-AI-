@@ -1,0 +1,16 @@
+{
+  "case_id": "manual_04",
+  "group": "manual_review",
+  "layout": "scanned_letter",
+  "billed": 12000,
+  "eligible": 12000,
+  "deductible": 2000,
+  "copay_percent": 0,
+  "expected_payable": null,
+  "insurer_paid": 10000,
+  "expected_status": "manual_review",
+  "calculation": "The settlement is a scan with OCR evidence requiring confirmation",
+  "expected_line_items": null,
+  "expected_deductions": null,
+  "expected_copay": null
+}

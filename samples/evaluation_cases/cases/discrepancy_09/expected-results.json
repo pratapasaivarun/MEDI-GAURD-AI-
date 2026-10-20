@@ -1,0 +1,28 @@
+{
+  "case_id": "discrepancy_09",
+  "group": "discrepancy",
+  "layout": "narrative",
+  "billed": 18000,
+  "eligible": 18000,
+  "deductible": 3000,
+  "copay_percent": 10,
+  "expected_payable": 13500,
+  "insurer_paid": 12500,
+  "expected_status": "possible_discrepancy",
+  "calculation": "Expected (18000 - 3000) \u00d7 90% = 13500; difference 1000",
+  "expected_line_items": [
+    {
+      "description": "Eligible treatment",
+      "category": "INVESTIGATION",
+      "amount": 18000,
+      "date": "2026-08-12"
+    }
+  ],
+  "expected_deductions": [
+    {
+      "category": "DEDUCTIBLE",
+      "amount": 4000
+    }
+  ],
+  "expected_copay": 1500
+}

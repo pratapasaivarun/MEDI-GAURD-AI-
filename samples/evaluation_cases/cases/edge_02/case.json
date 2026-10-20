@@ -1,0 +1,14 @@
+{
+  "label": "FICTIONAL SAMPLE",
+  "case_id": "edge_02",
+  "claim_id": "CLM-EVAL-EDGE-02",
+  "policy_terms_reviewer_confirmed": {
+    "annual_limit": 10000,
+    "deductible": 0,
+    "copay_percent": 10,
+    "room_limit_per_day": 5000,
+    "source_page": 1
+  },
+  "scanned_bill": false,
+  "settlement_layout": "colon_labels"
+}

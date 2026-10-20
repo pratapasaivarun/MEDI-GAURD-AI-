@@ -1,0 +1,23 @@
+{
+  "case_id": "manual_05",
+  "group": "manual_review",
+  "layout": "conflicting_paid_amounts",
+  "billed": 30000,
+  "eligible": 30000,
+  "deductible": 5000,
+  "copay_percent": 10,
+  "expected_payable": null,
+  "insurer_paid": null,
+  "expected_status": "manual_review",
+  "calculation": "Two conflicting paid amounts are present; a reviewer must resolve them",
+  "expected_line_items": [
+    {
+      "description": "Eligible treatment",
+      "category": "INVESTIGATION",
+      "amount": 30000,
+      "date": "2026-08-12"
+    }
+  ],
+  "expected_deductions": null,
+  "expected_copay": null
+}

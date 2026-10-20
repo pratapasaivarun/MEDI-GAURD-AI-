@@ -1,775 +1,3540 @@
 {
-  "timestamp_utc": "2026-10-19T18:24:04.439251+00:00",
-  "evaluation_type": "synthetic prototype evaluation; not real-world performance",
-  "environment": {
-    "python": "3.13.1",
-    "platform": "Windows-11-10.0.26200-SP0",
-    "configured_ollama_model": "ibm/granite4.1:8b",
-    "ollama": {
-      "available": false,
-      "models": [],
-      "error": "HTTPConnectionPool(host='127.0.0.1', port=1): Max retries exceeded with url: /api/tags (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=1): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
-    },
-    "tesseract_cmd": "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
+  "label": "FICTIONAL SAMPLE \u2014 hand-calculated before evaluation",
+  "validated_on": "30 synthetic cases",
+  "created_at": "2026-10-20T10:10:49+0530",
+  "case_count": 30,
+  "group_counts": {
+    "match": 10,
+    "discrepancy": 10,
+    "manual_review": 5,
+    "edge": 5
   },
-  "dataset": {
-    "synthetic_only": true,
-    "source": "samples/claim_scenarios/case_index.json",
-    "scenario_count": 24,
-    "category_counts": {
-      "approved": 5,
-      "partially_approved": 5,
-      "rejected": 2,
-      "manual_review": 12
+  "metrics": {
+    "extraction_total_match": {
+      "numerator": 30,
+      "denominator": 30,
+      "score": 1.0,
+      "target": 1.0,
+      "pass": true,
+      "note": ""
     },
-    "cases": [
-      {
-        "case_id": "01_standard_approved",
-        "expected_decision": "approved",
-        "expected_bill_total": 80000,
-        "reviewer_context_required": {},
-        "case_manifest": "samples\\claim_scenarios\\approved\\01_standard_approved\\case.json"
-      },
-      {
-        "case_id": "02_annual_limit_boundary",
-        "expected_decision": "approved",
-        "expected_bill_total": 100000,
-        "reviewer_context_required": {},
-        "case_manifest": "samples\\claim_scenarios\\approved\\02_annual_limit_boundary\\case.json"
-      },
-      {
-        "case_id": "03_below_deductible",
-        "expected_decision": "approved",
-        "expected_bill_total": 3000,
-        "reviewer_context_required": {},
-        "case_manifest": "samples\\claim_scenarios\\approved\\03_below_deductible\\case.json"
-      },
-      {
-        "case_id": "04_zero_copayment",
-        "expected_decision": "approved",
-        "expected_bill_total": 80000,
-        "reviewer_context_required": {},
-        "case_manifest": "samples\\claim_scenarios\\approved\\04_zero_copayment\\case.json"
-      },
-      {
-        "case_id": "05_zero_deductible",
-        "expected_decision": "approved",
-        "expected_bill_total": 80000,
-        "reviewer_context_required": {},
-        "case_manifest": "samples\\claim_scenarios\\approved\\05_zero_deductible\\case.json"
-      },
-      {
-        "case_id": "01_annual_limit_exceeded",
-        "expected_decision": "partially_approved",
-        "expected_bill_total": 140000,
-        "reviewer_context_required": {},
-        "case_manifest": "samples\\claim_scenarios\\partially_approved\\01_annual_limit_exceeded\\case.json"
-      },
-      {
-        "case_id": "02_surgery_sublimit",
-        "expected_decision": "partially_approved",
-        "expected_bill_total": 80000,
-        "reviewer_context_required": {
-          "coverage_category": "surgery"
-        },
-        "case_manifest": "samples\\claim_scenarios\\partially_approved\\02_surgery_sublimit\\case.json"
-      },
-      {
-        "case_id": "03_room_limit_proportional",
-        "expected_decision": "partially_approved",
-        "expected_bill_total": 80000,
-        "reviewer_context_required": {
-          "room_charge": 30000,
-          "room_days": 3,
-          "room_linked_charges": 50000
-        },
-        "case_manifest": "samples\\claim_scenarios\\partially_approved\\03_room_limit_proportional\\case.json"
-      },
-      {
-        "case_id": "04_waiting_period_partial",
-        "expected_decision": "partially_approved",
-        "expected_bill_total": 100000,
-        "reviewer_context_required": {
-          "waiting_period_status": "not_satisfied",
-          "waiting_period_affected_amount": 40000,
-          "unrelated_eligible_amount": 60000,
-          "trusted": true
-        },
-        "case_manifest": "samples\\claim_scenarios\\partially_approved\\04_waiting_period_partial\\case.json"
-      },
-      {
-        "case_id": "05_combined_sublimit_costshare",
-        "expected_decision": "partially_approved",
-        "expected_bill_total": 100000,
-        "reviewer_context_required": {
-          "coverage_category": "surgery"
-        },
-        "case_manifest": "samples\\claim_scenarios\\partially_approved\\05_combined_sublimit_costshare\\case.json"
-      },
-      {
-        "case_id": "01_confirmed_exclusion",
-        "expected_decision": "rejected",
-        "expected_bill_total": 100000,
-        "reviewer_context_required": {
-          "exclusion_match": {
-            "matched": true,
-            "confidence": 0.99
-          }
-        },
-        "case_manifest": "samples\\claim_scenarios\\rejected\\01_confirmed_exclusion\\case.json"
-      },
-      {
-        "case_id": "02_out_of_network",
-        "expected_decision": "rejected",
-        "expected_bill_total": 100000,
-        "reviewer_context_required": {
-          "network_status": "out_of_network",
-          "trusted": true
-        },
-        "case_manifest": "samples\\claim_scenarios\\rejected\\02_out_of_network\\case.json"
-      },
-      {
-        "case_id": "01_policy_number_mismatch",
-        "expected_decision": "manual_review",
-        "expected_bill_total": 80000,
-        "reviewer_context_required": {},
-        "case_manifest": "samples\\claim_scenarios\\manual_review\\01_policy_number_mismatch\\case.json"
-      },
-      {
-        "case_id": "02_missing_policy_terms",
-        "expected_decision": "manual_review",
-        "expected_bill_total": 80000,
-        "reviewer_context_required": {},
-        "case_manifest": "samples\\claim_scenarios\\manual_review\\02_missing_policy_terms\\case.json"
-      },
-      {
-        "case_id": "03_invalid_bill_total",
-        "expected_decision": "manual_review",
-        "expected_bill_total": 0,
-        "reviewer_context_required": {},
-        "case_manifest": "samples\\claim_scenarios\\manual_review\\03_invalid_bill_total\\case.json"
-      },
-      {
-        "case_id": "04_incomplete_bill_fields",
-        "expected_decision": "manual_review",
-        "expected_bill_total": 80000,
-        "reviewer_context_required": {},
-        "case_manifest": "samples\\claim_scenarios\\manual_review\\04_incomplete_bill_fields\\case.json"
-      },
-      {
-        "case_id": "05_low_quality_scan",
-        "expected_decision": "manual_review",
-        "expected_bill_total": 80000,
-        "reviewer_context_required": {},
-        "case_manifest": "samples\\claim_scenarios\\manual_review\\05_low_quality_scan\\case.json"
-      },
-      {
-        "case_id": "06_waiting_period_unconfirmed",
-        "expected_decision": "manual_review",
-        "expected_bill_total": 80000,
-        "reviewer_context_required": {
-          "waiting_period_status": "unknown"
-        },
-        "case_manifest": "samples\\claim_scenarios\\manual_review\\06_waiting_period_unconfirmed\\case.json"
-      },
-      {
-        "case_id": "07_preauthorization_unconfirmed",
-        "expected_decision": "manual_review",
-        "expected_bill_total": 80000,
-        "reviewer_context_required": {
-          "preauthorization_status": "not_confirmed",
-          "trusted": true
-        },
-        "case_manifest": "samples\\claim_scenarios\\manual_review\\07_preauthorization_unconfirmed\\case.json"
-      },
-      {
-        "case_id": "08_network_status_unknown",
-        "expected_decision": "manual_review",
-        "expected_bill_total": 80000,
-        "reviewer_context_required": {
-          "network_status": "unknown"
-        },
-        "case_manifest": "samples\\claim_scenarios\\manual_review\\08_network_status_unknown\\case.json"
-      },
-      {
-        "case_id": "09_possible_exclusion",
-        "expected_decision": "manual_review",
-        "expected_bill_total": 100000,
-        "reviewer_context_required": {
-          "exclusion_match": {
-            "matched": false,
-            "confidence": 0.5
-          }
-        },
-        "case_manifest": "samples\\claim_scenarios\\manual_review\\09_possible_exclusion\\case.json"
-      },
-      {
-        "case_id": "10_room_basis_missing",
-        "expected_decision": "manual_review",
-        "expected_bill_total": 30000,
-        "reviewer_context_required": {
-          "room_charge": 30000,
-          "room_days": 3
-        },
-        "case_manifest": "samples\\claim_scenarios\\manual_review\\10_room_basis_missing\\case.json"
-      },
-      {
-        "case_id": "11_multiple_bills_unconfirmed",
-        "expected_decision": "manual_review",
-        "expected_bill_total": 80000,
-        "reviewer_context_required": {
-          "multiple_bills": true,
-          "aggregation_confirmed": false
-        },
-        "case_manifest": "samples\\claim_scenarios\\manual_review\\11_multiple_bills_unconfirmed\\case.json"
-      },
-      {
-        "case_id": "12_possible_duplicate_charge",
-        "expected_decision": "manual_review",
-        "expected_bill_total": 80000,
-        "reviewer_context_required": {
-          "duplicate_suspected": true
-        },
-        "case_manifest": "samples\\claim_scenarios\\manual_review\\12_possible_duplicate_charge\\case.json"
-      }
-    ]
-  },
-  "annotations_file": "evaluation\\annotations.json",
-  "extraction": {
-    "dataset": "evaluation/ground_truth.json (synthetic_only=true)",
-    "documents_tested": 3,
-    "fields_evaluated": 12,
-    "correct_fields": 12,
-    "incorrect_or_missing_fields": 0,
-    "accuracy": 1.0,
-    "accuracy_percent": 100.0,
+    "extraction_other_fields_match": {
+      "numerator": 60,
+      "denominator": 60,
+      "score": 1.0,
+      "target": 0.95,
+      "pass": true,
+      "note": ""
+    },
+    "line_item_precision_recall": {
+      "cases": 28,
+      "expected_items": 28,
+      "actual_items": 28,
+      "matched_items": 28,
+      "precision": 1.0,
+      "recall": 1.0,
+      "note": "Description and amount exact-match across hand-labeled text bills; scanned-only cases are excluded."
+    },
     "ocr_field_accuracy": {
-      "correct_fields": 4,
-      "fields_evaluated": 4,
-      "accuracy_percent": 100.0
+      "numerator": 6,
+      "denominator": 6,
+      "score": 1.0,
+      "target": 0.9,
+      "pass": true,
+      "note": "OCR-marked PDFs: 2; methods: Tesseract only when reported by extraction."
     },
-    "digital_pdf_field_accuracy": {
-      "correct_fields": 8,
-      "fields_evaluated": 8,
-      "accuracy_percent": 100.0
+    "policy_term_accuracy": {
+      "numerator": 90,
+      "denominator": 90,
+      "score": 1.0,
+      "target": 0.95,
+      "pass": true,
+      "note": ""
     },
-    "field_scope": [
-      "patient_name",
-      "hospital_name",
-      "policy_number",
-      "total_amount"
-    ],
-    "field_details": [
-      {
-        "document": "../samples/demo_cases/a_match/bill.pdf",
-        "extraction_methods": [
-          "pymupdf"
-        ],
-        "ocr_attempted": false,
-        "field_results": {
-          "patient_name": {
-            "expected": "Ananya Sample",
-            "actual": "Ananya Sample",
-            "correct": true
-          },
-          "hospital_name": {
-            "expected": "Fictional City Hospital",
-            "actual": "Fictional City Hospital",
-            "correct": true
-          },
-          "policy_number": {
-            "expected": "POL-FICT-001",
-            "actual": "POL-FICT-001",
-            "correct": true
-          },
-          "total_amount": {
-            "expected": 47000,
-            "actual": 47000.0,
-            "correct": true
-          }
-        },
-        "field_count": 4,
-        "correct_fields": 4,
-        "timing": {
-          "mean_seconds": 0.083389,
-          "median_seconds": 0.083389,
-          "min_seconds": 0.083389,
-          "max_seconds": 0.083389
-        }
+    "retrieval": {
+      "queries": 30,
+      "precision_at_1": 1.0,
+      "precision_at_3": 0.3333333333333333,
+      "precision_at_5": 0.2,
+      "recall_at_5": 1.0,
+      "mrr": 1.0,
+      "hits_at_1": 30,
+      "hits_at_3": 30,
+      "hits_at_5": 30,
+      "target_precision_at_1": 0.8,
+      "target_recall_at_5": 0.9,
+      "pass": true,
+      "backend": {
+        "configured": "BAAI/bge-small-en-v1.5",
+        "active": "BAAI/bge-small-en-v1.5"
       },
-      {
-        "document": "../samples/demo_cases/b_wrongful_deduction/bill.pdf",
-        "extraction_methods": [
-          "pymupdf"
-        ],
-        "ocr_attempted": false,
-        "field_results": {
-          "patient_name": {
-            "expected": "Bhavna Sample",
-            "actual": "Bhavna Sample",
-            "correct": true
-          },
-          "hospital_name": {
-            "expected": "Fictional City Hospital",
-            "actual": "Fictional City Hospital",
-            "correct": true
-          },
-          "policy_number": {
-            "expected": "POL-FICT-001",
-            "actual": "POL-FICT-001",
-            "correct": true
-          },
-          "total_amount": {
-            "expected": 47000,
-            "actual": 47000.0,
-            "correct": true
-          }
-        },
-        "field_count": 4,
-        "correct_fields": 4,
-        "timing": {
-          "mean_seconds": 0.001983,
-          "median_seconds": 0.001983,
-          "min_seconds": 0.001983,
-          "max_seconds": 0.001983
-        }
-      },
-      {
-        "document": "../samples/demo_cases/c_manual_review/bill.pdf",
-        "extraction_methods": [
-          "pymupdf",
-          "tesseract"
-        ],
-        "ocr_attempted": true,
-        "field_results": {
-          "patient_name": {
-            "expected": "Chandra Sample",
-            "actual": "Chandra Sample",
-            "correct": true
-          },
-          "hospital_name": {
-            "expected": "Fictional City Hospital",
-            "actual": "Fictional City Hospital",
-            "correct": true
-          },
-          "policy_number": {
-            "expected": "POL-FICT-001",
-            "actual": "POL-FICT-001",
-            "correct": true
-          },
-          "total_amount": {
-            "expected": 47000,
-            "actual": 47000.0,
-            "correct": true
-          }
-        },
-        "field_count": 4,
-        "correct_fields": 4,
-        "timing": {
-          "mean_seconds": 1.085771,
-          "median_seconds": 1.085771,
-          "min_seconds": 1.085771,
-          "max_seconds": 1.085771
-        }
-      }
-    ],
-    "document_processing_timing": {
-      "mean_seconds": 0.390381,
-      "median_seconds": 0.083389,
-      "min_seconds": 0.001983,
-      "max_seconds": 1.085771
+      "note": "Relevant clause means its labeled text and page occur in a top-five retrieved chunk."
     },
-    "ocr_document_count": 1,
-    "ocr_timing": {
-      "mean_seconds": 1.085771,
-      "median_seconds": 1.085771,
-      "min_seconds": 1.085771,
-      "max_seconds": 1.085771
+    "rules_golden_agreement": {
+      "numerator": 24,
+      "denominator": 24,
+      "score": 1.0,
+      "target": 1.0,
+      "pass": true,
+      "note": ""
     },
-    "ocr_cer": "Not Evaluated — Ground Truth/Data Required",
-    "ocr_wer": "Not Evaluated — Ground Truth/Data Required",
-    "ocr_documents_scored_for_text": 0,
-    "ocr_metric_normalization": "Unicode NFC; whitespace collapsed; CER is case-sensitive; WER tokenization is case-insensitive.",
-    "ocr_note": "CER/WER are scored only when annotations.json contains a manually verified reference_text for that document.",
-    "ocr_documents": [
-      {
-        "document": "../samples/demo_cases/c_manual_review/bill.pdf",
-        "ground_truth_text": null,
-        "ocr_text": "FICTIONAL SAMPLE - CLAIM INVOICE\nPatient: Chandra Sample\nHospital: Fictional City Hospital\nPolicy No: POL-FICT-001\nClaim No: CLM-FICT-0419\nAdmission Date: 10-Aug-2026\nDischarge Date: 14-Aug-2026\nDescription | Qty | Rate | Amount | Date\nRoom charges | 4 | 7500 | 30000 | 10-Aug-2026\nDoctor nursing | 1 | 6000 | 6000 | 11-Aug-2026\nPharmacy medicines | 1 | 8000 | 8000 | 12-Aug-2026\nSub Total: INR 47000\nTax: INR 0\nGrand Total: INR 47000\nFIV TMINAL SAVIFLE - SUANINEY DILL FAGE\nPatient: Chandra Sample\nDiagnostic lab tests | Qty 1 | Rate 3000 | Amount 3000 | Date 13-Aug-2026\nGrand Total: INR 47000",
-        "cer": null,
-        "wer": null,
-        "status": "Not Evaluated — Ground Truth/Data Required"
-      }
-    ]
-  },
-  "retrieval": {
-    "precision_at_1": "Not Evaluated — Ground Truth/Data Required",
-    "precision_at_3": "Not Evaluated — Ground Truth/Data Required",
-    "precision_at_5": "Not Evaluated — Ground Truth/Data Required",
-    "recall_at_3": "Not Evaluated — Ground Truth/Data Required",
-    "recall_at_5": "Not Evaluated — Ground Truth/Data Required",
-    "reason": "Retrieval is scored by run_system_evaluation.py against the labeled fictional query set."
-  },
-  "decision": {
-    "test_cases": 24,
-    "expected_decisions_available": true,
-    "rule_engine_status_agreement": {
-      "status_accuracy": 0.5416666666666666,
-      "status_accuracy_percent": 54.17,
-      "scored_cases": 24,
-      "correct_cases": 13,
-      "excluded_context_required_cases": 0,
+    "rules_properties": {
+      "numerator": 211,
+      "denominator": 211,
+      "score": 1.0,
+      "target": 1.0,
+      "pass": true,
+      "note": "Three bounds per case, deterministic repeat per case, plus Decimal half-up rounding."
+    },
+    "settlement_paid_amount_f1": {
+      "tp": 28,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "denominator_expected_paid": 28
+    },
+    "settlement_deductions_f1": {
+      "tp": 37,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "denominator_cases": 25
+    },
+    "comparison_decision_accuracy": {
+      "numerator": 30,
+      "denominator": 30,
+      "score": 1.0,
+      "target": 1.0,
+      "pass": true,
+      "note": ""
+    },
+    "comparison_false_match_rate": {
+      "false_matches": 0,
+      "denominator_discrepancies": 10,
+      "rate": 0.0,
+      "target": 0.0
+    },
+    "llm_number_grounding": {
+      "numerator": 6,
+      "denominator": 6,
+      "score": 1.0,
+      "pass": true
+    },
+    "ollama_decision_equality": {
+      "numerator": 3,
+      "denominator": 3,
+      "score": 1.0,
+      "target": 1.0,
+      "pass": true,
+      "model": "ibm/granite4.1:8b",
+      "llm_calls": [
+        "comparison_explainer",
+        "comparison_explainer"
+      ],
       "case_results": [
         {
-          "case_id": "01_standard_approved",
-          "expected_decision": "approved",
-          "rule_engine_status": "approved",
-          "correct": true,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {},
-          "rule_warnings": []
+          "case": "a_match",
+          "status": "no_discrepancy",
+          "expected_insurer_payment": "22500",
+          "actual_insurer_payment": "22500",
+          "possible_difference": "0",
+          "off_explanation": "The insurer deductions match the deterministic policy calculation based on the documents provided. This remains an estimate for reviewer confirmation.",
+          "on_explanation": "The expected patient share is $24,500, and the actual patient share is also $24,500. There is no discrepancy between the expected and actual amounts, resulting in a possible difference of $0. No categories indicate any issues or differences.",
+          "comparison_unchanged": true,
+          "both_explanations_number_grounded": true
         },
         {
-          "case_id": "02_annual_limit_boundary",
-          "expected_decision": "approved",
-          "rule_engine_status": "approved",
-          "correct": true,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {},
-          "rule_warnings": []
+          "case": "b_wrongful_deduction",
+          "status": "possible_discrepancy",
+          "expected_insurer_payment": "22500",
+          "actual_insurer_payment": "19800",
+          "possible_difference": "2700",
+          "off_explanation": "The documents show a possible difference of INR 2,700.00. The investigation deduction of INR 3,000.00 is greater than the amount supported by the deterministic rules. The supporting clause is on page 1. Please ask an authorized reviewer to confirm the documents and calculation.",
+          "on_explanation": "The expected patient share for the investigation category was calculated at $24,500. However, the actual patient share was higher at $27,200, resulting in a discrepancy of $2,700. The insurer deducted $3,000 for diagnostic investigations during hospitalization, but the system did not flag any disallowed amounts. This unexplained deduction led to a net effect of reducing the payout by $2,700, despite the policy clause stating that diagnostic investigations are payable during hospitalization.",
+          "comparison_unchanged": true,
+          "both_explanations_number_grounded": true
         },
         {
-          "case_id": "03_below_deductible",
-          "expected_decision": "approved",
-          "rule_engine_status": "approved",
-          "correct": true,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {},
-          "rule_warnings": []
-        },
-        {
-          "case_id": "04_zero_copayment",
-          "expected_decision": "approved",
-          "rule_engine_status": "approved",
-          "correct": true,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {},
-          "rule_warnings": []
-        },
-        {
-          "case_id": "05_zero_deductible",
-          "expected_decision": "approved",
-          "rule_engine_status": "approved",
-          "correct": true,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {},
-          "rule_warnings": []
-        },
-        {
-          "case_id": "01_annual_limit_exceeded",
-          "expected_decision": "partially_approved",
-          "rule_engine_status": "partially_approved",
-          "correct": true,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {},
-          "rule_warnings": [
-            "annual_limit_exceeded"
-          ]
-        },
-        {
-          "case_id": "02_surgery_sublimit",
-          "expected_decision": "partially_approved",
-          "rule_engine_status": "approved",
-          "correct": false,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {
-            "coverage_category": "surgery"
-          },
-          "rule_warnings": []
-        },
-        {
-          "case_id": "03_room_limit_proportional",
-          "expected_decision": "partially_approved",
-          "rule_engine_status": "partially_approved",
-          "correct": true,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {
-            "room_charge": 30000,
-            "room_days": 3,
-            "room_linked_charges": 50000
-          },
-          "rule_warnings": [
-            "room_limit_applied",
-            "room_limit_proportional_applied"
-          ]
-        },
-        {
-          "case_id": "04_waiting_period_partial",
-          "expected_decision": "partially_approved",
-          "rule_engine_status": "manual_review",
-          "correct": false,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {
-            "waiting_period_status": "not_satisfied",
-            "waiting_period_affected_amount": 40000,
-            "unrelated_eligible_amount": 60000,
-            "trusted": true
-          },
-          "rule_warnings": []
-        },
-        {
-          "case_id": "05_combined_sublimit_costshare",
-          "expected_decision": "partially_approved",
-          "rule_engine_status": "approved",
-          "correct": false,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {
-            "coverage_category": "surgery"
-          },
-          "rule_warnings": []
-        },
-        {
-          "case_id": "01_confirmed_exclusion",
-          "expected_decision": "rejected",
-          "rule_engine_status": "approved",
-          "correct": false,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {
-            "exclusion_match": {
-              "matched": true,
-              "confidence": 0.99
-            }
-          },
-          "rule_warnings": []
-        },
-        {
-          "case_id": "02_out_of_network",
-          "expected_decision": "rejected",
-          "rule_engine_status": "approved",
-          "correct": false,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {
-            "network_status": "out_of_network",
-            "trusted": true
-          },
-          "rule_warnings": []
-        },
-        {
-          "case_id": "01_policy_number_mismatch",
-          "expected_decision": "manual_review",
-          "rule_engine_status": "approved",
-          "correct": false,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {},
-          "rule_warnings": []
-        },
-        {
-          "case_id": "02_missing_policy_terms",
-          "expected_decision": "manual_review",
-          "rule_engine_status": "manual_review",
-          "correct": true,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {},
-          "rule_warnings": [
-            "Required policy terms missing: deductible, copay_percent, deductible, copay_percent"
-          ]
-        },
-        {
-          "case_id": "03_invalid_bill_total",
-          "expected_decision": "manual_review",
-          "rule_engine_status": "manual_review",
-          "correct": true,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {},
-          "rule_warnings": [
-            "total_amount_missing_or_invalid"
-          ]
-        },
-        {
-          "case_id": "04_incomplete_bill_fields",
-          "expected_decision": "manual_review",
-          "rule_engine_status": "manual_review",
-          "correct": true,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {},
-          "rule_warnings": [
-            "total_amount_missing_or_invalid"
-          ]
-        },
-        {
-          "case_id": "05_low_quality_scan",
-          "expected_decision": "manual_review",
-          "rule_engine_status": "approved",
-          "correct": false,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {},
-          "rule_warnings": []
-        },
-        {
-          "case_id": "06_waiting_period_unconfirmed",
-          "expected_decision": "manual_review",
-          "rule_engine_status": "manual_review",
-          "correct": true,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {
-            "waiting_period_status": "unknown"
-          },
-          "rule_warnings": []
-        },
-        {
-          "case_id": "07_preauthorization_unconfirmed",
-          "expected_decision": "manual_review",
-          "rule_engine_status": "approved",
-          "correct": false,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {
-            "preauthorization_status": "not_confirmed",
-            "trusted": true
-          },
-          "rule_warnings": []
-        },
-        {
-          "case_id": "08_network_status_unknown",
-          "expected_decision": "manual_review",
-          "rule_engine_status": "approved",
-          "correct": false,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {
-            "network_status": "unknown"
-          },
-          "rule_warnings": []
-        },
-        {
-          "case_id": "09_possible_exclusion",
-          "expected_decision": "manual_review",
-          "rule_engine_status": "approved",
-          "correct": false,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {
-            "exclusion_match": {
-              "matched": false,
-              "confidence": 0.5
-            }
-          },
-          "rule_warnings": []
-        },
-        {
-          "case_id": "10_room_basis_missing",
-          "expected_decision": "manual_review",
-          "rule_engine_status": "partially_approved",
-          "correct": false,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {
-            "room_charge": 30000,
-            "room_days": 3
-          },
-          "rule_warnings": [
-            "room_limit_applied",
-            "room_limit_proportional_applied"
-          ]
-        },
-        {
-          "case_id": "11_multiple_bills_unconfirmed",
-          "expected_decision": "manual_review",
-          "rule_engine_status": "manual_review",
-          "correct": true,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {
-            "multiple_bills": true,
-            "aggregation_confirmed": false
-          },
-          "rule_warnings": [
-            "Multiple bills require reviewer confirmation before aggregation."
-          ]
-        },
-        {
-          "case_id": "12_possible_duplicate_charge",
-          "expected_decision": "manual_review",
-          "rule_engine_status": "manual_review",
-          "correct": true,
-          "scored": true,
-          "review_status": "confirmed",
-          "reviewer_context_required": {
-            "duplicate_suspected": true
-          },
-          "rule_warnings": [
-            "Possible duplicate charges require reviewer confirmation; charges were not removed automatically."
-          ]
+          "case": "c_manual_review",
+          "status": "manual_review",
+          "expected_insurer_payment": "22500",
+          "actual_insurer_payment": "22500",
+          "possible_difference": "-1000",
+          "off_explanation": "An authorized reviewer must confirm the settlement values and supporting policy evidence before this comparison can be relied on.",
+          "on_explanation": "An authorized reviewer must confirm the settlement values and supporting policy evidence before this comparison can be relied on.",
+          "comparison_unchanged": true,
+          "both_explanations_number_grounded": true
         }
       ],
-      "note": "Rule-engine status for synthetic fixtures with separately recorded fixture reviewer-confirmed policy terms and explicit scenario contexts. Not real-world or independent expert accuracy."
+      "number_grounding": {
+        "numerator": 6,
+        "denominator": 6,
+        "score": 1.0,
+        "pass": true
+      }
     },
-    "decision_agent_accuracy": "Not Evaluated — Ground Truth/Data Required",
-    "confusion_matrix": "Not Evaluated — Ground Truth/Data Required",
-    "reason": "The rules score is status agreement on 24 synthetic cases using explicit fixture reviewer-confirmed policy terms and scenario context. The decision-agent score requires a live model run and separate decision labels."
-  },
-  "evidence_support": "Not Evaluated — Ground Truth/Data Required",
-  "appeal_quality": {
-    "score": "Not Evaluated — Ground Truth/Data Required",
-    "rubric": {
-      "0": "Incorrect",
-      "1": "Partially correct",
-      "2": "Correct"
+    "fault_injection": {
+      "numerator": 3,
+      "denominator": 3,
+      "score": 1.0,
+      "target": 1.0,
+      "pass": true,
+      "note": "Down, timeout, and malformed responses use template fallback in passing tests."
     },
-    "reason": "Requires case-level factual/policy answer keys and expert review; no expert annotations are present."
-  },
-  "latency": {
-    "document_processing": {
-      "mean_seconds": 0.390381,
-      "median_seconds": 0.083389,
-      "min_seconds": 0.001983,
-      "max_seconds": 1.085771
+    "report_rules": {
+      "numerator": 2,
+      "denominator": 2,
+      "score": 1.0,
+      "target": 1.0,
+      "pass": true,
+      "note": "Appeal gating and report-number consistency have passing focused tests."
     },
-    "ocr": {
-      "mean_seconds": 1.085771,
-      "median_seconds": 1.085771,
-      "min_seconds": 1.085771,
-      "max_seconds": 1.085771
+    "browser_e2e": {
+      "numerator": 0,
+      "denominator": 0,
+      "score": null,
+      "target": "all three demo cases pass",
+      "pass": null,
+      "status": "NOT RUN",
+      "reason": "MEDIGUARD_EVAL_BROWSER=false; browser checks are delegated to CI manual verification."
     },
-    "retrieval": "Not Evaluated — Ground Truth/Data Required",
-    "rule_engine": "Not Evaluated — Ground Truth/Data Required",
-    "decision_agent": "Not Evaluated — Ground Truth/Data Required",
-    "report_generation": "Not Evaluated — Ground Truth/Data Required",
-    "end_to_end": "Not Evaluated — Ground Truth/Data Required",
-    "reason": "Only extraction/document-processing timing is measured by this runner; no isolated reproducible full workflow harness is in the repository."
+    "security": {
+      "numerator": 3,
+      "denominator": 3,
+      "score": 1.0,
+      "target": 1.0,
+      "pass": true,
+      "note": "Upload type/signature, path sanitization, and empty/size checks pass focused tests."
+    },
+    "seconds_per_claim": {
+      "denominator": 30,
+      "mean_seconds": 0.5881692033348372
+    }
   },
-  "model_comparison": {
-    "8b": "Not Evaluated — Ground Truth/Data Required",
-    "3b": "Not Evaluated — Ground Truth/Data Required",
-    "reason": "Only the configured 8B model is present in Ollama; matched 8B/3B scoring requires both models and quality annotations."
+  "confusion_matrix": {
+    "no_discrepancy": {
+      "no_discrepancy": 14,
+      "possible_discrepancy": 0,
+      "manual_review": 0
+    },
+    "possible_discrepancy": {
+      "no_discrepancy": 0,
+      "possible_discrepancy": 10,
+      "manual_review": 0
+    },
+    "manual_review": {
+      "no_discrepancy": 0,
+      "possible_discrepancy": 0,
+      "manual_review": 6
+    }
   },
-  "expert_validation": "Not Evaluated — Ground Truth/Data Required",
-  "limitations": [
-    "synthetic dataset",
-    "limited claim scenarios",
-    "OCR sensitivity to document quality",
-    "policy wording varies across insurers",
-    "CPU-only target configuration",
-    "no large-scale expert validation",
-    "3B model unavailable for matched comparison",
-    "sentence-transformers unavailable; BGE retrieval evaluation not run"
+  "cases": [
+    {
+      "case_id": "match_01",
+      "group": "match",
+      "expected_status": "no_discrepancy",
+      "actual_status": "no_discrepancy",
+      "status_match": true,
+      "expected_payable": 8100,
+      "actual_payable": 8100.0,
+      "payable_match": true,
+      "expected_paid": 8100,
+      "actual_paid": 8100.0,
+      "paid_match": true,
+      "expected_difference": 0,
+      "actual_difference": 0.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 1000.0
+        }
+      ],
+      "actual_copay": 900.0,
+      "expected_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 1000
+        }
+      ],
+      "expected_copay": 900,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.19606170000042766
+    },
+    {
+      "case_id": "match_02",
+      "group": "match",
+      "expected_status": "no_discrepancy",
+      "actual_status": "no_discrepancy",
+      "status_match": true,
+      "expected_payable": 18000,
+      "actual_payable": 18000.0,
+      "payable_match": true,
+      "expected_paid": 18000,
+      "actual_paid": 18000.0,
+      "paid_match": true,
+      "expected_difference": 0,
+      "actual_difference": 0.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [],
+      "actual_copay": 2000.0,
+      "expected_deductions": [],
+      "expected_copay": 2000,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.020957799977622926
+    },
+    {
+      "case_id": "match_03",
+      "group": "match",
+      "expected_status": "no_discrepancy",
+      "actual_status": "no_discrepancy",
+      "status_match": true,
+      "expected_payable": 14000,
+      "actual_payable": 14000.0,
+      "payable_match": true,
+      "expected_paid": 14000,
+      "actual_paid": 14000.0,
+      "paid_match": true,
+      "expected_difference": 0,
+      "actual_difference": 0.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 1000.0
+        }
+      ],
+      "actual_copay": 0.0,
+      "expected_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 1000
+        }
+      ],
+      "expected_copay": 0,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.012182600010419264
+    },
+    {
+      "case_id": "match_04",
+      "group": "match",
+      "expected_status": "no_discrepancy",
+      "actual_status": "no_discrepancy",
+      "status_match": true,
+      "expected_payable": 10000,
+      "actual_payable": 10000.0,
+      "payable_match": true,
+      "expected_paid": 10000,
+      "actual_paid": 10000.0,
+      "paid_match": true,
+      "expected_difference": 0,
+      "actual_difference": 0.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 2000.0
+        }
+      ],
+      "actual_copay": 0.0,
+      "expected_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 2000
+        }
+      ],
+      "expected_copay": 0,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.01323830001638271
+    },
+    {
+      "case_id": "match_05",
+      "group": "match",
+      "expected_status": "no_discrepancy",
+      "actual_status": "no_discrepancy",
+      "status_match": true,
+      "expected_payable": 22500,
+      "actual_payable": 22500.0,
+      "payable_match": true,
+      "expected_paid": 22500,
+      "actual_paid": 22500.0,
+      "paid_match": true,
+      "expected_difference": 0,
+      "actual_difference": 0.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 5000.0
+        }
+      ],
+      "actual_copay": 2500.0,
+      "expected_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 5000
+        }
+      ],
+      "expected_copay": 2500,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.01106449999497272
+    },
+    {
+      "case_id": "match_06",
+      "group": "match",
+      "expected_status": "no_discrepancy",
+      "actual_status": "no_discrepancy",
+      "status_match": true,
+      "expected_payable": 8000,
+      "actual_payable": 8000.0,
+      "payable_match": true,
+      "expected_paid": 8000,
+      "actual_paid": 8000.0,
+      "paid_match": true,
+      "expected_difference": 0,
+      "actual_difference": 0.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [],
+      "actual_copay": 0.0,
+      "expected_deductions": [],
+      "expected_copay": 0,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.011872400005813688
+    },
+    {
+      "case_id": "match_07",
+      "group": "match",
+      "expected_status": "no_discrepancy",
+      "actual_status": "no_discrepancy",
+      "status_match": true,
+      "expected_payable": 16000,
+      "actual_payable": 16000.0,
+      "payable_match": true,
+      "expected_paid": 16000,
+      "actual_paid": 16000.0,
+      "paid_match": true,
+      "expected_difference": 0,
+      "actual_difference": 0.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 5000.0
+        }
+      ],
+      "actual_copay": 4000.0,
+      "expected_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 5000
+        }
+      ],
+      "expected_copay": 4000,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.01221430001896806
+    },
+    {
+      "case_id": "match_08",
+      "group": "match",
+      "expected_status": "no_discrepancy",
+      "actual_status": "no_discrepancy",
+      "status_match": true,
+      "expected_payable": 27000,
+      "actual_payable": 27000.0,
+      "payable_match": true,
+      "expected_paid": 27000,
+      "actual_paid": 27000.0,
+      "paid_match": true,
+      "expected_difference": 0,
+      "actual_difference": 0.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 10000.0
+        }
+      ],
+      "actual_copay": 3000.0,
+      "expected_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 10000
+        }
+      ],
+      "expected_copay": 3000,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.012020900001516566
+    },
+    {
+      "case_id": "match_09",
+      "group": "match",
+      "expected_status": "no_discrepancy",
+      "actual_status": "no_discrepancy",
+      "status_match": true,
+      "expected_payable": 13500,
+      "actual_payable": 13500.0,
+      "payable_match": true,
+      "expected_paid": 13500,
+      "actual_paid": 13500.0,
+      "paid_match": true,
+      "expected_difference": 0,
+      "actual_difference": 0.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 3000.0
+        }
+      ],
+      "actual_copay": 1500.0,
+      "expected_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 3000
+        }
+      ],
+      "expected_copay": 1500,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.011888100008945912
+    },
+    {
+      "case_id": "match_10",
+      "group": "match",
+      "expected_status": "no_discrepancy",
+      "actual_status": "no_discrepancy",
+      "status_match": true,
+      "expected_payable": 40500,
+      "actual_payable": 40500.0,
+      "payable_match": true,
+      "expected_paid": 40500,
+      "actual_paid": 40500.0,
+      "paid_match": true,
+      "expected_difference": 0,
+      "actual_difference": 0.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 5000.0
+        }
+      ],
+      "actual_copay": 4500.0,
+      "expected_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 5000
+        }
+      ],
+      "expected_copay": 4500,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.011165900010382757
+    },
+    {
+      "case_id": "discrepancy_01",
+      "group": "discrepancy",
+      "expected_status": "possible_discrepancy",
+      "actual_status": "possible_discrepancy",
+      "status_match": true,
+      "expected_payable": 8100,
+      "actual_payable": 8100.0,
+      "payable_match": true,
+      "expected_paid": 7100,
+      "actual_paid": 7100.0,
+      "paid_match": true,
+      "expected_difference": 1000,
+      "actual_difference": 1000.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 2000.0
+        }
+      ],
+      "actual_copay": 900.0,
+      "expected_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 2000
+        }
+      ],
+      "expected_copay": 900,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.011951299995416775
+    },
+    {
+      "case_id": "discrepancy_02",
+      "group": "discrepancy",
+      "expected_status": "possible_discrepancy",
+      "actual_status": "possible_discrepancy",
+      "status_match": true,
+      "expected_payable": 18000,
+      "actual_payable": 18000.0,
+      "payable_match": true,
+      "expected_paid": 17000,
+      "actual_paid": 17000.0,
+      "paid_match": true,
+      "expected_difference": 1000,
+      "actual_difference": 1000.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 1000.0
+        }
+      ],
+      "actual_copay": 2000.0,
+      "expected_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 1000
+        }
+      ],
+      "expected_copay": 2000,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.011641999997664243
+    },
+    {
+      "case_id": "discrepancy_03",
+      "group": "discrepancy",
+      "expected_status": "possible_discrepancy",
+      "actual_status": "possible_discrepancy",
+      "status_match": true,
+      "expected_payable": 14000,
+      "actual_payable": 14000.0,
+      "payable_match": true,
+      "expected_paid": 13000,
+      "actual_paid": 13000.0,
+      "paid_match": true,
+      "expected_difference": 1000,
+      "actual_difference": 1000.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 2000.0
+        }
+      ],
+      "actual_copay": 0.0,
+      "expected_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 2000
+        }
+      ],
+      "expected_copay": 0,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.012444399995729327
+    },
+    {
+      "case_id": "discrepancy_04",
+      "group": "discrepancy",
+      "expected_status": "possible_discrepancy",
+      "actual_status": "possible_discrepancy",
+      "status_match": true,
+      "expected_payable": 10000,
+      "actual_payable": 10000.0,
+      "payable_match": true,
+      "expected_paid": 9000,
+      "actual_paid": 9000.0,
+      "paid_match": true,
+      "expected_difference": 1000,
+      "actual_difference": 1000.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 3000.0
+        }
+      ],
+      "actual_copay": 0.0,
+      "expected_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 3000
+        }
+      ],
+      "expected_copay": 0,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.011678400012897328
+    },
+    {
+      "case_id": "discrepancy_05",
+      "group": "discrepancy",
+      "expected_status": "possible_discrepancy",
+      "actual_status": "possible_discrepancy",
+      "status_match": true,
+      "expected_payable": 22500,
+      "actual_payable": 22500.0,
+      "payable_match": true,
+      "expected_paid": 21500,
+      "actual_paid": 21500.0,
+      "paid_match": true,
+      "expected_difference": 1000,
+      "actual_difference": 1000.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 6000.0
+        }
+      ],
+      "actual_copay": 2500.0,
+      "expected_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 6000
+        }
+      ],
+      "expected_copay": 2500,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.01124379999237135
+    },
+    {
+      "case_id": "discrepancy_06",
+      "group": "discrepancy",
+      "expected_status": "possible_discrepancy",
+      "actual_status": "possible_discrepancy",
+      "status_match": true,
+      "expected_payable": 8000,
+      "actual_payable": 8000.0,
+      "payable_match": true,
+      "expected_paid": 7000,
+      "actual_paid": 7000.0,
+      "paid_match": true,
+      "expected_difference": 1000,
+      "actual_difference": 1000.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 1000.0
+        }
+      ],
+      "actual_copay": 0.0,
+      "expected_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 1000
+        }
+      ],
+      "expected_copay": 0,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.011386600002879277
+    },
+    {
+      "case_id": "discrepancy_07",
+      "group": "discrepancy",
+      "expected_status": "possible_discrepancy",
+      "actual_status": "possible_discrepancy",
+      "status_match": true,
+      "expected_payable": 16000,
+      "actual_payable": 16000.0,
+      "payable_match": true,
+      "expected_paid": 15000,
+      "actual_paid": 15000.0,
+      "paid_match": true,
+      "expected_difference": 1000,
+      "actual_difference": 1000.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 6000.0
+        }
+      ],
+      "actual_copay": 4000.0,
+      "expected_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 6000
+        }
+      ],
+      "expected_copay": 4000,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.013542600005166605
+    },
+    {
+      "case_id": "discrepancy_08",
+      "group": "discrepancy",
+      "expected_status": "possible_discrepancy",
+      "actual_status": "possible_discrepancy",
+      "status_match": true,
+      "expected_payable": 27000,
+      "actual_payable": 27000.0,
+      "payable_match": true,
+      "expected_paid": 26000,
+      "actual_paid": 26000.0,
+      "paid_match": true,
+      "expected_difference": 1000,
+      "actual_difference": 1000.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 11000.0
+        }
+      ],
+      "actual_copay": 3000.0,
+      "expected_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 11000
+        }
+      ],
+      "expected_copay": 3000,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.011992699990514666
+    },
+    {
+      "case_id": "discrepancy_09",
+      "group": "discrepancy",
+      "expected_status": "possible_discrepancy",
+      "actual_status": "possible_discrepancy",
+      "status_match": true,
+      "expected_payable": 13500,
+      "actual_payable": 13500.0,
+      "payable_match": true,
+      "expected_paid": 12500,
+      "actual_paid": 12500.0,
+      "paid_match": true,
+      "expected_difference": 1000,
+      "actual_difference": 1000.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 4000.0
+        }
+      ],
+      "actual_copay": 1500.0,
+      "expected_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 4000
+        }
+      ],
+      "expected_copay": 1500,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.012004799995338544
+    },
+    {
+      "case_id": "discrepancy_10",
+      "group": "discrepancy",
+      "expected_status": "possible_discrepancy",
+      "actual_status": "possible_discrepancy",
+      "status_match": true,
+      "expected_payable": 40500,
+      "actual_payable": 40500.0,
+      "payable_match": true,
+      "expected_paid": 39500,
+      "actual_paid": 39500.0,
+      "paid_match": true,
+      "expected_difference": 1000,
+      "actual_difference": 1000.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 6000.0
+        }
+      ],
+      "actual_copay": 4500.0,
+      "expected_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 6000
+        }
+      ],
+      "expected_copay": 4500,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.012673500023083761
+    },
+    {
+      "case_id": "manual_01",
+      "group": "manual_review",
+      "expected_status": "manual_review",
+      "actual_status": "manual_review",
+      "status_match": true,
+      "expected_payable": null,
+      "actual_payable": 8100.0,
+      "payable_match": true,
+      "expected_paid": null,
+      "actual_paid": null,
+      "paid_match": true,
+      "expected_difference": null,
+      "actual_difference": 8100.0,
+      "settlement_needs_review": true,
+      "settlement_review_reasons": [
+        "Settlement amount paid was not identified."
+      ],
+      "actual_deductions": [],
+      "actual_copay": 0.0,
+      "expected_deductions": null,
+      "expected_copay": null,
+      "deductions_match": null,
+      "rule_warnings": [],
+      "comparison_reasons": [
+        "Settlement amount paid was not identified."
+      ],
+      "cause": "match",
+      "seconds": 0.011723499977961183
+    },
+    {
+      "case_id": "manual_02",
+      "group": "manual_review",
+      "expected_status": "manual_review",
+      "actual_status": "manual_review",
+      "status_match": true,
+      "expected_payable": null,
+      "actual_payable": 18000.0,
+      "payable_match": true,
+      "expected_paid": 18000,
+      "actual_paid": 18000.0,
+      "paid_match": true,
+      "expected_difference": null,
+      "actual_difference": 0.0,
+      "settlement_needs_review": true,
+      "settlement_review_reasons": [
+        "Settlement totals do not reconcile within INR 1.",
+        "Settlement claim reference does not match the case reference."
+      ],
+      "actual_deductions": [],
+      "actual_copay": 0.0,
+      "expected_deductions": null,
+      "expected_copay": null,
+      "deductions_match": null,
+      "rule_warnings": [],
+      "comparison_reasons": [
+        "Settlement totals do not reconcile within INR 1.",
+        "Settlement claim reference does not match the case reference."
+      ],
+      "cause": "match",
+      "seconds": 0.01195499999448657
+    },
+    {
+      "case_id": "manual_03",
+      "group": "manual_review",
+      "expected_status": "manual_review",
+      "actual_status": "manual_review",
+      "status_match": true,
+      "expected_payable": null,
+      "actual_payable": 14000.0,
+      "payable_match": true,
+      "expected_paid": 14000,
+      "actual_paid": 14000.0,
+      "paid_match": true,
+      "expected_difference": null,
+      "actual_difference": 0.0,
+      "settlement_needs_review": true,
+      "settlement_review_reasons": [
+        "Settlement deductions could not be read from the letter.",
+        "Settlement totals do not reconcile within INR 1."
+      ],
+      "actual_deductions": [],
+      "actual_copay": 0.0,
+      "expected_deductions": null,
+      "expected_copay": null,
+      "deductions_match": null,
+      "rule_warnings": [],
+      "comparison_reasons": [
+        "Settlement deductions could not be read from the letter.",
+        "Settlement totals do not reconcile within INR 1."
+      ],
+      "cause": "match",
+      "seconds": 17.080063700006576
+    },
+    {
+      "case_id": "manual_04",
+      "group": "manual_review",
+      "expected_status": "manual_review",
+      "actual_status": "manual_review",
+      "status_match": true,
+      "expected_payable": null,
+      "actual_payable": 10000.0,
+      "payable_match": true,
+      "expected_paid": 10000,
+      "actual_paid": 10000.0,
+      "paid_match": true,
+      "expected_difference": null,
+      "actual_difference": 0.0,
+      "settlement_needs_review": true,
+      "settlement_review_reasons": [
+        "Settlement totals do not reconcile within INR 1."
+      ],
+      "actual_deductions": [],
+      "actual_copay": 0.0,
+      "expected_deductions": null,
+      "expected_copay": null,
+      "deductions_match": null,
+      "rule_warnings": [],
+      "comparison_reasons": [
+        "Settlement totals do not reconcile within INR 1."
+      ],
+      "cause": "match",
+      "seconds": 0.013453400024445727
+    },
+    {
+      "case_id": "manual_05",
+      "group": "manual_review",
+      "expected_status": "manual_review",
+      "actual_status": "manual_review",
+      "status_match": true,
+      "expected_payable": null,
+      "actual_payable": 22500.0,
+      "payable_match": true,
+      "expected_paid": null,
+      "actual_paid": null,
+      "paid_match": true,
+      "expected_difference": null,
+      "actual_difference": 22500.0,
+      "settlement_needs_review": true,
+      "settlement_review_reasons": [
+        "Conflicting settlement amounts paid were found."
+      ],
+      "actual_deductions": [],
+      "actual_copay": 0.0,
+      "expected_deductions": null,
+      "expected_copay": null,
+      "deductions_match": null,
+      "rule_warnings": [],
+      "comparison_reasons": [
+        "Conflicting settlement amounts paid were found."
+      ],
+      "cause": "match",
+      "seconds": 0.012500999990152195
+    },
+    {
+      "case_id": "edge_01",
+      "group": "edge",
+      "expected_status": "no_discrepancy",
+      "actual_status": "no_discrepancy",
+      "status_match": true,
+      "expected_payable": 0,
+      "actual_payable": 0.0,
+      "payable_match": true,
+      "expected_paid": 0,
+      "actual_paid": 0.0,
+      "paid_match": true,
+      "expected_difference": 0,
+      "actual_difference": 0.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 5000.0
+        }
+      ],
+      "actual_copay": 0.0,
+      "expected_deductions": [
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 5000
+        }
+      ],
+      "expected_copay": 0,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.012541500007500872
+    },
+    {
+      "case_id": "edge_02",
+      "group": "edge",
+      "expected_status": "manual_review",
+      "actual_status": "manual_review",
+      "status_match": true,
+      "expected_payable": null,
+      "actual_payable": 0.0,
+      "payable_match": true,
+      "expected_paid": 0,
+      "actual_paid": 0.0,
+      "paid_match": true,
+      "expected_difference": null,
+      "actual_difference": 0.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [],
+      "actual_copay": 0.0,
+      "expected_deductions": null,
+      "expected_copay": null,
+      "deductions_match": null,
+      "rule_warnings": [
+        "total_amount_missing_or_invalid"
+      ],
+      "comparison_reasons": [
+        "total_amount_missing_or_invalid"
+      ],
+      "cause": "match",
+      "seconds": 0.028512499993667006
+    },
+    {
+      "case_id": "edge_03",
+      "group": "edge",
+      "expected_status": "no_discrepancy",
+      "actual_status": "no_discrepancy",
+      "status_match": true,
+      "expected_payable": 10000,
+      "actual_payable": 10000.0,
+      "payable_match": true,
+      "expected_paid": 10000,
+      "actual_paid": 10000.0,
+      "paid_match": true,
+      "expected_difference": 0,
+      "actual_difference": 0.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [],
+      "actual_copay": 0.0,
+      "expected_deductions": [],
+      "expected_copay": 0,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.011178999993717298
+    },
+    {
+      "case_id": "edge_04",
+      "group": "edge",
+      "expected_status": "no_discrepancy",
+      "actual_status": "no_discrepancy",
+      "status_match": true,
+      "expected_payable": 8100,
+      "actual_payable": 8100.0,
+      "payable_match": true,
+      "expected_paid": 8100,
+      "actual_paid": 8100.0,
+      "paid_match": true,
+      "expected_difference": 0,
+      "actual_difference": 0.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [
+        {
+          "category": "EXCLUSION",
+          "amount": 5000.0
+        },
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 1000.0
+        }
+      ],
+      "actual_copay": 900.0,
+      "expected_deductions": [
+        {
+          "category": "EXCLUSION",
+          "amount": 5000
+        },
+        {
+          "category": "DEDUCTIBLE",
+          "amount": 1000
+        }
+      ],
+      "expected_copay": 900,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.01506209999206476
+    },
+    {
+      "case_id": "edge_05",
+      "group": "edge",
+      "expected_status": "no_discrepancy",
+      "actual_status": "no_discrepancy",
+      "status_match": true,
+      "expected_payable": 0,
+      "actual_payable": 0.0,
+      "payable_match": true,
+      "expected_paid": 0,
+      "actual_paid": 0.0,
+      "paid_match": true,
+      "expected_difference": 0,
+      "actual_difference": 0.0,
+      "settlement_needs_review": false,
+      "settlement_review_reasons": [],
+      "actual_deductions": [
+        {
+          "category": "EXCLUSION",
+          "amount": 10000.0
+        }
+      ],
+      "actual_copay": 0.0,
+      "expected_deductions": [
+        {
+          "category": "EXCLUSION",
+          "amount": 10000
+        }
+      ],
+      "expected_copay": 0,
+      "deductions_match": true,
+      "rule_warnings": [],
+      "comparison_reasons": [],
+      "cause": "match",
+      "seconds": 0.014857800008030608
+    }
+  ],
+  "extraction_cases": [
+    {
+      "case_id": "match_01",
+      "ocr": false,
+      "expected_total": 10000,
+      "actual_total": 10000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 10000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 10000 | 10000\nSub Total: INR 10000\nTax: INR 0\nGrand Total: INR 10000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "match_02",
+      "ocr": false,
+      "expected_total": 20000,
+      "actual_total": 20000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 20000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 20000 | 20000\nSub Total: INR 20000\nTax: INR 0\nGrand Total: INR 20000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "match_03",
+      "ocr": false,
+      "expected_total": 15000,
+      "actual_total": 15000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 15000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 15000 | 15000\nSub Total: INR 15000\nTax: INR 0\nGrand Total: INR 15000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "match_04",
+      "ocr": false,
+      "expected_total": 12000,
+      "actual_total": 12000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 12000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 12000 | 12000\nSub Total: INR 12000\nTax: INR 0\nGrand Total: INR 12000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "match_05",
+      "ocr": false,
+      "expected_total": 30000,
+      "actual_total": 30000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 30000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 30000 | 30000\nSub Total: INR 30000\nTax: INR 0\nGrand Total: INR 30000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "match_06",
+      "ocr": false,
+      "expected_total": 8000,
+      "actual_total": 8000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 8000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 8000 | 8000\nSub Total: INR 8000\nTax: INR 0\nGrand Total: INR 8000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "match_07",
+      "ocr": false,
+      "expected_total": 25000,
+      "actual_total": 25000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 25000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 25000 | 25000\nSub Total: INR 25000\nTax: INR 0\nGrand Total: INR 25000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "match_08",
+      "ocr": false,
+      "expected_total": 40000,
+      "actual_total": 40000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 40000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 40000 | 40000\nSub Total: INR 40000\nTax: INR 0\nGrand Total: INR 40000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "match_09",
+      "ocr": false,
+      "expected_total": 18000,
+      "actual_total": 18000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 18000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 18000 | 18000\nSub Total: INR 18000\nTax: INR 0\nGrand Total: INR 18000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "match_10",
+      "ocr": false,
+      "expected_total": 50000,
+      "actual_total": 50000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 50000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 50000 | 50000\nSub Total: INR 50000\nTax: INR 0\nGrand Total: INR 50000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "discrepancy_01",
+      "ocr": false,
+      "expected_total": 10000,
+      "actual_total": 10000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 10000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 10000 | 10000\nSub Total: INR 10000\nTax: INR 0\nGrand Total: INR 10000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "discrepancy_02",
+      "ocr": false,
+      "expected_total": 20000,
+      "actual_total": 20000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 20000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 20000 | 20000\nSub Total: INR 20000\nTax: INR 0\nGrand Total: INR 20000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "discrepancy_03",
+      "ocr": false,
+      "expected_total": 15000,
+      "actual_total": 15000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 15000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 15000 | 15000\nSub Total: INR 15000\nTax: INR 0\nGrand Total: INR 15000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "discrepancy_04",
+      "ocr": false,
+      "expected_total": 12000,
+      "actual_total": 12000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 12000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 12000 | 12000\nSub Total: INR 12000\nTax: INR 0\nGrand Total: INR 12000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "discrepancy_05",
+      "ocr": false,
+      "expected_total": 30000,
+      "actual_total": 30000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 30000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 30000 | 30000\nSub Total: INR 30000\nTax: INR 0\nGrand Total: INR 30000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "discrepancy_06",
+      "ocr": false,
+      "expected_total": 8000,
+      "actual_total": 8000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 8000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 8000 | 8000\nSub Total: INR 8000\nTax: INR 0\nGrand Total: INR 8000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "discrepancy_07",
+      "ocr": false,
+      "expected_total": 25000,
+      "actual_total": 25000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 25000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 25000 | 25000\nSub Total: INR 25000\nTax: INR 0\nGrand Total: INR 25000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "discrepancy_08",
+      "ocr": false,
+      "expected_total": 40000,
+      "actual_total": 40000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 40000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 40000 | 40000\nSub Total: INR 40000\nTax: INR 0\nGrand Total: INR 40000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "discrepancy_09",
+      "ocr": false,
+      "expected_total": 18000,
+      "actual_total": 18000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 18000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 18000 | 18000\nSub Total: INR 18000\nTax: INR 0\nGrand Total: INR 18000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "discrepancy_10",
+      "ocr": false,
+      "expected_total": 50000,
+      "actual_total": 50000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 50000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 50000 | 50000\nSub Total: INR 50000\nTax: INR 0\nGrand Total: INR 50000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "manual_01",
+      "ocr": false,
+      "expected_total": 10000,
+      "actual_total": 10000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 10000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 10000 | 10000\nSub Total: INR 10000\nTax: INR 0\nGrand Total: INR 10000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "manual_02",
+      "ocr": false,
+      "expected_total": 20000,
+      "actual_total": 20000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 20000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 20000 | 20000\nSub Total: INR 20000\nTax: INR 0\nGrand Total: INR 20000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "manual_03",
+      "ocr": false,
+      "expected_total": 15000,
+      "actual_total": 15000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 15000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 15000 | 15000\nSub Total: INR 15000\nTax: INR 0\nGrand Total: INR 15000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "manual_04",
+      "ocr": true,
+      "expected_total": 12000,
+      "actual_total": 12000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Treatment charges",
+          "amount": 12000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": null,
+          "confidence": 95.32539682539684,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "tesseract",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL \u2014 NOT A REAL CLAIM\nPatient: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nTreatment charges: INR 12000\nGrand Total: INR 12000",
+              "confidence": 95.32539682539684
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "manual_05",
+      "ocr": false,
+      "expected_total": 30000,
+      "actual_total": 30000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 30000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 30000 | 30000\nSub Total: INR 30000\nTax: INR 0\nGrand Total: INR 30000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "edge_01",
+      "ocr": false,
+      "expected_total": 5000,
+      "actual_total": 5000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 5000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 5000 | 5000\nSub Total: INR 5000\nTax: INR 0\nGrand Total: INR 5000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "edge_02",
+      "ocr": false,
+      "expected_total": 0,
+      "actual_total": 0.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": []
+    },
+    {
+      "case_id": "edge_03",
+      "ocr": false,
+      "expected_total": 10000,
+      "actual_total": 10000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 10000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 10000 | 10000\nSub Total: INR 10000\nTax: INR 0\nGrand Total: INR 10000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "edge_04",
+      "ocr": false,
+      "expected_total": 15000,
+      "actual_total": 15000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Eligible treatment",
+          "amount": 10000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 10000 | 10000\nCosmetic surgery | 12 Aug 2026 | 1 | 5000 | 5000\nSub Total: INR 15000\nTax: INR 0\nGrand Total: INR 15000",
+              "confidence": 100.0
+            }
+          ]
+        },
+        {
+          "description": "Cosmetic surgery",
+          "amount": 5000.0,
+          "category": "SURGERY_OT",
+          "cpt_codes": [],
+          "date": "2026-08-12",
+          "confidence": 100.0,
+          "needs_review": false,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "pymupdf",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL - NOT A REAL CLAIM\nPatient name: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 12 Aug 2026 | 1 | 10000 | 10000\nCosmetic surgery | 12 Aug 2026 | 1 | 5000 | 5000\nSub Total: INR 15000\nTax: INR 0\nGrand Total: INR 15000",
+              "confidence": 100.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "edge_05",
+      "ocr": true,
+      "expected_total": 10000,
+      "actual_total": 10000.0,
+      "total_match": true,
+      "expected_patient": "Sample Patient",
+      "actual_patient": "Sample Patient",
+      "patient_match": true,
+      "expected_policy": "POL-EVAL-FICTIONAL-2026",
+      "actual_policy": "POL-EVAL-FICTIONAL-2026",
+      "policy_match": true,
+      "line_items": [
+        {
+          "description": "Treatment charges",
+          "amount": 10000.0,
+          "category": "OTHER",
+          "cpt_codes": [],
+          "date": null,
+          "confidence": 95.3968253968254,
+          "needs_review": true,
+          "evidence": [
+            {
+              "document_id": "bill.pdf",
+              "source_name": "bill.pdf",
+              "page": 1,
+              "method": "tesseract",
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL \u2014 NOT A REAL CLAIM\nPatient: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nTreatment charges: INR 10000\nGrand Total: INR 10000",
+              "confidence": 95.3968253968254
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "line_item_cases": [
+    {
+      "case_id": "match_01",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "match_02",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "match_03",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "match_04",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "match_05",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "match_06",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "match_07",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "match_08",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "match_09",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "match_10",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "discrepancy_01",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "discrepancy_02",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "discrepancy_03",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "discrepancy_04",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "discrepancy_05",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "discrepancy_06",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "discrepancy_07",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "discrepancy_08",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "discrepancy_09",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "discrepancy_10",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "manual_01",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "manual_02",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "manual_03",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "manual_05",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "edge_01",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "edge_02",
+      "expected_count": 0,
+      "actual_count": 0,
+      "matched": 0
+    },
+    {
+      "case_id": "edge_03",
+      "expected_count": 1,
+      "actual_count": 1,
+      "matched": 1
+    },
+    {
+      "case_id": "edge_04",
+      "expected_count": 2,
+      "actual_count": 2,
+      "matched": 2
+    }
+  ],
+  "policy_term_cases": [
+    {
+      "case_id": "match_01",
+      "term": "annual_limit",
+      "expected": 10000,
+      "actual": "10000",
+      "match": true
+    },
+    {
+      "case_id": "match_01",
+      "term": "deductible",
+      "expected": 1000,
+      "actual": "1000",
+      "match": true
+    },
+    {
+      "case_id": "match_01",
+      "term": "copay_percent",
+      "expected": 10,
+      "actual": "10",
+      "match": true
+    },
+    {
+      "case_id": "match_02",
+      "term": "annual_limit",
+      "expected": 20000,
+      "actual": "20000",
+      "match": true
+    },
+    {
+      "case_id": "match_02",
+      "term": "deductible",
+      "expected": 0,
+      "actual": "0",
+      "match": true
+    },
+    {
+      "case_id": "match_02",
+      "term": "copay_percent",
+      "expected": 10,
+      "actual": "10",
+      "match": true
+    },
+    {
+      "case_id": "match_03",
+      "term": "annual_limit",
+      "expected": 15000,
+      "actual": "15000",
+      "match": true
+    },
+    {
+      "case_id": "match_03",
+      "term": "deductible",
+      "expected": 1000,
+      "actual": "1000",
+      "match": true
+    },
+    {
+      "case_id": "match_03",
+      "term": "copay_percent",
+      "expected": 0,
+      "actual": "0",
+      "match": true
+    },
+    {
+      "case_id": "match_04",
+      "term": "annual_limit",
+      "expected": 12000,
+      "actual": "12000",
+      "match": true
+    },
+    {
+      "case_id": "match_04",
+      "term": "deductible",
+      "expected": 2000,
+      "actual": "2000",
+      "match": true
+    },
+    {
+      "case_id": "match_04",
+      "term": "copay_percent",
+      "expected": 0,
+      "actual": "0",
+      "match": true
+    },
+    {
+      "case_id": "match_05",
+      "term": "annual_limit",
+      "expected": 30000,
+      "actual": "30000",
+      "match": true
+    },
+    {
+      "case_id": "match_05",
+      "term": "deductible",
+      "expected": 5000,
+      "actual": "5000",
+      "match": true
+    },
+    {
+      "case_id": "match_05",
+      "term": "copay_percent",
+      "expected": 10,
+      "actual": "10",
+      "match": true
+    },
+    {
+      "case_id": "match_06",
+      "term": "annual_limit",
+      "expected": 10000,
+      "actual": "10000",
+      "match": true
+    },
+    {
+      "case_id": "match_06",
+      "term": "deductible",
+      "expected": 0,
+      "actual": "0",
+      "match": true
+    },
+    {
+      "case_id": "match_06",
+      "term": "copay_percent",
+      "expected": 0,
+      "actual": "0",
+      "match": true
+    },
+    {
+      "case_id": "match_07",
+      "term": "annual_limit",
+      "expected": 25000,
+      "actual": "25000",
+      "match": true
+    },
+    {
+      "case_id": "match_07",
+      "term": "deductible",
+      "expected": 5000,
+      "actual": "5000",
+      "match": true
+    },
+    {
+      "case_id": "match_07",
+      "term": "copay_percent",
+      "expected": 20,
+      "actual": "20",
+      "match": true
+    },
+    {
+      "case_id": "match_08",
+      "term": "annual_limit",
+      "expected": 40000,
+      "actual": "40000",
+      "match": true
+    },
+    {
+      "case_id": "match_08",
+      "term": "deductible",
+      "expected": 10000,
+      "actual": "10000",
+      "match": true
+    },
+    {
+      "case_id": "match_08",
+      "term": "copay_percent",
+      "expected": 10,
+      "actual": "10",
+      "match": true
+    },
+    {
+      "case_id": "match_09",
+      "term": "annual_limit",
+      "expected": 18000,
+      "actual": "18000",
+      "match": true
+    },
+    {
+      "case_id": "match_09",
+      "term": "deductible",
+      "expected": 3000,
+      "actual": "3000",
+      "match": true
+    },
+    {
+      "case_id": "match_09",
+      "term": "copay_percent",
+      "expected": 10,
+      "actual": "10",
+      "match": true
+    },
+    {
+      "case_id": "match_10",
+      "term": "annual_limit",
+      "expected": 50000,
+      "actual": "50000",
+      "match": true
+    },
+    {
+      "case_id": "match_10",
+      "term": "deductible",
+      "expected": 5000,
+      "actual": "5000",
+      "match": true
+    },
+    {
+      "case_id": "match_10",
+      "term": "copay_percent",
+      "expected": 10,
+      "actual": "10",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_01",
+      "term": "annual_limit",
+      "expected": 10000,
+      "actual": "10000",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_01",
+      "term": "deductible",
+      "expected": 1000,
+      "actual": "1000",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_01",
+      "term": "copay_percent",
+      "expected": 10,
+      "actual": "10",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_02",
+      "term": "annual_limit",
+      "expected": 20000,
+      "actual": "20000",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_02",
+      "term": "deductible",
+      "expected": 0,
+      "actual": "0",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_02",
+      "term": "copay_percent",
+      "expected": 10,
+      "actual": "10",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_03",
+      "term": "annual_limit",
+      "expected": 15000,
+      "actual": "15000",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_03",
+      "term": "deductible",
+      "expected": 1000,
+      "actual": "1000",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_03",
+      "term": "copay_percent",
+      "expected": 0,
+      "actual": "0",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_04",
+      "term": "annual_limit",
+      "expected": 12000,
+      "actual": "12000",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_04",
+      "term": "deductible",
+      "expected": 2000,
+      "actual": "2000",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_04",
+      "term": "copay_percent",
+      "expected": 0,
+      "actual": "0",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_05",
+      "term": "annual_limit",
+      "expected": 30000,
+      "actual": "30000",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_05",
+      "term": "deductible",
+      "expected": 5000,
+      "actual": "5000",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_05",
+      "term": "copay_percent",
+      "expected": 10,
+      "actual": "10",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_06",
+      "term": "annual_limit",
+      "expected": 10000,
+      "actual": "10000",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_06",
+      "term": "deductible",
+      "expected": 0,
+      "actual": "0",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_06",
+      "term": "copay_percent",
+      "expected": 0,
+      "actual": "0",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_07",
+      "term": "annual_limit",
+      "expected": 25000,
+      "actual": "25000",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_07",
+      "term": "deductible",
+      "expected": 5000,
+      "actual": "5000",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_07",
+      "term": "copay_percent",
+      "expected": 20,
+      "actual": "20",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_08",
+      "term": "annual_limit",
+      "expected": 40000,
+      "actual": "40000",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_08",
+      "term": "deductible",
+      "expected": 10000,
+      "actual": "10000",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_08",
+      "term": "copay_percent",
+      "expected": 10,
+      "actual": "10",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_09",
+      "term": "annual_limit",
+      "expected": 18000,
+      "actual": "18000",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_09",
+      "term": "deductible",
+      "expected": 3000,
+      "actual": "3000",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_09",
+      "term": "copay_percent",
+      "expected": 10,
+      "actual": "10",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_10",
+      "term": "annual_limit",
+      "expected": 50000,
+      "actual": "50000",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_10",
+      "term": "deductible",
+      "expected": 5000,
+      "actual": "5000",
+      "match": true
+    },
+    {
+      "case_id": "discrepancy_10",
+      "term": "copay_percent",
+      "expected": 10,
+      "actual": "10",
+      "match": true
+    },
+    {
+      "case_id": "manual_01",
+      "term": "annual_limit",
+      "expected": 10000,
+      "actual": "10000",
+      "match": true
+    },
+    {
+      "case_id": "manual_01",
+      "term": "deductible",
+      "expected": 1000,
+      "actual": "1000",
+      "match": true
+    },
+    {
+      "case_id": "manual_01",
+      "term": "copay_percent",
+      "expected": 10,
+      "actual": "10",
+      "match": true
+    },
+    {
+      "case_id": "manual_02",
+      "term": "annual_limit",
+      "expected": 20000,
+      "actual": "20000",
+      "match": true
+    },
+    {
+      "case_id": "manual_02",
+      "term": "deductible",
+      "expected": 0,
+      "actual": "0",
+      "match": true
+    },
+    {
+      "case_id": "manual_02",
+      "term": "copay_percent",
+      "expected": 10,
+      "actual": "10",
+      "match": true
+    },
+    {
+      "case_id": "manual_03",
+      "term": "annual_limit",
+      "expected": 15000,
+      "actual": "15000",
+      "match": true
+    },
+    {
+      "case_id": "manual_03",
+      "term": "deductible",
+      "expected": 1000,
+      "actual": "1000",
+      "match": true
+    },
+    {
+      "case_id": "manual_03",
+      "term": "copay_percent",
+      "expected": 0,
+      "actual": "0",
+      "match": true
+    },
+    {
+      "case_id": "manual_04",
+      "term": "annual_limit",
+      "expected": 12000,
+      "actual": "12000",
+      "match": true
+    },
+    {
+      "case_id": "manual_04",
+      "term": "deductible",
+      "expected": 2000,
+      "actual": "2000",
+      "match": true
+    },
+    {
+      "case_id": "manual_04",
+      "term": "copay_percent",
+      "expected": 0,
+      "actual": "0",
+      "match": true
+    },
+    {
+      "case_id": "manual_05",
+      "term": "annual_limit",
+      "expected": 30000,
+      "actual": "30000",
+      "match": true
+    },
+    {
+      "case_id": "manual_05",
+      "term": "deductible",
+      "expected": 5000,
+      "actual": "5000",
+      "match": true
+    },
+    {
+      "case_id": "manual_05",
+      "term": "copay_percent",
+      "expected": 10,
+      "actual": "10",
+      "match": true
+    },
+    {
+      "case_id": "edge_01",
+      "term": "annual_limit",
+      "expected": 10000,
+      "actual": "10000",
+      "match": true
+    },
+    {
+      "case_id": "edge_01",
+      "term": "deductible",
+      "expected": 5000,
+      "actual": "5000",
+      "match": true
+    },
+    {
+      "case_id": "edge_01",
+      "term": "copay_percent",
+      "expected": 10,
+      "actual": "10",
+      "match": true
+    },
+    {
+      "case_id": "edge_02",
+      "term": "annual_limit",
+      "expected": 10000,
+      "actual": "10000",
+      "match": true
+    },
+    {
+      "case_id": "edge_02",
+      "term": "deductible",
+      "expected": 0,
+      "actual": "0",
+      "match": true
+    },
+    {
+      "case_id": "edge_02",
+      "term": "copay_percent",
+      "expected": 10,
+      "actual": "10",
+      "match": true
+    },
+    {
+      "case_id": "edge_03",
+      "term": "annual_limit",
+      "expected": 10000,
+      "actual": "10000",
+      "match": true
+    },
+    {
+      "case_id": "edge_03",
+      "term": "deductible",
+      "expected": 0,
+      "actual": "0",
+      "match": true
+    },
+    {
+      "case_id": "edge_03",
+      "term": "copay_percent",
+      "expected": 0,
+      "actual": "0",
+      "match": true
+    },
+    {
+      "case_id": "edge_04",
+      "term": "annual_limit",
+      "expected": 15000,
+      "actual": "15000",
+      "match": true
+    },
+    {
+      "case_id": "edge_04",
+      "term": "deductible",
+      "expected": 1000,
+      "actual": "1000",
+      "match": true
+    },
+    {
+      "case_id": "edge_04",
+      "term": "copay_percent",
+      "expected": 10,
+      "actual": "10",
+      "match": true
+    },
+    {
+      "case_id": "edge_05",
+      "term": "annual_limit",
+      "expected": 10000,
+      "actual": "10000",
+      "match": true
+    },
+    {
+      "case_id": "edge_05",
+      "term": "deductible",
+      "expected": 0,
+      "actual": "0",
+      "match": true
+    },
+    {
+      "case_id": "edge_05",
+      "term": "copay_percent",
+      "expected": 10,
+      "actual": "10",
+      "match": true
+    }
+  ],
+  "retrieval_queries": [
+    {
+      "query_id": "q01",
+      "case_id": "match_01",
+      "expected_clause": "Annual limit:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 10000 Deductible: INR 1000 Co-pay: 10% Room limit per day: INR 5000 Pha"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q02",
+      "case_id": "match_02",
+      "expected_clause": "Deductible:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 20000 Deductible: INR 0 Co-pay: 10% Room limit per day: INR 5000 Pharma"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q03",
+      "case_id": "match_03",
+      "expected_clause": "Co-pay:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 15000 Deductible: INR 1000 Co-pay: 0% Room limit per day: INR 5000 Phar"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q04",
+      "case_id": "match_04",
+      "expected_clause": "Room limit per day:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 12000 Deductible: INR 2000 Co-pay: 0% Room limit per day: INR 5000 Phar"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q05",
+      "case_id": "match_05",
+      "expected_clause": "Pharmacy and medicines are payable during hospitalization.",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 30000 Deductible: INR 5000 Co-pay: 10% Room limit per day: INR 5000 Pha"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q06",
+      "case_id": "match_06",
+      "expected_clause": "Diagnostic investigations are payable during hospitalization.",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 10000 Deductible: INR 0 Co-pay: 0% Room limit per day: INR 5000 Pharmac"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q07",
+      "case_id": "match_07",
+      "expected_clause": "Annual limit:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 25000 Deductible: INR 5000 Co-pay: 20% Room limit per day: INR 5000 Pha"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q08",
+      "case_id": "match_08",
+      "expected_clause": "Deductible:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 40000 Deductible: INR 10000 Co-pay: 10% Room limit per day: INR 5000 Ph"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q09",
+      "case_id": "match_09",
+      "expected_clause": "Co-pay:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 18000 Deductible: INR 3000 Co-pay: 10% Room limit per day: INR 5000 Pha"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q10",
+      "case_id": "match_10",
+      "expected_clause": "Room limit per day:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 50000 Deductible: INR 5000 Co-pay: 10% Room limit per day: INR 5000 Pha"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q11",
+      "case_id": "discrepancy_01",
+      "expected_clause": "Pharmacy and medicines are payable during hospitalization.",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 10000 Deductible: INR 1000 Co-pay: 10% Room limit per day: INR 5000 Pha"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q12",
+      "case_id": "discrepancy_02",
+      "expected_clause": "Diagnostic investigations are payable during hospitalization.",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 20000 Deductible: INR 0 Co-pay: 10% Room limit per day: INR 5000 Pharma"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q13",
+      "case_id": "discrepancy_03",
+      "expected_clause": "Annual limit:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 15000 Deductible: INR 1000 Co-pay: 0% Room limit per day: INR 5000 Phar"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q14",
+      "case_id": "discrepancy_04",
+      "expected_clause": "Deductible:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 12000 Deductible: INR 2000 Co-pay: 0% Room limit per day: INR 5000 Phar"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q15",
+      "case_id": "discrepancy_05",
+      "expected_clause": "Co-pay:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 30000 Deductible: INR 5000 Co-pay: 10% Room limit per day: INR 5000 Pha"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q16",
+      "case_id": "discrepancy_06",
+      "expected_clause": "Room limit per day:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 10000 Deductible: INR 0 Co-pay: 0% Room limit per day: INR 5000 Pharmac"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q17",
+      "case_id": "discrepancy_07",
+      "expected_clause": "Pharmacy and medicines are payable during hospitalization.",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 25000 Deductible: INR 5000 Co-pay: 20% Room limit per day: INR 5000 Pha"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q18",
+      "case_id": "discrepancy_08",
+      "expected_clause": "Diagnostic investigations are payable during hospitalization.",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 40000 Deductible: INR 10000 Co-pay: 10% Room limit per day: INR 5000 Ph"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q19",
+      "case_id": "discrepancy_09",
+      "expected_clause": "Annual limit:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 18000 Deductible: INR 3000 Co-pay: 10% Room limit per day: INR 5000 Pha"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q20",
+      "case_id": "discrepancy_10",
+      "expected_clause": "Deductible:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 50000 Deductible: INR 5000 Co-pay: 10% Room limit per day: INR 5000 Pha"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q21",
+      "case_id": "manual_01",
+      "expected_clause": "Co-pay:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 10000 Deductible: INR 1000 Co-pay: 10% Room limit per day: INR 5000 Pha"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q22",
+      "case_id": "manual_02",
+      "expected_clause": "Annual limit:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 20000 Deductible: INR 0 Co-pay: 10% Room limit per day: INR 5000 Pharma"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q23",
+      "case_id": "manual_03",
+      "expected_clause": "Deductible:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 15000 Deductible: INR 1000 Co-pay: 0% Room limit per day: INR 5000 Phar"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q24",
+      "case_id": "manual_04",
+      "expected_clause": "Room limit per day:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 12000 Deductible: INR 2000 Co-pay: 0% Room limit per day: INR 5000 Phar"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q25",
+      "case_id": "manual_05",
+      "expected_clause": "Pharmacy and medicines are payable during hospitalization.",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 30000 Deductible: INR 5000 Co-pay: 10% Room limit per day: INR 5000 Pha"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q26",
+      "case_id": "edge_01",
+      "expected_clause": "Diagnostic investigations are payable during hospitalization.",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 10000 Deductible: INR 5000 Co-pay: 10% Room limit per day: INR 5000 Pha"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q27",
+      "case_id": "edge_02",
+      "expected_clause": "Annual limit:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 10000 Deductible: INR 0 Co-pay: 10% Room limit per day: INR 5000 Pharma"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q28",
+      "case_id": "edge_03",
+      "expected_clause": "Deductible:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 10000 Deductible: INR 0 Co-pay: 0% Room limit per day: INR 5000 Pharmac"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q29",
+      "case_id": "edge_04",
+      "expected_clause": "Co-pay:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 15000 Deductible: INR 1000 Co-pay: 10% Room limit per day: INR 5000 Pha"
+        }
+      ],
+      "first_relevant_rank": 1
+    },
+    {
+      "query_id": "q30",
+      "case_id": "edge_05",
+      "expected_clause": "Room limit per day:",
+      "expected_page": 1,
+      "retrieved": [
+        {
+          "page": 1,
+          "text": "FICTIONAL SAMPLE POLICY \u2014 NOT AN INSURANCE CONTRACT Policy number: POL-EVAL-FICTIONAL-2026 Annual limit: INR 10000 Deductible: INR 0 Co-pay: 10% Room limit per day: INR 5000 Pharma"
+        }
+      ],
+      "first_relevant_rank": 1
+    }
+  ],
+  "live_checks": {
+    "ollama": {
+      "numerator": 3,
+      "denominator": 3,
+      "score": 1.0,
+      "target": 1.0,
+      "pass": true,
+      "model": "ibm/granite4.1:8b",
+      "llm_calls": [
+        "comparison_explainer",
+        "comparison_explainer"
+      ],
+      "case_results": [
+        {
+          "case": "a_match",
+          "status": "no_discrepancy",
+          "expected_insurer_payment": "22500",
+          "actual_insurer_payment": "22500",
+          "possible_difference": "0",
+          "off_explanation": "The insurer deductions match the deterministic policy calculation based on the documents provided. This remains an estimate for reviewer confirmation.",
+          "on_explanation": "The expected patient share is $24,500, and the actual patient share is also $24,500. There is no discrepancy between the expected and actual amounts, resulting in a possible difference of $0. No categories indicate any issues or differences.",
+          "comparison_unchanged": true,
+          "both_explanations_number_grounded": true
+        },
+        {
+          "case": "b_wrongful_deduction",
+          "status": "possible_discrepancy",
+          "expected_insurer_payment": "22500",
+          "actual_insurer_payment": "19800",
+          "possible_difference": "2700",
+          "off_explanation": "The documents show a possible difference of INR 2,700.00. The investigation deduction of INR 3,000.00 is greater than the amount supported by the deterministic rules. The supporting clause is on page 1. Please ask an authorized reviewer to confirm the documents and calculation.",
+          "on_explanation": "The expected patient share for the investigation category was calculated at $24,500. However, the actual patient share was higher at $27,200, resulting in a discrepancy of $2,700. The insurer deducted $3,000 for diagnostic investigations during hospitalization, but the system did not flag any disallowed amounts. This unexplained deduction led to a net effect of reducing the payout by $2,700, despite the policy clause stating that diagnostic investigations are payable during hospitalization.",
+          "comparison_unchanged": true,
+          "both_explanations_number_grounded": true
+        },
+        {
+          "case": "c_manual_review",
+          "status": "manual_review",
+          "expected_insurer_payment": "22500",
+          "actual_insurer_payment": "22500",
+          "possible_difference": "-1000",
+          "off_explanation": "An authorized reviewer must confirm the settlement values and supporting policy evidence before this comparison can be relied on.",
+          "on_explanation": "An authorized reviewer must confirm the settlement values and supporting policy evidence before this comparison can be relied on.",
+          "comparison_unchanged": true,
+          "both_explanations_number_grounded": true
+        }
+      ],
+      "number_grounding": {
+        "numerator": 6,
+        "denominator": 6,
+        "score": 1.0,
+        "pass": true
+      }
+    }
+  },
+  "failures": [],
+  "target_failures": [],
+  "limits": [
+    "Synthetic cases are not representative of insurer claim populations.",
+    "Ollama and browser metrics are unavailable in this offline run.",
+    "Browser end-to-end upload flow is not scored by this offline command."
   ]
 }

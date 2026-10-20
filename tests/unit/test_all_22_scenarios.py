@@ -150,6 +150,28 @@ def test_09_waiting_periods():
     assert res["covered_amount"] == 0.0
 
 
+def test_09b_reviewer_confirmed_waiting_period_amount_is_apportioned():
+    terms = PolicyTerms(
+        annual_limit=Decimal("500000"), deductible=Decimal("5000"),
+        copay_percent=Decimal("10"), waiting_period_months=12,
+    )
+    context = {
+        "waiting_period_satisfied": False,
+        "waiting_period_affected_amount": 40000,
+        "trusted": True,
+    }
+
+    result = evaluate_claim(100000, terms=terms, claim_context=context)
+
+    assert result["line_item_results"][0]["status"] == "partial"
+    assert result["line_item_results"][0]["covered_amount"] == 60000
+    assert result["covered_amount"] == 60000
+    assert result["deductible"] == 5000
+    assert result["copayment"] == 5500
+    assert result["payable_amount"] == 49500
+    assert result["status"] == "partially_approved"
+
+
 # 10. Policy Exclusions (Diagnosis Match)
 def test_10_policy_exclusions():
     terms = PolicyTerms(

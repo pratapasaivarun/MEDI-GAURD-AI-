@@ -11,6 +11,8 @@ jobs:
     timeout-minutes: 20
     env:
       OLLAMA_HOST: http://127.0.0.1:1
+      MEDIGUARD_EVAL_LIVE: "false"
+      MEDIGUARD_EVAL_BROWSER: "false"
       MEDIGUARD_CORE_DEMO: "false"
       MEDIGUARD_TRUSTED_FIXTURES: "false"
       PYTHONPATH: .
@@ -25,9 +27,19 @@ jobs:
             tests/requirements-dev.txt
       - name: Install pinned dependencies
         run: python -m pip install -r tests/requirements-dev.txt
+      - name: Install OCR engine for synthetic evaluation
+        run: sudo apt-get update && sudo apt-get install -y tesseract-ocr
       - name: Run test suite with Ollama disabled
         env:
           MEDIGUARD_DB_PATH: ${{ runner.temp }}/mediguard-test.db
           MEDIGUARD_STORAGE_DIR: ${{ runner.temp }}/mediguard-test-storage
           CHROMA_DIR: ${{ runner.temp }}/mediguard-test-chroma
         run: python -m pytest -q tests --basetemp="${{ runner.temp }}/pytest"
+      - name: Run fast fictional evaluation suite
+        env:
+          MEDIGUARD_DB_PATH: ${{ runner.temp }}/mediguard-eval.db
+          MEDIGUARD_STORAGE_DIR: ${{ runner.temp }}/mediguard-eval-storage
+          CHROMA_DIR: ${{ runner.temp }}/mediguard-eval-chroma
+          MEDIGUARD_EVAL_LIVE: "false"
+          MEDIGUARD_EVAL_BROWSER: "false"
+        run: python -m evaluation.run_all

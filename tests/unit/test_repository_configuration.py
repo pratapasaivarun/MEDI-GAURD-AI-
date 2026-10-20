@@ -9,11 +9,11 @@ def test_unused_backup_key_and_crypto_dependency_are_removed():
     assert "cryptography" not in (ROOT / "requirements.txt").read_text(encoding="utf-8").lower()
 
 
-def test_evaluation_docs_describe_restored_fictional_phase4_ground_truth():
+def test_evaluation_docs_describe_hand_labeled_synthetic_case_set():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert "evaluation/ground_truth.json" in readme
-    assert "three fictional bills" in readme
-    assert (ROOT / "evaluation/ground_truth.json").is_file()
+    assert "samples/evaluation_cases/ground_truth.json" in readme
+    assert "30 synthetic cases" in readme
+    assert (ROOT / "samples/evaluation_cases/ground_truth.json").is_file()
 
 
 def test_app_base_url_default_matches_documented_streamlit_port():
@@ -26,14 +26,11 @@ def test_app_base_url_default_matches_documented_streamlit_port():
     assert 'port = 8501' in (ROOT / ".streamlit" / "config.toml").read_text(encoding="utf-8")
 
 
-def test_readme_commands_point_to_existing_evaluation_scripts():
+def test_readme_commands_point_to_reproducible_evaluation_runner():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert "evaluation/scripts/run_evaluation.py" in readme
-    assert "evaluation/scripts/run_system_evaluation.py" in readme
-    assert "evaluation/scripts/score_annotations.py" in readme
-    assert (ROOT / "evaluation/scripts/run_evaluation.py").is_file()
-    assert (ROOT / "evaluation/scripts/run_system_evaluation.py").is_file()
-    assert (ROOT / "evaluation/scripts/score_annotations.py").is_file()
+    assert "python.exe -m evaluation.run_all" in readme
+    assert "evaluation/latest/results.json" in readme
+    assert (ROOT / "evaluation/run_all.py").is_file()
 
 
 def test_decision_log_says_claimed_amount_never_sets_paid_amount():

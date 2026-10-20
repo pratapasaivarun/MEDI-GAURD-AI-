@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 from dataclasses import asdict, is_dataclass
 import csv
+import gc
 import json
 import os
 import platform
@@ -34,7 +35,10 @@ DEFAULT_TESSERACT = Path(r"C:\Program Files\Tesseract-OCR\tesseract.exe")
 if "TESSERACT_CMD" not in os.environ and DEFAULT_TESSERACT.exists():
     os.environ["TESSERACT_CMD"] = str(DEFAULT_TESSERACT)
 
-from metric_calculators import decision_scores, latency_summary, retrieval_scores  # noqa: E402
+try:  # Support both `python evaluation/scripts/...` and package imports in tests.
+    from .metric_calculators import decision_scores, latency_summary, retrieval_scores  # type: ignore[import-not-found]  # noqa: E402
+except ImportError:  # pragma: no cover - exercised by the command-line entry point
+    from metric_calculators import decision_scores, latency_summary, retrieval_scores  # noqa: E402
 
 
 class MemoryUpload:
@@ -72,6 +76,41 @@ def select_models(installed: list[dict[str, Any]], requested: str | None) -> lis
 
 def load_case_entries() -> list[dict[str, Any]]:
     return json.loads((ROOT / "samples" / "claim_scenarios" / "case_index.json").read_text(encoding="utf-8"))
+
+
+def load_reviewer_confirmed_terms() -> dict[str, Any]:
+    path = ROOT / "evaluation" / "reviewer_confirmed_policy_terms.json"
+    review = json.loads(path.read_text(encoding="utf-8"))
+    if review.get("synthetic_only") is not True or review.get("label") != "FICTIONAL SAMPLE":
+        raise ValueError("Reviewer-confirmed evaluation terms must be explicitly marked as fictional.")
+    expected_ids = {entry["case_id"] for entry in load_case_entries()}
+    if set(review.get("cases", {})) != expected_ids:
+        raise ValueError("Reviewer-confirmed terms must cover exactly the 24 indexed evaluation cases.")
+    if any(case.get("review_status") != "confirmed" for case in review["cases"].values()):
+        raise ValueError("Every evaluation case must have a reviewer decision recorded.")
+    return review["cases"]
+
+
+def confirm_fixture_policy_terms(app, policy_version_id: str, reviewer_id: str,
+                                 case_review: dict[str, Any], policy_text: str | None = None) -> str:
+    """Submit labeled terms through the same validation path as the reviewer form."""
+    values: dict[str, Any] = {}
+    source_pages: dict[str, int] = {}
+    sub_limits: dict[str, Any] = {}
+    for name, evidence in case_review.get("terms", {}).items():
+        if not evidence.get("source_text") or not evidence.get("source_page"):
+            raise ValueError(f"Reviewer-confirmed {name} is missing its source evidence.")
+        if evidence.get("source_name") != "policy.pdf":
+            raise ValueError(f"Reviewer-confirmed {name} does not cite the expected fictional policy PDF.")
+        if policy_text is not None and " ".join(str(evidence["source_text"]).split()).casefold() not in " ".join(policy_text.split()).casefold():
+            raise ValueError(f"Reviewer-confirmed {name} source text is not present in the uploaded policy.")
+        value = evidence["value"]
+        source_pages[name] = int(evidence["source_page"])
+        if name == "sub_limits":
+            sub_limits = value
+        else:
+            values[name] = value
+    return app.save_policy_terms_review(policy_version_id, reviewer_id, values, source_pages, sub_limits)
 
 
 def read_case(entry: dict[str, Any]) -> tuple[Path, dict[str, Any]]:
@@ -181,6 +220,7 @@ def run() -> int:
     annotations = {}
     if args.annotations.exists():
         annotations = json.loads(args.annotations.read_text(encoding="utf-8"))
+    reviewer_terms = load_reviewer_confirmed_terms()
 
     all_model_results = {}
     temp_root = tempfile.TemporaryDirectory(prefix="mediguard-evaluation-")
@@ -254,6 +294,19 @@ def run() -> int:
             document_seconds = time.perf_counter() - started
             set_trusted_context(app, claim_id, admin, manifest.get("reviewer_context_required") or {})
 
+            # Simulate an explicit reviewer confirmation using the source-page
+            # annotations. This is deliberately done through the production
+            # save function; the LLM and automated term extraction never confirm
+            # contract terms in the evaluation.
+            active_policy = app.active_policy_for_claim(claim_id, normalized)
+            review = reviewer_terms[manifest["case_id"]]
+            policy_review_status = "not_applicable"
+            if active_policy:
+                policy_review_status = confirm_fixture_policy_terms(
+                    app, active_policy["version_id"], admin["user_id"], review,
+                    active_policy["content_text"],
+                )
+
             started = time.perf_counter()
             rules = app.evaluate_saved_claim(claim_id, claimant["user_id"], normalized)
             rules_seconds = time.perf_counter() - started
@@ -318,6 +371,8 @@ def run() -> int:
                 "expected_rule_status": expected, "rule_engine_status": rules.get("status"),
                 "rule_engine_correct": rules.get("status") == expected,
                 "core_rule_engine_executed": rules.get("rule_version") == "mvp-1.0",
+                "fixture_policy_review_status": policy_review_status,
+                "result_reason": "; ".join(rules.get("warnings", [])),
                 "rule_version": rules.get("rule_version"),
                 "expected_decision": expected, "final_decision": final_decision,
                 "decision_correct": final_decision == expected if final_decision else None,
@@ -431,6 +486,8 @@ def run() -> int:
                                             for name, model in all_model_results.items()},
                       "3b_installed": not missing_3b}, indent=2, ensure_ascii=False))
     policy_index.close_policy_index()
+    gc.collect()
+    time.sleep(0.2)
     temp_root.cleanup()
     return 0
 

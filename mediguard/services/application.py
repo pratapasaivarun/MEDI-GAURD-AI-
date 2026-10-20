@@ -839,9 +839,19 @@ def save_policy_terms_review(version_id: str, reviewer_id: str, values: dict[str
         if policy is None:
             raise ValueError("Policy edition was not found.")
         reviewed = {}
-        for name in ("annual_limit", "deductible", "copay_percent", "room_limit_per_day", "waiting_period_months", "exclusions"):
+        for name in ("annual_limit", "deductible", "copay_percent", "room_limit_per_day", "waiting_period_months", "exclusions", "network_required", "preauthorization_required"):
             raw = values.get(name)
             if raw in (None, ""):
+                continue
+            if name in {"network_required", "preauthorization_required"}:
+                if not isinstance(raw, bool):
+                    raise ValueError(f"Confirm whether {name.replace('_', ' ')} is required.")
+                page = int(source_pages.get(name) or 0)
+                if page < 1:
+                    raise ValueError(f"Add the source page for {name.replace('_', ' ')}.")
+                if policy["page_count"] and page > int(policy["page_count"]):
+                    raise ValueError(f"The source page for {name.replace('_', ' ')} is beyond this policy document.")
+                reviewed[name] = {"term": name, "value": raw, "confidence": 1.0, "source_page": page, "source_name": policy["source_name"], "method": "reviewer_confirmed"}
                 continue
             if name == "exclusions":
                 exclusions = list(dict.fromkeys(
@@ -1702,6 +1712,14 @@ def _render_policy_management(user: dict) -> None:
                     def _page_default(name):
                         current = reviewed.get(name) or candidates.get(name) or {}
                         return int(current.get('source_page') or 0)
+                    def _requirement_default(name):
+                        current = reviewed.get(name) or candidates.get(name) or {}
+                        value = current.get('value')
+                        if value is True:
+                            return 'Required'
+                        if value is False:
+                            return 'Not required'
+                        return 'Not confirmed'
                     with st.form(f"policy_terms_review_{version['version_id']}"):
                         a,b,c = st.columns(3)
                         with a:
@@ -1723,6 +1741,10 @@ def _render_policy_management(user: dict) -> None:
                             exclusion_default = (reviewed.get('exclusions') or candidates.get('exclusions') or {}).get('value', [])
                             exclusion_text = st.text_area('Exclusions to confirm (one term per line)', value='\n'.join(map(str, exclusion_default)), key=f"exclusions_{version['version_id']}")
                             exclusion_page = st.number_input('Exclusions source page', min_value=0, value=_page_default('exclusions'), step=1, key=f"exclusions_page_{version['version_id']}")
+                            network_requirement = st.selectbox('Network provider requirement', ['Not confirmed', 'Required', 'Not required'], index=['Not confirmed', 'Required', 'Not required'].index(_requirement_default('network_required')), key=f"network_required_{version['version_id']}")
+                            network_page = st.number_input('Network requirement source page', min_value=0, value=_page_default('network_required'), step=1, key=f"network_page_{version['version_id']}")
+                            preauthorization_requirement = st.selectbox('Pre-authorization requirement', ['Not confirmed', 'Required', 'Not required'], index=['Not confirmed', 'Required', 'Not required'].index(_requirement_default('preauthorization_required')), key=f"preauthorization_required_{version['version_id']}")
+                            preauthorization_page = st.number_input('Pre-authorization source page', min_value=0, value=_page_default('preauthorization_required'), step=1, key=f"preauthorization_page_{version['version_id']}")
                         submitted_terms = st.form_submit_button('Save and confirm policy terms', type='primary')
                     if submitted_terms:
                         try:
@@ -1731,8 +1753,11 @@ def _render_policy_management(user: dict) -> None:
                                 raise ValueError('Sub-limits must be a JSON object of category to amount.')
                             review_status = save_policy_terms_review(
                                 version['version_id'], user['user_id'],
-                                {'annual_limit': annual, 'deductible': deductible, 'copay_percent': copay, 'room_limit_per_day': room_limit, 'waiting_period_months': waiting, 'exclusions': exclusion_text},
-                                {'annual_limit': int(annual_page), 'deductible': int(deductible_page), 'copay_percent': int(copay_page), 'room_limit_per_day': int(room_page), 'waiting_period_months': int(waiting_page), 'sub_limits': int(sub_page), 'exclusions': int(exclusion_page)},
+                                {'annual_limit': annual, 'deductible': deductible, 'copay_percent': copay, 'room_limit_per_day': room_limit, 'waiting_period_months': waiting, 'exclusions': exclusion_text,
+                                 'network_required': None if network_requirement == 'Not confirmed' else network_requirement == 'Required',
+                                 'preauthorization_required': None if preauthorization_requirement == 'Not confirmed' else preauthorization_requirement == 'Required'},
+                                {'annual_limit': int(annual_page), 'deductible': int(deductible_page), 'copay_percent': int(copay_page), 'room_limit_per_day': int(room_page), 'waiting_period_months': int(waiting_page), 'sub_limits': int(sub_page), 'exclusions': int(exclusion_page),
+                                 'network_required': int(network_page), 'preauthorization_required': int(preauthorization_page)},
                                 sub_value,
                             )
                             if review_status == 'confirmed':

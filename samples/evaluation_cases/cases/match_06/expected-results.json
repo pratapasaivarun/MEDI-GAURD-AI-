@@ -1,0 +1,23 @@
+{
+  "case_id": "match_06",
+  "group": "match",
+  "layout": "key_value",
+  "billed": 8000,
+  "eligible": 8000,
+  "deductible": 0,
+  "copay_percent": 0,
+  "expected_payable": 8000,
+  "insurer_paid": 8000,
+  "expected_status": "no_discrepancy",
+  "calculation": "8000 - 0 = 8000",
+  "expected_line_items": [
+    {
+      "description": "Eligible treatment",
+      "category": "INVESTIGATION",
+      "amount": 8000,
+      "date": "2026-08-12"
+    }
+  ],
+  "expected_deductions": [],
+  "expected_copay": 0
+}

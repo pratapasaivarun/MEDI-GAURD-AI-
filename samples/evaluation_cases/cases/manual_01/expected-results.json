@@ -1,0 +1,23 @@
+{
+  "case_id": "manual_01",
+  "group": "manual_review",
+  "layout": "missing_paid_label",
+  "billed": 10000,
+  "eligible": 10000,
+  "deductible": 1000,
+  "copay_percent": 10,
+  "expected_payable": null,
+  "insurer_paid": null,
+  "expected_status": "manual_review",
+  "calculation": "Paid amount is absent; no insurer comparison can be calculated safely",
+  "expected_line_items": [
+    {
+      "description": "Eligible treatment",
+      "category": "INVESTIGATION",
+      "amount": 10000,
+      "date": "2026-08-12"
+    }
+  ],
+  "expected_deductions": null,
+  "expected_copay": null
+}

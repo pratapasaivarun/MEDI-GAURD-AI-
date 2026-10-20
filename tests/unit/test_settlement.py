@@ -103,6 +103,49 @@ Amount Paid: INR 31000
     assert not any("do not reconcile" in reason for reason in result.review_reasons)
 
 
+def test_explicit_no_deductions_is_valid_without_llm_fallback(monkeypatch):
+    def fail_if_called(*_args, **_kwargs):
+        raise AssertionError("An explicit no-deductions statement must not call the LLM")
+    monkeypatch.setattr("mediguard.ingestion.settlement._llm_deductions", fail_if_called)
+    result = parse_settlement(
+        b"Bill Total: INR 10000\nAmount Paid: INR 10000\nDeductions: none\n",
+        "settlement.txt",
+    )
+    assert result.deductions == []
+    assert result.amount_paid == Decimal("10000.00")
+    assert result.needs_review is False
+
+
+def test_single_space_aligned_deduction_rows_are_parsed():
+    result = parse_settlement(
+        b"Bill Total: INR 10000\nDeductions\nDeductible INR 1000 Policy deductible\nAmount Paid: INR 9000\n",
+        "settlement.txt",
+    )
+    assert [(row.category, row.amount) for row in result.deductions] == [
+        ("DEDUCTIBLE", Decimal("1000.00")),
+    ]
+    assert result.needs_review is False
+
+
+def test_exclusion_deduction_has_a_distinct_category():
+    result = parse_settlement(
+        b"Bill Total: INR 10000\nDeductions\nExclusion | INR 5000 | not covered\nAmount Paid: INR 5000\n",
+        "settlement.txt",
+    )
+    assert result.deductions[0].category == "EXCLUSION"
+    assert result.deductions[0].needs_review is False
+
+
+def test_conflicting_paid_amounts_are_not_arbitrarily_selected():
+    result = parse_settlement(
+        b"Bill Total: INR 30000\nAmount Paid: INR 25000\nAmount Paid: INR 24000\nDeductions: none\n",
+        "settlement.txt",
+    )
+    assert result.amount_paid is None
+    assert result.needs_review is True
+    assert any("Conflicting" in reason for reason in result.review_reasons)
+
+
 def test_patient_payable_is_not_extracted_as_amount_paid(monkeypatch):
     monkeypatch.setattr("mediguard.ingestion.settlement.requests.post", lambda *_args, **_kwargs: type("Response", (), {"status_code": 503})())
     for patient_label in ("Amount payable by patient: INR 13100", "Patient payable to hospital: INR 13100"):

@@ -62,6 +62,7 @@ def test_real_policy_terms_are_not_used_until_reviewer_confirmed(tmp_path: Path,
             "INSERT INTO claims(claim_id,user_id,claim_number,patient_name,policy_number,status,created_at,updated_at,policy_version_id) VALUES(?,?,?,?,?,?,?,?,?)",
             ("claim-test", user["user_id"], "CLM-TEST", "Synthetic Patient", "POL-TEST", "draft", app.utc_now(), app.utc_now(), "policy-test"),
         )
+    user = app.get_user(user["user_id"])
 
     result = app.evaluate_saved_claim(
         "claim-test",
@@ -89,6 +90,8 @@ def test_real_policy_terms_are_not_used_until_reviewer_confirmed(tmp_path: Path,
         ({"room_limit_per_day": "5000"}, {"room_limit_per_day": 0}, {}),
         ({"waiting_period_months": "12"}, {"waiting_period_months": 0}, {}),
         ({"exclusions": "cosmetic surgery"}, {"exclusions": 0}, {}),
+        ({"network_required": True}, {"network_required": 0}, {}),
+        ({"preauthorization_required": True}, {"preauthorization_required": 0}, {}),
         ({}, {"sub_limits": 0}, {"surgery": "10000"}),
     )
     for values, source_pages, sub_limits in page_required_cases:
@@ -109,8 +112,8 @@ def test_real_policy_terms_are_not_used_until_reviewer_confirmed(tmp_path: Path,
     status = app.save_policy_terms_review(
         "policy-test",
         user["user_id"],
-        {"annual_limit": "100000", "deductible": "5000", "copay_percent": "10", "exclusions": "cosmetic surgery"},
-        {"annual_limit": 5, "deductible": 6, "copay_percent": 7, "exclusions": 4},
+        {"annual_limit": "100000", "deductible": "5000", "copay_percent": "10", "exclusions": "cosmetic surgery", "network_required": True, "preauthorization_required": False},
+        {"annual_limit": 5, "deductible": 6, "copay_percent": 7, "exclusions": 4, "network_required": 3, "preauthorization_required": 8},
         {},
     )
     assert status == "confirmed"
@@ -119,8 +122,10 @@ def test_real_policy_terms_are_not_used_until_reviewer_confirmed(tmp_path: Path,
     assert saved["terms_review_status"] == "confirmed"
     assert saved["terms_reviewed_by"] == user["user_id"]
     reviewed_policy = json.loads(saved["reviewed_policy_terms_json"])
-    assert set(reviewed_policy) == {"annual_limit", "deductible", "copay_percent", "exclusions"}
+    assert set(reviewed_policy) == {"annual_limit", "deductible", "copay_percent", "exclusions", "network_required", "preauthorization_required"}
     assert reviewed_policy["exclusions"]["method"] == "reviewer_confirmed"
+    assert reviewed_policy["network_required"] == {"term": "network_required", "value": True, "confidence": 1.0, "source_page": 3, "source_name": "policy.pdf", "method": "reviewer_confirmed"}
+    assert reviewed_policy["preauthorization_required"]["value"] is False
     calculated = app.evaluate_saved_claim(
         "claim-test",
         user["user_id"],
@@ -128,3 +133,12 @@ def test_real_policy_terms_are_not_used_until_reviewer_confirmed(tmp_path: Path,
     )
     assert calculated["rule_version"] != "policy-terms-review-required"
     assert calculated["line_item_results"][0]["status"] == "excluded"
+
+    app.save_adjudication_context("claim-test", user, {"network_status": "out_of_network", "trusted": True})
+    network_result = app.evaluate_saved_claim(
+        "claim-test",
+        user["user_id"],
+        {"total_amount": {"value": 50000.0}, "line_items": [{"description": "Covered inpatient treatment", "category": "other", "amount": 50000.0}], "missing_fields": [], "review_fields": []},
+    )
+    assert network_result["status"] == "rejected"
+    assert any("Policy requires a network provider" in warning for warning in network_result["warnings"])

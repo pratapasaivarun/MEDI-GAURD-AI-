@@ -484,6 +484,17 @@
           "source_page": 1,
           "source_name": "policy.pdf",
           "method": "deterministic_regex"
+        },
+        "exclusions": {
+          "term": "exclusions",
+          "value": [
+            "cosmetic surgery"
+          ],
+          "confidence": 1.0,
+          "source_text": "Exclusion\nCosmetic surgery is excluded.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "reviewer_confirmed"
         }
       }
     },
@@ -525,6 +536,15 @@
           "source_page": 1,
           "source_name": "policy.pdf",
           "method": "deterministic_regex"
+        },
+        "network_required": {
+          "term": "network_required",
+          "value": true,
+          "confidence": 1.0,
+          "source_text": "Network provider required\nyes",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "reviewer_confirmed"
         }
       }
     },
@@ -803,6 +823,15 @@
           "source_page": 1,
           "source_name": "policy.pdf",
           "method": "deterministic_regex"
+        },
+        "preauthorization_required": {
+          "term": "preauthorization_required",
+          "value": true,
+          "confidence": 1.0,
+          "source_text": "Preauthorization required\nyes",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "reviewer_confirmed"
         }
       }
     },
@@ -844,6 +873,15 @@
           "source_page": 1,
           "source_name": "policy.pdf",
           "method": "deterministic_regex"
+        },
+        "network_required": {
+          "term": "network_required",
+          "value": true,
+          "confidence": 1.0,
+          "source_text": "Network provider required\nyes",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "reviewer_confirmed"
         }
       }
     },
@@ -885,6 +923,17 @@
           "source_page": 1,
           "source_name": "policy.pdf",
           "method": "deterministic_regex"
+        },
+        "exclusions": {
+          "term": "exclusions",
+          "value": [
+            "cosmetic surgery"
+          ],
+          "confidence": 1.0,
+          "source_text": "Exclusion\nCosmetic surgery is excluded.",
+          "source_page": 1,
+          "source_name": "policy.pdf",
+          "method": "reviewer_confirmed"
         }
       }
     },

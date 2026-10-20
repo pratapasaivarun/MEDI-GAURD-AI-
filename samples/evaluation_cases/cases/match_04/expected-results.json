@@ -1,0 +1,28 @@
+{
+  "case_id": "match_04",
+  "group": "match",
+  "layout": "narrative",
+  "billed": 12000,
+  "eligible": 12000,
+  "deductible": 2000,
+  "copay_percent": 0,
+  "expected_payable": 10000,
+  "insurer_paid": 10000,
+  "expected_status": "no_discrepancy",
+  "calculation": "12000 - 2000 = 10000",
+  "expected_line_items": [
+    {
+      "description": "Eligible treatment",
+      "category": "INVESTIGATION",
+      "amount": 12000,
+      "date": "2026-08-12"
+    }
+  ],
+  "expected_deductions": [
+    {
+      "category": "DEDUCTIBLE",
+      "amount": 2000
+    }
+  ],
+  "expected_copay": 0
+}

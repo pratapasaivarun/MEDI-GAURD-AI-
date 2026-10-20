@@ -1,0 +1,16 @@
+{
+  "case_id": "edge_02",
+  "group": "edge",
+  "layout": "colon_labels",
+  "billed": 0,
+  "eligible": 0,
+  "deductible": 0,
+  "copay_percent": 10,
+  "expected_payable": null,
+  "insurer_paid": 0,
+  "expected_status": "manual_review",
+  "calculation": "A zero-value bill does not establish a valid claim total; review is required before comparison",
+  "expected_line_items": [],
+  "expected_deductions": null,
+  "expected_copay": null
+}

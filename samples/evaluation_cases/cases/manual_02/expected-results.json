@@ -1,0 +1,23 @@
+{
+  "case_id": "manual_02",
+  "group": "manual_review",
+  "layout": "mismatched_claim_id",
+  "billed": 20000,
+  "eligible": 20000,
+  "deductible": 0,
+  "copay_percent": 10,
+  "expected_payable": null,
+  "insurer_paid": 18000,
+  "expected_status": "manual_review",
+  "calculation": "Settlement claim ID does not match the registered claim; hold regardless of amount",
+  "expected_line_items": [
+    {
+      "description": "Eligible treatment",
+      "category": "INVESTIGATION",
+      "amount": 20000,
+      "date": "2026-08-12"
+    }
+  ],
+  "expected_deductions": null,
+  "expected_copay": null
+}

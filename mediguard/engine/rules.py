@@ -284,6 +284,8 @@ def evaluate_line_item(item: dict, terms: PolicyTerms, claim_context: dict | Non
     # Waiting Period Validation
     if terms.waiting_period_months and claim_context.get("waiting_period_satisfied") is False:
         affected_amount = claim_context.get("_waiting_period_amount_for_item")
+        if affected_amount is None and claim_context.get("trusted") is True:
+            affected_amount = claim_context.get("waiting_period_affected_amount")
         if affected_amount is None:
             affected_categories = {str(value).lower() for value in claim_context.get("waiting_period_affected_categories", [])}
             applies = bool(claim_context.get("waiting_period_applies")) or (category and category in affected_categories)

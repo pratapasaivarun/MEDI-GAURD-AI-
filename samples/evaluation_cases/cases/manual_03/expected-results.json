@@ -1,0 +1,23 @@
+{
+  "case_id": "manual_03",
+  "group": "manual_review",
+  "layout": "unreadable_deductions",
+  "billed": 15000,
+  "eligible": 15000,
+  "deductible": 1000,
+  "copay_percent": 0,
+  "expected_payable": null,
+  "insurer_paid": 14000,
+  "expected_status": "manual_review",
+  "calculation": "Deduction breakdown is unreadable; evidence is insufficient to attribute the difference",
+  "expected_line_items": [
+    {
+      "description": "Eligible treatment",
+      "category": "INVESTIGATION",
+      "amount": 15000,
+      "date": "2026-08-12"
+    }
+  ],
+  "expected_deductions": null,
+  "expected_copay": null
+}

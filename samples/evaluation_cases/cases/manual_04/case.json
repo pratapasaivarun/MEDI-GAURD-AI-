@@ -1,0 +1,14 @@
+{
+  "label": "FICTIONAL SAMPLE",
+  "case_id": "manual_04",
+  "claim_id": "CLM-EVAL-MANUAL-04",
+  "policy_terms_reviewer_confirmed": {
+    "annual_limit": 12000,
+    "deductible": 2000,
+    "copay_percent": 0,
+    "room_limit_per_day": 5000,
+    "source_page": 1
+  },
+  "scanned_bill": true,
+  "settlement_layout": "scanned_letter"
+}

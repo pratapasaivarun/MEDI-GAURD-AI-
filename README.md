@@ -106,36 +106,35 @@ See [03_RUNNING_THE_DEMO.md](docs/03_RUNNING_THE_DEMO.md) for the reviewer steps
 
 ## Run tests and evaluations
 
-The complete suite does not require Ollama. From PowerShell, explicitly keep model calls disabled:
+Create the environment as described above. The tests and offline evaluation run without Ollama or a browser. They use only fictional, hand-labeled samples.
 
 ```powershell
 $env:OLLAMA_HOST = 'http://127.0.0.1:1'
+$env:MEDIGUARD_EVAL_LIVE = 'false'
+$env:MEDIGUARD_EVAL_BROWSER = 'false'
 .\.venv\Scripts\python.exe -m pytest -q tests
+.\.venv\Scripts\python.exe -m evaluation.run_all
 ```
 
-Run the two evaluations and the labeled-query scorer from the repository root:
+To run the optional live checks, install Chromium once with `.\.venv\Scripts\python.exe -m playwright install chromium`, start Ollama with `ibm/granite4.1:8b` available, then set `MEDIGUARD_EVAL_LIVE=true` and `MEDIGUARD_EVAL_BROWSER=true` before `python -m evaluation.run_all`. The browser suite starts an isolated local app and saves screenshots in the system temporary folder, outside the repository.
 
-```powershell
-.\.venv\Scripts\python.exe evaluation/scripts/run_evaluation.py --repeats 1
-.\.venv\Scripts\python.exe evaluation/scripts/run_system_evaluation.py --rules-only --output evaluation/latest/system_rules_only.json
-.\.venv\Scripts\python.exe evaluation/scripts/score_annotations.py --system-results evaluation/latest/system_rules_only.json
-```
-
-The labeled bill values are in `evaluation/ground_truth.json` and cover three fictional bills. The extraction run writes `evaluation/latest/results.json`; the rules-only and annotation runs write their results under `evaluation/latest/`. The rules-only status score includes reviewer gates. See [06_EVALUATION_RESULTS.md](docs/06_EVALUATION_RESULTS.md) for what each score means.
+The 30 case labels are in `samples/evaluation_cases/ground_truth.json`; their PDFs and reviewer-confirmed terms are in `samples/evaluation_cases/cases/`. The labeled retrieval set is `evaluation/retrieval_queries.json`. The command writes machine-readable results to `evaluation/latest/results.json` and the scorecard and case table to `docs/06_EVALUATION_RESULTS.md`.
 
 ## Verified results
 
-Latest recorded fictional-data checks (2026-10-20; evaluation files last refreshed 2026-10-19):
+Latest recorded checks are for **30 synthetic cases only**; they are not general accuracy claims. The hand-labeled expected results were committed before scoring.
 
-- Automated suite: **200 passed** with Ollama disabled.
-- Extraction: **12/12 fields (100%)** across three fictional bills.
-- Direct deterministic rules status agreement: **13/24 (54.17%)**, using source-page-backed reviewer-confirmed terms across the 24 fictional scenarios; 11 labels differ.
-- End-to-end status agreement: **12/24 (50%)** across fictional scenarios. This includes reviewer gates and is not a standalone math accuracy score.
-- Retrieval: **24 labeled queries**; precision@1 **14/24 (58.33%)**, precision@3 **23/72 (31.94%)**, precision@5 **24/120 (20.00%)**, recall@3 **23/24 (95.83%)**, recall@5 **24/24 (100%)**.
-- The three demo cases produced the expected match, supported discrepancy, and manual-review outcomes in the browser. Live Ollama on/off checks kept the financial amounts and decisions identical.
+- Automated suite: **213 passed** with Ollama disabled.
+- Extraction totals: **30/30 (100%)**; other labeled fields: **60/60 (100%)**.
+- Text-bill line items: precision **28/28 (100%)**, recall **28/28 (100%)**; OCR field accuracy **6/6 (100%)**.
+- Reviewer-confirmed policy terms: **90/90 (100%)**.
+- Rules golden agreement: **24/24 (100%)**; property checks: **211/211 (100%)**.
+- Comparison labels: **30/30 (100%)**; discrepancy false matches: **0/10**. Settlement paid-amount F1: **100% (28 labeled payments)**; deduction F1: **100% (37 labeled deductions)**.
+- Retrieval over 30 questions: P@1 **30/30 (100%)**, P@3 **30/90 (33.3%)**, P@5 **30/150 (20%)**, recall@5 **30/30 (100%)**, MRR **1.000**. The latest run reported `BAAI/bge-small-en-v1.5` as the active embedding backend. These are synthetic query scores, not a claim of broad policy-search accuracy.
+- Ollama ON/OFF decision equality: **3/3** when run live; LLM number grounding: **6/6**. A repeatable Playwright run completed `a_match` (1/3). It then failed while registering the next claim and saving its uploads, so browser coverage is incomplete and is not scored as a pass. Screenshots stay outside the repository.
+- Mean offline evaluation time: about **0.59 seconds per case** on the recorded machine.
 
-These measurements cover small, fictional samples. The suite passing does not establish real-world insurance accuracy.
-
+The CI workflow runs the offline tests and evaluation. Ollama and browser checks are optional local checks and are reported separately. The historical 12/24 and 13/24 values used an unconfirmed policy-term gate and are superseded; they are not valid rules accuracy figures.
 ## Limitations
 
 Policy wording and OCR can be ambiguous, retrieval precision is low, and the 24-case status agreement shows substantial mismatches. Reviewers must inspect the cited policy page and all outputs. A broad clause exclusion filter can drop a coverage sentence when another sentence in the same passage contains exclusion wording. Appeal documents are drafts, not legal advice. Security, privacy, expert accuracy, and production performance have not been independently assessed. Hosting is not tested.

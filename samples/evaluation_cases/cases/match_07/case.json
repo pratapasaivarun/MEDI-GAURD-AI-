@@ -1,0 +1,14 @@
+{
+  "label": "FICTIONAL SAMPLE",
+  "case_id": "match_07",
+  "claim_id": "CLM-EVAL-MATCH-07",
+  "policy_terms_reviewer_confirmed": {
+    "annual_limit": 25000,
+    "deductible": 5000,
+    "copay_percent": 20,
+    "room_limit_per_day": 5000,
+    "source_page": 1
+  },
+  "scanned_bill": false,
+  "settlement_layout": "wrapped_rows"
+}

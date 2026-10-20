@@ -22,7 +22,7 @@ All results below are for the stated fictional test set, not general accuracy.
 | Browser flows | 8/8 | 3 demo cases + 5 upload/review errors, isolated claim sessions |
 | Explanation checklist | 30/30 points | 10 live Ollama explanations; numbers, clause/page, no overclaim |
 | Ollama decision equality | 10/10 | Same status and difference with explanation on and off |
-| Full automated tests | 224 passed | `python -m pytest -q tests` with a fresh temporary pytest base |
+| Full automated tests | 225 passed | `python -m pytest -q tests` with a fresh temporary pytest base |
 
 ## Performance snapshot
 

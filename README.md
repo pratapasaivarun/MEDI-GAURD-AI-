@@ -125,7 +125,7 @@ The 30 case labels are in `samples/evaluation_cases/ground_truth.json`; their PD
 
 Latest recorded checks are for **30 synthetic cases only**; they are not general accuracy claims. The hand-labeled expected results were committed before scoring.
 
-- Automated suite: **224 passed** with Ollama disabled (`python -m pytest -q tests`).
+- Automated suite: **225 passed** with Ollama disabled (use the fresh temporary pytest base command above).
 - Extraction totals: **30/30 (100%)**; other labeled fields: **60/60 (100%)**.
 - Text-bill line items: precision **28/28 (100%)**, recall **28/28 (100%)**; OCR field accuracy **6/6 (100%)**.
 - Reviewer-confirmed policy terms: **90/90 (100%)**.

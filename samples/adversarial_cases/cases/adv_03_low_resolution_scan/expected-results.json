@@ -1,0 +1,20 @@
+{
+  "case_id": "adv_03_low_resolution_scan",
+  "expected": {
+    "bill_total": 14500,
+    "line_items": [
+      {
+        "description": "Room charges",
+        "amount": 12000
+      },
+      {
+        "description": "Lab tests",
+        "amount": 2500
+      }
+    ],
+    "claim_reference": "ADV-1003",
+    "amount_paid": 14500,
+    "needs_review": false
+  },
+  "hand_label": "INR 12,000 + INR 2,500 = INR 14,500; the date printed on the scan is 10 Aug 2026. OCR uncertainty is a review signal, not an arithmetic change."
+}

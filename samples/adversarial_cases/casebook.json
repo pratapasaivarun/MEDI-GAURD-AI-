@@ -1,0 +1,86 @@
+{
+  "label": "FICTIONAL SAMPLE — hand-labeled before evaluation",
+  "cases": [
+    {
+      "case_id": "adv_01_split_columns",
+      "challenge": "Unusual pipe-delimited line items with the charge in the final column",
+      "bill_text": "FICTIONAL SAMPLE\nClaim No: ADV-1001\nDescription | Qty | Rate | Amount (INR)\nRoom charge | 4 days | 5000 | 20000\nPharmacy supplies | 1 | 1800 | 1800\nSub Total | 21800\nGrand Total | 21800",
+      "settlement_text": "FICTIONAL SAMPLE\nClaim No: ADV-1001\nBill Total: INR 21800\nAmount Paid: INR 21800",
+      "expected": {"bill_total": 21800, "line_items": [{"description": "Room charge", "amount": 20000}, {"description": "Pharmacy supplies", "amount": 1800}], "claim_reference": "ADV-1001", "amount_paid": 21800, "needs_review": false},
+      "hand_label": "The total is 20,000 + 1,800 = INR 21,800; the final Amount column is the charge for each row."
+    },
+    {
+      "case_id": "adv_02_noisy_ocr",
+      "challenge": "OCR-like character noise in a diagnostic row, with a readable total",
+      "bill_text": "FICTIONAL SAMPLE\nClaim Ref: ADV-1002\nD1agn0stic invest1gations 1 2400 2400\nPharmacy 1 600 600\nGRAND TOTAL INR 3000",
+      "settlement_text": "FICTIONAL SAMPLE\nClaim Ref: ADV-1002\nTotal Bill INR 3000\nPaid to hospital INR 3000",
+      "expected": {"bill_total": 3000, "line_items": [{"description": "D1agn0stic invest1gations", "amount": 2400}, {"description": "Pharmacy", "amount": 600}], "claim_reference": "ADV-1002", "amount_paid": 3000, "needs_review": false},
+      "hand_label": "The two displayed charges sum to INR 3,000; the misspelled words do not change the printed amounts."
+    },
+    {
+      "case_id": "adv_03_low_resolution_scan",
+      "challenge": "Low-resolution scanned bill page with a date and total",
+      "bill_text": "FICTIONAL SAMPLE\nClaim No. ADV-1003\nDate: 10 Aug 2026\nRoom charges INR 12000\nLab tests INR 2500\nGrand Total INR 14500",
+      "bill_representation": "low_resolution_scan",
+      "settlement_text": "FICTIONAL SAMPLE\nClaim No. ADV-1003\nBill Total INR 14500\nAmount Paid INR 14500",
+      "expected": {"bill_total": 14500, "line_items": [{"description": "Room charges", "amount": 12000}, {"description": "Lab tests", "amount": 2500}], "claim_reference": "ADV-1003", "amount_paid": 14500, "needs_review": false},
+      "hand_label": "INR 12,000 + INR 2,500 = INR 14,500; the date printed on the scan is 10 Aug 2026. OCR uncertainty is a review signal, not an arithmetic change."
+    },
+    {
+      "case_id": "adv_04_ambiguous_settlement_wording",
+      "challenge": "Settlement mentions an amount due after adjudication without saying it was paid",
+      "bill_text": "FICTIONAL SAMPLE\nClaim No: ADV-1004\nConsultation INR 1200\nMedicines INR 3800\nGrand Total INR 5000",
+      "settlement_text": "FICTIONAL SAMPLE\nClaim No: ADV-1004\nBill Total INR 5000\nAmount due after adjudication: INR 4200",
+      "expected": {"bill_total": 5000, "line_items": [{"description": "Consultation", "amount": 1200}, {"description": "Medicines", "amount": 3800}], "claim_reference": "ADV-1004", "amount_paid": null, "needs_review": true},
+      "hand_label": "‘Amount due after adjudication’ does not establish an actual payment; do not infer paid amount INR 4,200. Manual review is required."
+    },
+    {
+      "case_id": "adv_05_exact_daily_cap",
+      "challenge": "Room charge exactly equals a daily cap over four days",
+      "bill_text": "FICTIONAL SAMPLE\nClaim No: ADV-1005\nRoom tariff | 4 days | INR 5000/day | INR 20000\nGrand Total INR 20000",
+      "settlement_text": "FICTIONAL SAMPLE\nClaim No: ADV-1005\nBill Total INR 20000\nRoom rent deduction INR 0\nAmount Paid INR 20000",
+      "expected": {"bill_total": 20000, "line_items": [{"description": "Room tariff", "amount": 20000}], "claim_reference": "ADV-1005", "amount_paid": 20000, "room_allowable_at_5000_per_day_for_4_days": 20000, "needs_review": false},
+      "hand_label": "INR 5,000 per day × 4 days = INR 20,000, exactly the billed room charge; allowable amount is INR 20,000 and room-cap deduction is zero."
+    },
+    {
+      "case_id": "adv_06_one_rupee_over_cap",
+      "challenge": "Room charge is one rupee above the four-day cap",
+      "bill_text": "FICTIONAL SAMPLE\nClaim No: ADV-1006\nRoom charges for 4 days INR 20001\nGrand Total INR 20001",
+      "settlement_text": "FICTIONAL SAMPLE\nClaim No: ADV-1006\nBill Total INR 20001\nRoom rent above limit INR 1\nAmount Paid INR 20000",
+      "expected": {"bill_total": 20001, "line_items": [{"description": "Room charges for 4 days", "amount": 20001}], "claim_reference": "ADV-1006", "amount_paid": 20000, "room_allowable_at_5000_per_day_for_4_days": 20000, "room_cap_difference": 1, "needs_review": false},
+      "hand_label": "INR 5,000 × 4 = INR 20,000 allowed; INR 20,001 − INR 20,000 = INR 1 above the cap."
+    },
+    {
+      "case_id": "adv_07_multiple_deductions",
+      "challenge": "Three separate settlement deductions with a reconciled payment",
+      "bill_text": "FICTIONAL SAMPLE\nClaim No: ADV-1007\nRoom charges INR 25000\nMedicines INR 4000\nLab tests INR 1000\nGrand Total INR 30000",
+      "settlement_text": "FICTIONAL SAMPLE\nClaim No: ADV-1007\nBill Total INR 30000\nDeductions:\nRoom rent | INR 5000 | above cap\nCo-pay | INR 2000 | 10 percent\nNon-medical items | INR 1000 | excluded\nAmount Paid to Hospital INR 22000",
+      "expected": {"bill_total": 30000, "line_items": [{"description": "Room charges", "amount": 25000}, {"description": "Medicines", "amount": 4000}, {"description": "Lab tests", "amount": 1000}], "claim_reference": "ADV-1007", "deductions": [{"description": "Room rent", "amount": 5000}, {"description": "Co-pay", "amount": 2000}, {"description": "Non-medical items", "amount": 1000}], "amount_paid": 22000, "needs_review": false},
+      "hand_label": "INR 30,000 − INR 5,000 − INR 2,000 − INR 1,000 = INR 22,000 paid; all three deductions remain separate."
+    },
+    {
+      "case_id": "adv_08_missing_claim_reference",
+      "challenge": "Bill is complete but the settlement letter omits its claim reference",
+      "bill_text": "FICTIONAL SAMPLE\nClaim No: ADV-1008\nEmergency care INR 7000\nGrand Total INR 7000",
+      "settlement_text": "FICTIONAL SAMPLE\nBill Total INR 7000\nAmount paid INR 7000",
+      "expected": {"bill_total": 7000, "line_items": [{"description": "Emergency care", "amount": 7000}], "claim_reference": "ADV-1008", "amount_paid": 7000, "settlement_claim_reference": null, "needs_review": true},
+      "hand_label": "The settlement has a payment matching the bill total, but without a claim reference it cannot be safely bound to this claim."
+    },
+    {
+      "case_id": "adv_09_subtotal_tax_grand_total",
+      "challenge": "Subtotal, tax, and grand total appear together",
+      "bill_text": "FICTIONAL SAMPLE\nClaim No: ADV-1009\nNursing charges INR 18000\nLab tests INR 13000\nSub Total INR 31000\nTax INR 1550\nGrand Total INR 32550",
+      "settlement_text": "FICTIONAL SAMPLE\nClaim No: ADV-1009\nBill Total INR 32550\nAmount Paid INR 32550",
+      "expected": {"bill_total": 32550, "line_items": [{"description": "Nursing charges", "amount": 18000}, {"description": "Lab tests", "amount": 13000}], "claim_reference": "ADV-1009", "amount_paid": 32550, "needs_review": false},
+      "hand_label": "The subtotal is INR 31,000; adding INR 1,550 tax gives the explicit INR 32,550 Grand Total, which is the bill total."
+    },
+    {
+      "case_id": "adv_10_slash_reference",
+      "challenge": "Slash-separated insurer claim reference must bind to a hyphenated portal number",
+      "bill_text": "FICTIONAL SAMPLE\nClaim No: CLM-2026-0417\nDiagnostic tests INR 3000\nGrand Total INR 3000",
+      "settlement_text": "FICTIONAL SAMPLE\nClaim Ref: CLM/2026/0417\nBill Total INR 3000\nAmount Paid INR 3000",
+      "expected": {"bill_total": 3000, "line_items": [{"description": "Diagnostic tests", "amount": 3000}], "claim_reference": "CLM-2026-0417", "settlement_claim_reference": "CLM/2026/0417", "amount_paid": 3000, "normalized_claim_reference": "CLM20260417", "needs_review": false},
+      "hand_label": "Removing the separators from CLM-2026-0417 and CLM/2026/0417 gives CLM20260417 for both; the references match."
+    }
+  ]
+}

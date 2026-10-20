@@ -1,0 +1,18 @@
+{
+  "case_id": "adv_06_one_rupee_over_cap",
+  "expected": {
+    "bill_total": 20001,
+    "line_items": [
+      {
+        "description": "Room charges for 4 days",
+        "amount": 20001
+      }
+    ],
+    "claim_reference": "ADV-1006",
+    "amount_paid": 20000,
+    "room_allowable_at_5000_per_day_for_4_days": 20000,
+    "room_cap_difference": 1,
+    "needs_review": false
+  },
+  "hand_label": "INR 5,000 \u00d7 4 = INR 20,000 allowed; INR 20,001 \u2212 INR 20,000 = INR 1 above the cap."
+}

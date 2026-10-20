@@ -1,0 +1,17 @@
+{
+  "case_id": "adv_05_exact_daily_cap",
+  "expected": {
+    "bill_total": 20000,
+    "line_items": [
+      {
+        "description": "Room tariff",
+        "amount": 20000
+      }
+    ],
+    "claim_reference": "ADV-1005",
+    "amount_paid": 20000,
+    "room_allowable_at_5000_per_day_for_4_days": 20000,
+    "needs_review": false
+  },
+  "hand_label": "INR 5,000 per day \u00d7 4 days = INR 20,000, exactly the billed room charge; allowable amount is INR 20,000 and room-cap deduction is zero."
+}

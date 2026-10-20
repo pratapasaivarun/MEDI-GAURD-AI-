@@ -1,0 +1,20 @@
+{
+  "case_id": "adv_09_subtotal_tax_grand_total",
+  "expected": {
+    "bill_total": 32550,
+    "line_items": [
+      {
+        "description": "Nursing charges",
+        "amount": 18000
+      },
+      {
+        "description": "Lab tests",
+        "amount": 13000
+      }
+    ],
+    "claim_reference": "ADV-1009",
+    "amount_paid": 32550,
+    "needs_review": false
+  },
+  "hand_label": "The subtotal is INR 31,000; adding INR 1,550 tax gives the explicit INR 32,550 Grand Total, which is the bill total."
+}

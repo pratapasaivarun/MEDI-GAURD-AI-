@@ -1,0 +1,38 @@
+{
+  "case_id": "adv_07_multiple_deductions",
+  "expected": {
+    "bill_total": 30000,
+    "line_items": [
+      {
+        "description": "Room charges",
+        "amount": 25000
+      },
+      {
+        "description": "Medicines",
+        "amount": 4000
+      },
+      {
+        "description": "Lab tests",
+        "amount": 1000
+      }
+    ],
+    "claim_reference": "ADV-1007",
+    "deductions": [
+      {
+        "description": "Room rent",
+        "amount": 5000
+      },
+      {
+        "description": "Co-pay",
+        "amount": 2000
+      },
+      {
+        "description": "Non-medical items",
+        "amount": 1000
+      }
+    ],
+    "amount_paid": 22000,
+    "needs_review": false
+  },
+  "hand_label": "INR 30,000 \u2212 INR 5,000 \u2212 INR 2,000 \u2212 INR 1,000 = INR 22,000 paid; all three deductions remain separate."
+}

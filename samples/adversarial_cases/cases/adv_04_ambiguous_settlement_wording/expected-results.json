@@ -1,0 +1,20 @@
+{
+  "case_id": "adv_04_ambiguous_settlement_wording",
+  "expected": {
+    "bill_total": 5000,
+    "line_items": [
+      {
+        "description": "Consultation",
+        "amount": 1200
+      },
+      {
+        "description": "Medicines",
+        "amount": 3800
+      }
+    ],
+    "claim_reference": "ADV-1004",
+    "amount_paid": null,
+    "needs_review": true
+  },
+  "hand_label": "\u2018Amount due after adjudication\u2019 does not establish an actual payment; do not infer paid amount INR 4,200. Manual review is required."
+}

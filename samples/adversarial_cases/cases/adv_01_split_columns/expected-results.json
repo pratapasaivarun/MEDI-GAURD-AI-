@@ -1,0 +1,20 @@
+{
+  "case_id": "adv_01_split_columns",
+  "expected": {
+    "bill_total": 21800,
+    "line_items": [
+      {
+        "description": "Room charge",
+        "amount": 20000
+      },
+      {
+        "description": "Pharmacy supplies",
+        "amount": 1800
+      }
+    ],
+    "claim_reference": "ADV-1001",
+    "amount_paid": 21800,
+    "needs_review": false
+  },
+  "hand_label": "The total is 20,000 + 1,800 = INR 21,800; the final Amount column is the charge for each row."
+}

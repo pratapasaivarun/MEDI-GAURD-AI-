@@ -1,0 +1,17 @@
+{
+  "case_id": "adv_08_missing_claim_reference",
+  "expected": {
+    "bill_total": 7000,
+    "line_items": [
+      {
+        "description": "Emergency care",
+        "amount": 7000
+      }
+    ],
+    "claim_reference": "ADV-1008",
+    "amount_paid": 7000,
+    "settlement_claim_reference": null,
+    "needs_review": true
+  },
+  "hand_label": "The settlement has a payment matching the bill total, but without a claim reference it cannot be safely bound to this claim."
+}

@@ -1,0 +1,18 @@
+{
+  "case_id": "adv_10_slash_reference",
+  "expected": {
+    "bill_total": 3000,
+    "line_items": [
+      {
+        "description": "Diagnostic tests",
+        "amount": 3000
+      }
+    ],
+    "claim_reference": "CLM-2026-0417",
+    "settlement_claim_reference": "CLM/2026/0417",
+    "amount_paid": 3000,
+    "normalized_claim_reference": "CLM20260417",
+    "needs_review": false
+  },
+  "hand_label": "Removing the separators from CLM-2026-0417 and CLM/2026/0417 gives CLM20260417 for both; the references match."
+}

@@ -32,6 +32,6 @@
     {"case_id":"edge_02","group":"edge","layout":"colon_labels","billed":0,"eligible":0,"deductible":0,"copay_percent":10,"expected_payable":null,"insurer_paid":0,"expected_status":"manual_review","calculation":"A zero-value bill does not establish a valid claim total; review is required before comparison"},
     {"case_id":"edge_03","group":"edge","layout":"aligned_columns","billed":10000,"eligible":10000,"deductible":0,"copay_percent":0,"expected_payable":10000,"insurer_paid":10000,"expected_status":"no_discrepancy","calculation":"Amount exactly at annual limit: 10000 - 0 = 10000"},
     {"case_id":"edge_04","group":"edge","layout":"narrative","billed":15000,"eligible":10000,"excluded_amount":5000,"deductible":1000,"copay_percent":10,"expected_payable":8100,"insurer_paid":8100,"expected_status":"no_discrepancy","calculation":"Billed 15000 less excluded 5000 leaves eligible 10000; (10000 - 1000) × 90% = 8100"},
-    {"case_id":"edge_05","group":"edge","layout":"wrapped_rows","billed":10000,"eligible":0,"deductible":0,"copay_percent":10,"expected_payable":0,"insurer_paid":0,"expected_status":"no_discrepancy","calculation":"Date-window exclusion leaves zero eligible amount; payable is 0"}
+    {"case_id":"edge_05","group":"edge","layout":"wrapped_rows","billed":10000,"eligible":0,"excluded_amount":10000,"deductible":0,"copay_percent":10,"expected_payable":0,"insurer_paid":0,"expected_status":"no_discrepancy","calculation":"A fictional date-window exclusion leaves zero eligible amount; payable is 0"}
   ]
 }

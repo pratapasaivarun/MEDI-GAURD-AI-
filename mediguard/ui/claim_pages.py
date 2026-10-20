@@ -4,6 +4,7 @@ from mediguard.services import application as _app
 globals().update(vars(_app))
 import logging
 from mediguard.services.orchestration import assess_claim
+from mediguard.ui.navigation import queue_page
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,7 @@ def _render_claimant_result(user: dict) -> None:
     if not claims:
         st.info("You do not have a claim yet.")
         if st.button("Register a claim", type="primary"):
-            st.session_state.page = "Register claim"; st.rerun()
+            queue_page(st.session_state, "Register claim"); st.rerun()
         return
     options = {f"{c['claim_number']} · {c['patient_name']}": c['claim_id'] for c in claims}
     default = next((i for i, value in enumerate(options.values()) if value == st.session_state.get("active_claim")), 0)
@@ -69,7 +70,7 @@ def _render_claimant_result(user: dict) -> None:
     if not result:
         st.info("Your documents have not been analyzed yet.")
         if st.button("Continue claim review", type="primary"):
-            st.session_state.page = "Submit documents" if user['role'] == 'claimant' else "Claim review"; st.rerun()
+            queue_page(st.session_state, "Submit documents" if user['role'] == 'claimant' else "Claim review"); st.rerun()
         return
     status = result["status"]
     if status == "manual_review":
@@ -223,7 +224,7 @@ def _render_claimant_result(user: dict) -> None:
         st.info("Upload the insurer's settlement letter to compare it and enable a draft.")
     _render_claim_assistant(claim_id, normalized, result, workflow)
     if st.button("Back to dashboard"):
-        st.session_state.page = "Dashboard"; st.rerun()
+        queue_page(st.session_state, "Dashboard"); st.rerun()
 
 
 def _render_claim_assistant(claim_id: str, normalized: dict[str, Any], result: dict[str, Any], workflow: dict[str, Any]) -> None:
@@ -430,7 +431,7 @@ def _render_dashboard(user: dict) -> None:
         st.markdown('<div class="mg-section-title">Your claims</div><p class="mg-card-copy">Open a claim to continue the guided review.</p>', unsafe_allow_html=True)
         if not claims:
             st.info("You haven't registered a claim yet. Register your first claim to get started.")
-            if st.button('Register a claim', type='primary'): st.session_state.page = 'Register claim'; st.rerun()
+            if st.button('Register a claim', type='primary'): queue_page(st.session_state, 'Register claim'); st.rerun()
         else:
             cols = st.columns(2, gap='medium')
             for i, claim in enumerate(claims[:8]):
@@ -445,9 +446,9 @@ def _render_dashboard(user: dict) -> None:
                             st.session_state.active_claim = claim['claim_id']
                             if user['role'] == 'claimant':
                                 has_result = claim['status'] in {'approved', 'partially_approved', 'rejected', 'manual_review'}
-                                st.session_state.page = 'Claim result' if has_result else 'Submit documents'
+                                queue_page(st.session_state, 'Claim result' if has_result else 'Submit documents')
                             else:
-                                st.session_state.page = 'Claim review'
+                                queue_page(st.session_state, 'Claim review')
                             st.rerun()
     if user['role'] in {'reviewer','admin'}:
         queue = reviewer_queue(user)
@@ -481,7 +482,7 @@ def _render_register(user: dict) -> None:
             else:
                 claim_id = create_claim(user['user_id'], claim_number, patient, hospital, policy, str(incident_date))
                 st.session_state.active_claim = claim_id
-                st.session_state.page = 'Submit documents' if user['role'] == 'claimant' else 'Claim review'
+                queue_page(st.session_state, 'Submit documents' if user['role'] == 'claimant' else 'Claim review')
                 st.success('Claim registered. Continue to upload documents.')
                 st.rerun()
 
@@ -495,7 +496,7 @@ def _render_claim_submission(user: dict) -> None:
     if not claims:
         st.info('Register a claim first, then return here to add documents.')
         if st.button('Register a claim', type='primary', icon=':material/add_circle:'):
-            st.session_state.page = 'Register claim'; st.rerun()
+            queue_page(st.session_state, 'Register claim'); st.rerun()
         return
     options = {f"{claim['claim_number']} · {claim['patient_name']}": claim['claim_id'] for claim in claims}
     labels = list(options)
@@ -550,7 +551,7 @@ def _render_claim_submission(user: dict) -> None:
                         workflow = run_agents_for_claim(claim_id, user['user_id'], normalized, rules, progress_callback=status.write)
                         st.session_state[f'workflow_{claim_id}'] = workflow
                         status.update(label='Assessment complete.', state='complete')
-                    st.session_state.page = 'Claim result'
+                    queue_page(st.session_state, 'Claim result')
                     st.rerun()
                 except Exception:
                     logger.exception("Claim assessment failed")
@@ -674,73 +675,75 @@ def _render_claim_review(user: dict) -> None:
     with tabs[3]:
         normalized = st.session_state.get(f'normalized_{claim_id}')
         rules = st.session_state.get(f'rules_{claim_id}')
-        if not normalized: st.warning('Complete extraction before analysis.'); return
-        if user['role'] in {'reviewer','admin'}:
-            st.markdown('### Link the applicable policy edition')
-            editions = policy_versions()
-            if editions:
-                labels = {f"{edition['policy_number']} · {edition['version_label']} · {edition['source_name']} · {edition['status']}": edition['version_id'] for edition in editions}
-                linked_id = selected_claim['policy_version_id']
-                current_index = next((i for i, value in enumerate(labels.values()) if value == linked_id), 0)
-                with st.form(f'link_policy_edition_{claim_id}'):
-                    chosen_policy = st.selectbox('Policy edition', list(labels), index=current_index)
-                    link_policy = st.form_submit_button('Link edition to this claim')
-                if link_policy:
-                    try:
-                        link_policy_version_to_claim(claim_id, user['user_id'], labels[chosen_policy])
-                        st.success('Policy edition linked to this claim.')
-                        st.rerun()
-                    except Exception:
-                        logger.exception("Policy edition could not be linked to the claim")
-                        st.error('The policy edition could not be linked. Check your access and selected policy.')
-                linked_policy = next((edition for edition in editions if edition['version_id'] == linked_id), None)
-                if linked_policy:
-                    st.caption(f"Linked edition: {linked_policy['version_label']} · Term review: {linked_policy['terms_review_status']}")
+        if not normalized:
+            st.warning('Complete extraction before analysis.')
+        else:
+            if user['role'] in {'reviewer','admin'}:
+                st.markdown('### Link the applicable policy edition')
+                editions = policy_versions()
+                if editions:
+                    labels = {f"{edition['policy_number']} · {edition['version_label']} · {edition['source_name']} · {edition['status']}": edition['version_id'] for edition in editions}
+                    linked_id = selected_claim['policy_version_id']
+                    current_index = next((i for i, value in enumerate(labels.values()) if value == linked_id), 0)
+                    with st.form(f'link_policy_edition_{claim_id}'):
+                        chosen_policy = st.selectbox('Policy edition', list(labels), index=current_index)
+                        link_policy = st.form_submit_button('Link edition to this claim')
+                    if link_policy:
+                        try:
+                            link_policy_version_to_claim(claim_id, user['user_id'], labels[chosen_policy])
+                            st.success('Policy edition linked to this claim.')
+                            st.rerun()
+                        except Exception:
+                            logger.exception("Policy edition could not be linked to the claim")
+                            st.error('The policy edition could not be linked. Check your access and selected policy.')
+                    linked_policy = next((edition for edition in editions if edition['version_id'] == linked_id), None)
+                    if linked_policy:
+                        st.caption(f"Linked edition: {linked_policy['version_label']} · Term review: {linked_policy['terms_review_status']}")
+                    else:
+                        st.warning('No policy edition is linked. Link the correct edition before calculating.')
                 else:
-                    st.warning('No policy edition is linked. Link the correct edition before calculating.')
-            else:
-                st.info('Ingest the applicable policy edition in Policy management, then link it here.')
-        if st.button('Run deterministic coverage rules', type='primary'):
-            with st.status('Applying policy rules...', expanded=True) as status:
-                try: rules=evaluate_saved_claim(claim_id,user['user_id'],normalized); st.session_state[f'rules_{claim_id}']=rules; status.update(label='Rules complete',state='complete')
-                except Exception:
-                    logger.exception("Claim rules evaluation failed")
-                    status.update(label='Rules failed',state='error')
-                    st.error('The policy calculation could not be completed. Review the confirmed policy terms and bill details.')
-        if rules:
-            result_status = _safe_status(rules['status'])
-            st.markdown(deterministic_result_header_html(result_status), unsafe_allow_html=True)
-            with st.container(horizontal=True, horizontal_alignment='left'):
-                st.metric('Covered',f"INR {rules.get('covered_amount',0):,.2f}", border=True)
-                st.metric('Deductible',f"INR {rules.get('deductible',0):,.2f}", border=True)
-                st.metric('Copayment',f"INR {rules.get('copayment',0):,.2f}", border=True)
-                st.metric('Payable',f"INR {rules.get('payable_amount',0):,.2f}", border=True)
-            if rules.get('warnings'): st.warning('; '.join(rules['warnings']))
-            with st.expander('Why this result? Rule trace', expanded=True): st.dataframe(rules.get('results',[]), hide_index=True)
-            workflow=st.session_state.get(f'workflow_{claim_id}')
-            if st.button('Run Policy Agent + Decision Agent', type='primary'):
-                with st.status('Retrieving policy evidence...', expanded=True) as status:
-                    st.caption('Local AI processing can take 1–2 minutes on CPU. Keep this page open while it completes.')
-                    try:
-                        started=time.perf_counter(); workflow=run_agents_for_claim(claim_id,user['user_id'],normalized,rules,progress_callback=lambda msg: status.write(msg)); workflow['elapsed_seconds']=round(time.perf_counter()-started,2); st.session_state[f'workflow_{claim_id}']=workflow; status.update(label='Two-agent analysis complete',state='complete')
+                    st.info('Ingest the applicable policy edition in Policy management, then link it here.')
+            if st.button('Run deterministic coverage rules', type='primary'):
+                with st.status('Applying policy rules...', expanded=True) as status:
+                    try: rules=evaluate_saved_claim(claim_id,user['user_id'],normalized); st.session_state[f'rules_{claim_id}']=rules; status.update(label='Rules complete',state='complete')
                     except Exception:
-                        logger.exception("Claim explanation workflow failed")
-                        status.update(label='Agent workflow failed',state='error')
-                        st.error('The explanation service is unavailable. The deterministic calculation remains available for review.')
-            if workflow:
-                decision=workflow.get('decision',{}); decision_status = _safe_status(decision.get('status','manual_review')); st.markdown(evidence_recommendation_header_html(decision_status), unsafe_allow_html=True)
-                for reason in decision.get('reasons',[]): st.write(f'• {reason}')
-                st.caption(f"Policy source: {workflow.get('policy_source','none')} · LLM calls: {workflow.get('llm_calls',0)} · Time: {workflow.get('elapsed_seconds','n/a')}s")
-                with st.expander('Policy evidence and agent reasoning'): st.json({'decision':decision,'policy_findings':workflow.get('policy_findings',{})})
-                if user['role'] in {'reviewer','admin'}:
-                    with st.container(border=True):
-                        st.markdown('### Reviewer Sign-off')
-                        final=st.selectbox('Final determination',['approved','partially_approved','rejected','manual_review'],format_func=_status_badge,key=f'final_{claim_id}')
-                        comments=st.text_area('Reviewer comments',key=f'comments_{claim_id}')
-                        if st.button('Confirm sign-off',key=f'save_final_{claim_id}',type='primary'):
-                            if not comments.strip(): st.warning('Reviewer comments are required.')
-                            else: save_reviewer_decision(claim_id,user['user_id'],decision.get('status','manual_review'),final,comments); st.success('Reviewer decision saved and audited.')
-        else: st.info('Run deterministic rules before starting the agents.')
+                        logger.exception("Claim rules evaluation failed")
+                        status.update(label='Rules failed',state='error')
+                        st.error('The policy calculation could not be completed. Review the confirmed policy terms and bill details.')
+            if rules:
+                result_status = _safe_status(rules['status'])
+                st.markdown(deterministic_result_header_html(result_status), unsafe_allow_html=True)
+                with st.container(horizontal=True, horizontal_alignment='left'):
+                    st.metric('Covered',f"INR {rules.get('covered_amount',0):,.2f}", border=True)
+                    st.metric('Deductible',f"INR {rules.get('deductible',0):,.2f}", border=True)
+                    st.metric('Copayment',f"INR {rules.get('copayment',0):,.2f}", border=True)
+                    st.metric('Payable',f"INR {rules.get('payable_amount',0):,.2f}", border=True)
+                if rules.get('warnings'): st.warning('; '.join(rules['warnings']))
+                with st.expander('Why this result? Rule trace', expanded=True): st.dataframe(rules.get('results',[]), hide_index=True)
+                workflow=st.session_state.get(f'workflow_{claim_id}')
+                if st.button('Run Policy Agent + Decision Agent', type='primary'):
+                    with st.status('Retrieving policy evidence...', expanded=True) as status:
+                        st.caption('Local AI processing can take 1–2 minutes on CPU. Keep this page open while it completes.')
+                        try:
+                            started=time.perf_counter(); workflow=run_agents_for_claim(claim_id,user['user_id'],normalized,rules,progress_callback=lambda msg: status.write(msg)); workflow['elapsed_seconds']=round(time.perf_counter()-started,2); st.session_state[f'workflow_{claim_id}']=workflow; status.update(label='Two-agent analysis complete',state='complete')
+                        except Exception:
+                            logger.exception("Claim explanation workflow failed")
+                            status.update(label='Agent workflow failed',state='error')
+                            st.error('The explanation service is unavailable. The deterministic calculation remains available for review.')
+                if workflow:
+                    decision=workflow.get('decision',{}); decision_status = _safe_status(decision.get('status','manual_review')); st.markdown(evidence_recommendation_header_html(decision_status), unsafe_allow_html=True)
+                    for reason in decision.get('reasons',[]): st.write(f'• {reason}')
+                    st.caption(f"Policy source: {workflow.get('policy_source','none')} · LLM calls: {workflow.get('llm_calls',0)} · Time: {workflow.get('elapsed_seconds','n/a')}s")
+                    with st.expander('Policy evidence and agent reasoning'): st.json({'decision':decision,'policy_findings':workflow.get('policy_findings',{})})
+                    if user['role'] in {'reviewer','admin'}:
+                        with st.container(border=True):
+                            st.markdown('### Reviewer Sign-off')
+                            final=st.selectbox('Final determination',['approved','partially_approved','rejected','manual_review'],format_func=_status_badge,key=f'final_{claim_id}')
+                            comments=st.text_area('Reviewer comments',key=f'comments_{claim_id}')
+                            if st.button('Confirm sign-off',key=f'save_final_{claim_id}',type='primary'):
+                                if not comments.strip(): st.warning('Reviewer comments are required.')
+                                else: save_reviewer_decision(claim_id,user['user_id'],decision.get('status','manual_review'),final,comments); st.success('Reviewer decision saved and audited.')
+            else: st.info('Run deterministic rules before starting the agents.')
     with tabs[4]:
         normalized = st.session_state.get(f'normalized_{claim_id}')
         rules = st.session_state.get(f'rules_{claim_id}')

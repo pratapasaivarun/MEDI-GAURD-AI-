@@ -131,7 +131,7 @@ Latest recorded checks are for **30 synthetic cases only**; they are not general
 - Rules golden agreement: **24/24 (100%)**; property checks: **211/211 (100%)**.
 - Comparison labels: **30/30 (100%)**; discrepancy false matches: **0/10**. Settlement paid-amount F1: **100% (28 labeled payments)**; deduction F1: **100% (37 labeled deductions)**.
 - Retrieval over 30 questions: P@1 **30/30 (100%)**, P@3 **30/90 (33.3%)**, P@5 **30/150 (20%)**, recall@5 **30/30 (100%)**, MRR **1.000**. The latest run reported `BAAI/bge-small-en-v1.5` as the active embedding backend. These are synthetic query scores, not a claim of broad policy-search accuracy.
-- Ollama ON/OFF decision equality: **3/3** when run live; LLM number grounding: **6/6**. A repeatable Playwright run completed `a_match` (1/3). It then failed while registering the next claim and saving its uploads, so browser coverage is incomplete and is not scored as a pass. Screenshots stay outside the repository.
+- Ollama ON/OFF decision equality: **3/3** when run live; LLM number grounding: **6/6**. Playwright browser matrix: **8/8** passed (three demo cases plus empty, invalid-signature, oversized and corrupted uploads, and missing settlement). The supported discrepancy case downloaded its appeal PDF; the match and manual-review cases did not show an appeal. Screenshots stay outside the repository.
 - Mean offline evaluation time: about **0.59 seconds per case** on the recorded machine.
 
 The CI workflow runs the offline tests and evaluation. Ollama and browser checks are optional local checks and are reported separately. The historical 12/24 and 13/24 values used an unconfirmed policy-term gate and are superseded; they are not valid rules accuracy figures.

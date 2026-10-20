@@ -1614,6 +1614,8 @@ def _core_demo_user() -> dict[str, Any]:
 
 
 def _render_sidebar(user: dict) -> str:
+    from mediguard.ui.navigation import prepare_navigation
+
     with st.sidebar:
         _brand_header()
         st.markdown('<div class="mg-nav-label">WORKSPACE</div>', unsafe_allow_html=True)
@@ -1625,6 +1627,7 @@ def _render_sidebar(user: dict) -> str:
             if user['role'] == 'admin':
                 pages.insert(1, 'Register claim')
                 pages.append('Admin panel')
+        prepare_navigation(st.session_state, pages)
         current = st.session_state.get('page', 'Dashboard')
         if current not in pages: current = 'Dashboard'
         labels = {
@@ -1636,7 +1639,7 @@ def _render_sidebar(user: dict) -> str:
             'Policy management': ':material/policy: Policy management',
             'Admin panel': ':material/admin_panel_settings: Admin panel',
         }
-        page = st.radio('Workspace', pages, index=pages.index(current), format_func=lambda x: labels[x], label_visibility='collapsed')
+        page = st.radio('Workspace', pages, index=pages.index(current), format_func=lambda x: labels[x], label_visibility='collapsed', key='workspace_navigation')
         st.markdown('<div class="mg-sidebar-spacer"></div>', unsafe_allow_html=True)
         st.markdown('<div class="mg-nav-label">ACCOUNT</div>', unsafe_allow_html=True)
         st.caption(f"Signed in as {user['display_name']}")

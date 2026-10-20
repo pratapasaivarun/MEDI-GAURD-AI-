@@ -24,7 +24,7 @@ Ground truth was committed before this evaluation run. The runner never writes t
 | ollama_decision_equality | 100.0% | 3/3 | 1.0 | PASS |
 | fault_injection | 100.0% | 3/3 | 1.0 | PASS |
 | report_rules | 100.0% | 2/2 | 1.0 | PASS |
-| browser_e2e | n/a | 0/0 | all three demo cases pass | NOT RUN |
+| browser_e2e | 100.0% | 8/8 | all three demo cases and five upload/review cases pass | PASS |
 | security | 100.0% | 3/3 | 1.0 | PASS |
 | seconds_per_claim | 0.588169 s/claim | 30/30 | measured | MEASURED |
 
@@ -80,7 +80,7 @@ No evaluated case failed its status, payable, and paid-amount labels.
 ## Limits
 
 - Synthetic cases are not representative of insurer claim populations.
-- The 3-case Playwright run is incomplete: `a_match` passed (1/3); repeat runs stop while registering the next claim or saving its uploads. This is a browser harness / Streamlit navigation issue that still needs fixing; do not count the browser metric as passed.
+- Playwright covered all three demo cases (`a_match`, `b_wrongful_deduction`, `c_manual_review`) and five upload/review cases (empty file, invalid PDF signature, oversized file, corrupted PDF, missing settlement): **8/8 passed**. Each scenario used a fresh browser page and unique claim. The test fixed two harness races (waiting for persistent upload state and comparison completion) and found two app navigation/rendering defects: sidebar state overwrote programmatic claim navigation, and a missing bill extraction returned before the comparison tab could display its missing-settlement message. Both app defects now have regression coverage. The supported discrepancy case downloaded `CLM-FICT-0418-appeal-draft.pdf`; no appeal appeared for the match or manual-review cases. Screenshots are outside the repository at `C:\Users\prata\AppData\Local\Temp\mediguard-eval-screenshots-e2f2xcbn`.
 - Ollama on/off checks were run separately with `ibm/granite4.1:8b`; they passed 3/3 comparison-equality checks and grounded 6/6 explanation outputs. The model wording can still be imprecise even when its amounts and comparison object remain unchanged.
 - The regular CI command disables live Ollama and browser runs. Those are separately recorded local checks.
 

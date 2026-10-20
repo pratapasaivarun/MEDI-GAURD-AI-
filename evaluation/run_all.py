@@ -433,7 +433,7 @@ def run() -> int:
         "ollama_decision_equality": unavailable(1.0, "Live Ollama comparison is recorded separately from the deterministic run."),
         "fault_injection": {"numerator": 3, "denominator": 3, "score": 1.0, "target": 1.0, "pass": True, "note": "Down, timeout, and malformed responses use template fallback in passing tests."},
         "report_rules": {"numerator": 2, "denominator": 2, "score": 1.0, "target": 1.0, "pass": True, "note": "Appeal gating and report-number consistency have passing focused tests."},
-        "browser_e2e": unavailable("all scenarios pass", "Browser run has not been attempted."),
+        "browser_e2e": unavailable("3 demo cases and 5 upload/error cases pass", "Browser run has not been attempted."),
         "security": {"numerator": 3, "denominator": 3, "score": 1.0, "target": 1.0, "pass": True, "note": "Upload type/signature, path sanitization, and empty/size checks pass focused tests."},
         "seconds_per_claim": {"denominator": len(results), "mean_seconds": sum(row["seconds"] for row in results) / max(1, len(results))},
     }
@@ -448,7 +448,7 @@ def run() -> int:
         live_checks["browser"] = run_browser_suite()
         metrics["browser_e2e"] = live_checks["browser"]
     else:
-        metrics["browser_e2e"] = unavailable("all three demo cases pass", "MEDIGUARD_EVAL_BROWSER=false; browser checks are delegated to CI manual verification.")
+        metrics["browser_e2e"] = unavailable("3 demo cases and 5 upload/error cases pass", "MEDIGUARD_EVAL_BROWSER=false; Playwright checks are run separately.")
     failures = []
     by_id = {row["case_id"]: row for row in cases}
     for result in results:

@@ -20,13 +20,13 @@ Ground truth was committed before this evaluation run. The runner never writes t
 | settlement_deductions_f1 | F1 100.0% | 37/37 | measured | MEASURED |
 | comparison_decision_accuracy | 100.0% | 30/30 | 1.0 | PASS |
 | comparison_false_match_rate | 0/10 false matches; rate 0.0% | 0/10 | 0.0 | PASS |
-| llm_number_grounding | 100.0% | 6/6 | None | PASS |
-| ollama_decision_equality | 100.0% | 3/3 | 1.0 | PASS |
+| llm_number_grounding | 100.0% | 4/4 | 1.0 | PASS |
+| ollama_decision_equality | n/a | 0/0 | 1.0 | NOT RUN |
 | fault_injection | 100.0% | 3/3 | 1.0 | PASS |
 | report_rules | 100.0% | 2/2 | 1.0 | PASS |
-| browser_e2e | 100.0% | 8/8 | all three demo cases and five upload/review cases pass | PASS |
+| browser_e2e | n/a | 0/0 | 3 demo cases and 5 upload/error cases pass | NOT RUN |
 | security | 100.0% | 3/3 | 1.0 | PASS |
-| seconds_per_claim | 0.588169 s/claim | 30/30 | measured | MEASURED |
+| seconds_per_claim | 0.085215 s/claim | 30/30 | measured | MEASURED |
 
 ## Confusion matrix
 
@@ -80,13 +80,14 @@ No evaluated case failed its status, payable, and paid-amount labels.
 ## Limits
 
 - Synthetic cases are not representative of insurer claim populations.
-- Playwright covered all three demo cases (`a_match`, `b_wrongful_deduction`, `c_manual_review`) and five upload/review cases (empty file, invalid PDF signature, oversized file, corrupted PDF, missing settlement): **8/8 passed**. Each scenario used a fresh browser page and unique claim. The test fixed two harness races (waiting for persistent upload state and comparison completion) and found two app navigation/rendering defects: sidebar state overwrote programmatic claim navigation, and a missing bill extraction returned before the comparison tab could display its missing-settlement message. Both app defects now have regression coverage. The supported discrepancy case downloaded `CLM-FICT-0418-appeal-draft.pdf`; no appeal appeared for the match or manual-review cases. Current screenshots are outside the repository at `C:\Users\prata\AppData\Local\Temp\mediguard-eval-screenshots-u96waj78`.
-- Ollama on/off checks were run separately with `ibm/granite4.1:8b`; they passed 3/3 comparison-equality checks and grounded 6/6 explanation outputs. The model wording can still be imprecise even when its amounts and comparison object remain unchanged.
-- The regular CI command disables live Ollama and browser runs. Those are separately recorded local checks.
+- Ollama and browser metrics are unavailable in this offline run.
+- Browser end-to-end upload flow is not scored by this offline command.
 
-### What the earlier 12/24 and 13/24 figures meant
+The historical 13/24 score was rules-only status agreement with reviewer-confirmed terms; 12/24 was full-app status agreement including reviewer gates. They are distinct measurements on an older 24-case set, not comparable overall accuracy figures. See the preserved historical note and current case-by-case results.
 
-The archived evaluation note records **13/24** as rules-only status agreement after supplying reviewer-confirmed policy terms, and **12/24** as full-app status agreement with reviewer gates included. These were different measurements on an older 24-case label set, not two versions of the same accuracy score. The 12/24 app figure included cases sent to manual review at the confirmation gate, while the 13/24 figure bypassed that gate with confirmed terms. They were misleading when repeated without their setup, denominator, and distinction, and neither should be described as overall project accuracy. This report replaces them with case-by-case results on the current 30 labeled synthetic cases (including reviewer terms in the harness), plus the separately scoped adversarial parser checks. The old values remain historical only.
+## Supplemental measured results
+
+The sections below are separately measured checks. The standard evaluation command refreshes the 30-case scorecard and keeps these results attached.
 
 ## Adversarial document cases (separate parser check)
 
@@ -108,6 +109,10 @@ The ten fictional adversarial cases were labeled and committed before they were 
 **Result: 10/10 cases and 61/61 labeled field checks; macro line-item precision 1.00 and recall 1.00 (10 synthetic cases).** The machine-readable run is `evaluation/latest/adversarial_results.json`; reproduce it with `python -m evaluation.scripts.score_adversarial_cases`. The low-resolution case used Tesseract OCR. This score is a small targeted regression set, not a general accuracy estimate.
 
 The run initially found six parser defects: pipe-separated total labels were missed; `Claim Ref` and `Paid to hospital` were not recognized; “for 4 days” was discarded from a charge description; explicit above-limit deductions outside a Deductions heading were dropped; non-medical charges were classified as ordinary items; and a missing settlement reference did not request review. Regression tests were added for each behavior. The hand-labeled values were not changed to make the parser pass.
+
+## Browser matrix (live Playwright run)
+
+**8/8 passed.** The three demo cases reached their expected outcomes; `b_wrongful_deduction` showed the appeal PDF download, while the match and manual-review cases did not. Empty file, wrong type, oversized file, corrupted PDF, and missing settlement all displayed safe outcomes. Each scenario used a fresh browser page and claim. Current screenshots are in the temporary directory `C:\Users\prata\AppData\Local\Temp\mediguard-eval-screenshots-u96waj78` and are not committed.
 
 ## Explanation quality (live Ollama)
 

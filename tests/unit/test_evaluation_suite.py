@@ -31,6 +31,21 @@ def test_retrieval_precision_uses_k_times_query_count_as_denominator():
     assert score["mrr"] == 0.5
 
 
+def test_evaluation_report_refresh_keeps_separately_measured_sections(tmp_path):
+    report = tmp_path / "results.md"
+    report.write_text(
+        "Old generated scorecard\n\n## Supplemental measured results\n\n"
+        "## Browser matrix (live Playwright run)\n8/8\n\n## Performance\n35 seconds\n",
+        encoding="utf-8",
+    )
+    evaluation.write_evaluation_report(["New generated scorecard", "30/30"], report)
+    actual = report.read_text(encoding="utf-8")
+    assert "New generated scorecard" in actual
+    assert "Old generated scorecard" not in actual
+    assert "## Browser matrix (live Playwright run)" in actual
+    assert "## Performance" in actual
+
+
 def test_committed_case_expected_files_match_source_labels():
     labels = json.loads((ROOT / "samples/evaluation_cases/ground_truth.json").read_text(encoding="utf-8"))
     case_root = ROOT / "samples/evaluation_cases/cases"

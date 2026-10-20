@@ -35,7 +35,20 @@ LABELS_PATH = ROOT / "samples" / "evaluation_cases" / "ground_truth.json"
 CASES_DIR = ROOT / "samples" / "evaluation_cases" / "cases"
 RESULTS_PATH = ROOT / "evaluation" / "latest" / "results.json"
 REPORT_PATH = ROOT / "docs" / "06_EVALUATION_RESULTS.md"
+PRESERVED_REPORT_MARKER = "## Supplemental measured results"
 CENT = Decimal("0.01")
+
+
+def write_evaluation_report(lines: list[str], path: Path = REPORT_PATH) -> None:
+    """Refresh generated results while retaining separately measured sections."""
+    existing = path.read_text(encoding="utf-8") if path.exists() else ""
+    marker_at = existing.find(PRESERVED_REPORT_MARKER)
+    preserved = existing[marker_at:].strip() if marker_at >= 0 else ""
+    rendered = "\n".join(lines).rstrip()
+    if preserved:
+        rendered += "\n\n" + preserved
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(rendered.rstrip() + "\n", encoding="utf-8")
 
 
 def run_ollama_equivalence() -> dict[str, Any]:
@@ -520,9 +533,8 @@ def run() -> int:
     else:
         lines.append("No evaluated case failed its status, payable, and paid-amount labels.")
     lines.extend(["", "## Limits", "", *[f"- {item}" for item in output["limits"]], "",
-                  "Historical `12/24` and `13/24` figures came from different runs with an unconfirmed policy-term gate. They are superseded by this case-by-case result; they must not be presented as verified rules accuracy.", ""])
-    REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    REPORT_PATH.write_text("\n".join(lines), encoding="utf-8")
+                  "The historical 13/24 score was rules-only status agreement with reviewer-confirmed terms; 12/24 was full-app status agreement including reviewer gates. They are distinct measurements on an older 24-case set, not comparable overall accuracy figures. See the preserved historical note and current case-by-case results.", ""])
+    write_evaluation_report(lines)
     print(json.dumps({"cases": len(cases), "group_counts": output["group_counts"], "metrics": metrics,
                       "failures": failures, "results": str(RESULTS_PATH), "report": str(REPORT_PATH)}, indent=2, default=str))
     return 0 if not failures and not target_failures else 1

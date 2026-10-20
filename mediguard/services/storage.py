@@ -22,7 +22,9 @@ def open_database(path: Path) -> sqlite3.Connection:
 
 
 def validate_upload(uploaded_file, document_type: str | None, max_file_mb: int) -> tuple[bytes, str]:
-    original_name = Path(uploaded_file.name).name
+    # Browser uploads may include Windows separators even when the server is
+    # running on POSIX. Normalize both separator styles before taking basename.
+    original_name = Path(str(uploaded_file.name).replace("\\", "/")).name
     extension = Path(original_name).suffix.lower()
     allowed = {".pdf", ".txt"} if document_type == "settlement" else {".pdf", ".png", ".jpg", ".jpeg"}
     if extension not in allowed:

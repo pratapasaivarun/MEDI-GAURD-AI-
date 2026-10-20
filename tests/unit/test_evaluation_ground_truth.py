@@ -46,7 +46,8 @@ def test_every_scenario_uses_explicit_fixture_reviewer_confirmed_terms():
                for item in row["terms"].values())
     entries_by_id = {entry["case_id"]: entry for entry in index}
     for case_id, row in review["cases"].items():
-        policy_path = root / "samples/claim_scenarios" / entries_by_id[case_id]["path"] / "policy.pdf"
+        relative_case_path = entries_by_id[case_id]["path"].replace("\\", "/")
+        policy_path = root / "samples/claim_scenarios" / relative_case_path / "policy.pdf"
         with fitz.open(policy_path) as policy:
             source_text = " ".join("\n".join(page.get_text() for page in policy).split()).casefold()
         for evidence in row["terms"].values():

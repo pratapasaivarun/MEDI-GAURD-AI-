@@ -136,7 +136,8 @@ def test_deductible_is_compared_as_its_own_patient_share_category():
         deductible=Decimal("10000"), copay_percent=Decimal("10"),
     )
     claim = evaluate_claim(bill, terms)
-    letter = """Bill Total: INR 41000
+    letter = """Claim ID: SYN-41000
+Bill Total: INR 41000
 Deductions:
 Room rent | 10000 | cap
 Deductible | 10000

@@ -404,6 +404,11 @@ def _extract_line_items(text: str, evidence: list[Evidence]) -> list[dict[str, A
         date_match = date_token.search(stripped)
         item_date = parse_bill_date(date_match.group(0)) if date_match else None
         without_date = date_token.sub(" ", stripped) if date_match else stripped
+        embedded_duration = re.search(r"\b\d+\s+days?\b", without_date, re.IGNORECASE)
+        keep_embedded_duration = bool(
+            embedded_duration
+            and re.search(r"\bfor\s+$", without_date[:embedded_duration.start()], re.IGNORECASE)
+        )
         # Ignore parenthesized notes (often date ranges) and trailing stay
         # durations; they are metadata, not bill amount columns.
         without_date = re.sub(r"\([^)]*\)", " ", without_date)
@@ -413,6 +418,8 @@ def _extract_line_items(text: str, evidence: list[Evidence]) -> list[dict[str, A
             continue
         description = re.sub(r"[|:]+", " ", without_date[:matches[0].start()]).strip(" -\t")
         description = re.sub(r"\s+", " ", description).strip()
+        if keep_embedded_duration and embedded_duration:
+            description = f"{description} {embedded_duration.group(0)}".strip()
         if not re.match(r"^[A-Za-z][A-Za-z0-9 /&()'_-]{2,80}$", description):
             continue
         amount = parse_amount(matches[-1].group(0))
@@ -636,7 +643,7 @@ def normalize_documents(documents: list[dict[str, Any]]) -> NormalizedClaim:
         r"(?:policy|member)\s*(?:no|number|id)\.?\s*(?:of\s+(?:the\s+)?patient\s*)?(?:[:#-]\s*)?([A-Z0-9/-]+)",
         r"policy\s*(?:no|number)\.?\s*(?:of\s+(?:the\s+)?insured\s*)?(?:[:#-]\s*)?([A-Z0-9/-]+)",
     ], "policy_number")
-    claim.claim_number = find([r"claim\s*(?:no|number|id)\.?\s*(?:[:#-]\s*)?([A-Z0-9/-]+)"], "claim_number")
+    claim.claim_number = find([r"claim\s*(?:no|number|id|ref(?:erence)?)\.?\s*(?:[:#-]\s*)?([A-Z0-9/-]+)"], "claim_number")
     date_value = r"([0-9]{1,4}[./-][0-9]{1,2}[./-][0-9]{1,4}|[0-9]{1,2}[-/\s]+[A-Za-z]{3,9}[-/\s]+[0-9]{2,4})"
     claim.admission_date = find([rf"(?:admission(?:\s+date)?|admit|date\s+of\s+admission)\s*(?:[:#-]\s*)?{date_value}"], "admission_date")
     claim.discharge_date = find([rf"(?:discharge(?:\s+date)?|date\s+of\s+discharge)\s*(?:[:#-]\s*)?{date_value}"], "discharge_date")
@@ -669,7 +676,7 @@ def normalize_documents(documents: list[dict[str, Any]]) -> NormalizedClaim:
         for label in labels:
             label_pattern = re.escape(label).replace(r"\ ", r"\s+")
             pattern = re.compile(
-                rf"(?<!\w){label_pattern}(?!\w)\s*(?:[:#-]\s*)?(?:rs\.?|inr|₹|\$)?\s*(?P<amount>[0-9][0-9,]*(?:\.[0-9]{{1,2}})?)(?:\s*(?:rs\.?|inr|₹|\$))?",
+                rf"(?<!\w){label_pattern}(?!\w)\s*(?:(?:[:#-]|\||\t)\s*)?(?:rs\.?|inr|₹|\$)?\s*(?P<amount>[0-9][0-9,]*(?:\.[0-9]{{1,2}})?)(?:\s*(?:rs\.?|inr|₹|\$))?",
                 re.IGNORECASE,
             )
             for match in pattern.finditer(all_text):

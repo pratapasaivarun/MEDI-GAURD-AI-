@@ -22,7 +22,7 @@ MAX_FILE_MB = int(os.getenv("MAX_FILE_MB", "15"))
 def _settlement_category(description: str) -> str:
     if re.search(r"\bdeductible\b", description, re.IGNORECASE):
         return DEDUCTIBLE_CATEGORY
-    if re.search(r"\bexclusion\b|\bnon[- ]payable\b", description, re.IGNORECASE):
+    if re.search(r"\bexclusion\b|\bnon[- ]payable\b|\bnon[- ]medical\b", description, re.IGNORECASE):
         return "EXCLUSION"
     return _infer_line_category(description)
 
@@ -134,7 +134,7 @@ def parse_settlement(file_bytes: bytes, filename: str) -> SettlementData:
     payment_labels = (
         r"amount\s*(?:paid|settled|payable(?!\s+by\s+patient\b))|"
         r"settlement\s*amount|net\s*(?:amount\s*)?(?:paid|payable)|"
-        r"approved\s*amount|payable\s+to\s+hospital"
+        r"approved\s*amount|payable\s+to\s+hospital|paid\s+to\s+hospital"
     )
     payment_values = [
         _money(match.group(1))
@@ -162,14 +162,19 @@ def parse_settlement(file_bytes: bytes, filename: str) -> SettlementData:
         if re.match(r"^\s*deductions?(?:\s+(?:details|breakdown))?\s*:?[\s|]*$", lowered):
             in_deductions = True
             continue
-        if not in_deductions:
+        standalone_deduction = bool(re.search(
+            r"\b(?:deduction|above\s+(?:the\s+)?(?:cap|limit)|not\s+payable|excluded)\b",
+            lowered,
+            re.IGNORECASE,
+        ))
+        if not in_deductions and not standalone_deduction:
             continue
         if re.match(r"^\s*total\b", lowered):
             continue
         if re.search(
             r"(?:amount\s*(?:paid|settled|claimed|payable)|claimed\s*amount|"
             r"amount\s*claimed|settlement\s*amount|net\s*(?:amount\s*)?(?:paid|payable)|"
-            r"approved\s*amount|payable\s+to\s+hospital)",
+                r"approved\s*amount|payable\s+to\s+hospital|paid\s+to\s+hospital)",
             lowered,
         ):
             in_deductions = False
@@ -203,6 +208,9 @@ def parse_settlement(file_bytes: bytes, filename: str) -> SettlementData:
 
     needs_review = False
     review_reasons: list[str] = []
+    if not claim_id:
+        needs_review = True
+        review_reasons.append("Settlement claim reference was not identified.")
     if amount_paid is None:
         needs_review = True
         review_reasons.append("Conflicting settlement amounts paid were found." if payment_conflict
@@ -212,7 +220,13 @@ def parse_settlement(file_bytes: bytes, filename: str) -> SettlementData:
         text,
         re.IGNORECASE,
     ))
-    if not rows and not explicit_no_deductions and copay is None:
+    payment_equals_bill_total = (
+        amount_paid is not None
+        and bill_total is not None
+        and amount_paid == bill_total
+        and copay is None
+    )
+    if not rows and not explicit_no_deductions and not payment_equals_bill_total and copay is None:
         rows = _llm_deductions(text) or []
         if rows:
             needs_review = True

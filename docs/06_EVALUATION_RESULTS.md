@@ -85,3 +85,24 @@ No evaluated case failed its status, payable, and paid-amount labels.
 - The regular CI command disables live Ollama and browser runs. Those are separately recorded local checks.
 
 Historical `12/24` and `13/24` figures came from different runs with an unconfirmed policy-term gate. They are superseded by this case-by-case result; they must not be presented as verified rules accuracy.
+
+## Adversarial document cases (separate parser check)
+
+The ten fictional adversarial cases were labeled and committed before they were run through the parser. The check covers bill totals, line items, claim references, paid amounts, settlement references, deduction totals where labeled, and review routing. It does **not** score policy calculations or end-to-end comparison decisions.
+
+| Case | Challenge | Expected vs actual | Match |
+|---|---|---|---|
+| adv_01_split_columns | Pipe-separated table and total | All 6 labeled fields matched | yes |
+| adv_02_noisy_ocr | Noisy text, claim reference and hospital payment wording | All 6 labeled fields matched | yes |
+| adv_03_low_resolution_scan | Low-resolution scanned bill | All 6 labeled fields matched; OCR evidence returned | yes |
+| adv_04_ambiguous_settlement_wording | Ambiguous paid wording | All 6 labeled fields matched; routed for review | yes |
+| adv_05_exact_daily_cap | Amount exactly at daily cap | All 6 labeled fields matched | yes |
+| adv_06_one_rupee_over_cap | Duration phrase and one-rupee excess | All 6 labeled fields matched | yes |
+| adv_07_multiple_deductions | Several deduction lines | All 7 labeled fields matched, including deduction sum | yes |
+| adv_08_missing_claim_reference | Missing settlement claim reference | All 6 labeled fields matched; routed for review | yes |
+| adv_09_subtotal_tax_grand_total | Subtotal, tax, and grand total | All 6 labeled fields matched | yes |
+| adv_10_slash_reference | Slash-style claim reference | All 6 labeled fields matched | yes |
+
+**Result: 10/10 cases and 61/61 labeled field checks; macro line-item precision 1.00 and recall 1.00 (10 synthetic cases).** The machine-readable run is `evaluation/latest/adversarial_results.json`; reproduce it with `python -m evaluation.scripts.score_adversarial_cases`. The low-resolution case used Tesseract OCR. This score is a small targeted regression set, not a general accuracy estimate.
+
+The run initially found six parser defects: pipe-separated total labels were missed; `Claim Ref` and `Paid to hospital` were not recognized; “for 4 days” was discarded from a charge description; explicit above-limit deductions outside a Deductions heading were dropped; non-medical charges were classified as ordinary items; and a missing settlement reference did not request review. Regression tests were added for each behavior. The hand-labeled values were not changed to make the parser pass.

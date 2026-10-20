@@ -108,7 +108,7 @@ def test_explicit_no_deductions_is_valid_without_llm_fallback(monkeypatch):
         raise AssertionError("An explicit no-deductions statement must not call the LLM")
     monkeypatch.setattr("mediguard.ingestion.settlement._llm_deductions", fail_if_called)
     result = parse_settlement(
-        b"Bill Total: INR 10000\nAmount Paid: INR 10000\nDeductions: none\n",
+        b"Claim ID: SYN-10000\nBill Total: INR 10000\nAmount Paid: INR 10000\nDeductions: none\n",
         "settlement.txt",
     )
     assert result.deductions == []
@@ -118,7 +118,7 @@ def test_explicit_no_deductions_is_valid_without_llm_fallback(monkeypatch):
 
 def test_single_space_aligned_deduction_rows_are_parsed():
     result = parse_settlement(
-        b"Bill Total: INR 10000\nDeductions\nDeductible INR 1000 Policy deductible\nAmount Paid: INR 9000\n",
+        b"Claim ID: SYN-9000\nBill Total: INR 10000\nDeductions\nDeductible INR 1000 Policy deductible\nAmount Paid: INR 9000\n",
         "settlement.txt",
     )
     assert [(row.category, row.amount) for row in result.deductions] == [

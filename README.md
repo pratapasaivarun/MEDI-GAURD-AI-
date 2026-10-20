@@ -124,20 +124,22 @@ The 30 case labels are in `samples/evaluation_cases/ground_truth.json`; their PD
 
 Latest recorded checks are for **30 synthetic cases only**; they are not general accuracy claims. The hand-labeled expected results were committed before scoring.
 
-- Automated suite: **213 passed** with Ollama disabled.
+- Automated suite: **224 passed** with Ollama disabled (`python -m pytest -q tests`).
 - Extraction totals: **30/30 (100%)**; other labeled fields: **60/60 (100%)**.
 - Text-bill line items: precision **28/28 (100%)**, recall **28/28 (100%)**; OCR field accuracy **6/6 (100%)**.
 - Reviewer-confirmed policy terms: **90/90 (100%)**.
 - Rules golden agreement: **24/24 (100%)**; property checks: **211/211 (100%)**.
+- Adversarial parser set: **10/10 cases**, **61/61 labeled field checks**, line-item precision/recall **1.00/1.00**. Labels were committed before scoring.
 - Comparison labels: **30/30 (100%)**; discrepancy false matches: **0/10**. Settlement paid-amount F1: **100% (28 labeled payments)**; deduction F1: **100% (37 labeled deductions)**.
 - Retrieval over 30 questions: P@1 **30/30 (100%)**, P@3 **30/90 (33.3%)**, P@5 **30/150 (20%)**, recall@5 **30/30 (100%)**, MRR **1.000**. The latest run reported `BAAI/bge-small-en-v1.5` as the active embedding backend. These are synthetic query scores, not a claim of broad policy-search accuracy.
-- Ollama ON/OFF decision equality: **3/3** when run live; LLM number grounding: **6/6**. Playwright browser matrix: **8/8** passed (three demo cases plus empty, invalid-signature, oversized and corrupted uploads, and missing settlement). The supported discrepancy case downloaded its appeal PDF; the match and manual-review cases did not show an appeal. Screenshots stay outside the repository.
+- Ollama ON/OFF decision equality: **3/3 demo cases** in the system evaluation and **10/10 discrepancy cases** in the explanation/performance run; explanation checklist **30/30** across ten live model texts. Playwright browser matrix: **8/8** passed (three demo cases plus empty, invalid-signature, oversized and corrupted uploads, and missing settlement). The supported discrepancy case downloaded its appeal PDF; the match and manual-review cases did not show an appeal. Screenshots stay outside the repository.
 - Mean offline evaluation time: about **0.59 seconds per case** on the recorded machine.
+- Focused ten-claim timing: **0.632 s/claim** with Ollama off and **35.716 s/claim** with it on; on-mode Ollama/llama-server RSS peaked at **5,259.4 MiB**. Full method and warm-model details are in `docs/06_EVALUATION_RESULTS.md`.
 
-The CI workflow runs the offline tests and evaluation. Ollama and browser checks are optional local checks and are reported separately. The historical 12/24 and 13/24 values used an unconfirmed policy-term gate and are superseded; they are not valid rules accuracy figures.
+The CI workflow runs the offline tests and evaluation. Ollama and browser checks are optional local checks and are reported separately. The earlier **13/24** was rules-only status agreement with reviewer-confirmed policy terms supplied; **12/24** was the full-app result with reviewer gates included. They are distinct measurements from an older set, not one comparable overall accuracy figure; see `docs/06_EVALUATION_RESULTS.md` for the full explanation.
 ## Limitations
 
-Policy wording and OCR can be ambiguous, retrieval precision is low, and the 24-case status agreement shows substantial mismatches. Reviewers must inspect the cited policy page and all outputs. A broad clause exclusion filter can drop a coverage sentence when another sentence in the same passage contains exclusion wording. Appeal documents are drafts, not legal advice. Security, privacy, expert accuracy, and production performance have not been independently assessed. Hosting is not tested.
+Policy wording and OCR can be ambiguous, retrieval precision at 3/5 is low, and the reported scores apply only to small fictional labeled sets. Reviewers must inspect the cited policy page and all outputs. A broad clause exclusion filter can drop a coverage sentence when another sentence in the same passage contains exclusion wording. Appeal documents are drafts, not legal advice. Security, privacy, expert accuracy, and production performance have not been independently assessed. Hosting is not tested.
 
 ## Disclaimer
 

@@ -1,3 +1,1 @@
-# GitHub configuration
-
-This folder contains the automated test workflow used when changes are pushed or proposed for review.
+This folder contains GitHub Actions workflow configuration for the automated project checks.

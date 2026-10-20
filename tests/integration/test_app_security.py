@@ -1,6 +1,10 @@
+import secrets
 from datetime import datetime, timezone
 
 import pytest
+
+TEST_PASSWORD = secrets.token_urlsafe(24)
+WRONG_PASSWORD = secrets.token_urlsafe(24)
 
 from mediguard.services import application as app
 
@@ -17,10 +21,10 @@ class Upload:
 def test_sixth_failed_password_attempt_is_blocked_for_fifteen_minutes(monkeypatch, tmp_path):
     monkeypatch.setenv("MEDIGUARD_DB_PATH", str(tmp_path / "auth.db"))
     app.init_db()
-    app.register_user("reviewer@example.test", "Reviewer", "a-long-test-password")
+    app.register_user("reviewer@example.test", "Reviewer", TEST_PASSWORD)
     for _ in range(5):
-        assert app.authenticate_password("reviewer@example.test", "wrong-password") is None
-    assert app.authenticate_password("reviewer@example.test", "a-long-test-password") is None
+        assert app.authenticate_password("reviewer@example.test", WRONG_PASSWORD) is None
+    assert app.authenticate_password("reviewer@example.test", WRONG_PASSWORD) is None
     with app.db() as conn:
         row = conn.execute("SELECT blocked_until FROM login_attempts WHERE email=?", ("reviewer@example.test",)).fetchone()
     assert datetime.fromisoformat(row["blocked_until"]) > datetime.now(timezone.utc)
@@ -29,9 +33,9 @@ def test_sixth_failed_password_attempt_is_blocked_for_fifteen_minutes(monkeypatc
 def test_successful_login_clears_failed_attempts(monkeypatch, tmp_path):
     monkeypatch.setenv("MEDIGUARD_DB_PATH", str(tmp_path / "auth-success.db"))
     app.init_db()
-    app.register_user("claimant@example.test", "Claimant", "a-long-test-password")
-    app.authenticate_password("claimant@example.test", "wrong-password")
-    assert app.authenticate_password("claimant@example.test", "a-long-test-password") is not None
+    app.register_user("claimant@example.test", "Claimant", TEST_PASSWORD)
+    app.authenticate_password("claimant@example.test", WRONG_PASSWORD)
+    assert app.authenticate_password("claimant@example.test", TEST_PASSWORD) is not None
     with app.db() as conn:
         assert conn.execute("SELECT COUNT(*) FROM login_attempts").fetchone()[0] == 0
 

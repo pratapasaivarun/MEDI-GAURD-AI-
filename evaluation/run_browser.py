@@ -39,7 +39,7 @@ def run_browser_suite() -> dict[str, Any]:
     screenshot_dir = Path(tempfile.mkdtemp(prefix="mediguard-eval-screenshots-"))
     server_log = screenshot_dir / "streamlit.log"
     port = _port()
-    password = "EvalOnly-" + os.urandom(10).hex() + "!"
+    password = os.urandom(32).hex()
     env = os.environ.copy()
     env.update({
         "OLLAMA_HOST": "http://127.0.0.1:1",

@@ -1,3 +1,4 @@
+import secrets
 from decimal import Decimal
 
 from mediguard.services import application as app
@@ -9,7 +10,7 @@ def test_extracted_room_category_reaches_app_context_and_room_cap(monkeypatch, t
     monkeypatch.setenv("MEDIGUARD_DB_PATH", str(tmp_path / "room.db"))
     monkeypatch.setenv("MEDIGUARD_STORAGE_DIR", str(tmp_path / "storage"))
     app.init_db()
-    user = app.register_user("room@example.test", "Room Test", "a-long-test-password")
+    user = app.register_user("room@example.test", "Room Test", secrets.token_urlsafe(24))
     claim_id = app.create_claim(user["user_id"], "CLM-ROOM-1", "Ravi Reddy", "Hospital", "POL-1", "2026-08-10")
     bill_text = "Room rent Rs 24,000, 4 days\nDoctor and nursing Rs 12,000"
     evidence = [Evidence("bill-1", "bill.txt", 1, "text", bill_text, 100.0)]

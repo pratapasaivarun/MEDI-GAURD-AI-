@@ -1,3 +1,4 @@
+import secrets
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -18,8 +19,8 @@ def test_only_admin_can_purge_expired_documents_and_recent_files_remain(monkeypa
     monkeypatch.setenv("MEDIGUARD_DB_PATH", str(tmp_path / "retention.db"))
     monkeypatch.setenv("MEDIGUARD_STORAGE_DIR", str(tmp_path / "private"))
     app.init_db()
-    claimant = app.register_user("claimant@example.test", "Fictional Claimant", "a-long-test-password")
-    admin_registration = app.register_user("admin@example.test", "Fictional Admin", "a-long-test-password")
+    claimant = app.register_user("claimant@example.test", "Fictional Claimant", secrets.token_urlsafe(24))
+    admin_registration = app.register_user("admin@example.test", "Fictional Admin", secrets.token_urlsafe(24))
     with app.db() as conn:
         conn.execute("UPDATE users SET role='admin' WHERE user_id=?", (admin_registration["user_id"],))
     admin = app.get_user(admin_registration["user_id"])
@@ -48,7 +49,7 @@ def test_only_admin_can_purge_expired_documents_and_recent_files_remain(monkeypa
 def test_retention_period_must_be_positive_and_admin_only(monkeypatch, tmp_path):
     monkeypatch.setenv("MEDIGUARD_DB_PATH", str(tmp_path / "retention-invalid.db"))
     app.init_db()
-    registration = app.register_user("admin@example.test", "Fictional Admin", "a-long-test-password")
+    registration = app.register_user("admin@example.test", "Fictional Admin", secrets.token_urlsafe(24))
     with app.db() as conn:
         conn.execute("UPDATE users SET role='admin' WHERE user_id=?", (registration["user_id"],))
     admin = app.get_user(registration["user_id"])

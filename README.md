@@ -88,7 +88,7 @@ Open [http://127.0.0.1:8501](http://127.0.0.1:8501). Claimants can register from
 For the isolated fictional demo, create a local reviewer password in the current PowerShell session and launch the demo:
 
 ```powershell
-$env:MEDIGUARD_ADMIN_PASSWORD = 'choose-a-local-demo-password'
+$env:MEDIGUARD_ADMIN_PASSWORD = Read-Host "Choose a local demo password"
 .\.venv\Scripts\python.exe run_demo.py
 ```
 

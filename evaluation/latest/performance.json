@@ -1,0 +1,191 @@
+{
+  "dataset": "first 10 discrepancy cases in samples/evaluation_cases/ground_truth.json",
+  "synthetic_only": true,
+  "ollama_model": "ibm/granite4.1:8b",
+  "ollama_mode": "warm model; warm-up/load time excluded from per-claim timings",
+  "off": {
+    "case_count": 10,
+    "total_seconds": 6.317,
+    "mean_seconds_per_claim": 0.632,
+    "median_seconds_per_claim": 0.249,
+    "min_seconds_per_claim": 0.008,
+    "max_seconds_per_claim": 4.335,
+    "peak_app_rss_mib": 102.6,
+    "peak_ollama_rss_mib": 1532.1,
+    "cases": [
+      {
+        "case": "discrepancy_01",
+        "status": "possible_discrepancy",
+        "possible_difference": "1000.00",
+        "comparison_unchanged": true,
+        "explanation_chars": 275,
+        "seconds": 4.335
+      },
+      {
+        "case": "discrepancy_02",
+        "status": "possible_discrepancy",
+        "possible_difference": "1000.00",
+        "comparison_unchanged": true,
+        "explanation_chars": 275,
+        "seconds": 0.013
+      },
+      {
+        "case": "discrepancy_03",
+        "status": "possible_discrepancy",
+        "possible_difference": "1000.00",
+        "comparison_unchanged": true,
+        "explanation_chars": 275,
+        "seconds": 0.051
+      },
+      {
+        "case": "discrepancy_04",
+        "status": "possible_discrepancy",
+        "possible_difference": "1000.00",
+        "comparison_unchanged": true,
+        "explanation_chars": 275,
+        "seconds": 0.013
+      },
+      {
+        "case": "discrepancy_05",
+        "status": "possible_discrepancy",
+        "possible_difference": "1000.00",
+        "comparison_unchanged": true,
+        "explanation_chars": 275,
+        "seconds": 0.127
+      },
+      {
+        "case": "discrepancy_06",
+        "status": "possible_discrepancy",
+        "possible_difference": "1000.00",
+        "comparison_unchanged": true,
+        "explanation_chars": 275,
+        "seconds": 0.542
+      },
+      {
+        "case": "discrepancy_07",
+        "status": "possible_discrepancy",
+        "possible_difference": "1000.00",
+        "comparison_unchanged": true,
+        "explanation_chars": 275,
+        "seconds": 0.454
+      },
+      {
+        "case": "discrepancy_08",
+        "status": "possible_discrepancy",
+        "possible_difference": "1000.00",
+        "comparison_unchanged": true,
+        "explanation_chars": 276,
+        "seconds": 0.404
+      },
+      {
+        "case": "discrepancy_09",
+        "status": "possible_discrepancy",
+        "possible_difference": "1000.00",
+        "comparison_unchanged": true,
+        "explanation_chars": 275,
+        "seconds": 0.371
+      },
+      {
+        "case": "discrepancy_10",
+        "status": "possible_discrepancy",
+        "possible_difference": "1000.00",
+        "comparison_unchanged": true,
+        "explanation_chars": 275,
+        "seconds": 0.008
+      }
+    ]
+  },
+  "on": {
+    "case_count": 10,
+    "total_seconds": 357.165,
+    "mean_seconds_per_claim": 35.716,
+    "median_seconds_per_claim": 31.423,
+    "min_seconds_per_claim": 28.813,
+    "max_seconds_per_claim": 58.004,
+    "peak_app_rss_mib": 102.9,
+    "peak_ollama_rss_mib": 5259.4,
+    "cases": [
+      {
+        "case": "discrepancy_01",
+        "status": "possible_discrepancy",
+        "possible_difference": "1000.00",
+        "comparison_unchanged": true,
+        "explanation_chars": 401,
+        "seconds": 40.526
+      },
+      {
+        "case": "discrepancy_02",
+        "status": "possible_discrepancy",
+        "possible_difference": "1000.00",
+        "comparison_unchanged": true,
+        "explanation_chars": 499,
+        "seconds": 58.004
+      },
+      {
+        "case": "discrepancy_03",
+        "status": "possible_discrepancy",
+        "possible_difference": "1000.00",
+        "comparison_unchanged": true,
+        "explanation_chars": 617,
+        "seconds": 42.513
+      },
+      {
+        "case": "discrepancy_04",
+        "status": "possible_discrepancy",
+        "possible_difference": "1000.00",
+        "comparison_unchanged": true,
+        "explanation_chars": 412,
+        "seconds": 35.131
+      },
+      {
+        "case": "discrepancy_05",
+        "status": "possible_discrepancy",
+        "possible_difference": "1000.00",
+        "comparison_unchanged": true,
+        "explanation_chars": 419,
+        "seconds": 30.83
+      },
+      {
+        "case": "discrepancy_06",
+        "status": "possible_discrepancy",
+        "possible_difference": "1000.00",
+        "comparison_unchanged": true,
+        "explanation_chars": 475,
+        "seconds": 29.479
+      },
+      {
+        "case": "discrepancy_07",
+        "status": "possible_discrepancy",
+        "possible_difference": "1000.00",
+        "comparison_unchanged": true,
+        "explanation_chars": 470,
+        "seconds": 32.015
+      },
+      {
+        "case": "discrepancy_08",
+        "status": "possible_discrepancy",
+        "possible_difference": "1000.00",
+        "comparison_unchanged": true,
+        "explanation_chars": 424,
+        "seconds": 29.778
+      },
+      {
+        "case": "discrepancy_09",
+        "status": "possible_discrepancy",
+        "possible_difference": "1000.00",
+        "comparison_unchanged": true,
+        "explanation_chars": 415,
+        "seconds": 30.075
+      },
+      {
+        "case": "discrepancy_10",
+        "status": "possible_discrepancy",
+        "possible_difference": "1000.00",
+        "comparison_unchanged": true,
+        "explanation_chars": 421,
+        "seconds": 28.813
+      }
+    ]
+  },
+  "decision_outputs_identical": true
+}

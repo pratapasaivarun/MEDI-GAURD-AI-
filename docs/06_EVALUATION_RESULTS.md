@@ -84,7 +84,9 @@ No evaluated case failed its status, payable, and paid-amount labels.
 - Ollama on/off checks were run separately with `ibm/granite4.1:8b`; they passed 3/3 comparison-equality checks and grounded 6/6 explanation outputs. The model wording can still be imprecise even when its amounts and comparison object remain unchanged.
 - The regular CI command disables live Ollama and browser runs. Those are separately recorded local checks.
 
-Historical `12/24` and `13/24` figures came from different runs with an unconfirmed policy-term gate. They are superseded by this case-by-case result; they must not be presented as verified rules accuracy.
+### What the earlier 12/24 and 13/24 figures meant
+
+The archived evaluation note records **13/24** as rules-only status agreement after supplying reviewer-confirmed policy terms, and **12/24** as full-app status agreement with reviewer gates included. These were different measurements on an older 24-case label set, not two versions of the same accuracy score. The 12/24 app figure included cases sent to manual review at the confirmation gate, while the 13/24 figure bypassed that gate with confirmed terms. They were misleading when repeated without their setup, denominator, and distinction, and neither should be described as overall project accuracy. This report replaces them with case-by-case results on the current 30 labeled synthetic cases (including reviewer terms in the harness), plus the separately scoped adversarial parser checks. The old values remain historical only.
 
 ## Adversarial document cases (separate parser check)
 
@@ -125,3 +127,14 @@ Ten fictional deductible-discrepancy comparisons were sent through `explain_comp
 | discrepancy_10 | yes | yes (p. 1) | yes | no | 3/3 |
 
 **Score: 30/30 checks (100.0%).** Validated on ten synthetic explanations only. Full text and per-check results: `evaluation/latest/explanation_quality.json`.
+
+## Performance (ten synthetic discrepancy claims)
+
+Measured on Windows with `ibm/granite4.1:8b`; the Ollama-on model was warm at the start. Each timing includes claim construction, settlement parsing, comparison, and explanation. This is a small local run, not a production capacity estimate.
+
+| Mode | Claims | Mean seconds/claim | Median | Range | App peak RSS | Ollama/llama-server peak RSS |
+|---|---:|---:|---:|---:|---:|---:|
+| Ollama off | 10 | 0.632 | 0.249 | 0.008–4.335 s | 102.6 MiB | 1,532.1 MiB |
+| Ollama on | 10 | 35.716 | 31.423 | 28.813–58.004 s | 102.9 MiB | 5,259.4 MiB |
+
+The off run did not unload the already resident Ollama model, so its Ollama RSS is not an Ollama-free baseline. The on run samples all processes with `ollama` or `llama` in their name every 0.2 seconds; peak values are process working-set samples and can miss shorter spikes. The result file is `evaluation/latest/performance.json`; rerun with `python -m evaluation.scripts.benchmark_claims`.

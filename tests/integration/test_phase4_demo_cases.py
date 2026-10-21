@@ -17,7 +17,7 @@ import requests
 from mediguard.services import application as app
 import mediguard.ingestion.extraction as extraction
 from mediguard.ai.agents import explain_comparison
-from mediguard.reporting.reports import build_comparison_appeal_letter_docx, build_comparison_appeal_letter_pdf
+from mediguard.reporting.reports import build_comparison_appeal_letter_docx, build_comparison_appeal_letter_pdf, build_comparison_appeal_letter_text
 
 
 CASES = Path(__file__).parents[2] / "samples" / "demo_cases"
@@ -146,10 +146,19 @@ def test_fictional_demo_case_runs_through_app_pipeline_with_ollama_off(run_case,
         lab = next(row for row in comparison.categories if row.category == "INVESTIGATION")
         assert lab.clause is not None and lab.clause.page == expected["supporting_clause_page"]
     if expected["appeal_available"]:
-        pdf = build_comparison_appeal_letter_pdf(claim, comparison, settlement, explanation)
-        docx = build_comparison_appeal_letter_docx(claim, comparison, settlement, explanation)
+        letter = build_comparison_appeal_letter_text(claim, provisional_comparison, settlement, explanation, provisional=True)
+        pdf = build_comparison_appeal_letter_pdf(claim, provisional_comparison, settlement, explanation, provisional=True)
+        docx = build_comparison_appeal_letter_docx(claim, provisional_comparison, settlement, explanation, provisional=True)
+        assert "lab" in letter.casefold()
+        assert "diagnostic lab tests and investigations" in letter.casefold()
+        assert "co-pay by INR 300" not in letter
         assert pdf.startswith(b"%PDF")
         assert docx.startswith(b"PK")
+        import fitz
+        from docx import Document
+        from io import BytesIO
+        assert "PROVISIONAL DRAFT" in fitz.open(stream=pdf, filetype="pdf")[0].get_text()
+        assert "PROVISIONAL DRAFT" in " ".join(p.text for p in Document(BytesIO(docx)).paragraphs)
     else:
         assert not app.appeal_draft_available(comparison)
 

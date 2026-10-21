@@ -36,6 +36,6 @@
     "copay": 2500,
     "insurer_estimate": 22500,
     "patient_share": 24500,
-    "settlement_explanation": "The insurer under-applies co-pay by INR 300 and wrongly deducts the payable INR 3000 lab line. This reconciles to INR 2700 excess patient responsibility after the policy 10% share."
+    "settlement_explanation": "The settlement deducts INR 3,000 for the diagnostic lab tests even though the policy says diagnostic investigations are payable during hospitalization. After the policy cost sharing, the insurer payment is INR 2,700 below the estimate. The lower co-payment recorded in the settlement is not a separate error."
   }
 }

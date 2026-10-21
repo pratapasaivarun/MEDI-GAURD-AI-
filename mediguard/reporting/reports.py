@@ -544,6 +544,14 @@ def build_comparison_appeal_letter_text(
     rows = [row for row in comparison.categories if row.status in {"UNEXPLAINED_DEDUCTION", "EXCESS_DEDUCTION"}]
     details = []
     for row in rows:
+        category_labels = {
+            "INVESTIGATION": "Diagnostic lab tests and investigations",
+            "PHARMACY": "Pharmacy and medicines",
+            "ROOM": "Room charges",
+            "ICU": "ICU charges",
+            "DOCTOR_NURSING": "Doctor and nursing charges",
+        }
+        category_label = category_labels.get(row.category, row.category.replace("_", " ").title())
         insurer_reason = row.insurer_reason or "No reason was recorded."
         if insurer_reason.rstrip()[-1:] not in {".", "!", "?"}:
             insurer_reason = insurer_reason.rstrip() + "."
@@ -553,7 +561,7 @@ def build_comparison_appeal_letter_text(
             if row.clause else "No supporting clause found; please check your policy."
         )
         details.append(
-            f"- {row.category}: insurer deduction {_inr_indian(row.insurer_deducted)}; "
+            f"- {category_label}: insurer deduction {_inr_indian(row.insurer_deducted)}; "
             f"amount supported by rules {_inr_indian(row.engine_disallowed)}. "
             f"Insurer reason: {insurer_reason} "
             f"{date_window_note}"

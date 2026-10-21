@@ -33,6 +33,22 @@ Ground truth was committed before this evaluation run. The runner never writes t
 | security | 100.0% | 3/3 | 1.0 | PASS |
 | seconds_per_claim | 0.518045 s/claim | 30/30 | measured | MEASURED |
 
+### Confirmed-term, provisional, and live checks
+
+These measurements come from separate runs: the offline scorecard above reports `run_all`; the app-path and live checks below are recorded in their own JSON files and in the Milestone log.
+
+| Check | Result | Meaning |
+|---|---:|---|
+| Reviewer-confirmed terms, rules/comparison status agreement | **30/30** | The evaluator supplies the hand-labeled reviewer terms and scenario context. |
+| No-confirmation app-path status agreement | **6/30** | **24/30** labeled cases become Manual Review because “Eligible treatment” does not support a safe category assignment. |
+| Result shown before confirmation | **30/30** | Every labeled case shows an amount/range or a Manual Review with a specific reason. |
+| Provisional versus reviewer-confirmed app status and amounts unchanged | **30/30** | The paired app-path run records equal statuses and amounts for all 30 cases. |
+| Claimant-first browser matrix | **8/8** | Three fictional demos, five upload/error cases, and reviewer confirmation/claimant refresh; all 11 displayed INR amounts stayed the same after confirmation. |
+| Ollama ON/OFF decision and amount equality | **13/13** | Three demos plus ten discrepancy cases. Ollama produced explanations for two resolved demos; the other 11 Manual Review results used the template. |
+| Fresh-clone first result time | **1.386 s, 1.465 s, 2.054 s** | Three demo claims; maximum **2.054 s** on this laptop. |
+
+The no-confirmation **6/30** status score is distinct from the **30/30** reviewer-confirmed terms rules/comparison score and from the **30/30** result-shown score. The latter measures whether the claimant receives a usable result or a specific review reason, not whether an ambiguous category can be decided automatically.
+
 ## Confusion matrix
 
 Rows are expected labels and columns are actual labels.
@@ -100,7 +116,7 @@ Measured by `extract_policy_terms` on each source `policy.pdf`, compared with se
 
 ### Claimant-first result time (pinned `.venv`)
 
-The previous multi-minute wait was caused by eagerly indexing each newly uploaded policy: Chroma initialized the configured `BAAI/bge-small-en-v1.5` SentenceTransformer embedding function and embedded policy chunks before rendering the result. Settlement clause lookup also queried the index synchronously, including when a category had no extracted clause or a policy was absent. Claimant assessment now uses extracted page evidence for comparison; uploaded policies never fall back to semantic indexing during first-result calculation. Legacy linked policies without claimant-uploaded pages can still use the index, and claimant policy search or the optional policy-evidence AI initializes it only when explicitly requested. A fresh-database Playwright matrix under the pinned `.venv` with BGE installed passed 8/8. First-result times were 3.934 s (`a_match`), 1.455 s (`b_wrongful_deduction`), and 2.072 s (`c_manual_review`); maximum 3.934 s. Screenshots remain outside the repository in the directory recorded in `evaluation/latest/claimant_browser_results.json`.
+The previous multi-minute wait was caused by eagerly indexing each newly uploaded policy: Chroma initialized the configured `BAAI/bge-small-en-v1.5` SentenceTransformer embedding function and embedded policy chunks before rendering the result. Settlement clause lookup also queried the index synchronously, including when a category had no extracted clause or a policy was absent. Claimant assessment now uses extracted page evidence for comparison; uploaded policies never fall back to semantic indexing during first-result calculation. Legacy linked policies without claimant-uploaded pages can still use the index, and claimant policy search or the optional policy-evidence AI initializes it only when explicitly requested. A fresh-database Playwright matrix from the fresh clone under the pinned `.venv` passed 8/8. First-result times were 1.386 s (`a_match`), 1.465 s (`b_wrongful_deduction`), and 2.054 s (`c_manual_review`); maximum 2.054 s. Screenshots remain outside the repository in the directory recorded in `evaluation/latest/claimant_browser_results.json`.
 
 ## Adversarial document cases (separate parser check)
 
@@ -231,6 +247,6 @@ Full records are in `evaluation/latest/provisional_ollama_equivalence.json`. “
 
 ### Embedding backend and “Pending review” check
 
-The earlier Chroma fallback came from running evaluation with system Python (`C:\Program Files\Python313\python.exe`), which has Chroma but no `sentence-transformers`. The project `.venv` installs the pinned package and has cached BGE-small weights. Re-running evaluation under `.venv` confirms `BAAI/bge-small-en-v1.5` active; retrieval on 30 synthetic queries remains P@1 **30/30**, P@3 **30/90**, P@5 **30/150**, recall@5 **30/30**, MRR **1.000**. The system-Python browser run uses Chroma fallback; the BGE-enabled browser run exceeded five minutes before showing the first result, so BGE browser performance remains unresolved.
+The earlier Chroma fallback came from running evaluation with system Python (`C:\Program Files\Python313\python.exe`), which has Chroma but no `sentence-transformers`. In the fresh-clone `.venv`, `run_all` loaded `BAAI/bge-small-en-v1.5`; retrieval on 30 synthetic queries scored P@1 **30/30**, P@3 **30/90**, P@5 **30/150**, recall@5 **30/30**, and MRR **1.000**. Claimant assessment does not load or wait for BGE: the fresh-clone browser matrix showed results within **2.054 seconds** at the slowest of three demo cases. Semantic policy search still requires the configured embedding package and its first model download.
 
 No claimant UI source contains the literal status “Pending review.” Unavailable amounts are labeled “Not calculable” with the unresolved term/document reason displayed nearby; the comparison uses “Manual review is needed because…” and lists the specific issue. A clean-database Playwright check confirmed those screens. This is a source and browser check, not proof about every possible future screen or state.

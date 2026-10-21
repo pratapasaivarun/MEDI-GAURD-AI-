@@ -8,6 +8,7 @@ import re
 import sqlite3
 import time
 import uuid
+from contextlib import contextmanager
 from datetime import date, datetime, timezone
 from dataclasses import fields, is_dataclass
 from decimal import Decimal, InvalidOperation
@@ -122,8 +123,18 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def db() -> sqlite3.Connection:
-    return open_database(get_db_path())
+@contextmanager
+def db():
+    """Open a short-lived SQLite connection for one application operation."""
+    connection = open_database(get_db_path())
+    try:
+        yield connection
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
 
 
 def _claim_access(claim_id: str, user: dict | sqlite3.Row, write: bool = False) -> sqlite3.Row:

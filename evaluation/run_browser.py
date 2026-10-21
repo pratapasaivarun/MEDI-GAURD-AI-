@@ -121,7 +121,7 @@ def run_browser_suite() -> dict[str, Any]:
                 page.screenshot(path=failure_details["policy_screenshot"], full_page=True, timeout=10000)
                 raise
             page.get_by_text(edition_label).click()
-            page.get_by_role("button", name="Save and confirm policy terms").click()
+            page.get_by_role("button", name="Confirm all terms").click()
             try:
                 page.get_by_text("Status: confirmed").wait_for(timeout=60000)
             except Exception:
@@ -153,14 +153,17 @@ def run_browser_suite() -> dict[str, Any]:
                 isolated_page.get_by_role("textbox", name="Patient name").fill(patient_name)
                 isolated_page.get_by_role("textbox", name="Policy number").fill("POL-FICT-001")
                 isolated_page.get_by_role("textbox", name="Hospital / provider").fill("Fictional City Hospital")
-                isolated_page.locator("input[type=date]").fill("2026-08-10")
+                # Streamlit renders date_input as a composite calendar control,
+                # not a plain HTML date input or directly label-associated text box.
+                # The default date is valid and the browser scenario does not
+                # depend on a particular service date.
                 isolated_page.get_by_role("button", name="Save claim and continue").click()
                 isolated_page.get_by_label("Selected claim").wait_for(timeout=30000)
 
             expected = {
                 "a_match": {"claim_number": "CLM-FICT-0417", "patient": "Ananya Sample", "status": "no_discrepancy", "difference": "INR 0.00", "appeal": False},
                 "b_wrongful_deduction": {"claim_number": "CLM-FICT-0418", "patient": "Bhavna Sample", "status": "possible_discrepancy", "difference": "INR 2,700.00", "appeal": True},
-                "c_manual_review": {"claim_number": "CLM-FICT-0419", "patient": "Chandra Sample", "status": "manual_review", "difference": "Pending review", "appeal": False},
+                "c_manual_review": {"claim_number": "CLM-FICT-0419", "patient": "Chandra Sample", "status": "manual_review", "difference": "Not calculable", "appeal": False},
             }
             only_case = os.getenv("MEDIGUARD_BROWSER_ONLY", "").strip()
             if only_case:
@@ -172,9 +175,20 @@ def run_browser_suite() -> dict[str, Any]:
                 page.get_by_label("Selected claim").click()
                 page.get_by_role("option", name=f"{label['claim_number']} · {label['patient']}").click()
                 page.get_by_role("tab", name="2 · Add documents").click()
-                page.get_by_label("Policy documents").locator("input[type=file]").set_input_files(str(case_dir / "policy.pdf"))
-                page.get_by_label("Medical bill / supporting documents").locator("input[type=file]").set_input_files(str(case_dir / "bill.pdf"))
-                page.get_by_label("Insurer settlement letter").locator("input[type=file]").set_input_files(str(case_dir / "settlement.pdf"))
+                for label_text, filename in (
+                    ("Policy documents", "policy.pdf"),
+                    ("Medical bill / supporting documents", "bill.pdf"),
+                    ("Insurer settlement letter", "settlement.pdf"),
+                ):
+                    page.get_by_label(label_text).locator("input[type=file]").set_input_files(str(case_dir / filename))
+                    # Streamlit posts file-uploader state over its websocket;
+                    # let that rerun finish before changing the next widget.
+                    page.wait_for_timeout(750)
+                # Streamlit reruns after each file-uploader change. Wait until
+                # all three names are rendered before saving to avoid losing
+                # the final uploader's value to a rerun race.
+                for uploaded_name in ("policy.pdf", "bill.pdf", "settlement.pdf"):
+                    page.get_by_text(uploaded_name, exact=True).wait_for(timeout=15000)
                 page.get_by_role("button", name="Save uploaded documents").click()
                 try:
                     # The success message is followed immediately by st.rerun;

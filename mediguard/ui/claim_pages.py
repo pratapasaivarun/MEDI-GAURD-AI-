@@ -383,8 +383,9 @@ def _claim_answer_from_saved_data(question: str, result: dict[str, Any], normali
     asked = question.lower().strip()
     amount_words = ("how much", "amount", "claim got", "claim receive", "claim received", "payable", "paid", "payout", "covered", "insurance pay", "insurance cover")
     if result.get("status") == "manual_review":
-        if any(word in asked for word in amount_words) or "deductible" in asked or "copay" in asked or "co-pay" in asked or any(word in asked for word in ("excluded", "not covered", "limited")):
-            return "A coverage or payment estimate is not available yet. An authorized reviewer must confirm the bill details and applicable policy terms first."
+        if any(word in asked for word in amount_words) or "deductible" in asked or "copay" in asked or "co-pay" in asked or any(word in asked for word in ("excluded", "not covered", "limited", "why", "review", "status")):
+            reason = str(result.get("reason") or "A source value could not be verified.")
+            return f"A coverage or payment estimate is not available yet. Reason: {reason} Next step: ask an authorized reviewer to check the named source value or document issue."
     if any(word in asked for word in amount_words):
         return (
             f"The insurance-covered payable amount is {_inr(result.get('amount_covered'))}. "

@@ -307,3 +307,27 @@ The upload matrix rejected an empty PDF, a `.txt` uploaded as a bill, and a 15 M
 **Expected output:** all tests pass with Ollama disabled.
 
 **Observed output:** `200 passed in 32.61s`. An initial run using the machine-wide pytest temporary directory failed during fixture setup because Windows denied access to that shared temp folder; the isolated repository-local temporary directory resolved it. The workflow YAML is now accepted by GitHub, dependencies install, and the hosted pytest step runs, but that step exits 1. The public job-log endpoint returned HTTP 403 (`Must have admin rights to Repository`), so the hosted test failure cannot be identified from this session. Local Windows tests pass; hosted Linux CI remains unresolved pending the pytest output from the linked Actions run.
+
+## Provisional results and review exports
+
+**What changed:** Provisional claim reports, appeal drafts, and hospital billing notes now state that they are provisional; PDF drafts carry a visible watermark and Word/text versions include the warning. Added coverage for each export type.
+
+**Verify command:** `python -m pytest -q tests --basetemp .pytest-temp`
+
+**Expected output:** all tests pass.
+
+**Observed output:** `228 passed in 98.29s` after the export change.
+
+## Provisional calculations and reviewer term panel
+
+**What changed:** A low-confidence exclusion term no longer blocks every claim amount when none of the bill lines matches it; a matching bill line still routes to specific manual review. The reviewer panel now lists every supported term, including terms not extracted, and shows that a source page is required. Manual-review assistant answers repeat the specific reason and next step. The three fictional demo cases now compare provisional and confirmed app-service results. Updated the demo flow and recorded the current, limited results.
+
+**Verify commands:**
+
+- `python -m pytest -q tests --basetemp .pytest-temp`
+- `$env:MEDIGUARD_EVAL_LIVE='false'; $env:MEDIGUARD_EVAL_BROWSER='false'; python -m evaluation.run_all`
+- `$env:MEDIGUARD_BROWSER_ONLY='a_match'; python -m evaluation.run_browser`
+
+**Expected output:** pytest passes; the offline evaluation reports 30 synthetic cases with no case failures; the provisional app-path check reports 3/3 demo cases; browser checks pass.
+
+**Observed output:** `230 passed in 104.86s`; the 30-case offline evaluation exited successfully with no labeled failures (totals 30/30, other fields 60/60, line items 28/28, OCR 6/6, policy terms 90/90, rules 24/24, comparison decisions 30/30). Retrieval ran on Chroma's default fallback backend (P@1 30/30, P@3 30/90, P@5 30/150, recall@5 30/30, MRR 1.000). The provisional-vs-confirmed app path passed for 3/3 demos. The Playwright reviewer-workspace run returned 0/8 and stayed on its initial tab after the rules action; the claimant-first browser matrix and upload-error screens remain unverified, and the cause is not yet isolated.

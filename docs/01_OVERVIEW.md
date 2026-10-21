@@ -1,6 +1,6 @@
 # MediGuard AI overview
 
-MediGuard AI is a college demonstration prototype that reads fictional hospital bills, insurance policies, and insurer settlement letters. It calculates a policy-based estimate with Python rules and compares that estimate with the insurer's letter. A reviewer confirms policy terms and evidence before the app shows a result.
+MediGuard AI is a college demonstration prototype that reads fictional hospital bills, insurance policies, and insurer settlement letters. It calculates a provisional policy-based estimate with Python rules and compares that estimate with the insurer's letter before policy terms are reviewer-confirmed. Reviewers can correct terms and source pages later; linked claims then recompute and show the reviewer-confirmed status.
 
 It is for demonstrating document extraction, policy evidence, deterministic calculations, settlement comparison, and a patient-support explanation workflow. It does not make insurer decisions and must not be used for real claims or real patient information.
 

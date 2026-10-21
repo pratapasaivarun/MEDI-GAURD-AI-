@@ -1181,9 +1181,34 @@ _POLICY_TERM_LABELS = {
     "waiting_period_months": "waiting period",
     "sub_limits": "category sub-limits",
     "exclusions": "exclusions",
+    "non_payable_categories": "non-payable categories",
     "network_required": "network requirement",
     "preauthorization_required": "pre-authorization requirement",
 }
+
+
+def _policy_term_review_rows(candidates: dict[str, Any]) -> list[dict[str, str]]:
+    """Return a reviewer row for every supported term, including missing ones."""
+    rows: list[dict[str, str]] = []
+    for term_name, label in _POLICY_TERM_LABELS.items():
+        value = candidates.get(term_name)
+        if isinstance(value, dict):
+            rows.append({
+                "Term": label.title(),
+                "Candidate value": str(value.get("value")) if value.get("value") is not None else "Not identified",
+                "Source page": str(value.get("source_page") or "Not identified"),
+                "Confidence": f"{float(value.get('confidence', 0) or 0):.2f}",
+                "Evidence": _policy_term_verification_label(value),
+            })
+        else:
+            rows.append({
+                "Term": label.title(),
+                "Candidate value": "Not identified",
+                "Source page": "Not identified",
+                "Confidence": "—",
+                "Evidence": "No candidate was extracted. Confirm the value and source page from the policy before relying on it.",
+            })
+    return rows
 
 
 def _provisional_policy_terms(payload: dict[str, Any], normalized: dict[str, Any], page_count: int | None = None):
@@ -1215,7 +1240,31 @@ def _provisional_policy_terms(payload: dict[str, Any], normalized: dict[str, Any
             flag(name, "no value was extracted; this term was not assumed to be zero", page)
             safe_payload.pop(name, None)
         elif item.get("needs_review") or method == "llm_fallback" or confidence < 0.85:
-            flag(name, f"extraction confidence is {confidence:.2f}; this candidate was not used until review", page)
+            if name == "exclusions":
+                extracted_exclusions = value if isinstance(value, list) else [value]
+                bill_descriptions = [
+                    " ".join(str(line.get("description") or "").casefold().split())
+                    for line in (normalized.get("line_items") or [])
+                    if isinstance(line, dict)
+                ]
+                matched_exclusion = next((
+                    str(term).strip() for term in extracted_exclusions
+                    if str(term).strip()
+                    and any(str(term).strip().casefold() in description for description in bill_descriptions)
+                ), None)
+                if matched_exclusion:
+                    flag(name, f"the {confidence:.2f}-confidence exclusion candidate {matched_exclusion!r} matches a bill item and was not applied until review", page)
+                else:
+                    label = _POLICY_TERM_LABELS.get(name, name.replace("_", " "))
+                    page_text = f"page {page}" if page else "page not identified"
+                    issues.append({
+                        "term": name,
+                        "page": page,
+                        "reason": f"{label}: {page_text}; the {confidence:.2f}-confidence candidate was not applied, and no current bill line matches it. Confirm this term to check whether the result changes.",
+                    })
+                    safe_payload.pop(name, None)
+            else:
+                flag(name, f"extraction confidence is {confidence:.2f}; this candidate was not used until review", page)
             safe_payload.pop(name, None)
         elif page is None or (page_count and int(page) > int(page_count)):
             flag(name, "a valid source page is required before this candidate can be used", page)
@@ -1844,13 +1893,7 @@ def _render_policy_management(user: dict) -> None:
                         candidates, reviewed = {}, {}
                     st.write(f"Page count: {version['page_count'] or 'not recorded'} · Status: {version['terms_review_status']}")
                     st.caption('Every candidate is shown with its source page and confidence. Correct values against the policy wording before confirming the complete set.')
-                    candidate_rows = []
-                    for term_name, term_value in candidates.items():
-                        if isinstance(term_value, dict):
-                            verification = _policy_term_verification_label(term_value)
-                            candidate_rows.append({"Term": term_name.replace("_", " ").title(), "Candidate value": str(term_value.get("value")), "Source page": term_value.get("source_page") or "Not identified", "Confidence": f"{float(term_value.get('confidence', 0) or 0):.2f}", "Evidence": verification})
-                    if candidate_rows:
-                        st.dataframe(candidate_rows, hide_index=True)
+                    st.dataframe(_policy_term_review_rows(candidates), hide_index=True)
                     if version["terms_review_status"] != "confirmed":
                         st.warning("Provisional: terms not yet confirmed. Existing claims use only reliable, source-backed candidates and show unresolved terms individually.")
                     with st.form(f"policy_search_{version['version_id']}"):

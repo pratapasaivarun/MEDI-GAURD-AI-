@@ -100,6 +100,10 @@ def run_case(monkeypatch, tmp_path):
             app.save_document(claim_id, user, Upload(filename, (case_dir / filename).read_bytes()), doc_type)
         normalized = app.process_claim_documents(claim_id, user_id)
         version_id = normalized["active_policy_version_id"]
+        provisional_rules = app.evaluate_saved_claim(claim_id, user_id, normalized)
+        provisional_comparison, _ = app.run_settlement_comparison(
+            claim_id, user_id, normalized, provisional_rules
+        )
         app.save_policy_terms_review(
             version_id, reviewer_id,
             {"annual_limit": 500000, "deductible": 10000, "copay_percent": 10, "room_limit_per_day": 5000},
@@ -110,18 +114,24 @@ def run_case(monkeypatch, tmp_path):
         with app.db() as conn:
             claim_row = conn.execute("SELECT * FROM claims WHERE claim_id=?", (claim_id,)).fetchone()
         explanation = explain_comparison(comparison, use_llm=False)
-        return manifest, normalized, rules, comparison, settlement, dict(claim_row), explanation, list(ocr_evidence)
+        return (manifest, normalized, rules, comparison, settlement, dict(claim_row),
+                explanation, list(ocr_evidence), provisional_rules, provisional_comparison)
 
     return execute
 
 
 @pytest.mark.parametrize("case_name", ["a_match", "b_wrongful_deduction", "c_manual_review"])
 def test_fictional_demo_case_runs_through_app_pipeline_with_ollama_off(run_case, case_name):
-    manifest, normalized, rules, comparison, settlement, claim, explanation, ocr_evidence = run_case(case_name)
+    (manifest, normalized, rules, comparison, settlement, claim, explanation,
+     ocr_evidence, provisional_rules, provisional_comparison) = run_case(case_name)
     expected = manifest["expected"]
     assert comparison.status == expected["expected_status"], (rules.get("warnings"), settlement, comparison.review_reasons, comparison.categories)
     assert float(comparison.possible_difference) == pytest.approx(expected["possible_difference"])
     assert app.appeal_draft_available(comparison) is expected["appeal_available"]
+    assert provisional_rules["policy_terms_review_status"] == "provisional"
+    assert provisional_comparison.status == expected["expected_status"]
+    assert provisional_comparison.expected_insurer_payment == comparison.expected_insurer_payment
+    assert provisional_comparison.possible_difference == comparison.possible_difference
     assert explanation and "Ollama" not in explanation
     assert normalized["total_amount"]["value"] == expected["bill_total"]
     assert normalized["patient_name"]["value"] == manifest["patient_name"]

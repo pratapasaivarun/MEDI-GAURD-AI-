@@ -26,7 +26,7 @@ Ground truth was committed before this evaluation run. The runner never writes t
 | report_rules | 100.0% | 2/2 | 1.0 | PASS |
 | browser_e2e | n/a | 0/0 | 3 demo cases and 5 upload/error cases pass | NOT RUN |
 | security | 100.0% | 3/3 | 1.0 | PASS |
-| seconds_per_claim | 0.085215 s/claim | 30/30 | measured | MEASURED |
+| seconds_per_claim | 0.602346 s/claim | 30/30 | measured | MEASURED |
 
 ## Confusion matrix
 
@@ -143,3 +143,17 @@ Measured on Windows with `ibm/granite4.1:8b`; the Ollama-on model was warm at th
 | Ollama on | 10 | 35.716 | 31.423 | 28.813–58.004 s | 102.9 MiB | 5,259.4 MiB |
 
 The off run did not unload the already resident Ollama model, so its Ollama RSS is not an Ollama-free baseline. The on run samples all processes with `ollama` or `llama` in their name every 0.2 seconds; peak values are process working-set samples and can miss shorter spikes. The result file is `evaluation/latest/performance.json`; rerun with `python -m evaluation.scripts.benchmark_claims`.
+
+## Supplemental provisional app-path verification
+
+The integration suite now runs each fictional demo case through the application's document processing, unconfirmed policy-term evaluation, and settlement-comparison services, then confirms the terms and repeats the calculation. It checks that the provisional result is visible, the status and comparison values match after confirmation, and a reviewer does not change the amounts when extracted terms were correct.
+
+| Case | Provisional status | Provisional insurer estimate | Settlement payment | Difference | Confirmed run equal? |
+|---|---|---:|---:|---:|---|
+| `a_match` | no discrepancy | INR 22,500 | INR 22,500 | INR 0 | yes |
+| `b_wrongful_deduction` | possible discrepancy | INR 22,500 | INR 19,800 | INR 2,700 | yes |
+| `c_manual_review` | manual review (bill/settlement totals do not reconcile; scanned evidence is reviewed) | INR 22,500 | INR 22,500 | not relied on | yes |
+
+**Result shown without reviewer confirmation: 3/3 demo cases.** Status and insurer estimate matched the subsequent reviewer-confirmed run in all three cases; the comparison difference also matched in the two cases where it is relied on. The app-level comparison is covered by `tests/integration/test_phase4_demo_cases.py`. This is not a result for all 30 evaluation plus 10 adversarial cases.
+
+The Playwright acceptance run remains unresolved. The available browser script currently exercises the reviewer workspace and returned to its initial review-path tab after the rules step (0/8 on the latest attempt). It is not yet isolated whether this is an app tab-state issue or an outdated automation flow. The claimant-first browser matrix, reviewer confirmation in a second browser session, and five upload-error screens have not yet been verified. Do not treat the earlier recorded browser score as current verification of the provisional claimant flow.

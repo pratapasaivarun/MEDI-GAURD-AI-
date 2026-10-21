@@ -54,6 +54,32 @@ def test_claimant_submission_returns_rules_result_without_waiting_for_llm(monkey
     assert claim_pages._assess_claimant_submission("claim-id", "user-id") == result
 
 
+def test_policy_reviewer_panel_lists_missing_terms_and_requires_source_pages():
+    rows = claim_pages._policy_term_review_rows({
+        "annual_limit": {"value": "100000", "source_page": 2, "confidence": 0.95, "method": "deterministic_regex"},
+    })
+    by_term = {row["Term"]: row for row in rows}
+    assert by_term["Annual Limit"]["Candidate value"] == "100000"
+    assert by_term["Annual Limit"]["Source page"] == "2"
+    assert by_term["Deductible"]["Candidate value"] == "Not identified"
+    assert by_term["Deductible"]["Source page"] == "Not identified"
+    assert "source page" in by_term["Deductible"]["Evidence"]
+    assert "Co-Payment Percentage" in by_term
+    assert "Non-Payable Categories" in by_term
+
+
+def test_claim_assistant_names_the_specific_manual_review_reason():
+    answer = claim_pages._claim_answer_from_saved_data(
+        "Why is my claim under review?",
+        {"status": "manual_review", "reason": "Co-payment percentage: page not identified; no reliable value is available."},
+        {}, [],
+    )
+    assert "Co-payment percentage" in answer
+    assert "page not identified" in answer
+    assert "source value or document issue" in answer
+    assert "confirm the bill details and applicable policy terms first" not in answer
+
+
 def test_storage_upload_validator_keeps_file_checks_in_service_layer():
     content, name = validate_upload(Upload("bill.pdf", b"%PDF-1.4 fictional"), "medical_bill", 1)
     assert content == b"%PDF-1.4 fictional"

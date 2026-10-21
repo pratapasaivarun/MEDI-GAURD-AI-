@@ -62,6 +62,7 @@ def test_unconfirmed_policy_terms_are_provisional_and_missing_terms_keep_safe_su
                 "annual_limit": {"term": "annual_limit", "value": 100000, "confidence": 0.95, "source_page": 1, "source_text": "Annual limit INR 100000", "method": "deterministic_regex"},
                 "deductible": {"term": "deductible", "value": 5000, "confidence": 0.95, "source_page": 1, "source_text": "Deductible INR 5000", "method": "deterministic_regex"},
                 "copay_percent": {"term": "copay_percent", "value": 10, "confidence": 0.95, "source_page": 1, "source_text": "Co-pay 10%", "method": "deterministic_regex"},
+                "exclusions": {"term": "exclusions", "value": ["cosmetic surgery"], "confidence": 0.85, "needs_review": True, "source_page": 2, "source_text": "Cosmetic surgery is excluded from coverage.", "method": "deterministic_keyword"},
             }), "pending"),
         )
         conn.execute(
@@ -79,7 +80,16 @@ def test_unconfirmed_policy_terms_are_provisional_and_missing_terms_keep_safe_su
     assert result["policy_terms_review_status"] == "provisional"
     assert result["payable_amount"] == 2250.0
     assert result["claimant_result"]["amount_claimant_pays"] == 5250.0
-    assert result["policy_terms_issues"] == []
+    assert any(issue["term"] == "exclusions" for issue in result["policy_terms_issues"])
+    assert "exclusions" not in result["policy_terms_missing"]
+
+    matched_unconfirmed_exclusion = app.evaluate_saved_claim(
+        "claim-test", user["user_id"],
+        {"total_amount": {"value": 50000.0}, "patient_name": {"value": "Synthetic Patient"}, "hospital_name": {"value": "Example Hospital"}, "line_items": [{"description": "Cosmetic surgery", "category": "surgery", "amount": 50000.0}], "missing_fields": [], "review_fields": []},
+    )
+    assert matched_unconfirmed_exclusion["status"] == "manual_review"
+    assert matched_unconfirmed_exclusion["payable_amount"] is None
+    assert "exclusions" in matched_unconfirmed_exclusion["policy_terms_missing"]
 
     with app.db() as conn:
         incomplete_candidates = json.loads(conn.execute("SELECT policy_terms_json FROM policy_versions WHERE version_id='policy-test'").fetchone()[0])

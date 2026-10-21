@@ -37,6 +37,7 @@ def test_claim_clause_map_uses_indexed_coverage_evidence_and_filters_exclusions(
 
 def test_indexed_clause_with_exception_or_inadmissible_word_is_rejected(monkeypatch):
     monkeypatch.setattr(app, "active_policy_for_claim", lambda *_args: {"version_id": "policy-v1"})
+    monkeypatch.setattr(app, "claim_documents", lambda *_args: [])
     monkeypatch.setattr(app, "retrieve_indexed_policy_evidence", lambda *_args, **_kwargs: [
         {"text": "Clause 3.4: medicines are covered except when not prescribed.", "page": 9},
         {"text": "Clause 3.5: pharmacy costs are reimbursable but inadmissible under this plan.", "page": 10},
@@ -47,6 +48,7 @@ def test_indexed_clause_with_exception_or_inadmissible_word_is_rejected(monkeypa
 
 def test_empty_qualified_retrieval_returns_no_clause(monkeypatch):
     monkeypatch.setattr(app, "active_policy_for_claim", lambda *_args: {"version_id": "policy-v1"})
+    monkeypatch.setattr(app, "claim_documents", lambda *_args: [])
     monkeypatch.setattr(app, "retrieve_indexed_policy_evidence", lambda *_args, **_kwargs: [])
 
     assert app._claim_policy_clause_map("claim-1") == {}
@@ -54,6 +56,7 @@ def test_empty_qualified_retrieval_returns_no_clause(monkeypatch):
 
 def test_coverage_sentence_survives_exclusion_in_later_sentence(monkeypatch):
     monkeypatch.setattr(app, "active_policy_for_claim", lambda *_args: {"version_id": "policy-v1"})
+    monkeypatch.setattr(app, "claim_documents", lambda *_args: [])
     monkeypatch.setattr(app, "retrieve_indexed_policy_evidence", lambda *_args, **_kwargs: [
         {"text": "Clause 3.4: Pharmacy expenses are payable. Charges above the annual limit are excluded.", "page": 9, "section": "coverage"},
     ])
@@ -67,6 +70,7 @@ def test_demo_policy_pharmacy_query_returns_a_usable_coverage_clause(monkeypatch
     with pymupdf.open(policy_path) as document:
         chunks = [chunk for page_number, page in enumerate(document, start=1) for chunk in chunk_policy_text(page.get_text(), page=page_number)]
     monkeypatch.setattr(app, "active_policy_for_claim", lambda *_args: {"version_id": "demo-partial"})
+    monkeypatch.setattr(app, "claim_documents", lambda *_args: [])
     monkeypatch.setattr(app, "retrieve_indexed_policy_evidence", lambda query, _policy_id, limit: [
         {**chunk, "source_name": "partial_policy.pdf"} for chunk in chunks
         if "pharmacy" in query.lower() and "pharmacy" in chunk["text"].lower()
@@ -74,3 +78,18 @@ def test_demo_policy_pharmacy_query_returns_a_usable_coverage_clause(monkeypatch
 
     clauses = app._claim_policy_clause_map("claim-demo")
     assert clauses["PHARMACY"].text == "Prescribed pharmacy medicines during hospitalization are payable within the annual limit."
+
+
+def test_uploaded_policy_clause_map_uses_page_evidence_without_semantic_model(monkeypatch):
+    monkeypatch.setattr(app, "active_policy_for_claim", lambda *_args: {"version_id": "policy-v1"})
+    monkeypatch.setattr(app, "claim_documents", lambda *_args: [{
+        "document_type": "policy",
+        "extracted_json": __import__("json").dumps({"evidence": [
+            {"text": "Clause 3.4: Pharmacy medicines are payable during hospitalization.", "page": 2},
+        ]}),
+    }])
+    monkeypatch.setattr(app, "retrieve_indexed_policy_evidence", lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("should not load embeddings")))
+
+    clauses = app._claim_policy_clause_map("claim-uploaded")
+    assert clauses["PHARMACY"].page == 2
+    assert "payable" in clauses["PHARMACY"].text

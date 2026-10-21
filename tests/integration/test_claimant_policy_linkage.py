@@ -17,13 +17,14 @@ class Upload:
         return self._content
 
 
-def test_claimant_upload_links_policy_when_indexing_fails(monkeypatch, tmp_path):
+def test_claimant_upload_links_policy_without_blocking_on_semantic_index(monkeypatch, tmp_path):
     monkeypatch.setenv("MEDIGUARD_DB_PATH", str(tmp_path / "claims.db"))
     monkeypatch.setenv("MEDIGUARD_STORAGE_DIR", str(tmp_path / "storage"))
     monkeypatch.setenv("MEDIGUARD_TRUSTED_FIXTURES", "false")
+    index_calls = []
     monkeypatch.setattr(
         app, "index_policy_documents",
-        lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("index unavailable")),
+        lambda *_args, **_kwargs: index_calls.append(_args),
     )
     app.init_db()
 
@@ -60,3 +61,5 @@ def test_claimant_upload_links_policy_when_indexing_fails(monkeypatch, tmp_path)
     rules = app.evaluate_saved_claim(claim_id, user_id, normalized)
     assert not any("No matching policy edition is linked" in warning for warning in rules["warnings"])
     assert rules["policy_terms_review_status"] == "provisional"
+    assert index_calls == []
+    assert normalized["policy_index"]["status"] == "deferred_until_policy_search"

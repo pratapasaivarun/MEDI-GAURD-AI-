@@ -850,7 +850,7 @@ def save_policy_terms_review(version_id: str, reviewer_id: str, values: dict[str
         if policy is None:
             raise ValueError("Policy edition was not found.")
         reviewed = {}
-        for name in ("annual_limit", "deductible", "copay_percent", "room_limit_per_day", "icu_limit_per_day", "waiting_period_months", "exclusions", "non_payable_categories", "network_required", "preauthorization_required"):
+        for name in ("annual_limit", "deductible", "copay_percent", "room_limit_per_day", "icu_limit_per_day", "waiting_period_months", "pre_hospitalization_days", "post_hospitalization_days", "exclusions", "non_payable_categories", "network_required", "preauthorization_required"):
             raw = values.get(name)
             if raw in (None, ""):
                 continue
@@ -892,7 +892,7 @@ def save_policy_terms_review(version_id: str, reviewer_id: str, values: dict[str
                 raise ValueError(f"Add the source page for {name.replace('_', ' ')}.")
             if policy["page_count"] and page > int(policy["page_count"]):
                 raise ValueError(f"The source page for {name.replace('_', ' ')} is beyond this policy document.")
-            value = int(number) if name == "waiting_period_months" else number
+            value = int(number) if name in {"waiting_period_months", "pre_hospitalization_days", "post_hospitalization_days"} else number
             reviewed[name] = {"term": name, "value": value, "confidence": 1.0, "source_page": page, "source_name": policy["source_name"], "method": "reviewer_confirmed"}
         clean_sub_limits = {}
         for category, amount in (sub_limits or {}).items():
@@ -1070,17 +1070,10 @@ def process_claim_documents(claim_id: str, user_id: str) -> dict:
                             "INSERT INTO audit_events VALUES (?,?,?,?,?,?)",
                             (str(uuid.uuid4()), claim_id, user_id, "fictional_fixture_policy_attached", json.dumps({"version_id": normalized["active_policy_version_id"], "policy_number": fixture_policy["policy_number"], "source_name": fixture_policy["source_name"], "policy_sha256": [payload.get("sha256") for payload in policy_payloads]}), utc_now()),
                         )
-                # Link the claim to its policy edition before optional clause
-                # indexing. Index failures must not erase the policy record or
-                # leave the claimant with a false "no matching edition" result.
-                normalized["policy_index"] = index_policy_documents(
-                    policy_payloads, normalized["active_policy_version_id"]
-                )
-                with db() as conn:
-                    conn.execute(
-                        "UPDATE policy_versions SET indexed_chunks=? WHERE version_id=?",
-                        (int(normalized["policy_index"].get("chunks_indexed", 0)), normalized["active_policy_version_id"]),
-                    )
+                # Claimant results use the extracted page text and deterministic
+                # rules. Defer semantic indexing/model initialization until a
+                # reviewer or claimant explicitly opens the policy evidence AI.
+                normalized["policy_index"] = {"status": "deferred_until_policy_search", "chunks_indexed": 0}
         except Exception as exc:
             normalized["policy_index_error"] = str(exc)
     with db() as conn:
@@ -1114,13 +1107,17 @@ def _extract_one(doc):
 def _derived_claim_context(claim_id: str, user_id: str, normalized: dict) -> dict[str, Any]:
     user = get_user(user_id)
     context = load_adjudication_context(claim_id, user)
+    admission = (normalized.get("admission_date") or {}).get("value")
+    discharge = (normalized.get("discharge_date") or {}).get("value")
+    if admission:
+        context["admission_date"] = admission
+    if discharge:
+        context["discharge_date"] = discharge
     line_items = normalized.get("line_items") or []
     room_items = [item for item in line_items if normalize_category(item.get("category")) == ROOM_CATEGORY]
     non_room_total = sum((Decimal(str(item.get("amount", 0) or 0)) for item in line_items if normalize_category(item.get("category")) != ROOM_CATEGORY), Decimal("0"))
     if room_items:
         context.setdefault("room_charge", sum((Decimal(str(item.get("amount", 0) or 0)) for item in room_items), Decimal("0")))
-        admission = (normalized.get("admission_date") or {}).get("value")
-        discharge = (normalized.get("discharge_date") or {}).get("value")
         if admission and discharge:
             try:
                 start = datetime.fromisoformat(str(admission))
@@ -1197,6 +1194,8 @@ _POLICY_TERM_LABELS = {
     "room_limit_per_day": "room limit per day",
     "icu_limit_per_day": "ICU limit per day",
     "waiting_period_months": "waiting period",
+    "pre_hospitalization_days": "pre-hospitalization window",
+    "post_hospitalization_days": "post-hospitalization window",
     "sub_limits": "category sub-limits",
     "exclusions": "exclusions",
     "non_payable_categories": "non-payable categories",
@@ -1451,13 +1450,37 @@ def _claim_policy_clause_map(claim_id: str) -> dict[str, Clause]:
     }
     coverage = re.compile(r"\b(?:cover(?:ed|s)?|payable|reimburs\w*|eligible|includ(?:ed|es))\b", re.I)
     exclusions = re.compile(r"\b(?:exclu\w*|not\s+covered|not\s+payable|non[- ]payable|except|inadmissible)\b", re.I)
+    direct_evidence: list[dict[str, Any]] = []
+    has_claim_uploaded_policy = False
+    for document in claim_documents(claim_id):
+        if document["document_type"] != "policy":
+            continue
+        has_claim_uploaded_policy = True
+        if not document["extracted_json"]:
+            continue
+        try:
+            payload = json.loads(document["extracted_json"])
+        except (TypeError, json.JSONDecodeError):
+            continue
+        for evidence in payload.get("evidence", []):
+            if isinstance(evidence, dict) and evidence.get("text"):
+                direct_evidence.append(evidence)
     for category, terms in category_terms.items():
         query = f"{terms} covered payable reimbursed under policy benefit"
-        try:
-            evidence_rows = retrieve_indexed_policy_evidence(query, policy_id, limit=8)
-        except Exception:
-            continue
-        for evidence in evidence_rows:
+        category_evidence = [
+            evidence for evidence in direct_evidence
+            if category_match[category].search(str(evidence.get("text") or ""))
+        ]
+        if not has_claim_uploaded_policy and policy:
+            try:
+                # Legacy admin-linked policies without claim-uploaded source
+                # pages can use the semantic index. Claimant uploads stay on
+                # extracted page evidence so first-result rendering never waits
+                # for model initialization or embedding.
+                category_evidence = retrieve_indexed_policy_evidence(query, policy_id, limit=8)
+            except Exception:
+                continue
+        for evidence in category_evidence:
             text = re.sub(r"\s+", " ", str(evidence.get("text") or "")).strip()
             if not text:
                 continue
@@ -1771,6 +1794,20 @@ def run_agents_for_claim(claim_id: str, user_id: str, normalized: dict, rules: d
         policy_source = "claim-uploaded policy"
     if not policy_text.strip():
         raise ValueError("No usable policy evidence found. Ingest an active edition in Policy management or upload and extract a policy document in Claim review.")
+    if active_policy and not int(active_policy["indexed_chunks"] or 0):
+        policy_payloads = []
+        for document in claim_documents(claim_id, user):
+            if document["document_type"] == "policy" and document["extracted_json"]:
+                try:
+                    policy_payloads.append(json.loads(document["extracted_json"]))
+                except (TypeError, json.JSONDecodeError):
+                    continue
+        if policy_payloads:
+            if progress_callback:
+                progress_callback("Preparing policy search for the optional explanation. Your Python-calculated result is already available.")
+            indexed = index_policy_documents(policy_payloads, policy_id)
+            with db() as conn:
+                conn.execute("UPDATE policy_versions SET indexed_chunks=? WHERE version_id=?", (int(indexed.get("chunks_indexed", 0)), policy_id))
     if not st.session_state.get("ollama_warmed"):
         try:
             warm_ollama()
@@ -1960,6 +1997,10 @@ def _render_policy_management(user: dict) -> None:
                         with c:
                             waiting = st.text_input('Waiting period (months, optional)', value=_term_default('waiting_period_months'), key=f"waiting_{version['version_id']}")
                             waiting_page = st.number_input('Waiting period source page', min_value=0, value=_page_default('waiting_period_months'), step=1, key=f"waiting_page_{version['version_id']}")
+                            pre_days = st.text_input('Pre-hospitalization window (days, optional)', value=_term_default('pre_hospitalization_days'), key=f"pre_days_{version['version_id']}")
+                            pre_days_page = st.number_input('Pre-hospitalization source page', min_value=0, value=_page_default('pre_hospitalization_days'), step=1, key=f"pre_days_page_{version['version_id']}")
+                            post_days = st.text_input('Post-hospitalization window (days, optional)', value=_term_default('post_hospitalization_days'), key=f"post_days_{version['version_id']}")
+                            post_days_page = st.number_input('Post-hospitalization source page', min_value=0, value=_page_default('post_hospitalization_days'), step=1, key=f"post_days_page_{version['version_id']}")
                             sub_default = (reviewed.get('sub_limits') or candidates.get('sub_limits') or {}).get('value', {})
                             sub_text = st.text_area('Sub-limits JSON (optional)', value=json.dumps(sub_default, ensure_ascii=False), key=f"sub_limits_{version['version_id']}")
                             sub_page = st.number_input('Sub-limits source page', min_value=0, value=_page_default('sub_limits'), step=1, key=f"sub_page_{version['version_id']}")
@@ -1981,10 +2022,10 @@ def _render_policy_management(user: dict) -> None:
                                 raise ValueError('Sub-limits must be a JSON object of category to amount.')
                             review_status = save_policy_terms_review(
                                 version['version_id'], user['user_id'],
-                                {'annual_limit': annual, 'deductible': deductible, 'copay_percent': copay, 'room_limit_per_day': room_limit, 'icu_limit_per_day': icu_limit, 'waiting_period_months': waiting, 'exclusions': exclusion_text, 'non_payable_categories': nonpayable_text,
+                                {'annual_limit': annual, 'deductible': deductible, 'copay_percent': copay, 'room_limit_per_day': room_limit, 'icu_limit_per_day': icu_limit, 'waiting_period_months': waiting, 'pre_hospitalization_days': pre_days, 'post_hospitalization_days': post_days, 'exclusions': exclusion_text, 'non_payable_categories': nonpayable_text,
                                  'network_required': None if network_requirement == 'Not confirmed' else network_requirement == 'Required',
                                  'preauthorization_required': None if preauthorization_requirement == 'Not confirmed' else preauthorization_requirement == 'Required'},
-                                {'annual_limit': int(annual_page), 'deductible': int(deductible_page), 'copay_percent': int(copay_page), 'room_limit_per_day': int(room_page), 'icu_limit_per_day': int(icu_page), 'waiting_period_months': int(waiting_page), 'sub_limits': int(sub_page), 'exclusions': int(exclusion_page), 'non_payable_categories': int(nonpayable_page),
+                                {'annual_limit': int(annual_page), 'deductible': int(deductible_page), 'copay_percent': int(copay_page), 'room_limit_per_day': int(room_page), 'icu_limit_per_day': int(icu_page), 'waiting_period_months': int(waiting_page), 'pre_hospitalization_days': int(pre_days_page), 'post_hospitalization_days': int(post_days_page), 'sub_limits': int(sub_page), 'exclusions': int(exclusion_page), 'non_payable_categories': int(nonpayable_page),
                                  'network_required': int(network_page), 'preauthorization_required': int(preauthorization_page)},
                                 sub_value,
                             )

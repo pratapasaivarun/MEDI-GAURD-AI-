@@ -1,5 +1,6 @@
 from decimal import Decimal
 from datetime import date
+import json
 import re
 import uuid
 from pathlib import Path
@@ -149,6 +150,23 @@ Amount Paid: INR 108900
             return [{"text": "Clause 3.4: Pharmacy medicines during hospitalization are payable.", "page": 9, "section": "3.4"}]
         return []
 
+    original_claim_documents = app.claim_documents
+
+    def documents_with_lab_clause(claim_id, user=None):
+        documents = [dict(row) for row in original_claim_documents(claim_id, user)]
+        for document in documents:
+            if document["document_type"] != "policy":
+                continue
+            payload = json.loads(document["extracted_json"])
+            payload.setdefault("evidence", []).append({
+                "text": "Clause 5.2: Lab tests and diagnostic investigations during hospitalization are payable.",
+                "page": 11,
+                "section": "5.2",
+            })
+            document["extracted_json"] = json.dumps(payload)
+        return documents
+
+    monkeypatch.setattr(app, "claim_documents", documents_with_lab_clause)
     monkeypatch.setattr(app, "retrieve_indexed_policy_evidence", retrieve)
     lab_item = next(item for item in normalized["line_items"] if item.get("category") == "INVESTIGATION")
     lab_item["date"] = "2026-08-12"
@@ -163,3 +181,16 @@ Amount Paid: INR 108900
     undated_lab = next(row for row in undated.categories if row.category == "INVESTIGATION")
     assert undated.status == "manual_review"
     assert undated_lab.status == "REVIEW"
+
+
+def test_saved_claim_rule_context_includes_extracted_admission_and_discharge_dates(monkeypatch):
+    monkeypatch.setattr(app, "get_user", lambda _user_id: {"user_id": "fictional-user"})
+    monkeypatch.setattr(app, "load_adjudication_context", lambda *_args: {})
+    normalized = {
+        "admission_date": {"value": "2026-08-10"},
+        "discharge_date": {"value": "2026-08-14"},
+        "line_items": [],
+    }
+    context = app._derived_claim_context("fictional-claim", "fictional-user", normalized)
+    assert context["admission_date"] == "2026-08-10"
+    assert context["discharge_date"] == "2026-08-14"

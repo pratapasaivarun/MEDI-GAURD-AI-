@@ -11,10 +11,28 @@
       "provisional": true,
       "expected_payable": 8100,
       "provisional_payable": 8100.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 8100.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          8100.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 0.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "One or more comparison categories lack sufficient evidence."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -31,10 +49,28 @@
       "provisional": true,
       "expected_payable": 18000,
       "provisional_payable": 18000.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 18000.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          18000.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 0.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "One or more comparison categories lack sufficient evidence."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -51,10 +87,28 @@
       "provisional": true,
       "expected_payable": 14000,
       "provisional_payable": 14000.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 14000.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          14000.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 0.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "One or more comparison categories lack sufficient evidence."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -71,10 +125,28 @@
       "provisional": true,
       "expected_payable": 10000,
       "provisional_payable": 10000.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 10000.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          10000.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 0.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "One or more comparison categories lack sufficient evidence."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -91,10 +163,28 @@
       "provisional": true,
       "expected_payable": 22500,
       "provisional_payable": 22500.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 22500.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          22500.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 0.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "One or more comparison categories lack sufficient evidence."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -111,10 +201,28 @@
       "provisional": true,
       "expected_payable": 8000,
       "provisional_payable": 8000.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 8000.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          8000.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 0.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "One or more comparison categories lack sufficient evidence."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -131,10 +239,28 @@
       "provisional": true,
       "expected_payable": 16000,
       "provisional_payable": 16000.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 16000.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          16000.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 0.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "One or more comparison categories lack sufficient evidence."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -151,10 +277,28 @@
       "provisional": true,
       "expected_payable": 27000,
       "provisional_payable": 27000.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 27000.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          27000.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 0.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "One or more comparison categories lack sufficient evidence."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -171,10 +315,28 @@
       "provisional": true,
       "expected_payable": 13500,
       "provisional_payable": 13500.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 13500.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          13500.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 0.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "One or more comparison categories lack sufficient evidence."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -191,10 +353,28 @@
       "provisional": true,
       "expected_payable": 40500,
       "provisional_payable": 40500.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 40500.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          40500.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 0.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "One or more comparison categories lack sufficient evidence."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -211,10 +391,28 @@
       "provisional": true,
       "expected_payable": 8100,
       "provisional_payable": 8100.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 8100.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          8100.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 1000.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "UNRECONCILED_DIFFERENCE: category-level payout effects do not reconcile with the patient-share difference."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -231,10 +429,28 @@
       "provisional": true,
       "expected_payable": 18000,
       "provisional_payable": 18000.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 18000.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          18000.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 1000.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "UNRECONCILED_DIFFERENCE: category-level payout effects do not reconcile with the patient-share difference."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -251,10 +467,28 @@
       "provisional": true,
       "expected_payable": 14000,
       "provisional_payable": 14000.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 14000.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          14000.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 1000.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "UNRECONCILED_DIFFERENCE: category-level payout effects do not reconcile with the patient-share difference."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -271,10 +505,28 @@
       "provisional": true,
       "expected_payable": 10000,
       "provisional_payable": 10000.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 10000.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          10000.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 1000.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "UNRECONCILED_DIFFERENCE: category-level payout effects do not reconcile with the patient-share difference."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -291,10 +543,28 @@
       "provisional": true,
       "expected_payable": 22500,
       "provisional_payable": 22500.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 22500.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          22500.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 1000.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "UNRECONCILED_DIFFERENCE: category-level payout effects do not reconcile with the patient-share difference."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -311,10 +581,28 @@
       "provisional": true,
       "expected_payable": 8000,
       "provisional_payable": 8000.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 8000.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          8000.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 1000.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "UNRECONCILED_DIFFERENCE: category-level payout effects do not reconcile with the patient-share difference."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -331,10 +619,28 @@
       "provisional": true,
       "expected_payable": 16000,
       "provisional_payable": 16000.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 16000.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          16000.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 1000.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "UNRECONCILED_DIFFERENCE: category-level payout effects do not reconcile with the patient-share difference."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -351,10 +657,28 @@
       "provisional": true,
       "expected_payable": 27000,
       "provisional_payable": 27000.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 27000.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          27000.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 1000.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "UNRECONCILED_DIFFERENCE: category-level payout effects do not reconcile with the patient-share difference."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -371,10 +695,28 @@
       "provisional": true,
       "expected_payable": 13500,
       "provisional_payable": 13500.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 13500.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          13500.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 1000.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "UNRECONCILED_DIFFERENCE: category-level payout effects do not reconcile with the patient-share difference."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -391,10 +733,28 @@
       "provisional": true,
       "expected_payable": 40500,
       "provisional_payable": 40500.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 40500.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          40500.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 1000.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "UNRECONCILED_DIFFERENCE: category-level payout effects do not reconcile with the patient-share difference."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -411,10 +771,25 @@
       "provisional": true,
       "expected_payable": null,
       "provisional_payable": 8100.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 8100.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          8100.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [],
       "provisional_difference": 8100.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation.",
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
         "Settlement amount paid was not identified."
       ],
       "policy_version_linked": true,
@@ -432,10 +807,25 @@
       "provisional": true,
       "expected_payable": null,
       "provisional_payable": 18000.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 18000.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          18000.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [],
       "provisional_difference": 0.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation.",
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
         "Settlement totals do not reconcile within INR 1.",
         "CLAIM_ID_MISMATCH: settlement claim reference does not match the selected claim."
       ],
@@ -454,10 +844,25 @@
       "provisional": true,
       "expected_payable": null,
       "provisional_payable": 14000.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 14000.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          14000.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [],
       "provisional_difference": 0.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation.",
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
         "Settlement deductions could not be read from the letter.",
         "Settlement totals do not reconcile within INR 1."
       ],
@@ -476,10 +881,25 @@
       "provisional": true,
       "expected_payable": null,
       "provisional_payable": 10000.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 10000.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          10000.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [],
       "provisional_difference": 0.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Treatment charges. The extracted line item requires reviewer confirmation.",
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
         "Settlement totals do not reconcile within INR 1."
       ],
       "policy_version_linked": true,
@@ -497,10 +917,25 @@
       "provisional": true,
       "expected_payable": null,
       "provisional_payable": 22500.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 22500.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          22500.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [],
       "provisional_difference": 22500.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation.",
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
         "Conflicting settlement amounts paid were found."
       ],
       "policy_version_linked": true,
@@ -518,10 +953,28 @@
       "provisional": true,
       "expected_payable": 0,
       "provisional_payable": 0.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 0.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          0.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 0.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "One or more comparison categories lack sufficient evidence."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -538,6 +991,12 @@
       "provisional": true,
       "expected_payable": null,
       "provisional_payable": 0.0,
+      "provisional_payable_range": null,
+      "displayed_estimate": {
+        "amount": 0.0
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [],
       "provisional_difference": 0.0,
       "policy_terms_missing": [],
       "specific_reasons": [
@@ -558,10 +1017,28 @@
       "provisional": true,
       "expected_payable": 10000,
       "provisional_payable": 10000.0,
+      "provisional_payable_range": {
+        "lower": 0.0,
+        "upper": 10000.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          0.0,
+          10000.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 0.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "One or more comparison categories lack sufficient evidence."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -578,10 +1055,28 @@
       "provisional": true,
       "expected_payable": 8100,
       "provisional_payable": 12600.0,
+      "provisional_payable_range": {
+        "lower": 3600.0,
+        "upper": 12600.0,
+        "reasons": [
+          "the room cap could apply if this line is a room charge"
+        ]
+      },
+      "displayed_estimate": {
+        "range": [
+          3600.0,
+          12600.0
+        ]
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": 4500.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_RANGE: the room cap could apply if this line is a room charge. The estimate is shown as a range until each listed line is categorized.",
+        "UNRECONCILED_DIFFERENCE: category-level payout effects do not reconcile with the patient-share difference."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
@@ -597,22 +1092,35 @@
       "result_shown": true,
       "provisional": true,
       "expected_payable": 0,
-      "provisional_payable": 9000.0,
-      "provisional_difference": 9000.0,
+      "provisional_payable": 0.0,
+      "provisional_payable_range": null,
+      "displayed_estimate": {
+        "amount": 0.0
+      },
+      "amount_or_range_shown": true,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
+      "provisional_difference": 0.0,
       "policy_terms_missing": [],
       "specific_reasons": [
-        "Line item requires reviewer confirmation: Treatment charges. The extracted line item requires reviewer confirmation."
+        "UNCATEGORIZED_ASSUMPTION: listed uncategorized lines were treated as general covered charges; no category-specific cap or exclusion was identified in the available terms.",
+        "One or more comparison categories lack sufficient evidence."
       ],
       "policy_version_linked": true,
       "confirmed_actual": "manual_review",
-      "confirmed_payable": 9000.0,
-      "confirmed_difference": 9000.0,
+      "confirmed_payable": 0.0,
+      "confirmed_difference": 0.0,
       "provisional_amounts_equal_confirmed": true,
       "provisional_status_equal_confirmed": true
     }
   ],
   "evaluation_status_match": {
     "numerator": 6,
+    "denominator": 30
+  },
+  "evaluation_amount_or_range_shown": {
+    "numerator": 30,
     "denominator": 30
   },
   "evaluation_result_shown": {
@@ -632,6 +1140,12 @@
       "provisional": true,
       "expected_payable": null,
       "provisional_payable": null,
+      "provisional_payable_range": null,
+      "displayed_estimate": null,
+      "amount_or_range_shown": false,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": null,
       "policy_terms_missing": [
         "active_policy_terms"
@@ -650,6 +1164,12 @@
       "provisional": true,
       "expected_payable": null,
       "provisional_payable": null,
+      "provisional_payable_range": null,
+      "displayed_estimate": null,
+      "amount_or_range_shown": false,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": null,
       "policy_terms_missing": [
         "active_policy_terms"
@@ -668,6 +1188,12 @@
       "provisional": true,
       "expected_payable": null,
       "provisional_payable": null,
+      "provisional_payable_range": null,
+      "displayed_estimate": null,
+      "amount_or_range_shown": false,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": null,
       "policy_terms_missing": [
         "active_policy_terms"
@@ -686,6 +1212,12 @@
       "provisional": true,
       "expected_payable": null,
       "provisional_payable": null,
+      "provisional_payable_range": null,
+      "displayed_estimate": null,
+      "amount_or_range_shown": false,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": null,
       "policy_terms_missing": [
         "active_policy_terms"
@@ -706,6 +1238,12 @@
       "provisional": true,
       "expected_payable": null,
       "provisional_payable": null,
+      "provisional_payable_range": null,
+      "displayed_estimate": null,
+      "amount_or_range_shown": false,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": null,
       "policy_terms_missing": [
         "active_policy_terms"
@@ -724,6 +1262,12 @@
       "provisional": true,
       "expected_payable": null,
       "provisional_payable": null,
+      "provisional_payable_range": null,
+      "displayed_estimate": null,
+      "amount_or_range_shown": false,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": null,
       "policy_terms_missing": [
         "active_policy_terms"
@@ -742,6 +1286,12 @@
       "provisional": true,
       "expected_payable": null,
       "provisional_payable": null,
+      "provisional_payable_range": null,
+      "displayed_estimate": null,
+      "amount_or_range_shown": false,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": null,
       "policy_terms_missing": [
         "active_policy_terms"
@@ -760,6 +1310,12 @@
       "provisional": true,
       "expected_payable": null,
       "provisional_payable": null,
+      "provisional_payable_range": null,
+      "displayed_estimate": null,
+      "amount_or_range_shown": false,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": null,
       "policy_terms_missing": [
         "active_policy_terms"
@@ -780,6 +1336,12 @@
       "provisional": true,
       "expected_payable": null,
       "provisional_payable": null,
+      "provisional_payable_range": null,
+      "displayed_estimate": null,
+      "amount_or_range_shown": false,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": null,
       "policy_terms_missing": [
         "active_policy_terms"
@@ -798,6 +1360,12 @@
       "provisional": true,
       "expected_payable": null,
       "provisional_payable": null,
+      "provisional_payable_range": null,
+      "displayed_estimate": null,
+      "amount_or_range_shown": false,
+      "mismatch_causes": [
+        "decision status differs from the hand-labeled expected status"
+      ],
       "provisional_difference": null,
       "policy_terms_missing": [
         "active_policy_terms"
@@ -816,6 +1384,6 @@
   "adversarial_decision_labels": "The casebook labels extraction and settlement parsing only; it supplies no policy PDF or final decision labels. Manual Review is the correct safe app outcome because no policy edition is supplied.",
   "embedding_backend": {
     "configured": "BAAI/bge-small-en-v1.5",
-    "active": "BAAI/bge-small-en-v1.5"
+    "active": "deferred until optional policy search"
   }
 }

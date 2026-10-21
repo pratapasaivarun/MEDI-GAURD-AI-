@@ -97,7 +97,9 @@ def run_claimant_browser_suite() -> dict[str, Any]:
 
     def assess(page: Any, *, has_settlement: bool = True) -> str:
         page.get_by_role("button", name="Submit claim for assessment").click()
-        page.get_by_text("Your claim result", exact=True).wait_for(timeout=300000)
+        result_started = time.perf_counter()
+        page.get_by_text("Your claim result", exact=True).wait_for(timeout=60000)
+        assess.time_to_first_result_seconds = round(time.perf_counter() - result_started, 3)
         if has_settlement:
             page.get_by_text("Settlement comparison", exact=True).wait_for(timeout=60000)
         else:
@@ -142,6 +144,7 @@ def run_claimant_browser_suite() -> dict[str, Any]:
                 shown = "Pending review" not in body or "because" in body.casefold() or "reason" in body.casefold()
                 outcomes.append({"case": case_name, "expected": manifest["expected"]["expected_status"], "actual": body,
                                  "passed": status_match and shown, "result_shown": shown,
+                                 "time_to_first_result_seconds": assess.time_to_first_result_seconds,
                                  "screenshot": str(screenshot), "claimant_email": f"{manifest['claim_number'].lower()}@fictional.test"})
                 pages[case_name] = page
 
@@ -232,7 +235,10 @@ def run_claimant_browser_suite() -> dict[str, Any]:
                 uploader.set_input_files(str(error_dir / filename))
                 page.get_by_text(filename, exact=True).wait_for(timeout=15000)
                 page.get_by_role("button", name="Save documents").click()
-                page.wait_for_timeout(1200)
+                if case_name != "corrupted_pdf":
+                    page.get_by_text("One or more files could not be saved", exact=False).wait_for(timeout=15000)
+                else:
+                    page.wait_for_timeout(1200)
                 body = page.locator("body").inner_text()
                 if case_name == "corrupted_pdf" and "document(s) ready for assessment" in body:
                     # It passes upload validation but must fail safely during extraction.
@@ -281,8 +287,11 @@ def run_claimant_browser_suite() -> dict[str, Any]:
         scratch.cleanup()
 
     passed_count = sum(bool(item.get("passed")) for item in outcomes[:8])
+    demo_times = [item["time_to_first_result_seconds"] for item in outcomes if item.get("case") in {"a_match", "b_wrongful_deduction", "c_manual_review"} and item.get("time_to_first_result_seconds") is not None]
     result = {"numerator": passed_count, "denominator": 8, "score": passed_count / 8,
               "pass": passed_count == 8 and reviewer_refresh.get("passed", False),
+              "time_to_first_result_seconds": demo_times,
+              "max_time_to_first_result_seconds": max(demo_times) if demo_times else None,
               "cases": outcomes, "reviewer_refresh": reviewer_refresh,
               "screenshots_directory": str(screenshots), "failure": failure}
     if failure:
@@ -295,6 +304,8 @@ def run_claimant_browser_suite() -> dict[str, Any]:
         "numerator": passed_count,
         "denominator": 8,
         "pass": result["pass"],
+        "time_to_first_result_seconds": demo_times,
+        "max_time_to_first_result_seconds": result["max_time_to_first_result_seconds"],
         "reviewer_refresh": reviewer_refresh,
         "cases": [{key: case.get(key) for key in ("case", "expected", "passed", "result_shown", "screenshot") if key in case}
                   for case in outcomes],

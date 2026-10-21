@@ -517,6 +517,7 @@ def evaluate_claim(
     line_results: list[dict[str, Any]] = []
     uncategorized_lines: list[dict[str, Any]] = []
     unknown_category_risks: list[str] = []
+    uncertain_unknown_amount = Decimal("0")
     total_room_reduction = Decimal("0")
     non_payables = {str(value).lower() for value in terms.source.get("non_payable_categories", {}).get("value", [])}
     for index, item in enumerate(items):
@@ -536,14 +537,6 @@ def evaluate_claim(
                 "amount": float(amount),
                 "assumption": "treated as a general covered charge for the upper estimate",
             })
-            if terms.source.get("exclusions", {}).get("value"):
-                unknown_category_risks.append("policy exclusions could apply")
-            if terms.sub_limits:
-                unknown_category_risks.append("category-specific sub-limits could apply")
-            if terms.room_limit_per_day is not None:
-                unknown_category_risks.append("the room cap could apply if this line is a room charge")
-            if terms.icu_limit_per_day is not None or terms.sub_limits.get("icu") is not None:
-                unknown_category_risks.append("the ICU cap could apply if this line is an ICU charge")
         if category in non_payables or any(term in str(item.get("description") or "").lower() for term in non_payables):
             evaluated = {"description": item.get("description", "Unspecified item"), "category": category, "amount": float(amount), "status": "excluded", "covered_amount": 0.0, "applied_rule": "non_payable", "calculation": "This category is listed as non-payable in the reviewed policy terms."}
         else:
@@ -579,6 +572,18 @@ def evaluate_claim(
 
         if duplicate_info[index]["duplicate"]:
             evaluated["possible_duplicate"] = True
+        if unknown_category and evaluated.get("status") not in {"excluded", "fail"}:
+            uncertain_unknown_amount += amount
+            if terms.source.get("exclusions", {}).get("value"):
+                unknown_category_risks.append("policy exclusions could apply")
+            if terms.sub_limits:
+                unknown_category_risks.append("category-specific sub-limits could apply")
+            if terms.room_limit_per_day is not None:
+                unknown_category_risks.append("the room cap could apply if this line is a room charge")
+            if terms.icu_limit_per_day is not None or terms.sub_limits.get("icu") is not None:
+                unknown_category_risks.append("the ICU cap could apply if this line is an ICU charge")
+        elif unknown_category and evaluated.get("status") == "excluded":
+            uncategorized_lines[-1]["assumption"] = f"category unknown; this line is excluded by the {evaluated.get('applied_rule') or 'policy'} rule"
         line_results.append(evaluated)
         if evaluated.get("status") == "needs_review":
             review_required = True
@@ -611,8 +616,7 @@ def evaluate_claim(
         # under an applicable exclusion/cap, so do not claim that amount as
         # definitely eligible. Known, categorized lines keep their calculated
         # amounts. Upper bound is the ordinary general-charge result above.
-        unknown_amount = sum((money(row["amount"]) for row in uncategorized_lines), Decimal("0"))
-        lower_covered = max(Decimal("0"), covered - unknown_amount)
+        lower_covered = max(Decimal("0"), covered - uncertain_unknown_amount)
         if annual_limit is not None:
             lower_covered = min(lower_covered, annual_limit)
         lower_deductible = min(money(terms.deductible), lower_covered) if terms.deductible is not None else None

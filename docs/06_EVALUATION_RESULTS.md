@@ -4,7 +4,7 @@
 
 Policy-term scores below are measured by extracting directly from each case's `policy.pdf` and comparing with separately committed source-PDF labels. The measurement does not load reviewer-confirmed term files. Core fields (annual limit, deductible, co-pay) are 90/90. The expanded term-by-term extraction results are: deductible 30/30; co-pay 30/30; room cap 30/30; ICU cap 30/30 (absent as labeled); exclusions 30/30 (absent as labeled); date window 30/30; annual limit 30/30. Total across these seven checks: 210/210. See `evaluation/latest/policy_pdf_term_scores.json` for case-level values.
 
-Fixture audit note (2026-10-21): the hand-labeled `edge_05` outcome remained INR 0, but its original policy PDF had no date-window rule and its scanned bill had no service date. That made the label impossible to verify from its source documents. The expected-results file was left unchanged. The fictional source policy and scanned bill were corrected to show a 30-day pre-hospitalization window and a service date 70 days before admission; the date-window clause is now extracted from page 1 and the charge is excluded by the documented rule. If a future bill line has no readable date while a date-window term applies, the app states that the check could not be done and routes the line to review.
+Fixture audit note (2026-10-21): the hand-labeled `edge_05` outcome remained INR 0, but its original policy PDF had no date-window rule and its scanned bill had no service date. That made the label impossible to verify from its source documents. The expected-results file was left unchanged. The fictional source policy and scanned bill were corrected to show a 30-day pre-hospitalization window and a service date 70 days before admission; the date-window clause is extracted from page 1 and the dated charge is excluded by the documented rule. The reviewer form now accepts both date-window terms with source-page references. If a future bill line has no readable date while a date-window term applies, the app states that the check could not be done and routes the line to review.
 
 Ground truth was committed before this evaluation run. The runner never writes to expected labels.
 
@@ -94,6 +94,14 @@ The historical 13/24 score was rules-only status agreement with reviewer-confirm
 
 The sections below are separately measured checks. The standard evaluation command refreshes the 30-case scorecard and keeps these results attached.
 
+### Policy-term extraction from source PDFs
+
+Measured by `extract_policy_terms` on each source `policy.pdf`, compared with separately committed source-PDF labels (not the reviewer-confirmed terms JSON): deductible 30/30; co-pay 30/30; room cap 30/30; ICU cap 30/30; exclusions 30/30; date window 30/30; annual limit 30/30. The ICU and exclusion denominators include PDFs where the labeled correct value is absence. See `evaluation/latest/policy_pdf_term_scores.json` for each case and extracted value.
+
+### Claimant-first result time (pinned `.venv`)
+
+The previous multi-minute wait was caused by eagerly indexing each newly uploaded policy: Chroma initialized the configured `BAAI/bge-small-en-v1.5` SentenceTransformer embedding function and embedded policy chunks before rendering the result. Settlement clause lookup also queried the index synchronously, including when a category had no extracted clause or a policy was absent. Claimant assessment now uses extracted page evidence for comparison; uploaded policies never fall back to semantic indexing during first-result calculation. Legacy linked policies without claimant-uploaded pages can still use the index, and claimant policy search or the optional policy-evidence AI initializes it only when explicitly requested. A fresh-database Playwright matrix under the pinned `.venv` with BGE installed passed 8/8. First-result times were 3.934 s (`a_match`), 1.455 s (`b_wrongful_deduction`), and 2.072 s (`c_manual_review`); maximum 3.934 s. Screenshots remain outside the repository in the directory recorded in `evaluation/latest/claimant_browser_results.json`.
+
 ## Adversarial document cases (separate parser check)
 
 The ten fictional adversarial cases were labeled and committed before they were run through the parser. The check covers bill totals, line items, claim references, paid amounts, settlement references, deduction totals where labeled, and review routing. It does **not** score policy calculations or end-to-end comparison decisions.
@@ -155,61 +163,59 @@ The off run did not unload the already resident Ollama model, so its Ollama RSS 
 
 ## Provisional claimant app-path verification (2026-10-21)
 
-All cases were uploaded through the app services with no prior reviewer confirmation. “Result shown” means the claimant path returned a visible estimate or Manual Review with a reason; it does not mean the decision label matched.
+All 30 labeled cases were uploaded through the claimant app path without reviewer confirmation before the first result. “Result shown” means the claimant path returned an amount or range, or Manual Review with a specific reason; it does not mean the hand-labeled status matched.
 
-| Case | Expected | Actual | Result shown | Provisional payable | Cause when different |
+| Case | Expected | Actual | Result shown | Displayed estimate (INR) | Cause when different |
 |---|---|---|---:|---:|---|
-| match_01 | no_discrepancy | manual_review | yes | 8,100 | Generic “Eligible treatment” description needs category confirmation. |
-| match_02 | no_discrepancy | manual_review | yes | 18,000 | Generic “Eligible treatment” description needs category confirmation. |
-| match_03 | no_discrepancy | manual_review | yes | 14,000 | Generic “Eligible treatment” description needs category confirmation. |
-| match_04 | no_discrepancy | manual_review | yes | 10,000 | Generic “Eligible treatment” description needs category confirmation. |
-| match_05 | no_discrepancy | manual_review | yes | 22,500 | Generic “Eligible treatment” description needs category confirmation. |
-| match_06 | no_discrepancy | manual_review | yes | 8,000 | Generic “Eligible treatment” description needs category confirmation. |
-| match_07 | no_discrepancy | manual_review | yes | 16,000 | Generic “Eligible treatment” description needs category confirmation. |
-| match_08 | no_discrepancy | manual_review | yes | 27,000 | Generic “Eligible treatment” description needs category confirmation. |
-| match_09 | no_discrepancy | manual_review | yes | 13,500 | Generic “Eligible treatment” description needs category confirmation. |
-| match_10 | no_discrepancy | manual_review | yes | 40,500 | Generic “Eligible treatment” description needs category confirmation. |
-| discrepancy_01 | possible_discrepancy | manual_review | yes | 8,100 | Generic “Eligible treatment” description needs category confirmation. |
-| discrepancy_02 | possible_discrepancy | manual_review | yes | 18,000 | Generic “Eligible treatment” description needs category confirmation. |
-| discrepancy_03 | possible_discrepancy | manual_review | yes | 14,000 | Generic “Eligible treatment” description needs category confirmation. |
-| discrepancy_04 | possible_discrepancy | manual_review | yes | 10,000 | Generic “Eligible treatment” description needs category confirmation. |
-| discrepancy_05 | possible_discrepancy | manual_review | yes | 22,500 | Generic “Eligible treatment” description needs category confirmation. |
-| discrepancy_06 | possible_discrepancy | manual_review | yes | 8,000 | Generic “Eligible treatment” description needs category confirmation. |
-| discrepancy_07 | possible_discrepancy | manual_review | yes | 16,000 | Generic “Eligible treatment” description needs category confirmation. |
-| discrepancy_08 | possible_discrepancy | manual_review | yes | 27,000 | Generic “Eligible treatment” description needs category confirmation. |
-| discrepancy_09 | possible_discrepancy | manual_review | yes | 13,500 | Generic “Eligible treatment” description needs category confirmation. |
-| discrepancy_10 | possible_discrepancy | manual_review | yes | 40,500 | Generic “Eligible treatment” description needs category confirmation. |
-| manual_01 | manual_review | manual_review | yes | 8,100 | Generic line needs category confirmation; settlement paid amount missing. |
-| manual_02 | manual_review | manual_review | yes | 18,000 | Generic line needs category confirmation; settlement totals do not reconcile and claim ID mismatches. |
-| manual_03 | manual_review | manual_review | yes | 14,000 | Generic line needs category confirmation; deductions unreadable and totals do not reconcile. |
-| manual_04 | manual_review | manual_review | yes | 10,000 | “Treatment charges” needs category confirmation; settlement totals do not reconcile. |
-| manual_05 | manual_review | manual_review | yes | 22,500 | Generic line needs category confirmation; conflicting paid amounts. |
-| edge_01 | no_discrepancy | manual_review | yes | 0 | Generic “Eligible treatment” description needs category confirmation. |
-| edge_02 | manual_review | manual_review | yes | 0 | Bill total missing or invalid. |
-| edge_03 | no_discrepancy | manual_review | yes | 10,000 | Generic “Eligible treatment” description needs category confirmation. |
-| edge_04 | no_discrepancy | manual_review | yes | 12,600 | Generic “Eligible treatment” description needs category confirmation. |
-| edge_05 | no_discrepancy | manual_review | yes | 9,000 | Source bill says only “Treatment charges”; it has no line date or exclusion wording. See label/source mismatch below. |
+| match_01 | no_discrepancy | manual_review | yes | 0–8,100 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| match_02 | no_discrepancy | manual_review | yes | 0–18,000 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| match_03 | no_discrepancy | manual_review | yes | 0–14,000 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| match_04 | no_discrepancy | manual_review | yes | 0–10,000 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| match_05 | no_discrepancy | manual_review | yes | 0–22,500 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| match_06 | no_discrepancy | manual_review | yes | 0–8,000 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| match_07 | no_discrepancy | manual_review | yes | 0–16,000 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| match_08 | no_discrepancy | manual_review | yes | 0–27,000 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| match_09 | no_discrepancy | manual_review | yes | 0–13,500 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| match_10 | no_discrepancy | manual_review | yes | 0–40,500 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| discrepancy_01 | possible_discrepancy | manual_review | yes | 0–8,100 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| discrepancy_02 | possible_discrepancy | manual_review | yes | 0–18,000 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| discrepancy_03 | possible_discrepancy | manual_review | yes | 0–14,000 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| discrepancy_04 | possible_discrepancy | manual_review | yes | 0–10,000 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| discrepancy_05 | possible_discrepancy | manual_review | yes | 0–22,500 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| discrepancy_06 | possible_discrepancy | manual_review | yes | 0–8,000 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| discrepancy_07 | possible_discrepancy | manual_review | yes | 0–16,000 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| discrepancy_08 | possible_discrepancy | manual_review | yes | 0–27,000 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| discrepancy_09 | possible_discrepancy | manual_review | yes | 0–13,500 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| discrepancy_10 | possible_discrepancy | manual_review | yes | 0–40,500 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| manual_01 | manual_review | manual_review | yes | 0–8,100 (range) | — |
+| manual_02 | manual_review | manual_review | yes | 0–18,000 (range) | — |
+| manual_03 | manual_review | manual_review | yes | 0–14,000 (range) | — |
+| manual_04 | manual_review | manual_review | yes | 0–10,000 (range) | — |
+| manual_05 | manual_review | manual_review | yes | 0–22,500 (range) | — |
+| edge_01 | no_discrepancy | manual_review | yes | 0–0 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| edge_02 | manual_review | manual_review | yes | 0 | Bill total is missing or invalid; app shows INR 0 and names the missing total. |
+| edge_03 | no_discrepancy | manual_review | yes | 0–10,000 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| edge_04 | no_discrepancy | manual_review | yes | 3,600–12,600 (range) | Generic “Eligible treatment” line has no defensible category; app shows a range and asks for category review. |
+| edge_05 | no_discrepancy | manual_review | yes | 0 | Generic “Exclusion” settlement row cannot be tied to the date-window category; comparison asks for review. The estimate is INR 0. |
 
-**Visible result: 30/30; expected decision label matched: 6/30; provisional vs reviewer-confirmed status and amounts equal: 30/30.** Core policy terms were extracted for all 30 (`policy_terms_missing` is empty), but the safe status remains Manual Review when a generic item has no reliable category. The 24 match/discrepancy cases show the specific “Eligible treatment” category-review reason. This conservative status mismatch is not a payable-amount mismatch for those 24 cases: each estimate equals its hand-labeled payable, but an item category is still unresolved.
+**Visible amount or range: 30/30; expected decision label matched: 6/30; provisional values and decisions equal the reviewer-confirmed run: 30/30.** The 24 ordinary match/discrepancy cases remain Manual Review because their only bill item is named “Eligible treatment”; the estimate is shown as a range and the line is listed with its INR amount. Those status mismatches are caused by missing category detail, not by changing the hand-calculated payable labels.
 
-`edge_05` is the one amount mismatch (expected INR 0; app estimates INR 9,000). Its label describes a date-window exclusion, but its fictional policy contains no such exclusion and its scanned bill has no dated service line—OCR reads only “Treatment charges: INR 10000.” The source does not support zero payable. We retained the committed label and did not teach the app to infer an absent exclusion; this case needs corrected source evidence or a reviewer decision before it can be scored as an app defect.
+`edge_05` now estimates INR 0. The original source PDF lacked the labeled date-window rule and dated line, so the fictional policy and scanned bill were corrected while the expected label remained unchanged. The reviewer-confirmed terms manifest was also corrected to include the extracted 30-day pre- and 60-day post-hospitalization windows; the reviewer form now supports confirming those terms with source pages. Its status remains Manual Review because the settlement says only “Exclusion,” which cannot be reliably tied to the date-window category. The displayed estimate is 0 and the unresolved comparison reason is shown; this is a remaining fixture limitation, not a mismatch in the payable calculation.
 
-The 10 adversarial extraction-only cases also showed a result **10/10**. Their expected app outcome is Manual Review because these fixtures deliberately contain no policy PDF or final decision label. The reason on each screen names the missing linked policy edition; `adv_04` additionally says paid amount and deductions could not be read, and `adv_08` also says the settlement claim reference was not identified. These ten are not decision-accuracy cases.
+The 10 adversarial extraction-only cases also showed a reasoned result **10/10**. These fixtures deliberately contain no policy PDF or final decision label; Manual Review is the safe outcome. Exact per-case strings are in `evaluation/latest/provisional_app_path.json`. Reproduce with `python -m evaluation.scripts.run_provisional_app_path`.
 
 | Adversarial cases | Expected | Actual | Result shown | Reason |
 |---|---|---|---:|---|
-| adv_01_split_columns | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked; ingest and link the applicable policy edition. |
-| adv_02_noisy_ocr | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked; ingest and link the applicable policy edition. |
-| adv_03_low_resolution_scan | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked; ingest and link the applicable policy edition. |
-| adv_04_ambiguous_settlement_wording | Manual Review | manual_review | yes | No linked policy; paid amount missing; deductions unreadable. |
-| adv_05_exact_daily_cap | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked; ingest and link the applicable policy edition. |
-| adv_06_one_rupee_over_cap | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked; ingest and link the applicable policy edition. |
-| adv_07_multiple_deductions | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked; ingest and link the applicable policy edition. |
-| adv_08_missing_claim_reference | Manual Review | manual_review | yes | No linked policy; settlement claim reference missing. |
-| adv_09_subtotal_tax_grand_total | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked; ingest and link the applicable policy edition. |
-| adv_10_slash_reference | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked; ingest and link the applicable policy edition. |
-
-The machine-readable case-by-case outcomes and exact reason strings are in `evaluation/latest/provisional_app_path.json`. Reproduce with `python -m evaluation.scripts.run_provisional_app_path`.
+| adv_01_split_columns | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked to this claim. Link an edition in Claim review first.; Policy edition: no matching policy page is linked to this claim. Ingest and link the applicable policy edition before calculation. |
+| adv_02_noisy_ocr | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked to this claim. Link an edition in Claim review first.; Policy edition: no matching policy page is linked to this claim. Ingest and link the applicable policy edition before calculation. |
+| adv_03_low_resolution_scan | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked to this claim. Link an edition in Claim review first.; Policy edition: no matching policy page is linked to this claim. Ingest and link the applicable policy edition before calculation. |
+| adv_04_ambiguous_settlement_wording | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked to this claim. Link an edition in Claim review first.; Policy edition: no matching policy page is linked to this claim. Ingest and link the applicable policy edition before calculation.; Settlement amount paid was not identified.; Settlement deductions could not be read from the letter. |
+| adv_05_exact_daily_cap | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked to this claim. Link an edition in Claim review first.; Policy edition: no matching policy page is linked to this claim. Ingest and link the applicable policy edition before calculation. |
+| adv_06_one_rupee_over_cap | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked to this claim. Link an edition in Claim review first.; Policy edition: no matching policy page is linked to this claim. Ingest and link the applicable policy edition before calculation. |
+| adv_07_multiple_deductions | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked to this claim. Link an edition in Claim review first.; Policy edition: no matching policy page is linked to this claim. Ingest and link the applicable policy edition before calculation. |
+| adv_08_missing_claim_reference | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked to this claim. Link an edition in Claim review first.; Policy edition: no matching policy page is linked to this claim. Ingest and link the applicable policy edition before calculation.; Settlement claim reference was not identified.; CLAIM_ID_MISSING: settlement claim reference was not identified. |
+| adv_09_subtotal_tax_grand_total | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked to this claim. Link an edition in Claim review first.; Policy edition: no matching policy page is linked to this claim. Ingest and link the applicable policy edition before calculation. |
+| adv_10_slash_reference | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked to this claim. Link an edition in Claim review first.; Policy edition: no matching policy page is linked to this claim. Ingest and link the applicable policy edition before calculation. |
 
 ### Ollama on/off with provisional app results
 

@@ -7,6 +7,8 @@
     "deductible": 0,
     "copay_percent": 10,
     "room_limit_per_day": 5000,
+    "pre_hospitalization_days": 30,
+    "post_hospitalization_days": 60,
     "source_page": 1
   },
   "scanned_bill": true,

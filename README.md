@@ -86,6 +86,8 @@ Run the regular app on port 8501:
 
 Open [http://127.0.0.1:8501](http://127.0.0.1:8501). Claimants can register, upload documents, and see a provisional result. A reviewer can confirm or correct policy terms later; linked claims recompute, and the claimant sees the updated badge after refresh. Reviewer access uses the app's invitation flow.
 
+Claimant assessment reads the uploaded policy's extracted page evidence directly and does not load BGE or build a semantic index before showing the deterministic estimate. Semantic indexing is lazy: it starts only when the optional policy-evidence AI explanation or policy search is explicitly run. In the pinned `.venv` on this laptop, the fresh-database claimant-first browser run showed first results in **3.934 s, 1.455 s and 2.072 s** (maximum **3.934 s**; browser matrix **8/8**). This is one local measurement, not a guarantee for every computer or scan.
+
 For the isolated fictional demo, create a local reviewer password in the current PowerShell session and launch the demo:
 
 ```powershell
@@ -120,16 +122,16 @@ $testTemp = Join-Path $env:TEMP ("mediguard-pytest-" + [guid]::NewGuid().ToStrin
 
 To run the optional live checks, install Chromium once with `.\.venv\Scripts\python.exe -m playwright install chromium`, start Ollama with `ibm/granite4.1:8b` available, then set `MEDIGUARD_EVAL_LIVE=true` and `MEDIGUARD_EVAL_BROWSER=true` before `python -m evaluation.run_all`. The browser suite starts an isolated local app and saves screenshots in the system temporary folder, outside the repository.
 
-The 30 case labels are in `samples/evaluation_cases/ground_truth.json`; their PDFs and reviewer-confirmed terms are in `samples/evaluation_cases/cases/`. The labeled retrieval set is `evaluation/retrieval_queries.json`. The command writes machine-readable results to `evaluation/latest/results.json` and the scorecard and case table to `docs/06_EVALUATION_RESULTS.md`.
+The 30 case labels are in `samples/evaluation_cases/ground_truth.json`; their PDFs and reviewer-confirmed terms (including date-window terms where applicable) are in `samples/evaluation_cases/cases/`. Independent policy-PDF extraction labels are in `samples/evaluation_cases/policy_pdf_term_labels.json`. The labeled retrieval set is `evaluation/retrieval_queries.json`. The command writes machine-readable results to `evaluation/latest/results.json` and the scorecard and case table to `docs/06_EVALUATION_RESULTS.md`.
 
 ## Verified results
 
 Latest recorded evaluation scores are validated on **30 synthetic cases**, with an additional **3 app-path demo cases**; these are not general accuracy claims. The hand-labeled expected results were committed before scoring.
 
-- Automated suite: **236 passed** with Ollama disabled (use the fresh temporary pytest base command above).
+- Automated suite: **244 passed** with Ollama disabled (use the fresh temporary pytest base command above).
 - Result shown without reviewer confirmation: **40/40** app-path cases (30 labeled evaluation cases plus 10 extraction-only adversarial cases). All 30 labeled cases show a result; all 10 adversarial cases show a reasoned Manual Review because their fixtures contain no policy.
 - Claimant-first Playwright: **8/8** on a fresh database (three demos and five upload/error scenarios); a second reviewer session confirmed terms, then claimant refresh changed the badge while all 11 displayed INR amounts remained identical. Screenshots are saved outside the repo; paths are recorded in `evaluation/latest/claimant_browser_results.json`.
-- Provisional decision-label agreement through the full app path: **6/30**. All 30 cases show a visible result, and all 30 have identical status and amounts before and after reviewer confirmation. The 24 ordinary match/discrepancy labels remain Manual Review because the synthetic bill line says only “Eligible treatment” and needs a defensible category. `edge_05` has the one payable mismatch (expected INR 0, shown estimate INR 9,000); its policy and bill do not contain the labeled date-window exclusion or a dated service line.
+- Provisional decision-label agreement through the full app path: **6/30**. All 30 cases show an amount or range, and all 30 have identical status and amounts before and after reviewer confirmation. The 24 ordinary match/discrepancy labels remain Manual Review because the synthetic bill line says only “Eligible treatment” and needs a defensible category. `edge_05` now estimates INR 0 after correcting the fictional policy and dated scanned-bill evidence without changing the expected label; it remains Manual Review because the settlement uses a generic “Exclusion” row that cannot be tied to the date-window category.
 - Extraction totals: **30/30 (100%)**; other labeled fields: **60/60 (100%)**.
 - Text-bill line items: precision **28/28 (100%)**, recall **28/28 (100%)**; OCR field accuracy **6/6 (100%)**.
 - Core policy-term extraction from source PDFs (annual limit, deductible and co-pay): **90/90**; the runner compares PDF extraction with hand labels and does not read reviewer-confirmed terms files.

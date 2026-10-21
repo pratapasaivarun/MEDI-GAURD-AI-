@@ -1,8 +1,14 @@
 {
-  "created_at": "2026-10-21T05:17:54.880352+00:00",
+  "created_at": "2026-10-21T09:11:13.427226+00:00",
   "numerator": 8,
   "denominator": 8,
   "pass": true,
+  "time_to_first_result_seconds": [
+    3.934,
+    1.455,
+    2.072
+  ],
+  "max_time_to_first_result_seconds": 3.934,
   "reviewer_refresh": {
     "passed": true,
     "badge_before": true,
@@ -34,8 +40,8 @@
       "INR 0.00"
     ],
     "screenshots": [
-      "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm\\reviewer-policy-confirmed.png",
-      "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm\\claimant-after-review.png"
+      "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-ehumsrfx\\reviewer-policy-confirmed.png",
+      "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-ehumsrfx\\claimant-after-review.png"
     ]
   },
   "cases": [
@@ -44,53 +50,53 @@
       "expected": "no_discrepancy",
       "passed": true,
       "result_shown": true,
-      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm\\a_match-claimant-result.png"
+      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-ehumsrfx\\a_match-claimant-result.png"
     },
     {
       "case": "b_wrongful_deduction",
       "expected": "possible_discrepancy",
       "passed": true,
       "result_shown": true,
-      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm\\b_wrongful_deduction-claimant-result.png"
+      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-ehumsrfx\\b_wrongful_deduction-claimant-result.png"
     },
     {
       "case": "c_manual_review",
       "expected": "manual_review",
       "passed": true,
       "result_shown": true,
-      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm\\c_manual_review-claimant-result.png"
+      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-ehumsrfx\\c_manual_review-claimant-result.png"
     },
     {
       "case": "empty_file",
       "passed": true,
       "result_shown": true,
-      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm\\empty_file.png"
+      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-ehumsrfx\\empty_file.png"
     },
     {
       "case": "wrong_type",
       "passed": true,
       "result_shown": true,
-      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm\\wrong_type.png"
+      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-ehumsrfx\\wrong_type.png"
     },
     {
       "case": "oversized",
       "passed": true,
       "result_shown": true,
-      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm\\oversized.png"
+      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-ehumsrfx\\oversized.png"
     },
     {
       "case": "corrupted_pdf",
       "passed": true,
       "result_shown": true,
-      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm\\corrupted_pdf.png"
+      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-ehumsrfx\\corrupted_pdf.png"
     },
     {
       "case": "missing_settlement",
       "passed": true,
       "result_shown": true,
-      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm\\missing_settlement.png"
+      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-ehumsrfx\\missing_settlement.png"
     }
   ],
-  "screenshots_directory": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm",
+  "screenshots_directory": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-ehumsrfx",
   "failure": null
 }

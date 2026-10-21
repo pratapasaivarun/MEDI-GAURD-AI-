@@ -77,11 +77,29 @@ def _run_one(app, assess_claim, claimant: dict, reviewer: dict, case_dir: Path,
     if comparison:
         reasons.extend(getattr(comparison, "review_reasons", []) or [])
     actual_payable = rules.get("payable_amount")
+    payable_range = rules.get("payable_range")
     actual_status = comparison.status if comparison else rules.get("status")
+    expected_payable = expected.get("expected_payable")
+    if payable_range:
+        low, high = float(payable_range["lower"]), float(payable_range["upper"])
+        amount_match = expected_payable is None or low <= float(expected_payable) <= high
+        shown_estimate = {"range": [low, high]}
+    else:
+        amount_match = expected_payable is None or (actual_payable is not None and abs(float(actual_payable) - float(expected_payable)) < 0.01)
+        shown_estimate = {"amount": _plain(actual_payable)} if actual_payable is not None else None
+    mismatch_causes = []
+    if expected.get("expected_status") is not None and actual_status != expected.get("expected_status"):
+        mismatch_causes.append("decision status differs from the hand-labeled expected status")
+    if not amount_match:
+        mismatch_causes.append("expected payable is outside the displayed estimate")
     row: dict[str, Any] = {
         "case_id": expected["case_id"], "expected": expected.get("expected_status", "not labeled for decision; extraction-only fixture"),
         "actual": actual_status, "result_shown": bool(rules), "provisional": True,
         "expected_payable": expected.get("expected_payable"), "provisional_payable": _plain(actual_payable),
+        "provisional_payable_range": _plain(payable_range),
+        "displayed_estimate": shown_estimate,
+        "amount_or_range_shown": shown_estimate is not None,
+        "mismatch_causes": mismatch_causes,
         "provisional_difference": _plain(getattr(comparison, "possible_difference", None)),
         "policy_terms_missing": rules.get("policy_terms_missing", []),
         "specific_reasons": list(dict.fromkeys(reasons)),
@@ -149,28 +167,31 @@ def main() -> int:
         "reviewer_confirmation_before_first_result": False,
         "evaluation_cases": labeled_rows,
         "evaluation_status_match": {"numerator": sum(row["actual"] == row["expected"] for row in labeled_rows), "denominator": len(labeled_rows)},
+        "evaluation_amount_or_range_shown": {"numerator": sum(row["amount_or_range_shown"] for row in labeled_rows), "denominator": len(labeled_rows)},
         "evaluation_result_shown": {"numerator": sum(row["result_shown"] for row in labeled_rows), "denominator": len(labeled_rows)},
         "evaluation_provisional_equals_confirmed": {"numerator": sum(row.get("provisional_amounts_equal_confirmed", False) and row.get("provisional_status_equal_confirmed", False) for row in labeled_rows), "denominator": len(labeled_rows)},
         "adversarial_cases": adversarial_rows,
         "adversarial_result_shown": {"numerator": sum(row["result_shown"] for row in adversarial_rows), "denominator": len(adversarial_rows)},
         "adversarial_decision_labels": "The casebook labels extraction and settlement parsing only; it supplies no policy PDF or final decision labels. Manual Review is the correct safe app outcome because no policy edition is supplied.",
-        "embedding_backend": policy_index.embedding_backend_status(),
+        "embedding_backend": {"configured": policy_index.EMBEDDING_MODEL, "active": "deferred until optional policy search"},
     }
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(output, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps({
         "evaluation_status_match": output["evaluation_status_match"],
+        "evaluation_amount_or_range_shown": output["evaluation_amount_or_range_shown"],
         "evaluation_result_shown": output["evaluation_result_shown"],
         "evaluation_provisional_equals_confirmed": output["evaluation_provisional_equals_confirmed"],
         "adversarial_result_shown": output["adversarial_result_shown"],
         "cases": [{"case_id": row["case_id"], "expected": row["expected"], "actual": row["actual"],
                    "result_shown": row["result_shown"], "reasons": row["specific_reasons"],
+                   "expected_payable": row["expected_payable"], "displayed_estimate": row["displayed_estimate"],
+                   "mismatch_causes": row["mismatch_causes"],
                    "missing_terms": row["policy_terms_missing"],
                    "provisional_equals_confirmed": row.get("provisional_amounts_equal_confirmed")} for row in (*labeled_rows, *adversarial_rows)],
         "embedding_backend": output["embedding_backend"],
         "results_path": str(OUTPUT),
     }, indent=2, ensure_ascii=False))
-    policy_index.close_policy_index()
     gc.collect()
     temporary.cleanup()
     return 0 if output["evaluation_result_shown"]["numerator"] == 30 and output["adversarial_result_shown"]["numerator"] == 10 else 1

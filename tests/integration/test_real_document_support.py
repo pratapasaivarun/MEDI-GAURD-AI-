@@ -159,8 +159,8 @@ def test_unconfirmed_policy_terms_are_provisional_and_missing_terms_keep_safe_su
     status = app.save_policy_terms_review(
         "policy-test",
         user["user_id"],
-        {"annual_limit": "100000", "deductible": "5000", "copay_percent": "10", "exclusions": "cosmetic surgery", "network_required": False, "preauthorization_required": False},
-        {"annual_limit": 5, "deductible": 6, "copay_percent": 7, "exclusions": 4, "network_required": 3, "preauthorization_required": 8},
+        {"annual_limit": "100000", "deductible": "5000", "copay_percent": "10", "pre_hospitalization_days": "30", "post_hospitalization_days": "60", "exclusions": "cosmetic surgery", "network_required": False, "preauthorization_required": False},
+        {"annual_limit": 5, "deductible": 6, "copay_percent": 7, "pre_hospitalization_days": 2, "post_hospitalization_days": 3, "exclusions": 4, "network_required": 3, "preauthorization_required": 8},
         {},
     )
     assert status == "confirmed"
@@ -188,8 +188,10 @@ def test_unconfirmed_policy_terms_are_provisional_and_missing_terms_keep_safe_su
     assert saved["terms_review_status"] == "confirmed"
     assert saved["terms_reviewed_by"] == user["user_id"]
     reviewed_policy = json.loads(saved["reviewed_policy_terms_json"])
-    assert set(reviewed_policy) == {"annual_limit", "deductible", "copay_percent", "exclusions", "network_required", "preauthorization_required"}
+    assert set(reviewed_policy) == {"annual_limit", "deductible", "copay_percent", "pre_hospitalization_days", "post_hospitalization_days", "exclusions", "network_required", "preauthorization_required"}
     assert reviewed_policy["exclusions"]["method"] == "reviewer_confirmed"
+    assert reviewed_policy["pre_hospitalization_days"]["value"] == 30
+    assert reviewed_policy["post_hospitalization_days"]["value"] == 60
     assert reviewed_policy["network_required"] == {"term": "network_required", "value": False, "confidence": 1.0, "source_page": 3, "source_name": "policy.pdf", "method": "reviewer_confirmed"}
     assert reviewed_policy["preauthorization_required"]["value"] is False
     calculated = app.evaluate_saved_claim(

@@ -49,6 +49,16 @@ def test_item_total_mismatch_over_one_percent_requires_review():
     assert "TOTAL_MISMATCH" in " ".join(result["warnings"])
 
 
+def test_manual_review_warning_names_the_unconfirmed_bill_item():
+    terms = PolicyTerms(annual_limit=Decimal("500000"), deductible=Decimal("0"), copay_percent=Decimal("0"))
+    result = evaluate_claim(
+        Decimal("1000"), terms,
+        line_items=[{"description": "Eligible treatment", "category": "other", "amount": Decimal("1000"), "needs_review": True}],
+    )
+    assert result["status"] == "manual_review"
+    assert any("Eligible treatment" in warning and "reviewer confirmation" in warning for warning in result["warnings"])
+
+
 def test_patient_name_requires_exact_surname_and_accepts_initial():
     assert verify_patient_name_match("Anil Kumar", "Sunil Kumar")["result"] == "MISMATCH"
     assert verify_patient_name_match("A. Kumar", "Anil Kumar")["result"] == "MINOR_VARIATION"

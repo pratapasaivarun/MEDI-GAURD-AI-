@@ -583,6 +583,11 @@ def evaluate_claim(
         status = "rejected"
     elif review_required or payable is None:
         status = "manual_review"
+    for item in line_results:
+        if item.get("status") == "needs_review":
+            description = str(item.get("description") or "Unspecified line item").strip()
+            detail = str(item.get("calculation") or "The extracted line item needs confirmation.").strip()
+            warnings.append(f"Line item requires reviewer confirmation: {description}. {detail}")
     warnings.extend(control_warnings)
     if annual_limit is not None and total > annual_limit:
         warnings.append("annual_limit_exceeded")

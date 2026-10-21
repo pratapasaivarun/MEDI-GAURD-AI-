@@ -255,7 +255,7 @@ def _render_claimant_result(user: dict) -> None:
                 column_config={
                     "Amount claimed": st.column_config.NumberColumn(format="INR %.2f"),
                     "Amount approved": st.column_config.NumberColumn(format="INR %.2f"),
-                    "Status": st.column_config.MarkdownColumn(),
+                    "Status": st.column_config.TextColumn(),
                 },
             )
     recommendations = recommend_next_steps(

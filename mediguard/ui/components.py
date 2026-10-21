@@ -21,10 +21,10 @@ def evidence_recommendation_header_html(status: Any) -> str:
 def _line_item_status_label(status: Any) -> str:
     """Return a compact, readable status cue for claimant-facing item rows."""
     return {
-        "covered": ":green[:material/check_circle: Covered]",
-        "partial": ":orange[:material/pie_chart: Partially covered]",
-        "excluded": ":red[:material/cancel: Excluded]",
-        "needs_review": ":orange[:material/rate_review: Needs review]",
+        "covered": "Covered",
+        "partial": "Partially covered",
+        "excluded": "Excluded",
+        "needs_review": "Needs review",
     }.get(str(status), str(status or "Needs review").replace("_", " ").title())
 
 

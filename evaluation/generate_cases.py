@@ -36,6 +36,8 @@ def _write_policy(path: Path, row: dict) -> None:
         "Diagnostic investigations are payable during hospitalization.",
         "The listed case policy terms are reviewer-confirmed synthetic labels.",
     ]
+    if row["case_id"] == "edge_05":
+        lines.append("Pre-hospitalization expenses are covered up to 30 days before admission; post-hospitalization expenses are covered up to 60 days after discharge. Treatment outside these date windows is excluded.")
     doc = SimpleDocTemplate(str(path), pagesize=A4)
     doc.build([Paragraph(line, STYLES["BodyText"]) for line in lines])
 
@@ -50,11 +52,13 @@ def _write_bill(path: Path, row: dict, scanned: bool) -> None:
             "Policy number: POL-EVAL-FICTIONAL-2026",
             "Admission date: 10 Aug 2026",
             "Discharge date: 14 Aug 2026",
-            f"Treatment charges: INR {row['billed']}",
+            "Description | Date | Qty | Rate | Amount" if row["case_id"] == "edge_05" else f"Treatment charges: INR {row['billed']}",
+            f"Eligible treatment | 01 Jun 2026 | 1 | {row['billed']} | {row['billed']}" if row["case_id"] == "edge_05" else "",
             f"Grand Total: INR {row['billed']}",
         ]
         font_path = Path(r"C:\Windows\Fonts\arial.ttf")
         font = ImageFont.truetype(str(font_path), 42) if font_path.exists() else ImageFont.load_default()
+        text = [line for line in text if line]
         for i, line in enumerate(text):
             draw.text((70, 80 + i * 185), line, fill="black", font=font)
         image_path = path.with_suffix(".png")

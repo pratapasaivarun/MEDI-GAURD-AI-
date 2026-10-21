@@ -2,6 +2,8 @@
 
 **30 synthetic cases; fictional data only.**
 
+Fixture audit note (2026-10-21): the hand-labeled `edge_05` outcome remained INR 0, but its original policy PDF had no date-window rule and its scanned bill had no service date. That made the label impossible to verify from its source documents. The expected-results file was left unchanged. The fictional source policy and scanned bill were corrected to show a 30-day pre-hospitalization window and a service date 70 days before admission; the date-window clause is now extracted from page 1 and the charge is excluded by the documented rule. If a future bill line has no readable date while a date-window term applies, the app states that the check could not be done and routes the line to review.
+
 Ground truth was committed before this evaluation run. The runner never writes to expected labels.
 
 ## Scorecard

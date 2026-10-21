@@ -267,7 +267,10 @@ def evaluate_line_item(item: dict, terms: PolicyTerms, claim_context: dict | Non
 
     # Pre / Post Hospitalization Window Validation
     item_date = item.get("date") or item.get("expense_date")
-    if (terms.pre_hospitalization_days is not None or terms.post_hospitalization_days is not None or "pre" in category or "post" in category) and item_date:
+    date_window_applies = (terms.pre_hospitalization_days is not None or terms.post_hospitalization_days is not None or "pre" in category or "post" in category)
+    if date_window_applies and not item_date and (terms.pre_hospitalization_days is not None or terms.post_hospitalization_days is not None):
+        return {**result, "status": "needs_review", "applied_rule": "pre_post_window", "calculation": "A policy date-window rule applies, but this bill line has no readable expense date; the date-window check could not be done."}
+    if date_window_applies and item_date:
         window_res = validate_expense_date_window(
             expense_date_str=item_date,
             admission_date_str=claim_context.get("admission_date"),

@@ -139,6 +139,14 @@ def extract_policy_terms(source: Any) -> dict[str, Any]:
         rf"ICU\s+(?:daily\s+)?limit\s*(?:per\s*day)?\s*[:\-]?\s*{_MONEY}\s*(?:per\s*day)?",
         rf"intensive\s+care\s+(?:unit\s+)?(?:daily\s+)?limit\s*(?:per\s*day)?\s*[:\-]?\s*{_MONEY}\s*(?:per\s*day)?",
     ], "icu_limit_per_day", _number)
+    terms["pre_hospitalization_days"] = _find(rows, [
+        r"pre[- ]hospitalization[\s\S]{0,80}?(?:up to|within|for)?\s*([0-9]{1,3})\s*days?",
+        r"([0-9]{1,3})\s*days?\s+(?:before|prior to)\s+(?:the\s+)?admission",
+    ], "pre_hospitalization_days", int)
+    terms["post_hospitalization_days"] = _find(rows, [
+        r"post[- ]hospitalization[\s\S]{0,80}?(?:up to|within|for)?\s*([0-9]{1,3})\s*days?",
+        r"([0-9]{1,3})\s*days?\s+(?:after|from)\s+(?:the\s+)?discharge",
+    ], "post_hospitalization_days", int)
     terms["waiting_period_months"] = _find(rows, [r"waiting\s+period\s*[:\-]?\s*([0-9]+)\s*months?"], "waiting_period_months", int)
     # Capture simple category-specific limits such as "Surgery sub-limit: INR 100000".
     sub_limit_rows = []
@@ -256,6 +264,8 @@ def extract_policy_terms(source: Any) -> dict[str, Any]:
         deductible=present["deductible"]["value"] if "deductible" in present else None,
         copay_percent=present["copay_percent"]["value"] if "copay_percent" in present else None,
         room_limit_per_day=present["room_limit_per_day"]["value"] if "room_limit_per_day" in present else None,
+        pre_hospitalization_days=int(present["pre_hospitalization_days"]["value"]) if "pre_hospitalization_days" in present else None,
+        post_hospitalization_days=int(present["post_hospitalization_days"]["value"]) if "post_hospitalization_days" in present else None,
         waiting_period_months=present["waiting_period_months"]["value"] if "waiting_period_months" in present else None,
         sub_limits={key: Decimal(str(value)) for key, value in present.get("sub_limits", {}).get("value", {}).items()} if present.get("sub_limits") else {},
         icu_limit_per_day=(
@@ -294,6 +304,8 @@ def terms_from_json(payload: dict[str, Any] | None) -> tuple[PolicyTerms, list[s
         raw = value(name)
         return Decimal(str(raw)) if raw is not None else None
     raw_waiting = value("waiting_period_months")
+    raw_pre_days = value("pre_hospitalization_days")
+    raw_post_days = value("post_hospitalization_days")
     raw_sub_limits = value("sub_limits") or {}
     if not isinstance(raw_sub_limits, dict):
         raw_sub_limits = {}
@@ -303,6 +315,8 @@ def terms_from_json(payload: dict[str, Any] | None) -> tuple[PolicyTerms, list[s
     return PolicyTerms(
         annual_limit=decimal_value("annual_limit"), deductible=decimal_value("deductible"), copay_percent=decimal_value("copay_percent"),
         room_limit_per_day=decimal_value("room_limit_per_day"), waiting_period_months=int(raw_waiting) if raw_waiting is not None else None,
+        pre_hospitalization_days=int(raw_pre_days) if raw_pre_days is not None else None,
+        post_hospitalization_days=int(raw_post_days) if raw_post_days is not None else None,
         sub_limits={str(key): Decimal(str(raw)) for key, raw in raw_sub_limits.items()},
         icu_limit_per_day=Decimal(str(raw_icu_limit)) if raw_icu_limit is not None else None,
     ), missing, confidence

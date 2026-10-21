@@ -143,6 +143,7 @@ def _render_claimant_result(user: dict) -> None:
         if st.button("Continue claim review", type="primary"):
             queue_page(st.session_state, "Submit documents" if user['role'] == 'claimant' else "Claim review"); st.rerun()
         return
+    comparison, settlement = get_comparison_for_view(claim_id, user)
     status = result["status"]
     _render_policy_terms_badge(result.get("policy_terms_review_status"))
     if status == "manual_review":
@@ -274,9 +275,10 @@ def _render_claimant_result(user: dict) -> None:
                     "Status": st.column_config.TextColumn(),
                 },
             )
-    recommendations = recommend_next_steps(
+    recommendations = _claimant_recommendations(
         workflow.get("decision") or {},
         {**rules, "billing_anomalies": billing_anomalies, "submission_deadline": submission_deadline or {}},
+        comparison,
     )
     if recommendations:
         with st.container(border=True):
@@ -303,7 +305,6 @@ def _render_claimant_result(user: dict) -> None:
             use_container_width=True,
             help="A clear summary of the current claim outcome, amounts, reasons, and next steps.",
         )
-    comparison, settlement = get_comparison_for_view(claim_id, user)
     if comparison and settlement:
         with st.container(border=True):
             _render_settlement_comparison(dict(claim), comparison, settlement, user, normalized, rules)

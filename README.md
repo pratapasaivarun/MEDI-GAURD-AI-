@@ -2,7 +2,7 @@
 
 **A fictional-data prototype for comparing health-insurance settlements with a transparent Python estimate.**
 
-[![CI](https://github.com/pratapasaivarun/MEDI-GAURD-AI-/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/pratapasaivarun/MEDI-GAURD-AI-/actions/workflows/tests.yml)
+[![CI](https://github.com/pratapasaivarun/MediGuard-AI/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/pratapasaivarun/MediGuard-AI/actions/workflows/tests.yml)
 [![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -42,8 +42,8 @@ Python 3.13 is the verified runtime. Tesseract is optional for scanned-page OCR.
 ### Windows PowerShell
 
 ```powershell
-git clone https://github.com/pratapasaivarun/MEDI-GAURD-AI-.git
-Set-Location MEDI-GAURD-AI-
+git clone https://github.com/pratapasaivarun/MediGuard-AI.git
+Set-Location MediGuard-AI
 py -3.13 -m venv .venv
 \.venv\Scripts\python.exe -m pip install --upgrade pip
 \.venv\Scripts\python.exe -m pip install -r requirements.txt -r tests/requirements-dev.txt
@@ -70,8 +70,8 @@ Open the regular app at <http://127.0.0.1:8501>.
 ### macOS or Linux
 
 ```bash
-git clone https://github.com/pratapasaivarun/MEDI-GAURD-AI-.git
-cd MEDI-GAURD-AI-
+git clone https://github.com/pratapasaivarun/MediGuard-AI.git
+cd MediGuard-AI
 python3.13 -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip

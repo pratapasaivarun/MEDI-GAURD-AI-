@@ -327,6 +327,45 @@ def _inr(value: Any) -> str:
     return f"INR {float(value or 0):,.2f}"
 
 
+def _claimant_recommendations(decision: dict[str, Any], rules: dict[str, Any], comparison: Any) -> list[str]:
+    recommendations = recommend_next_steps(decision, rules)
+    if comparison and comparison.status == "possible_discrepancy":
+        return [
+            f"The settlement differs from the policy-based estimate by {_inr(comparison.possible_difference)}. Review the Settlement comparison below and check the appeal draft."
+        ] + [text for text in recommendations if "No action is needed" not in text]
+    return recommendations
+
+
+def _claimant_policy_issue(issue: dict[str, Any]) -> str:
+    """Translate source-review diagnostics into claimant-readable wording."""
+    labels = {
+        "annual_limit": "Annual coverage limit",
+        "deductible": "Deductible",
+        "copay_percent": "Co-payment rate",
+        "room_limit_per_day": "Daily room limit",
+        "icu_limit_per_day": "Daily ICU limit",
+        "exclusions": "Policy exclusions",
+        "date_window": "Pre- and post-hospitalization period",
+        "matching_policy": "Policy number",
+        "active_policy_terms": "Linked policy edition",
+    }
+    term = str(issue.get("term") or "Policy detail").strip()
+    label = labels.get(term, term.replace("_", " ").strip().capitalize())
+    reason = str(issue.get("reason") or "This policy detail needs review.").strip()
+    reason = re.sub(rf"^{re.escape(term)}:\s*", "", reason, flags=re.IGNORECASE)
+    reason = re.sub(
+        r";?\s*the\s+(\d+(?:\.\d+)?)-confidence candidate was not applied, and no current bill line matches it\.\s*Confirm this term to check whether the result changes\.?",
+        r". The extracted value has confidence \1 and needs review before it can be used.",
+        reason,
+        flags=re.IGNORECASE,
+    )
+    reason = reason.lstrip(" .;:").strip()
+    reason = re.sub(r"\bconfidence candidate\b", "extracted value", reason, flags=re.IGNORECASE)
+    page = issue.get("page")
+    source = f" Source: policy page {page}." if page else " The policy page could not be identified."
+    return f"{label}: {reason}{source}"
+
+
 def appeal_draft_available(comparison: Any) -> bool:
     """Appeal downloads require a comparison with a possible discrepancy."""
     return comparison is not None and getattr(comparison, "status", None) == "possible_discrepancy"

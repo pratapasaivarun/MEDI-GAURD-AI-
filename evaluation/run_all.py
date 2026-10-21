@@ -30,6 +30,7 @@ from mediguard.engine.models import SettlementData, SettlementDeduction  # noqa:
 from mediguard.ingestion.extraction import extract_document, run_extraction  # noqa: E402
 from mediguard.ingestion.settlement import parse_settlement  # noqa: E402
 from mediguard.policy.policy_terms import extract_policy_terms  # noqa: E402
+from evaluation.scripts.score_policy_terms_from_pdfs import run as score_policy_terms_from_pdfs  # noqa: E402
 
 LABELS_PATH = ROOT / "samples" / "evaluation_cases" / "ground_truth.json"
 CASES_DIR = ROOT / "samples" / "evaluation_cases" / "cases"
@@ -422,7 +423,8 @@ def run() -> int:
             "recall": sum(r["matched"] for r in line_item_rows) / max(1, sum(r["expected_count"] for r in line_item_rows)),
             "note": "Description and amount exact-match across hand-labeled text bills; scanned-only cases are excluded."},
         "ocr_field_accuracy": metric(ocr_total + ocr_other, len(ocr_rows) * 3, .90, note=f"OCR-marked PDFs: {len(ocr_rows)}; methods: Tesseract only when reported by extraction."),
-        "policy_term_accuracy": metric(term_correct, len(policy_rows), .95),
+        "policy_pdf_core_term_accuracy": metric(term_correct, len(policy_rows), .95, note="Three terms (annual limit, deductible, co-pay) extracted from source PDFs and compared with hand labels; reviewer-confirmed terms files are not read."),
+        "policy_pdf_term_accuracy": score_policy_terms_from_pdfs(emit=False),
         "retrieval": {**retrieval_scores,
                       "target_precision_at_1": .8, "target_recall_at_5": .9,
                       "pass": retrieved_queries == 30 and retrieval_scores["precision_at_1"] >= .8 and retrieval_scores["recall_at_5"] >= .9,
@@ -491,7 +493,13 @@ def run() -> int:
              "Ground truth was committed before this evaluation run. The runner never writes to expected labels.", "",
              "## Scorecard", "", "| Metric | Result | Numerator / denominator | Target | Pass |", "|---|---:|---:|---:|---|"]
     for name, value in metrics.items():
-        if "score" in value:
+        if "scores" in value:
+            term_scores = value["scores"]
+            shown = "; ".join(f"{term} {entry['numerator']}/{entry['denominator']}" for term, entry in term_scores.items())
+            n = sum(entry["numerator"] for entry in term_scores.values())
+            d = sum(entry["denominator"] for entry in term_scores.values())
+            target, passed = "measured per term; no aggregate target", "MEASURED"
+        elif "score" in value:
             shown = "n/a" if value["score"] is None else f"{100 * value['score']:.1f}%"
             n, d = value.get("numerator", 0), value.get("denominator", 0)
             passed = "NOT RUN" if value.get("pass") is None else ("PASS" if value["pass"] else "FAIL")

@@ -132,7 +132,8 @@ Latest recorded evaluation scores are validated on **30 synthetic cases**, with 
 - Provisional decision-label agreement through the full app path: **6/30**. All 30 cases show a visible result, and all 30 have identical status and amounts before and after reviewer confirmation. The 24 ordinary match/discrepancy labels remain Manual Review because the synthetic bill line says only “Eligible treatment” and needs a defensible category. `edge_05` has the one payable mismatch (expected INR 0, shown estimate INR 9,000); its policy and bill do not contain the labeled date-window exclusion or a dated service line.
 - Extraction totals: **30/30 (100%)**; other labeled fields: **60/60 (100%)**.
 - Text-bill line items: precision **28/28 (100%)**, recall **28/28 (100%)**; OCR field accuracy **6/6 (100%)**.
-- Reviewer-confirmed policy terms: **90/90 (100%)**.
+- Core policy-term extraction from source PDFs (annual limit, deductible and co-pay): **90/90**; the runner compares PDF extraction with hand labels and does not read reviewer-confirmed terms files.
+- Policy-term extraction from the 30 source policy PDFs, compared with separate source-PDF labels: deductible **30/30**, co-pay **30/30**, room cap **30/30**, ICU cap **30/30** (correctly absent), exclusions **30/30** (correctly absent), date window **30/30** (including `edge_05`), annual limit **30/30**. This 210/210 measurement includes terms correctly absent from PDFs and does not use reviewer-confirmed terms files.
 - Rules golden agreement: **24/24 (100%)**; property checks: **211/211 (100%)**.
 - Adversarial parser set: **10/10 cases**, **61/61 labeled field checks**, line-item precision/recall **1.00/1.00**. Labels were committed before scoring.
 - Comparison labels: **30/30 (100%)**; discrepancy false matches: **0/10**. Settlement paid-amount F1: **100% (28 labeled payments)**; deduction F1: **100% (37 labeled deductions)**.

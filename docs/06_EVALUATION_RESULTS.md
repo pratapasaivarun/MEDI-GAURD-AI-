@@ -2,6 +2,8 @@
 
 **30 synthetic cases; fictional data only.**
 
+Policy-term scores below are measured by extracting directly from each case's `policy.pdf` and comparing with separately committed source-PDF labels. The measurement does not load reviewer-confirmed term files. Core fields (annual limit, deductible, co-pay) are 90/90. The expanded term-by-term extraction results are: deductible 30/30; co-pay 30/30; room cap 30/30; ICU cap 30/30 (absent as labeled); exclusions 30/30 (absent as labeled); date window 30/30; annual limit 30/30. Total across these seven checks: 210/210. See `evaluation/latest/policy_pdf_term_scores.json` for case-level values.
+
 Fixture audit note (2026-10-21): the hand-labeled `edge_05` outcome remained INR 0, but its original policy PDF had no date-window rule and its scanned bill had no service date. That made the label impossible to verify from its source documents. The expected-results file was left unchanged. The fictional source policy and scanned bill were corrected to show a 30-day pre-hospitalization window and a service date 70 days before admission; the date-window clause is now extracted from page 1 and the charge is excluded by the documented rule. If a future bill line has no readable date while a date-window term applies, the app states that the check could not be done and routes the line to review.
 
 Ground truth was committed before this evaluation run. The runner never writes to expected labels.
@@ -14,7 +16,8 @@ Ground truth was committed before this evaluation run. The runner never writes t
 | extraction_other_fields_match | 100.0% | 60/60 | 0.95 | PASS |
 | line_item_precision_recall | Precision 100.0%; recall 100.0% | 28/28 | measured | MEASURED |
 | ocr_field_accuracy | 100.0% | 6/6 | 0.9 | PASS |
-| policy_term_accuracy | 100.0% | 90/90 | 0.95 | PASS |
+| policy_pdf_core_term_accuracy | 100.0% | 90/90 | 0.95 | PASS |
+| policy_pdf_term_accuracy | 100.0% across seven term types | 210/210 | measured by term | MEASURED |
 | retrieval | P@1 100.0%; P@3 33.3%; P@5 20.0%; R@5 100.0%; MRR 1.000 | P@1 30/30; P@3 30/90; P@5 30/150; R@5 30/30/labeled retrieved slots | P@1 ≥.8, R@5 ≥.9 | PASS |
 | rules_golden_agreement | 100.0% | 24/24 | 1.0 | PASS |
 | rules_properties | 100.0% | 211/211 | 1.0 | PASS |

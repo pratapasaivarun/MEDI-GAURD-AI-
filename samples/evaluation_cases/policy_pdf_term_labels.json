@@ -1,0 +1,308 @@
+{
+  "label": "FICTIONAL SOURCE-PDF TERM LABELS, independently read from policy.pdf; not reviewer-confirmed terms",
+  "cases": [
+    {
+      "case_id": "match_01",
+      "annual_limit": 10000,
+      "deductible": 1000,
+      "copay_percent": 10,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "match_02",
+      "annual_limit": 20000,
+      "deductible": 0,
+      "copay_percent": 10,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "match_03",
+      "annual_limit": 15000,
+      "deductible": 1000,
+      "copay_percent": 0,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "match_04",
+      "annual_limit": 12000,
+      "deductible": 2000,
+      "copay_percent": 0,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "match_05",
+      "annual_limit": 30000,
+      "deductible": 5000,
+      "copay_percent": 10,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "match_06",
+      "annual_limit": 10000,
+      "deductible": 0,
+      "copay_percent": 0,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "match_07",
+      "annual_limit": 25000,
+      "deductible": 5000,
+      "copay_percent": 20,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "match_08",
+      "annual_limit": 40000,
+      "deductible": 10000,
+      "copay_percent": 10,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "match_09",
+      "annual_limit": 18000,
+      "deductible": 3000,
+      "copay_percent": 10,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "match_10",
+      "annual_limit": 50000,
+      "deductible": 5000,
+      "copay_percent": 10,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "discrepancy_01",
+      "annual_limit": 10000,
+      "deductible": 1000,
+      "copay_percent": 10,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "discrepancy_02",
+      "annual_limit": 20000,
+      "deductible": 0,
+      "copay_percent": 10,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "discrepancy_03",
+      "annual_limit": 15000,
+      "deductible": 1000,
+      "copay_percent": 0,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "discrepancy_04",
+      "annual_limit": 12000,
+      "deductible": 2000,
+      "copay_percent": 0,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "discrepancy_05",
+      "annual_limit": 30000,
+      "deductible": 5000,
+      "copay_percent": 10,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "discrepancy_06",
+      "annual_limit": 10000,
+      "deductible": 0,
+      "copay_percent": 0,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "discrepancy_07",
+      "annual_limit": 25000,
+      "deductible": 5000,
+      "copay_percent": 20,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "discrepancy_08",
+      "annual_limit": 40000,
+      "deductible": 10000,
+      "copay_percent": 10,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "discrepancy_09",
+      "annual_limit": 18000,
+      "deductible": 3000,
+      "copay_percent": 10,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "discrepancy_10",
+      "annual_limit": 50000,
+      "deductible": 5000,
+      "copay_percent": 10,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "manual_01",
+      "annual_limit": 10000,
+      "deductible": 1000,
+      "copay_percent": 10,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "manual_02",
+      "annual_limit": 20000,
+      "deductible": 0,
+      "copay_percent": 10,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "manual_03",
+      "annual_limit": 15000,
+      "deductible": 1000,
+      "copay_percent": 0,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "manual_04",
+      "annual_limit": 12000,
+      "deductible": 2000,
+      "copay_percent": 0,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "manual_05",
+      "annual_limit": 30000,
+      "deductible": 5000,
+      "copay_percent": 10,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "edge_01",
+      "annual_limit": 10000,
+      "deductible": 5000,
+      "copay_percent": 10,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "edge_02",
+      "annual_limit": 10000,
+      "deductible": 0,
+      "copay_percent": 10,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "edge_03",
+      "annual_limit": 10000,
+      "deductible": 0,
+      "copay_percent": 0,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "edge_04",
+      "annual_limit": 15000,
+      "deductible": 1000,
+      "copay_percent": 10,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": null
+    },
+    {
+      "case_id": "edge_05",
+      "annual_limit": 10000,
+      "deductible": 0,
+      "copay_percent": 10,
+      "room_limit_per_day": 5000,
+      "icu_limit_per_day": null,
+      "exclusions": null,
+      "date_window": {
+        "pre_hospitalization_days": 30,
+        "post_hospitalization_days": 60
+      }
+    }
+  ]
+}

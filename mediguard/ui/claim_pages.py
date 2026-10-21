@@ -8,6 +8,43 @@ from mediguard.ui.navigation import queue_page
 
 logger = logging.getLogger(__name__)
 
+_CLAIM_REVIEW_TAB_LABELS = (
+    '1 · Choose claim',
+    '2 · Add documents',
+    '3 · Check extraction',
+    '4 · Calculate & review',
+    '5 · Compare settlement & draft letters',
+)
+
+
+def _claim_review_tab_key(claim_id: str) -> str:
+    return f"claim_review_active_tab_{claim_id}"
+
+
+def _remember_claim_review_tab(claim_id: str, tab_index: int) -> None:
+    if 0 <= tab_index < len(_CLAIM_REVIEW_TAB_LABELS):
+        st.session_state[_claim_review_tab_key(claim_id)] = _CLAIM_REVIEW_TAB_LABELS[tab_index]
+
+
+def _claim_review_tab_default(claim_id: str) -> str:
+    selected = st.session_state.get(_claim_review_tab_key(claim_id))
+    return selected if selected in _CLAIM_REVIEW_TAB_LABELS else _CLAIM_REVIEW_TAB_LABELS[0]
+
+
+def _policy_edition_default_index(editions, linked_id: str | None, claim_policy_number: str | None) -> int:
+    """Prefer an already linked edition, otherwise a confirmed matching edition."""
+    rows = list(editions or [])
+    for index, edition in enumerate(rows):
+        if linked_id and edition["version_id"] == linked_id:
+            return index
+    policy_number = str(claim_policy_number or "").strip().casefold()
+    matching = [
+        index for index, edition in enumerate(rows)
+        if policy_number and str(edition["policy_number"] or "").strip().casefold() == policy_number
+    ]
+    confirmed = [index for index in matching if rows[index]["terms_review_status"] == "confirmed"]
+    return (confirmed or matching or [0])[0]
+
 
 def _render_policy_terms_badge(review_status: str | None) -> None:
     if review_status == "provisional":
@@ -619,7 +656,7 @@ def _render_claim_review(user: dict) -> None:
                 reviewer_rules = None
     if reviewer_rules:
         _render_policy_terms_badge(reviewer_rules.get("policy_terms_review_status"))
-    tabs = st.tabs(['1 · Choose claim', '2 · Add documents', '3 · Check extraction', '4 · Calculate & review', '5 · Compare settlement & draft letters'])
+    tabs = st.tabs(_CLAIM_REVIEW_TAB_LABELS, default=_claim_review_tab_default(claim_id))
     with tabs[0]:
         st.markdown('### Your review path')
         path_columns = st.columns(4, gap='small')
@@ -641,6 +678,7 @@ def _render_claim_review(user: dict) -> None:
             else:
                 try:
                     for uploaded, kind in files: save_document(claim_id, user, uploaded, kind)
+                    _remember_claim_review_tab(claim_id, 1)
                     st.success(f'Saved {len(files)} document(s).'); st.rerun()
                 except (ValueError, PermissionError):
                     logger.exception("Reviewer document upload was rejected")
@@ -659,6 +697,8 @@ def _render_claim_review(user: dict) -> None:
                     logger.exception("Reviewer document extraction failed")
                     status.update(label='Extraction failed', state='error')
                     st.error('Document extraction did not finish. Check the uploaded files and try again.')
+            _remember_claim_review_tab(claim_id, 2)
+            st.rerun()
         if normalized:
             missing = normalized.get('missing_fields',[]) + normalized.get('review_fields',[])
             if missing: st.warning('Some fields need your input before analysis: ' + ', '.join(missing))
@@ -713,6 +753,7 @@ def _render_claim_review(user: dict) -> None:
                         st.session_state[f'normalized_{claim_id}'] = normalized
                         st.session_state.pop(f'rules_{claim_id}', None)
                         st.session_state.pop(f'workflow_{claim_id}', None)
+                        _remember_claim_review_tab(claim_id, 2)
                         st.success(f"Saved reviewer confirmations for {len(edits)} field groups.")
                         st.rerun()
                     except Exception:
@@ -731,13 +772,16 @@ def _render_claim_review(user: dict) -> None:
                 if editions:
                     labels = {f"{edition['policy_number']} · {edition['version_label']} · {edition['source_name']} · {edition['status']}": edition['version_id'] for edition in editions}
                     linked_id = selected_claim['policy_version_id']
-                    current_index = next((i for i, value in enumerate(labels.values()) if value == linked_id), 0)
+                    current_index = _policy_edition_default_index(
+                        editions, linked_id, selected_claim['policy_number']
+                    )
                     with st.form(f'link_policy_edition_{claim_id}'):
                         chosen_policy = st.selectbox('Policy edition', list(labels), index=current_index)
                         link_policy = st.form_submit_button('Link edition to this claim')
                     if link_policy:
                         try:
                             link_policy_version_to_claim(claim_id, user['user_id'], labels[chosen_policy])
+                            _remember_claim_review_tab(claim_id, 3)
                             st.success('Policy edition linked to this claim.')
                             st.rerun()
                         except Exception:
@@ -757,6 +801,8 @@ def _render_claim_review(user: dict) -> None:
                         logger.exception("Claim rules evaluation failed")
                         status.update(label='Rules failed',state='error')
                         st.error('The policy calculation could not be completed. Review the confirmed policy terms and bill details.')
+                _remember_claim_review_tab(claim_id, 3)
+                st.rerun()
             if rules:
                 result_status = _safe_status(rules['status'])
                 st.markdown(deterministic_result_header_html(result_status), unsafe_allow_html=True)
@@ -776,6 +822,8 @@ def _render_claim_review(user: dict) -> None:
                             logger.exception("Claim explanation workflow failed")
                             status.update(label='Agent workflow failed',state='error')
                             st.error('The explanation service is unavailable. The deterministic calculation remains available for review.')
+                    _remember_claim_review_tab(claim_id, 3)
+                    st.rerun()
                 if workflow:
                     decision=workflow.get('decision',{}); decision_status = _safe_status(decision.get('status','manual_review')); st.markdown(evidence_recommendation_header_html(decision_status), unsafe_allow_html=True)
                     for reason in decision.get('reasons',[]): st.write(f'• {reason}')
@@ -804,6 +852,8 @@ def _render_claim_review(user: dict) -> None:
                 comparison, settlement = run_settlement_comparison(claim_id, user['user_id'], normalized, rules)
                 st.session_state[f'comparison_{claim_id}'] = comparison
                 st.session_state[f'settlement_{claim_id}'] = settlement
+                _remember_claim_review_tab(claim_id, 4)
+                st.rerun()
             except Exception:
                 logger.exception("Settlement comparison failed")
                 st.error('The settlement comparison could not be completed. Check the settlement amount and deductions.')

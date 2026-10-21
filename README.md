@@ -126,7 +126,7 @@ The 30 case labels are in `samples/evaluation_cases/ground_truth.json`; their PD
 
 Latest recorded evaluation scores are validated on **30 synthetic cases**, with an additional **3 app-path demo cases**; these are not general accuracy claims. The hand-labeled expected results were committed before scoring.
 
-- Automated suite: **230 passed** with Ollama disabled (use the fresh temporary pytest base command above).
+- Automated suite: **232 passed** with Ollama disabled (use the fresh temporary pytest base command above).
 - Result shown without reviewer confirmation: **3/3 demo cases** reached an app-path result; provisional status, insurer estimate, and comparison difference matched the later reviewer-confirmed run on all three.
 - Extraction totals: **30/30 (100%)**; other labeled fields: **60/60 (100%)**.
 - Text-bill line items: precision **28/28 (100%)**, recall **28/28 (100%)**; OCR field accuracy **6/6 (100%)**.
@@ -135,7 +135,7 @@ Latest recorded evaluation scores are validated on **30 synthetic cases**, with 
 - Adversarial parser set: **10/10 cases**, **61/61 labeled field checks**, line-item precision/recall **1.00/1.00**. Labels were committed before scoring.
 - Comparison labels: **30/30 (100%)**; discrepancy false matches: **0/10**. Settlement paid-amount F1: **100% (28 labeled payments)**; deduction F1: **100% (37 labeled deductions)**.
 - Retrieval over 30 questions: P@1 **30/30 (100%)**, P@3 **30/90 (33.3%)**, P@5 **30/150 (20%)**, recall@5 **30/30 (100%)**, MRR **1.000**. The latest evaluation used Chroma's default fallback embedding backend because the configured BGE model was unavailable. These are synthetic query scores, not a claim of broad policy-search accuracy.
-- Ollama ON/OFF decision equality: earlier recorded checks were **3/3 demo cases** in the system evaluation and **10/10 discrepancy cases** in the explanation/performance run; explanation checklist **30/30** across ten live model texts. These were not rerun during the provisional-flow change. The Playwright run was attempted but is **not passing**: the existing reviewer-workspace script returned **0/8** and remained on its initial review tab after the rules step. I have not isolated whether this is tab state in the app or outdated automation; claimant-first browser acceptance and the five upload errors remain unverified. Screenshots are outside the repository.
+- Ollama ON/OFF decision equality: earlier recorded checks were **3/3 demo cases** in the system evaluation and **10/10 discrepancy cases** in the explanation/performance run; explanation checklist **30/30** across ten live model texts. These were not rerun during the provisional-flow change. One isolated reviewer-workspace browser run passed `a_match` (1/1). The full Playwright run is **not passing** (0/8): it returned Manual Review because the uploaded policy edition was not linked to the claim. I have not isolated whether that was app state or the automation setup. Claimant-first browser acceptance and the five upload errors remain unverified. Screenshots are outside the repository.
 - Mean offline evaluation-run time: **0.602 seconds per case** for the latest 30-case run. The focused end-to-end claim timing above includes the explanation path and is reported separately.
 - Focused ten-claim timing: **0.632 s/claim** with Ollama off and **35.716 s/claim** with it on; on-mode Ollama/llama-server RSS peaked at **5,259.4 MiB**. Full method and warm-model details are in `docs/06_EVALUATION_RESULTS.md`.
 

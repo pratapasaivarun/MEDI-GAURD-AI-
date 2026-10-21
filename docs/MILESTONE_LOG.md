@@ -331,3 +331,13 @@ The upload matrix rejected an empty PDF, a `.txt` uploaded as a bill, and a 15 M
 **Expected output:** pytest passes; the offline evaluation reports 30 synthetic cases with no case failures; the provisional app-path check reports 3/3 demo cases; browser checks pass.
 
 **Observed output:** `230 passed in 104.86s`; the 30-case offline evaluation exited successfully with no labeled failures (totals 30/30, other fields 60/60, line items 28/28, OCR 6/6, policy terms 90/90, rules 24/24, comparison decisions 30/30). Retrieval ran on Chroma's default fallback backend (P@1 30/30, P@3 30/90, P@5 30/150, recall@5 30/30, MRR 1.000). The provisional-vs-confirmed app path passed for 3/3 demos. The Playwright reviewer-workspace run returned 0/8 and stayed on its initial tab after the rules action; the claimant-first browser matrix and upload-error screens remain unverified, and the cause is not yet isolated.
+
+## Keep reviewer actions on their active step
+
+**What changed:** The reviewer workspace now reopens the step where the last calculation or comparison action completed. When a claim has no linked policy edition, the selector prefers an already confirmed edition with the same policy number. Added regression checks for both behaviors.
+
+**Verify command:** `python -m pytest -q tests --basetemp .pytest-temp`
+
+**Expected output:** all tests pass.
+
+**Observed output:** `232 passed in 110.07s`. The selected `a_match` reviewer-workspace browser run passed `1/1`. The latest full reviewer-workspace Playwright run returned `0/8` because it reached Manual Review with “No matching policy edition is linked to this claim.” The cause is not isolated between the browser flow and app state. The claimant-first flow and upload errors are still unverified.

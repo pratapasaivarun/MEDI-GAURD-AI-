@@ -213,7 +213,9 @@ def run_browser_suite() -> dict[str, Any]:
                     page.get_by_role("button", name="Link edition to this claim").click()
                     page.get_by_text("Term review: confirmed").wait_for(timeout=20000)
                 page.get_by_role("button", name="Run deterministic coverage rules").click()
-                page.get_by_text("Rules complete").wait_for(timeout=30000)
+                # The result status is rendered after the app reruns to keep
+                # the rules tab active, so the transient status label is gone.
+                page.get_by_text("Estimated insurer payment", exact=True).wait_for(timeout=30000)
                 page.get_by_role("tab", name="5 · Compare settlement & draft letters").click()
                 compare_button = page.get_by_role("button", name="Run settlement comparison")
                 compare_button.wait_for(state="visible", timeout=30000)

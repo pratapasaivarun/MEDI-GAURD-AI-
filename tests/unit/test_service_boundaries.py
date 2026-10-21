@@ -80,6 +80,23 @@ def test_claim_assistant_names_the_specific_manual_review_reason():
     assert "confirm the bill details and applicable policy terms first" not in answer
 
 
+def test_reviewer_workspace_remembers_the_active_step_after_a_rerun(monkeypatch):
+    state = {}
+    monkeypatch.setattr(claim_pages, "st", SimpleNamespace(session_state=state))
+    claim_pages._remember_claim_review_tab("claim-1", 4)
+    assert claim_pages._claim_review_tab_default("claim-1") == "5 · Compare settlement & draft letters"
+
+
+def test_policy_link_picker_prefers_confirmed_matching_edition_when_none_linked():
+    editions = [
+        {"version_id": "claim-upload", "policy_number": "POL-FICT-001", "terms_review_status": "pending"},
+        {"version_id": "reviewed", "policy_number": "POL-FICT-001", "terms_review_status": "confirmed"},
+        {"version_id": "other", "policy_number": "POL-OTHER", "terms_review_status": "confirmed"},
+    ]
+    assert claim_pages._policy_edition_default_index(editions, None, "POL-FICT-001") == 1
+    assert claim_pages._policy_edition_default_index(editions, "claim-upload", "POL-FICT-001") == 0
+
+
 def test_storage_upload_validator_keeps_file_checks_in_service_layer():
     content, name = validate_upload(Upload("bill.pdf", b"%PDF-1.4 fictional"), "medical_bill", 1)
     assert content == b"%PDF-1.4 fictional"

@@ -500,6 +500,9 @@ def build_appeal_letter_pdf(claim: dict[str, Any], rules: dict[str, Any], workfl
         ),
         Paragraph("Key points for review", styles["heading"]),
     ]
+    provisional = rules.get("policy_terms_review_status") == "provisional"
+    if provisional:
+        story.insert(0, Paragraph("PROVISIONAL DRAFT — policy terms have not yet been reviewer-confirmed. Do not send as a final appeal.", styles["body"]))
     for reason in reasons[:3]:
         story.append(Paragraph(f"- {_reason_copy(reason)}", styles["letter"]))
     story.extend([
@@ -509,7 +512,8 @@ def build_appeal_letter_pdf(claim: dict[str, Any], rules: dict[str, Any], workfl
         Spacer(1, 12),
         Paragraph(escape(ESTIMATE_DISCLAIMER), styles["small"]),
     ])
-    doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
+    page_callback = lambda canvas, page_doc: _appeal_page(canvas, page_doc, provisional)
+    doc.build(story, onFirstPage=page_callback, onLaterPages=page_callback)
     return buffer.getvalue()
 
 
@@ -581,17 +585,20 @@ def build_comparison_appeal_letter_text(
     return letter
 
 
-def build_hospital_note_text(claim: dict[str, Any], comparison: ComparisonResult) -> str:
+def build_hospital_note_text(claim: dict[str, Any], comparison: ComparisonResult, provisional: bool = False) -> str:
     if comparison.status != "possible_discrepancy":
         raise ValueError("A hospital note is available only for a possible discrepancy.")
     claim_id = str(claim.get("claim_number") or "Not available")
     patient = str(claim.get("patient_name") or "Not available")
-    return "\n\n".join([
+    paragraphs = [
         f"To: Billing Department\nSubject: Please record the possible insurer difference as under insurer review - Claim {claim_id}",
         f"For {patient}, please record {_inr_indian(comparison.possible_difference)} as under insurer review while the settlement is being checked. The rules-based estimate of the undisputed patient amount is {_inr_indian(comparison.expected_patient_share)}.",
         "Please provide an itemized account statement and keep the disputed amount separate from the undisputed balance while the insurer review is pending.",
         ESTIMATE_DISCLAIMER,
-    ])
+    ]
+    if provisional:
+        paragraphs.insert(0, "PROVISIONAL DRAFT — policy terms have not yet been reviewer-confirmed. Do not use as a final determination.")
+    return "\n\n".join(paragraphs)
 
 
 def build_comparison_appeal_letter_pdf(claim: dict[str, Any], comparison: ComparisonResult, settlement: SettlementData, explanation: str | None = None, signature: str = "Claimant or authorized representative", provisional: bool = False) -> bytes:
@@ -625,22 +632,28 @@ def build_comparison_appeal_letter_docx(claim: dict[str, Any], comparison: Compa
     return output.getvalue()
 
 
-def build_hospital_note_pdf(claim: dict[str, Any], comparison: ComparisonResult) -> bytes:
+def build_hospital_note_pdf(claim: dict[str, Any], comparison: ComparisonResult, provisional: bool = False) -> bytes:
     styles = _styles()
     buffer, doc = _document()
     story = [Paragraph("MediGuard AI", styles["subtitle"]), Paragraph("Hospital Billing Note", styles["title"])]
-    story.extend(Paragraph(escape(paragraph), styles["letter"]) for paragraph in build_hospital_note_text(claim, comparison).split("\n\n"))
-    doc.build(story, onFirstPage=_footer)
+    story.extend(Paragraph(escape(paragraph), styles["letter"]) for paragraph in build_hospital_note_text(claim, comparison, provisional).split("\n\n"))
+    page_callback = lambda canvas, page_doc: _appeal_page(canvas, page_doc, provisional)
+    doc.build(story, onFirstPage=page_callback, onLaterPages=page_callback)
     return buffer.getvalue()
 
 
-def build_hospital_note_docx(claim: dict[str, Any], comparison: ComparisonResult) -> bytes:
+def build_hospital_note_docx(claim: dict[str, Any], comparison: ComparisonResult, provisional: bool = False) -> bytes:
     from docx import Document
+    from docx.shared import RGBColor
 
     document = Document()
     document.add_heading("Hospital Billing Note", level=1)
-    for paragraph in build_hospital_note_text(claim, comparison).split("\n\n"):
-        document.add_paragraph(paragraph)
+    for paragraph in build_hospital_note_text(claim, comparison, provisional).split("\n\n"):
+        rendered = document.add_paragraph(paragraph)
+        if provisional and paragraph.startswith("PROVISIONAL DRAFT"):
+            for run in rendered.runs:
+                run.bold = True
+                run.font.color.rgb = RGBColor(185, 28, 28)
     output = io.BytesIO()
     document.save(output)
     return output.getvalue()

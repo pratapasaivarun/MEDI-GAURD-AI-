@@ -8,6 +8,7 @@ import mediguard.ai.agents as agents
 from mediguard.engine.models import CategoryComparison, Clause, ComparisonResult, SettlementData
 from mediguard.reporting.reports import (
     ESTIMATE_DISCLAIMER,
+    build_appeal_letter_pdf,
     build_comparison_appeal_letter_docx,
     build_comparison_appeal_letter_pdf,
     build_comparison_appeal_letter_text,
@@ -77,6 +78,16 @@ def test_provisional_appeal_is_marked_in_text_pdf_and_word_but_confirmed_is_not(
     confirmed_docx = Document(BytesIO(build_comparison_appeal_letter_docx(claim, comparison, settlement)))
     assert "PROVISIONAL DRAFT" in "\n".join(paragraph.text for paragraph in provisional_docx.paragraphs)
     assert "PROVISIONAL DRAFT" not in "\n".join(paragraph.text for paragraph in confirmed_docx.paragraphs)
+
+    provisional_hospital_text = build_hospital_note_text(claim, comparison, provisional=True)
+    assert provisional_hospital_text.startswith("PROVISIONAL DRAFT")
+    hospital_pdf = fitz.open(stream=build_hospital_note_pdf(claim, comparison, provisional=True), filetype="pdf")
+    assert "PROVISIONAL DRAFT" in hospital_pdf[0].get_text()
+    hospital_docx = Document(BytesIO(build_hospital_note_docx(claim, comparison, provisional=True)))
+    assert "PROVISIONAL DRAFT" in "\n".join(paragraph.text for paragraph in hospital_docx.paragraphs)
+
+    decision_pdf = fitz.open(stream=build_appeal_letter_pdf(claim, {"status": "approved", "payable_amount": 8100, "policy_terms_review_status": "provisional"}), filetype="pdf")
+    assert "PROVISIONAL DRAFT" in decision_pdf[0].get_text()
 
 
 def test_fabricated_llm_number_falls_back_to_fixed_explanation(monkeypatch):

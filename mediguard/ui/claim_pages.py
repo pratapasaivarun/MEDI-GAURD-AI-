@@ -366,12 +366,12 @@ def _render_settlement_comparison(
             st.download_button('Appeal letter (PDF)', build_comparison_appeal_letter_pdf(claim, comparison, settlement, explanation, provisional=provisional_appeal), file_name=f"{claim.get('claim_number','claim')}-appeal-draft.pdf", mime='application/pdf', key=f"appeal_pdf_{claim.get('claim_id','claim')}")
             st.download_button('Appeal letter (Word)', build_comparison_appeal_letter_docx(claim, comparison, settlement, explanation, provisional=provisional_appeal), file_name=f"{claim.get('claim_number','claim')}-appeal-draft.docx", mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document', key=f"appeal_docx_{claim.get('claim_id','claim')}")
         with b:
-            st.download_button('Hospital billing note (PDF)', build_hospital_note_pdf(claim, comparison), file_name=f"{claim.get('claim_number','claim')}-hospital-note.pdf", mime='application/pdf', key=f"hospital_pdf_{claim.get('claim_id','claim')}")
-            st.download_button('Hospital billing note (Word)', build_hospital_note_docx(claim, comparison), file_name=f"{claim.get('claim_number','claim')}-hospital-note.docx", mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document', key=f"hospital_docx_{claim.get('claim_id','claim')}")
+            st.download_button('Hospital billing note (PDF)', build_hospital_note_pdf(claim, comparison, provisional=provisional_appeal), file_name=f"{claim.get('claim_number','claim')}-hospital-note.pdf", mime='application/pdf', key=f"hospital_pdf_{claim.get('claim_id','claim')}")
+            st.download_button('Hospital billing note (Word)', build_hospital_note_docx(claim, comparison, provisional=provisional_appeal), file_name=f"{claim.get('claim_number','claim')}-hospital-note.docx", mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document', key=f"hospital_docx_{claim.get('claim_id','claim')}")
         with st.expander('Preview appeal letter'):
             st.text(build_comparison_appeal_letter_text(claim, comparison, settlement, explanation, provisional=provisional_appeal))
         with st.expander('Preview hospital note'):
-            st.text(build_hospital_note_text(claim, comparison))
+            st.text(build_hospital_note_text(claim, comparison, provisional=provisional_appeal))
     elif comparison.status == 'manual_review':
         st.info('An appeal draft is unavailable until the listed comparison issue can be resolved from the source documents.')
     else:

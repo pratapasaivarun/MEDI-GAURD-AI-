@@ -26,7 +26,7 @@ Ground truth was committed before this evaluation run. The runner never writes t
 | report_rules | 100.0% | 2/2 | 1.0 | PASS |
 | browser_e2e | n/a | 0/0 | 3 demo cases and 5 upload/error cases pass | NOT RUN |
 | security | 100.0% | 3/3 | 1.0 | PASS |
-| seconds_per_claim | 0.602346 s/claim | 30/30 | measured | MEASURED |
+| seconds_per_claim | 0.518045 s/claim | 30/30 | measured | MEASURED |
 
 ## Confusion matrix
 
@@ -110,9 +110,13 @@ The ten fictional adversarial cases were labeled and committed before they were 
 
 The run initially found six parser defects: pipe-separated total labels were missed; `Claim Ref` and `Paid to hospital` were not recognized; “for 4 days” was discarded from a charge description; explicit above-limit deductions outside a Deductions heading were dropped; non-medical charges were classified as ordinary items; and a missing settlement reference did not request review. Regression tests were added for each behavior. The hand-labeled values were not changed to make the parser pass.
 
-## Browser matrix (live Playwright run)
+## Claimant-first browser matrix (fresh database)
 
-**8/8 passed.** The three demo cases reached their expected outcomes; `b_wrongful_deduction` showed the appeal PDF download, while the match and manual-review cases did not. Empty file, wrong type, oversized file, corrupted PDF, and missing settlement all displayed safe outcomes. Each scenario used a fresh browser page and claim. Current screenshots are in the temporary directory `C:\Users\prata\AppData\Local\Temp\mediguard-eval-screenshots-u96waj78` and are not committed.
+**8/8 passed**, including registration, uploading each demo's bill, policy, and settlement without a reviewer step, and reaching a visible result. Five independent fresh claims also safely handled an empty file, wrong type, oversized file, corrupted PDF, and missing settlement. In a second session, a reviewer confirmed policy terms; the claimant signed in again and refreshed. The badge changed from “Provisional: terms not yet confirmed” to “Reviewer-confirmed policy terms,” while all 11 displayed INR values stayed identical.
+
+The original 0/8 was initially caused by an app bug: policy indexing ran before the claim was linked to the policy edition, and an indexing error prevented linking. That order is fixed and covered by `tests/integration/test_claimant_policy_linkage.py`. A later rerun exposed a separate Playwright test issue: its selector matched the same reviewer badge twice. The locator now selects the first badge; it was a test-script defect. A BGE-enabled Playwright run under the pinned virtual environment did not reach the first result within its five-minute timeout; the successful 8/8 run used the system-Python runtime used by the open local app, which selects Chroma's fallback embedding. This is a real runtime/performance difference and remains a limitation of the BGE browser run.
+
+Screenshots are saved outside the repo at `C:\Users\prata\AppData\Local\Temp\mediguard-claimant-screenshots-jkh4w_sm`. The compact result is `evaluation/latest/claimant_browser_results.json`.
 
 ## Explanation quality (live Ollama)
 
@@ -144,16 +148,78 @@ Measured on Windows with `ibm/granite4.1:8b`; the Ollama-on model was warm at th
 
 The off run did not unload the already resident Ollama model, so its Ollama RSS is not an Ollama-free baseline. The on run samples all processes with `ollama` or `llama` in their name every 0.2 seconds; peak values are process working-set samples and can miss shorter spikes. The result file is `evaluation/latest/performance.json`; rerun with `python -m evaluation.scripts.benchmark_claims`.
 
-## Supplemental provisional app-path verification
+## Provisional claimant app-path verification (2026-10-21)
 
-The integration suite now runs each fictional demo case through the application's document processing, unconfirmed policy-term evaluation, and settlement-comparison services, then confirms the terms and repeats the calculation. It checks that the provisional result is visible, the status and comparison values match after confirmation, and a reviewer does not change the amounts when extracted terms were correct.
+All cases were uploaded through the app services with no prior reviewer confirmation. “Result shown” means the claimant path returned a visible estimate or Manual Review with a reason; it does not mean the decision label matched.
 
-| Case | Provisional status | Provisional insurer estimate | Settlement payment | Difference | Confirmed run equal? |
-|---|---|---:|---:|---:|---|
-| `a_match` | no discrepancy | INR 22,500 | INR 22,500 | INR 0 | yes |
-| `b_wrongful_deduction` | possible discrepancy | INR 22,500 | INR 19,800 | INR 2,700 | yes |
-| `c_manual_review` | manual review (bill/settlement totals do not reconcile; scanned evidence is reviewed) | INR 22,500 | INR 22,500 | not relied on | yes |
+| Case | Expected | Actual | Result shown | Provisional payable | Cause when different |
+|---|---|---|---:|---:|---|
+| match_01 | no_discrepancy | manual_review | yes | 8,100 | Generic “Eligible treatment” description needs category confirmation. |
+| match_02 | no_discrepancy | manual_review | yes | 18,000 | Generic “Eligible treatment” description needs category confirmation. |
+| match_03 | no_discrepancy | manual_review | yes | 14,000 | Generic “Eligible treatment” description needs category confirmation. |
+| match_04 | no_discrepancy | manual_review | yes | 10,000 | Generic “Eligible treatment” description needs category confirmation. |
+| match_05 | no_discrepancy | manual_review | yes | 22,500 | Generic “Eligible treatment” description needs category confirmation. |
+| match_06 | no_discrepancy | manual_review | yes | 8,000 | Generic “Eligible treatment” description needs category confirmation. |
+| match_07 | no_discrepancy | manual_review | yes | 16,000 | Generic “Eligible treatment” description needs category confirmation. |
+| match_08 | no_discrepancy | manual_review | yes | 27,000 | Generic “Eligible treatment” description needs category confirmation. |
+| match_09 | no_discrepancy | manual_review | yes | 13,500 | Generic “Eligible treatment” description needs category confirmation. |
+| match_10 | no_discrepancy | manual_review | yes | 40,500 | Generic “Eligible treatment” description needs category confirmation. |
+| discrepancy_01 | possible_discrepancy | manual_review | yes | 8,100 | Generic “Eligible treatment” description needs category confirmation. |
+| discrepancy_02 | possible_discrepancy | manual_review | yes | 18,000 | Generic “Eligible treatment” description needs category confirmation. |
+| discrepancy_03 | possible_discrepancy | manual_review | yes | 14,000 | Generic “Eligible treatment” description needs category confirmation. |
+| discrepancy_04 | possible_discrepancy | manual_review | yes | 10,000 | Generic “Eligible treatment” description needs category confirmation. |
+| discrepancy_05 | possible_discrepancy | manual_review | yes | 22,500 | Generic “Eligible treatment” description needs category confirmation. |
+| discrepancy_06 | possible_discrepancy | manual_review | yes | 8,000 | Generic “Eligible treatment” description needs category confirmation. |
+| discrepancy_07 | possible_discrepancy | manual_review | yes | 16,000 | Generic “Eligible treatment” description needs category confirmation. |
+| discrepancy_08 | possible_discrepancy | manual_review | yes | 27,000 | Generic “Eligible treatment” description needs category confirmation. |
+| discrepancy_09 | possible_discrepancy | manual_review | yes | 13,500 | Generic “Eligible treatment” description needs category confirmation. |
+| discrepancy_10 | possible_discrepancy | manual_review | yes | 40,500 | Generic “Eligible treatment” description needs category confirmation. |
+| manual_01 | manual_review | manual_review | yes | 8,100 | Generic line needs category confirmation; settlement paid amount missing. |
+| manual_02 | manual_review | manual_review | yes | 18,000 | Generic line needs category confirmation; settlement totals do not reconcile and claim ID mismatches. |
+| manual_03 | manual_review | manual_review | yes | 14,000 | Generic line needs category confirmation; deductions unreadable and totals do not reconcile. |
+| manual_04 | manual_review | manual_review | yes | 10,000 | “Treatment charges” needs category confirmation; settlement totals do not reconcile. |
+| manual_05 | manual_review | manual_review | yes | 22,500 | Generic line needs category confirmation; conflicting paid amounts. |
+| edge_01 | no_discrepancy | manual_review | yes | 0 | Generic “Eligible treatment” description needs category confirmation. |
+| edge_02 | manual_review | manual_review | yes | 0 | Bill total missing or invalid. |
+| edge_03 | no_discrepancy | manual_review | yes | 10,000 | Generic “Eligible treatment” description needs category confirmation. |
+| edge_04 | no_discrepancy | manual_review | yes | 12,600 | Generic “Eligible treatment” description needs category confirmation. |
+| edge_05 | no_discrepancy | manual_review | yes | 9,000 | Source bill says only “Treatment charges”; it has no line date or exclusion wording. See label/source mismatch below. |
 
-**Result shown without reviewer confirmation: 3/3 demo cases.** Status and insurer estimate matched the subsequent reviewer-confirmed run in all three cases; the comparison difference also matched in the two cases where it is relied on. The app-level comparison is covered by `tests/integration/test_phase4_demo_cases.py`. This is not a result for all 30 evaluation plus 10 adversarial cases.
+**Visible result: 30/30; expected decision label matched: 6/30; provisional vs reviewer-confirmed status and amounts equal: 30/30.** Core policy terms were extracted for all 30 (`policy_terms_missing` is empty), but the safe status remains Manual Review when a generic item has no reliable category. The 24 match/discrepancy cases show the specific “Eligible treatment” category-review reason. This conservative status mismatch is not a payable-amount mismatch for those 24 cases: each estimate equals its hand-labeled payable, but an item category is still unresolved.
 
-The Playwright acceptance run remains unresolved. The reviewer workspace now preserves the active step across calculation and comparison reruns. An isolated reviewer-workspace run of `a_match` passed 1/1 and saved a screenshot outside the repository. The full matrix remains 0/8: it reached Manual Review because no policy edition was linked to the claim. It is not yet isolated whether the missing link came from the automation setup or the app flow. The claimant-first browser matrix, reviewer confirmation in a second browser session, and five upload-error screens have not yet been verified. Do not treat the earlier recorded browser score as current verification of the provisional claimant flow.
+`edge_05` is the one amount mismatch (expected INR 0; app estimates INR 9,000). Its label describes a date-window exclusion, but its fictional policy contains no such exclusion and its scanned bill has no dated service line—OCR reads only “Treatment charges: INR 10000.” The source does not support zero payable. We retained the committed label and did not teach the app to infer an absent exclusion; this case needs corrected source evidence or a reviewer decision before it can be scored as an app defect.
+
+The 10 adversarial extraction-only cases also showed a result **10/10**. Their expected app outcome is Manual Review because these fixtures deliberately contain no policy PDF or final decision label. The reason on each screen names the missing linked policy edition; `adv_04` additionally says paid amount and deductions could not be read, and `adv_08` also says the settlement claim reference was not identified. These ten are not decision-accuracy cases.
+
+| Adversarial cases | Expected | Actual | Result shown | Reason |
+|---|---|---|---:|---|
+| adv_01_split_columns | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked; ingest and link the applicable policy edition. |
+| adv_02_noisy_ocr | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked; ingest and link the applicable policy edition. |
+| adv_03_low_resolution_scan | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked; ingest and link the applicable policy edition. |
+| adv_04_ambiguous_settlement_wording | Manual Review | manual_review | yes | No linked policy; paid amount missing; deductions unreadable. |
+| adv_05_exact_daily_cap | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked; ingest and link the applicable policy edition. |
+| adv_06_one_rupee_over_cap | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked; ingest and link the applicable policy edition. |
+| adv_07_multiple_deductions | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked; ingest and link the applicable policy edition. |
+| adv_08_missing_claim_reference | Manual Review | manual_review | yes | No linked policy; settlement claim reference missing. |
+| adv_09_subtotal_tax_grand_total | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked; ingest and link the applicable policy edition. |
+| adv_10_slash_reference | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked; ingest and link the applicable policy edition. |
+
+The machine-readable case-by-case outcomes and exact reason strings are in `evaluation/latest/provisional_app_path.json`. Reproduce with `python -m evaluation.scripts.run_provisional_app_path`.
+
+### Ollama on/off with provisional app results
+
+The same 3 demo cases and 10 discrepancy cases were uploaded through the claimant orchestration path with no reviewer confirmation. Explanations were requested once with Ollama disabled and once enabled; the comparison snapshot was checked before and after.
+
+| Set | Decision, amounts, and number grounding | Model behavior |
+|---|---:|---|
+| Three demos | 3/3 equal and grounded | Ollama called for the two resolved comparisons; manual-review case used the safe template. |
+| Ten discrepancy cases | 10/10 equal and grounded | All ten stayed Manual Review due generic line descriptions, so the safety gate correctly used the template and made zero model calls. |
+| Total | **13/13** | Ollama available; two actual model calls; no decision or amount changes. |
+
+Full records are in `evaluation/latest/provisional_ollama_equivalence.json`. “Ollama on” cannot be interpreted as 13 generated answers: the LLM is deliberately not called for unresolved Manual Review results.
+
+### Embedding backend and “Pending review” check
+
+The earlier Chroma fallback came from running evaluation with system Python (`C:\Program Files\Python313\python.exe`), which has Chroma but no `sentence-transformers`. The project `.venv` installs the pinned package and has cached BGE-small weights. Re-running evaluation under `.venv` confirms `BAAI/bge-small-en-v1.5` active; retrieval on 30 synthetic queries remains P@1 **30/30**, P@3 **30/90**, P@5 **30/150**, recall@5 **30/30**, MRR **1.000**. The system-Python browser run uses Chroma fallback; the BGE-enabled browser run exceeded five minutes before showing the first result, so BGE browser performance remains unresolved.
+
+No claimant UI source contains the literal status “Pending review.” Unavailable amounts are labeled “Not calculable” with the unresolved term/document reason displayed nearby; the comparison uses “Manual review is needed because…” and lists the specific issue. A clean-database Playwright check confirmed those screens. This is a source and browser check, not proof about every possible future screen or state.

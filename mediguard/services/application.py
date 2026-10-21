@@ -1021,7 +1021,6 @@ def process_claim_documents(claim_id: str, user_id: str) -> dict:
     if policy_payloads:
         policy_id = ((normalized.get("policy_number") or {}).get("value") or claim_id)
         try:
-            normalized["policy_index"] = index_policy_documents(policy_payloads, str(policy_id))
             # Core MVP behavior: a policy uploaded with a claim is automatically
             # registered as the active edition for that matching policy number.
             # The advanced Policy Management page remains deferred.
@@ -1051,7 +1050,7 @@ def process_claim_documents(claim_id: str, user_id: str) -> dict:
                         terms_reviewer = "trusted_fixture" if trusted_terms_confirmed else None
                         terms_reviewed_at = utc_now() if trusted_terms_confirmed else None
                         policy_page_count = max((int(item.get("page", 1)) for payload in policy_payloads for item in payload.get("evidence", [])), default=1)
-                        conn.execute("INSERT INTO policy_versions(version_id,policy_number,version_label,insurer_name,effective_date,status,source_name,stored_path,page_count,content_text,indexed_chunks,created_at,policy_terms_json,terms_review_status,reviewed_policy_terms_json,terms_reviewed_by,terms_reviewed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (version_id, policy_number, "Claim-uploaded policy", "Not specified", "", "active", policy_payloads[0].get("source_name", "policy"), "", policy_page_count, policy_text, int(normalized["policy_index"].get("chunks_indexed", 0)), utc_now(), json.dumps(extracted_terms["terms_json"]), review_status, json.dumps(reviewed_terms) if reviewed_terms else None, terms_reviewer, terms_reviewed_at))
+                        conn.execute("INSERT INTO policy_versions(version_id,policy_number,version_label,insurer_name,effective_date,status,source_name,stored_path,page_count,content_text,indexed_chunks,created_at,policy_terms_json,terms_review_status,reviewed_policy_terms_json,terms_reviewed_by,terms_reviewed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (version_id, policy_number, "Claim-uploaded policy", "Not specified", "", "active", policy_payloads[0].get("source_name", "policy"), "", policy_page_count, policy_text, 0, utc_now(), json.dumps(extracted_terms["terms_json"]), review_status, json.dumps(reviewed_terms) if reviewed_terms else None, terms_reviewer, terms_reviewed_at))
                         normalized["active_policy_version_id"] = version_id
                     conn.execute("UPDATE claims SET policy_number=?,policy_version_id=?,updated_at=? WHERE claim_id=? AND (policy_number IS NULL OR policy_number='' OR policy_number=?)", (policy_number, normalized["active_policy_version_id"], utc_now(), claim_id, policy_number))
                     fixture_policy = conn.execute("SELECT policy_number,source_name,terms_reviewed_by FROM policy_versions WHERE version_id=?", (normalized["active_policy_version_id"],)).fetchone()
@@ -1060,9 +1059,17 @@ def process_claim_documents(claim_id: str, user_id: str) -> dict:
                             "INSERT INTO audit_events VALUES (?,?,?,?,?,?)",
                             (str(uuid.uuid4()), claim_id, user_id, "fictional_fixture_policy_attached", json.dumps({"version_id": normalized["active_policy_version_id"], "policy_number": fixture_policy["policy_number"], "source_name": fixture_policy["source_name"], "policy_sha256": [payload.get("sha256") for payload in policy_payloads]}), utc_now()),
                         )
-                # Retrieval runs with the active edition ID, so store this
-                # claim-uploaded policy under that same ID as well.
-                index_policy_documents(policy_payloads, normalized["active_policy_version_id"])
+                # Link the claim to its policy edition before optional clause
+                # indexing. Index failures must not erase the policy record or
+                # leave the claimant with a false "no matching edition" result.
+                normalized["policy_index"] = index_policy_documents(
+                    policy_payloads, normalized["active_policy_version_id"]
+                )
+                with db() as conn:
+                    conn.execute(
+                        "UPDATE policy_versions SET indexed_chunks=? WHERE version_id=?",
+                        (int(normalized["policy_index"].get("chunks_indexed", 0)), normalized["active_policy_version_id"]),
+                    )
         except Exception as exc:
             normalized["policy_index_error"] = str(exc)
     with db() as conn:

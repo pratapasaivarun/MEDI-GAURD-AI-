@@ -71,9 +71,11 @@ def test_typed_contract_uses_the_same_deterministic_rule_path():
     assert result.lines[0].reason_code == "ROOM_CAP"
 
 
-def test_missing_policy_terms_default_to_manual_review():
+def test_missing_policy_terms_require_review_without_inventing_amounts():
     result = evaluate_claim(Decimal("10000"))
     assert result["status"] == "manual_review"
-    assert result["deductible"] == 0
-    assert result["payable_amount"] == 0
-    assert result["warnings"] == ["Required policy terms missing: annual_limit, deductible, copay_percent"]
+    assert result["deductible"] is None
+    assert result["copayment"] is None
+    assert result["payable_amount"] is None
+    assert result["patient_share"] is None
+    assert result["policy_terms_missing"] == ["annual_limit", "deductible", "copay_percent"]

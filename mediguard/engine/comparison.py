@@ -20,13 +20,15 @@ def compare(claim: ClaimResult, settlement: SettlementData, terms: PolicyTerms) 
     amount_paid = settlement.amount_paid
     actual_patient = max(Decimal("0"), (settlement.bill_total or Decimal("0")) - (amount_paid or Decimal("0")))
     expected_patient = claim.patient_share
-    possible_difference = actual_patient - expected_patient
+    possible_difference = actual_patient - expected_patient if expected_patient is not None else None
     billed_total = settlement.bill_total or Decimal("0")
-    expected_insurer = max(Decimal("0"), billed_total - expected_patient)
-    if claim.status == "manual_review" or settlement.needs_review or settlement.bill_total is None:
+    expected_insurer = claim.insurer_share
+    if claim.status == "manual_review" or settlement.needs_review or settlement.bill_total is None or expected_patient is None:
         reasons = list(claim.review_reasons) + list(settlement.review_reasons)
         if settlement.bill_total is None:
             reasons.append("Bill total is required to compare the insurer payment.")
+        if expected_patient is None and not reasons:
+            reasons.append("The expected patient share cannot be calculated because required policy terms are unresolved.")
         if claim.status == "manual_review" and not reasons:
             reasons.append("Claim calculation requires confirmation.")
         return ComparisonResult(expected_patient, actual_patient, possible_difference, status="manual_review", review_reasons=reasons, billed_total=billed_total, actual_insurer_payment=amount_paid, expected_insurer_payment=expected_insurer)
@@ -120,7 +122,7 @@ def compare(claim: ClaimResult, settlement: SettlementData, terms: PolicyTerms) 
             review_note=review_note,
         ))
 
-    if possible_difference > Decimal("0") and abs(possible_difference - discrepancy_total) > Decimal("1"):
+    if possible_difference is not None and possible_difference > Decimal("0") and abs(possible_difference - discrepancy_total) > Decimal("1"):
         return ComparisonResult(
             expected_patient, actual_patient, possible_difference, comparisons,
             "manual_review", ["UNRECONCILED_DIFFERENCE: category-level payout effects do not reconcile with the patient-share difference."],
@@ -128,5 +130,5 @@ def compare(claim: ClaimResult, settlement: SettlementData, terms: PolicyTerms) 
         )
     if any(row.status == "REVIEW" for row in comparisons):
         return ComparisonResult(expected_patient, actual_patient, possible_difference, comparisons, "manual_review", ["One or more comparison categories lack sufficient evidence."], billed_total, amount_paid, expected_insurer)
-    status = "possible_discrepancy" if possible_difference > 0 and any(row.status in {"UNEXPLAINED_DEDUCTION", "EXCESS_DEDUCTION"} for row in comparisons) else "no_discrepancy"
+    status = "possible_discrepancy" if possible_difference is not None and possible_difference > 0 and any(row.status in {"UNEXPLAINED_DEDUCTION", "EXCESS_DEDUCTION"} for row in comparisons) else "no_discrepancy"
     return ComparisonResult(expected_patient, actual_patient, possible_difference, comparisons, status, [], billed_total, amount_paid, expected_insurer)

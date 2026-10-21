@@ -25,7 +25,7 @@ MINT = colors.HexColor("#EAF8F5")
 
 
 def _money(value: Any) -> str:
-    return f"INR {float(value or 0):,.2f}"
+    return "Not calculable from available information" if value is None else f"INR {float(value):,.2f}"
 
 
 def _inr_indian(value: Any) -> str:
@@ -227,31 +227,28 @@ def build_decision_report(claim: dict[str, Any], normalized: dict[str, Any], rul
     workflow = workflow or {}
     decision = workflow.get("decision", {})
     findings = workflow.get("policy_findings", {})
-    status = str(decision.get("status") or rules.get("status") or "manual_review")
+    # The report's automated status comes from Python rules. Agent text is for
+    # explanation and cannot assign a claim outcome.
+    status = str(rules.get("status") or "manual_review")
     payable = rules.get("payable_amount", 0)
     total = _claim_total(normalized, rules)
-    deductible = float(rules.get("deductible", 0) or 0)
-    copayment = float(rules.get("copayment", 0) or 0)
-    responsibility = max(0, total - float(payable or 0))
-    excluded = max(0, responsibility - deductible - copayment)
-    financial_review_pending = status == "manual_review"
+    deductible = float(rules["deductible"]) if rules.get("deductible") is not None else None
+    copayment = float(rules["copayment"]) if rules.get("copayment") is not None else None
+    responsibility = max(0, total - float(payable)) if payable is not None else None
+    excluded = max(0, responsibility - deductible - copayment) if None not in (responsibility, deductible, copayment) else None
+    financial_review_pending = payable is None
     amount_rows = [("Total medical bill", _money(total))]
+    amount_rows.extend([
+        ("Known eligible amount before cost sharing", _money(rules.get("covered_before_cost_sharing", rules.get("covered_amount")))),
+        ("Deductible", _money(rules.get("deductible"))),
+        ("Copayment", _money(rules.get("copayment"))),
+        ("Estimated insurer payment", _money(payable)),
+        ("Estimated claimant responsibility", _money(responsibility)),
+        ("Excluded or policy-limited", _money(rules.get("claimant_result", {}).get("amount_excluded_or_limited"))),
+    ])
     if financial_review_pending:
-        amount_rows.extend([
-            ("Estimated insurer payment", "Pending reviewer confirmation"),
-            ("Estimated claimant responsibility", "Pending reviewer confirmation"),
-            ("Policy adjustments", "Pending reviewer confirmation"),
-        ])
-        amount_explanation = "Coverage and payment estimates are unavailable until an authorized reviewer confirms the bill details and applicable policy terms."
+        amount_explanation = "The report shows each amount that can be calculated safely. Unresolved policy terms are left unavailable instead of being assumed to be zero."
     else:
-        amount_rows.extend([
-            ("Covered before cost sharing", _money(rules.get("covered_amount", 0))),
-            ("Deductible", _money(deductible)),
-            ("Copayment", _money(copayment)),
-            ("Estimated insurer payment", _money(payable)),
-            ("Estimated claimant responsibility", _money(responsibility)),
-            ("Excluded or policy-limited", _money(excluded)),
-        ])
         amount_explanation = (
             f"The estimated claimant responsibility is {_money(responsibility)}. This includes {_money(deductible)} deductible, "
             f"{_money(copayment)} copayment, and {_money(excluded)} that is excluded or limited by the available policy information."
@@ -264,6 +261,15 @@ def build_decision_report(claim: dict[str, Any], normalized: dict[str, Any], rul
         Paragraph("Claim Decision Report", styles["title"]),
         Paragraph(f"Prepared {datetime.now().strftime('%d %b %Y')} | Claim reference: {claim.get('claim_number', 'Not available')}", styles["subtitle"]),
         Spacer(1, 13),
+    ]
+    terms_status = rules.get("policy_terms_review_status", "provisional")
+    if terms_status == "provisional":
+        story.append(Paragraph("PROVISIONAL: policy terms have not yet been reviewer-confirmed. This estimate may change after review and is not a final determination.", styles["body"]))
+    elif terms_status == "preconfirmed_fictional_sample":
+        story.append(Paragraph("Pre-confirmed fictional sample. Fixture source and confirmation are recorded in the audit trail. This estimate is not an insurer decision.", styles["body"]))
+    else:
+        story.append(Paragraph("Reviewer-confirmed policy terms. This estimate is not an insurer decision.", styles["body"]))
+    story.extend([
         Paragraph("Outcome summary", styles["heading"]),
         Paragraph(f"<b>Current status: {_status_label(status)}</b><br/>{_outcome_copy(status, payable)}", styles["body"]),
         Spacer(1, 5),
@@ -277,7 +283,9 @@ def build_decision_report(claim: dict[str, Any], normalized: dict[str, Any], rul
         _details_table(amount_rows),
         Paragraph("What this means", styles["heading"]),
         Paragraph(amount_explanation, styles["body"]),
-    ]
+    ])
+    for issue in rules.get("policy_terms_issues", []):
+        story.append(Paragraph(escape(str(issue.get("reason", "Policy term needs review."))), styles["body"]))
     line_item_results = rules.get("line_item_results") or []
     if decision.get("confidence") is not None:
         story.append(Paragraph(f"Decision confidence: {float(decision['confidence']):.2f} ({confidence_label(float(decision['confidence']))})", styles["small"]))

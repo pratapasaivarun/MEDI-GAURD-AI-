@@ -8,6 +8,17 @@ from mediguard.ui.navigation import queue_page
 
 logger = logging.getLogger(__name__)
 
+
+def _render_policy_terms_badge(review_status: str | None) -> None:
+    if review_status == "provisional":
+        st.warning("Provisional: terms not yet confirmed. Amounts are calculated from source-backed extracted terms and may change after authorized review.")
+    elif review_status == "reviewer_confirmed":
+        st.success("Reviewer-confirmed policy terms. This remains an estimate, not an insurer decision.")
+    elif review_status == "preconfirmed_fictional_sample":
+        st.info("Pre-confirmed fictional sample. The fixture source is recorded in the audit trail.")
+    elif review_status == "not_available":
+        st.warning("Policy terms are unavailable for calculation. See the listed policy or document issue and next step.")
+
 def _claimant_result_for_claim(claim_id: str, user: dict) -> dict[str, Any] | None:
     """Return only claimant-safe amounts and explanation; hide raw agent/reviewer data."""
     claim = _claim_access(claim_id, user)
@@ -23,18 +34,29 @@ def _claimant_result_for_claim(claim_id: str, user: dict) -> dict[str, Any] | No
                 rules = None
     if not rules and not workflow:
         return None
-    decision = workflow.get("decision") or {}
-    status = claim["status"] if claim["status"] in {"approved", "partially_approved", "rejected", "manual_review"} else (decision.get("status") or ((rules or {}).get("status", "manual_review")))
+    with db() as conn:
+        reviewer_decision = conn.execute(
+            "SELECT final_status FROM reviewer_decisions WHERE claim_id=? ORDER BY created_at DESC LIMIT 1",
+            (claim_id,),
+        ).fetchone()
+    # The Python rules own the automated status. The LLM workflow supplies
+    # explanatory text only; a recorded reviewer decision may supersede it.
+    status = reviewer_decision["final_status"] if reviewer_decision else (rules or {}).get("status", "manual_review")
     claimant = (rules or {}).get("claimant_result") or {}
     billed = float(claimant.get("amount_billed", 0) or 0)
-    covered = float(claimant.get("amount_covered", (rules or {}).get("payable_amount", 0)) or 0)
-    responsibility = float(claimant.get("amount_claimant_pays", max(0, billed - covered)) or 0)
-    deductible = float(claimant.get("deductible", (rules or {}).get("deductible", 0)) or 0)
-    copayment = float(claimant.get("copayment", (rules or {}).get("copayment", 0)) or 0)
-    excluded_or_limited = float(claimant.get("amount_excluded_or_limited", 0) or 0)
-    not_paid = float(claimant.get("amount_not_covered", responsibility) or 0)
-    reasons = decision.get("reasons") or (rules or {}).get("warnings") or []
-    reason = _claim_warning_message(reasons[0]) if reasons else "Your claim has been processed and the result is ready to review."
+    def optional_float(value):
+        return float(value) if value is not None else None
+    payable_raw = claimant.get("amount_covered", (rules or {}).get("payable_amount"))
+    responsibility_raw = claimant.get("amount_claimant_pays", (rules or {}).get("claimant_responsibility"))
+    covered = optional_float(payable_raw)
+    responsibility = optional_float(responsibility_raw)
+    deductible = optional_float(claimant.get("deductible", (rules or {}).get("deductible")))
+    copayment = optional_float(claimant.get("copayment", (rules or {}).get("copayment")))
+    excluded_or_limited = optional_float(claimant.get("amount_excluded_or_limited"))
+    not_paid = optional_float(claimant.get("amount_not_covered", responsibility))
+    reasons = (rules or {}).get("warnings") or []
+    term_issues = (rules or {}).get("policy_terms_issues") or []
+    reason = (term_issues[0].get("reason") if term_issues else (_claim_warning_message(reasons[0]) if reasons else "Your claim has been processed and the result is ready to review."))
     return {
         "status": status,
         "amount_billed": billed,
@@ -44,6 +66,9 @@ def _claimant_result_for_claim(claim_id: str, user: dict) -> dict[str, Any] | No
         "deductible": deductible,
         "copayment": copayment,
         "amount_excluded_or_limited": excluded_or_limited,
+        "covered_before_cost_sharing": optional_float(claimant.get("covered_before_cost_sharing", (rules or {}).get("covered_before_cost_sharing", (rules or {}).get("covered_amount")))),
+        "policy_terms_review_status": (rules or {}).get("policy_terms_review_status"),
+        "policy_terms_issues": term_issues,
         "reason": reason,
         "requires_human_review": status == "manual_review",
         "rules": rules or {},
@@ -73,8 +98,9 @@ def _render_claimant_result(user: dict) -> None:
             queue_page(st.session_state, "Submit documents" if user['role'] == 'claimant' else "Claim review"); st.rerun()
         return
     status = result["status"]
+    _render_policy_terms_badge(result.get("policy_terms_review_status"))
     if status == "manual_review":
-        st.warning("Your claim is under review. Some information must be confirmed before a final result can be issued.")
+        st.warning("Manual review is required. The specific unresolved information and next steps are listed below.")
     elif status == "approved":
         st.success("The automated assessment indicates approval based on the information currently available.")
     elif status == "partially_approved":
@@ -83,18 +109,18 @@ def _render_claimant_result(user: dict) -> None:
         st.error("The automated assessment indicates that the current policy information does not cover this claim.")
     amount_columns = st.columns(3, gap="medium")
     amount_columns[0].metric("Total bill", f"INR {result['amount_billed']:,.2f}", border=True)
-    if result["requires_human_review"]:
-        amount_columns[1].metric("Estimated insurance share", "Pending review", border=True)
-        amount_columns[2].metric("Estimated amount you pay", "Pending review", border=True)
-    else:
-        amount_columns[1].metric("Estimated insurance share", f"INR {result['amount_covered']:,.2f}", border=True)
-        amount_columns[2].metric("Estimated amount you pay", f"INR {result['amount_claimant_pays']:,.2f}", border=True)
+    amount_columns[1].metric("Estimated insurance share", f"INR {result['amount_covered']:,.2f}" if result["amount_covered"] is not None else "Not calculable", border=True)
+    amount_columns[2].metric("Estimated amount you pay", f"INR {result['amount_claimant_pays']:,.2f}" if result["amount_claimant_pays"] is not None else "Not calculable", border=True)
     with st.container(border=True):
         st.markdown("### What this means for you")
         st.write(result["reason"])
+        for issue in result.get("policy_terms_issues", []):
+            st.write(f"• {issue['reason']}")
         if result["requires_human_review"]:
-            st.write("Coverage and your estimated payment are not available until the bill and applicable policy terms are confirmed.")
-            st.caption("This is not a final determination. An authorized reviewer must confirm the result.")
+            known_coverage = result.get("covered_before_cost_sharing")
+            if known_coverage is not None:
+                st.write(f"Known eligible amount before unresolved policy terms: INR {known_coverage:,.2f}.")
+            st.caption("This is not a final determination. Review the listed term or document issue before relying on the estimate.")
         else:
             st.write(
                 f"The claimant responsibility of INR {result['amount_claimant_pays']:,.2f} includes "
@@ -111,25 +137,24 @@ def _render_claimant_result(user: dict) -> None:
     normalized = st.session_state.get(f"normalized_{claim_id}") or {}
     if rules.get("line_item_reconciliation_failed"):
         st.info(str(rules.get("line_item_notice") or _claim_warning_message("line_item_reconciliation_failed")))
-    if result["requires_human_review"]:
-        st.info("The amount breakdown will be available after the reviewer confirms the required information.")
-    else:
-        with st.expander("See the amount breakdown", expanded=False):
-            st.write(f"Covered amount before deductions: INR {float(rules.get('covered_amount', 0) or 0):,.2f}")
-            st.write(f"Deductible: INR {float(result.get('deductible', 0) or 0):,.2f}")
-            st.write(f"Copayment: INR {float(result.get('copayment', 0) or 0):,.2f}")
-            st.write(f"Excluded or policy-limited amount: INR {float(result.get('amount_excluded_or_limited', 0) or 0):,.2f}")
-            st.caption("Claimant responsibility equals deductible, copayment, and any excluded or policy-limited amount.")
-            adjustments = []
-            for item in rules.get("results", []):
-                if item.get("status") in {"partial", "fail"}:
-                    adjustments.append({"Policy check": str(item.get("rule_id", "")).replace("_", " ").title(), "Effect": item.get("calculation", "Policy adjustment applied"), "Amount affected": item.get("amount")})
-            if adjustments:
-                st.markdown("#### Items or rules affecting coverage")
-                st.dataframe(adjustments, hide_index=True)
-            warnings = rules.get("warnings") or []
-            if warnings:
-                st.write("Calculation notes: " + "; ".join(_claim_warning_message(item) for item in warnings))
+    with st.expander("See the amount breakdown", expanded=result["requires_human_review"]):
+        if result.get("covered_before_cost_sharing") is not None:
+            st.write(f"Known eligible amount before cost sharing: INR {result['covered_before_cost_sharing']:,.2f}")
+        st.write(f"Deductible: INR {float(result['deductible']):,.2f}" if result.get("deductible") is not None else "Deductible: not calculable from the available policy terms.")
+        st.write(f"Co-payment: INR {float(result['copayment']):,.2f}" if result.get("copayment") is not None else "Co-payment: not calculable from the available policy terms.")
+        st.write(f"Estimated insurer payment: INR {result['amount_covered']:,.2f}" if result.get("amount_covered") is not None else "Estimated insurer payment: not calculable from the unresolved terms listed above.")
+        st.write(f"Excluded or policy-limited amount: INR {float(result['amount_excluded_or_limited']):,.2f}" if result.get("amount_excluded_or_limited") is not None else "Excluded or policy-limited amount: not calculable until the unresolved terms are reviewed.")
+        st.caption("These figures are provisional estimates. An unavailable component is left blank instead of being assumed to be zero.")
+        adjustments = []
+        for item in rules.get("results", []):
+            if item.get("status") in {"partial", "fail", "needs_review"}:
+                adjustments.append({"Policy check": str(item.get("rule_id", "")).replace("_", " ").title(), "Effect": item.get("calculation", "Policy adjustment applied"), "Amount affected": item.get("amount")})
+        if adjustments:
+            st.markdown("#### Items or rules affecting coverage")
+            st.dataframe(adjustments, hide_index=True)
+        warnings = rules.get("warnings") or []
+        if warnings:
+            st.write("Calculation notes: " + "; ".join(_claim_warning_message(item) for item in warnings))
     billing_anomalies = normalized.get("billing_anomalies") or {}
     bill_date_value = (normalized.get("bill_date") or {}).get("value")
     try:
@@ -263,6 +288,8 @@ def _render_settlement_comparison(
     """Render the same evidence-bounded settlement comparison for both roles."""
     st.markdown('### Settlement comparison')
     st.caption('This compares the settlement letter with a deterministic policy estimate. It is decision support, not an insurer determination.')
+    if rules:
+        _render_policy_terms_badge(rules.get("policy_terms_review_status"))
     if needs_bill_total_confirmation(settlement):
         st.warning('The settlement letter has no bill total. The uploaded hospital bill total is proposed; confirm it before relying on a comparison.')
         checked = st.checkbox(
@@ -291,10 +318,10 @@ def _render_settlement_comparison(
                     st.error('The bill total could not be confirmed. Check the source page and try again.')
     metrics = st.columns(3, gap='medium')
     metrics[0].metric('Settlement payment', _inr(comparison.actual_insurer_payment) if comparison.actual_insurer_payment is not None else 'Not identified', border=True)
-    metrics[1].metric('Estimated insurer payment', _inr(comparison.expected_insurer_payment) if comparison.status != 'manual_review' else 'Pending review', border=True)
-    metrics[2].metric('Possible difference', _inr(comparison.possible_difference) if comparison.status != 'manual_review' else 'Pending review', border=True)
+    metrics[1].metric('Estimated insurer payment', _inr(comparison.expected_insurer_payment) if comparison.expected_insurer_payment is not None else 'Not calculable', border=True)
+    metrics[2].metric('Possible difference', _inr(comparison.possible_difference) if comparison.possible_difference is not None else 'Not calculable', border=True)
     if comparison.status == 'manual_review':
-        st.warning('The comparison needs an authorized reviewer to confirm the source values and policy evidence.')
+        st.warning('Manual review is needed because at least one comparison input is unresolved. An authorized reviewer should resolve the specific issue listed below before relying on the comparison.')
         for reason in comparison.review_reasons:
             st.write(f'• {reason}')
     elif comparison.status == 'possible_discrepancy':
@@ -333,7 +360,7 @@ def _render_settlement_comparison(
         with st.expander('Preview hospital note'):
             st.text(build_hospital_note_text(claim, comparison))
     elif comparison.status == 'manual_review':
-        st.info('An appeal draft is not available while this comparison needs manual review. An authorized reviewer must confirm the source values and policy evidence.')
+        st.info('An appeal draft is unavailable until the listed comparison issue can be resolved from the source documents.')
     else:
         st.info('No appeal draft is available because no possible settlement discrepancy was identified.')
 
@@ -572,6 +599,17 @@ def _render_claim_review(user: dict) -> None:
     selected = st.selectbox('Selected claim', labels, index=default); claim_id = options[selected]; st.session_state.active_claim = claim_id
     selected_claim = next(c for c in claims if c['claim_id'] == claim_id)
     st.markdown(claim_context_html(selected_claim, selected_claim['status']), unsafe_allow_html=True)
+    reviewer_rules = st.session_state.get(f"rules_{claim_id}")
+    if not reviewer_rules:
+        with db() as conn:
+            stored_rules = conn.execute("SELECT result_json FROM rule_evaluations WHERE claim_id=? ORDER BY created_at DESC LIMIT 1", (claim_id,)).fetchone()
+        if stored_rules:
+            try:
+                reviewer_rules = json.loads(stored_rules["result_json"])
+            except (TypeError, json.JSONDecodeError):
+                reviewer_rules = None
+    if reviewer_rules:
+        _render_policy_terms_badge(reviewer_rules.get("policy_terms_review_status"))
     tabs = st.tabs(['1 · Choose claim', '2 · Add documents', '3 · Check extraction', '4 · Calculate & review', '5 · Compare settlement & draft letters'])
     with tabs[0]:
         st.markdown('### Your review path')
@@ -714,10 +752,9 @@ def _render_claim_review(user: dict) -> None:
                 result_status = _safe_status(rules['status'])
                 st.markdown(deterministic_result_header_html(result_status), unsafe_allow_html=True)
                 with st.container(horizontal=True, horizontal_alignment='left'):
-                    st.metric('Covered',f"INR {rules.get('covered_amount',0):,.2f}", border=True)
-                    st.metric('Deductible',f"INR {rules.get('deductible',0):,.2f}", border=True)
-                    st.metric('Copayment',f"INR {rules.get('copayment',0):,.2f}", border=True)
-                    st.metric('Payable',f"INR {rules.get('payable_amount',0):,.2f}", border=True)
+                    for label, key in (('Known eligible before unresolved terms', 'covered_before_cost_sharing'), ('Deductible', 'deductible'), ('Copayment', 'copayment'), ('Estimated insurer payment', 'payable_amount')):
+                        value = rules.get(key)
+                        st.metric(label, f"INR {float(value):,.2f}" if value is not None else 'Not calculable', border=True)
                 if rules.get('warnings'): st.warning('; '.join(rules['warnings']))
                 with st.expander('Why this result? Rule trace', expanded=True): st.dataframe(rules.get('results',[]), hide_index=True)
                 workflow=st.session_state.get(f'workflow_{claim_id}')

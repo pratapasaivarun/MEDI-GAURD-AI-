@@ -42,15 +42,15 @@ class Clause:
 
 @dataclass
 class PolicyTerms:
-    sum_insured: Decimal
+    sum_insured: Decimal | None
     room_rent_cap_per_day: Decimal | None = None
-    copay_percent: Decimal = Decimal("0")
+    copay_percent: Decimal | None = Decimal("0")
     non_payable_categories: list[str] = field(default_factory=list)
     exclusions: list[str] = field(default_factory=list)
     clauses: dict[str, Clause] = field(default_factory=dict)
     proportionate_deduction: bool = True
     icu_limit_per_day: Decimal | None = None
-    deductible: Decimal = Decimal("0")
+    deductible: Decimal | None = Decimal("0")
 
 
 @dataclass
@@ -67,8 +67,8 @@ class ClaimResult:
     lines: list[LineResult]
     eligible_total: Decimal
     copay: Decimal
-    patient_share: Decimal
-    insurer_share: Decimal
+    patient_share: Decimal | None
+    insurer_share: Decimal | None
     status: Literal["computed", "manual_review"]
     deductible: Decimal = Decimal("0")
     review_reasons: list[str] = field(default_factory=list)
@@ -114,12 +114,12 @@ class CategoryComparison:
 
 @dataclass
 class ComparisonResult:
-    expected_patient_share: Decimal
+    expected_patient_share: Decimal | None
     actual_patient_share: Decimal
-    possible_difference: Decimal
+    possible_difference: Decimal | None
     categories: list[CategoryComparison] = field(default_factory=list)
     status: Literal["no_discrepancy", "possible_discrepancy", "manual_review"] = "manual_review"
     review_reasons: list[str] = field(default_factory=list)
     billed_total: Decimal = Decimal("0")
     actual_insurer_payment: Decimal | None = Decimal("0")
-    expected_insurer_payment: Decimal = Decimal("0")
+    expected_insurer_payment: Decimal | None = Decimal("0")

@@ -417,9 +417,16 @@ def evaluate_claim(
     items = supplied_items or [{"description": "Claim total", "category": "other", "amount": total, "source": "user"}]
     if total <= 0:
         return {"status": "manual_review", "rule_version": RULE_VERSION, "results": [], "line_item_results": [], "covered_amount": 0.0, "deductible": 0.0, "copayment": 0.0, "payable_amount": 0.0, "warnings": ["total_amount_missing_or_invalid"]}
-    if policy_terms_missing or terms.annual_limit is None or terms.deductible is None or terms.copay_percent is None:
-        missing = policy_terms_missing or ["annual_limit", "deductible", "copay_percent"]
-        return {"status": "manual_review", "rule_version": RULE_VERSION, "results": [], "line_item_results": [], "covered_amount": 0.0, "deductible": 0.0, "copayment": 0.0, "payable_amount": 0.0, "warnings": ["Required policy terms missing: " + ", ".join(missing)], "policy_terms_missing": missing, "policy_terms": terms.source}
+    # Missing policy terms must not be silently treated as zero or as an
+    # unlimited benefit. Continue the parts of the calculation that are
+    # supported by known evidence, then leave affected totals unavailable.
+    missing_terms = list(dict.fromkeys(policy_terms_missing))
+    for name in ("annual_limit", "deductible", "copay_percent"):
+        if getattr(terms, name) is None and name not in missing_terms:
+            missing_terms.append(name)
+    if missing_terms:
+        review_required = True
+        warnings.append("POLICY_TERMS_UNCONFIRMED: " + ", ".join(missing_terms))
 
     if missing_fields:
         warnings.append("Missing required fields: " + ", ".join(missing_fields))
@@ -464,9 +471,9 @@ def evaluate_claim(
         review_required = True
         control_warnings.append("Previous claims history is uncertain; reviewer confirmation required.")
 
-    annual_limit = money(terms.annual_limit)
+    annual_limit = money(terms.annual_limit) if terms.annual_limit is not None else None
     previous = terms.previous_claims_total if terms.previous_claims_total is not None else context.get("previous_claims_total")
-    if previous is not None:
+    if previous is not None and annual_limit is not None:
         annual_limit = max(Decimal("0"), annual_limit - money(previous))
         if annual_limit == 0:
             hard_reject = True
@@ -552,24 +559,32 @@ def evaluate_claim(
     covered = sum((money(item.get("covered_amount")) for item in line_results), Decimal("0"))
     pre_limit = covered
     remaining = annual_limit
-    for item in line_results:
-        allowed = money(item.get("covered_amount"))
-        if allowed > remaining:
-            item["covered_amount"] = float(max(Decimal("0"), remaining))
-            item.update(status="partial", applied_rule="sum_insured", calculation=f"The remaining sum insured leaves INR {remaining} eligible for this item.")
-        remaining = max(Decimal("0"), remaining - money(item.get("covered_amount")))
+    if remaining is not None:
+        for item in line_results:
+            allowed = money(item.get("covered_amount"))
+            if allowed > remaining:
+                item["covered_amount"] = float(max(Decimal("0"), remaining))
+                item.update(status="partial", applied_rule="sum_insured", calculation=f"The remaining sum insured leaves INR {remaining} eligible for this item.")
+            remaining = max(Decimal("0"), remaining - money(item.get("covered_amount")))
     covered = sum((money(item.get("covered_amount")) for item in line_results), Decimal("0"))
-    deductible = min(money(terms.deductible), covered)
-    after_deductible = max(Decimal("0"), covered - deductible)
-    copayment = (after_deductible * money(terms.copay_percent) / Decimal("100")).quantize(MONEY, rounding=ROUND_HALF_UP)
-    payable = max(Decimal("0"), after_deductible - copayment)
-    status = "partially_approved" if any(item.get("status") in {"partial", "excluded"} for item in line_results) or total > annual_limit or mismatch else "approved"
+    coverage_terms_unknown = any(name not in {"deductible", "copay_percent"} for name in missing_terms)
+    deductible = min(money(terms.deductible), covered) if terms.deductible is not None and not coverage_terms_unknown else None
+    after_deductible = max(Decimal("0"), covered - deductible) if deductible is not None else None
+    copayment = (
+        (after_deductible * money(terms.copay_percent) / Decimal("100")).quantize(MONEY, rounding=ROUND_HALF_UP)
+        if after_deductible is not None and terms.copay_percent is not None and not coverage_terms_unknown else None
+    )
+    payable = (
+        max(Decimal("0"), after_deductible - copayment)
+        if after_deductible is not None and copayment is not None and annual_limit is not None and not missing_terms else None
+    )
+    status = "partially_approved" if any(item.get("status") in {"partial", "excluded"} for item in line_results) or (annual_limit is not None and total > annual_limit) or mismatch else "approved"
     if hard_reject:
         status = "rejected"
-    elif review_required:
+    elif review_required or payable is None:
         status = "manual_review"
     warnings.extend(control_warnings)
-    if total > annual_limit:
+    if annual_limit is not None and total > annual_limit:
         warnings.append("annual_limit_exceeded")
     if any(item.get("applied_rule") == "room_limit" for item in line_results):
         warnings.append("room_limit_applied")
@@ -577,9 +592,9 @@ def evaluate_claim(
         warnings.append("room_limit_proportional_applied")
     rule_results = [
         RuleResult("line_item_coverage", RULE_VERSION, "pass", {"line_items": len(line_results)}, f"sum(allowed line items) = {covered}", covered),
-        RuleResult("deductible", RULE_VERSION, "pass", {"eligible_before_deductible": float(covered), "deductible": float(deductible)}, f"{covered} - {deductible} = {after_deductible}", deductible),
-        RuleResult("copayment", RULE_VERSION, "pass", {"after_deductible": float(after_deductible), "copay_percent": float(terms.copay_percent)}, f"{after_deductible} x {terms.copay_percent}% = {copayment}", copayment),
-        RuleResult("payable_amount", RULE_VERSION, "pass", {"eligible_after_deductible": float(after_deductible), "copayment": float(copayment)}, f"{after_deductible} - {copayment} = {payable}", payable),
+        RuleResult("deductible", RULE_VERSION, "pass" if deductible is not None else "needs_review", {"eligible_before_deductible": float(covered), "deductible": float(deductible) if deductible is not None else None}, f"{covered} - {deductible}" if deductible is not None else "Deductible cannot be calculated until the policy term is known.", deductible),
+        RuleResult("copayment", RULE_VERSION, "pass" if copayment is not None else "needs_review", {"after_deductible": float(after_deductible) if after_deductible is not None else None, "copay_percent": float(terms.copay_percent) if terms.copay_percent is not None else None}, f"{after_deductible} x {terms.copay_percent}% = {copayment}" if copayment is not None else "Co-payment cannot be calculated until the deductible and co-payment terms are known.", copayment),
+        RuleResult("payable_amount", RULE_VERSION, "pass" if payable is not None else "needs_review", {"eligible_after_deductible": float(after_deductible) if after_deductible is not None else None, "copayment": float(copayment) if copayment is not None else None}, f"{after_deductible} - {copayment} = {payable}" if payable is not None else "Insurer payment cannot be calculated until all required policy terms are known.", payable),
     ]
-    return {"status": status, "rule_version": RULE_VERSION, "results": [row.to_dict() for row in rule_results], "line_item_reconciliation_failed": mismatch, "line_item_notice": "Itemized charges differ from the bill total by more than 1%; reviewer confirmation is required." if mismatch else None, "line_item_results": line_results, "covered_amount": float(covered), "deductible": float(deductible), "copayment": float(copayment), "payable_amount": float(payable), "patient_share": float(max(Decimal("0"), total - payable)), "warnings": warnings, "policy_terms": terms.source}
+    return {"status": status, "rule_version": RULE_VERSION, "results": [row.to_dict() for row in rule_results], "line_item_reconciliation_failed": mismatch, "line_item_notice": "Itemized charges differ from the bill total by more than 1%; reviewer confirmation is required." if mismatch else None, "line_item_results": line_results, "covered_amount": float(covered), "covered_before_cost_sharing": float(covered), "deductible": float(deductible) if deductible is not None else None, "copayment": float(copayment) if copayment is not None else None, "payable_amount": float(payable) if payable is not None else None, "patient_share": float(max(Decimal("0"), total - payable)) if payable is not None else None, "policy_terms_missing": missing_terms, "warnings": warnings, "policy_terms": terms.source}
 

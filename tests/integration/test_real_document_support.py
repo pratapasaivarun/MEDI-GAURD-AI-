@@ -43,7 +43,7 @@ INR 7,500.00
     assert len(result["line_items"]) == 2
 
 
-def test_real_policy_terms_are_not_used_until_reviewer_confirmed(tmp_path: Path, monkeypatch) -> None:
+def test_unconfirmed_policy_terms_are_provisional_and_missing_terms_keep_safe_subtotals(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("MEDIGUARD_DB_PATH", str(tmp_path / "review.sqlite"))
     monkeypatch.setenv("MEDIGUARD_STORAGE_DIR", str(tmp_path / "storage"))
     monkeypatch.setenv("CHROMA_DIR", str(tmp_path / "chroma"))
@@ -56,7 +56,11 @@ def test_real_policy_terms_are_not_used_until_reviewer_confirmed(tmp_path: Path,
         conn.execute("UPDATE users SET role='admin' WHERE user_id=?", (user["user_id"],))
         conn.execute(
             "INSERT INTO policy_versions(version_id,policy_number,version_label,insurer_name,effective_date,status,source_name,stored_path,page_count,content_text,indexed_chunks,created_at,policy_terms_json,terms_review_status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            ("policy-test", "POL-TEST", "Complete copy", "Example", "2026-01-01", "active", "policy.pdf", "", 36, "synthetic policy text", 1, app.utc_now(), json.dumps({}), "pending"),
+            ("policy-test", "POL-TEST", "Complete copy", "Example", "2026-01-01", "active", "policy.pdf", "", 36, "synthetic policy text", 1, app.utc_now(), json.dumps({
+                "annual_limit": {"term": "annual_limit", "value": 100000, "confidence": 0.95, "source_page": 1, "source_text": "Annual limit INR 100000", "method": "deterministic_regex"},
+                "deductible": {"term": "deductible", "value": 5000, "confidence": 0.95, "source_page": 1, "source_text": "Deductible INR 5000", "method": "deterministic_regex"},
+                "copay_percent": {"term": "copay_percent", "value": 10, "confidence": 0.95, "source_page": 1, "source_text": "Co-pay 10%", "method": "deterministic_regex"},
+            }), "pending"),
         )
         conn.execute(
             "INSERT INTO claims(claim_id,user_id,claim_number,patient_name,policy_number,status,created_at,updated_at,policy_version_id) VALUES(?,?,?,?,?,?,?,?,?)",
@@ -67,11 +71,29 @@ def test_real_policy_terms_are_not_used_until_reviewer_confirmed(tmp_path: Path,
     result = app.evaluate_saved_claim(
         "claim-test",
         user["user_id"],
-        {"total_amount": {"value": 7500.0}, "line_items": [], "missing_fields": [], "review_fields": []},
+        {"total_amount": {"value": 7500.0}, "patient_name": {"value": "Synthetic Patient"}, "hospital_name": {"value": "Example Hospital"}, "line_items": [], "missing_fields": [], "review_fields": []},
     )
-    assert result["status"] == "manual_review"
-    assert "policy-terms-review-required" == result["rule_version"]
-    assert "reviewed_policy_terms" in result["policy_terms_missing"]
+    assert result["status"] == "approved", result.get("warnings")
+    assert result["policy_terms_review_status"] == "provisional"
+    assert result["payable_amount"] == 2250.0
+    assert result["claimant_result"]["amount_claimant_pays"] == 5250.0
+    assert result["policy_terms_issues"] == []
+
+    with app.db() as conn:
+        incomplete_candidates = json.loads(conn.execute("SELECT policy_terms_json FROM policy_versions WHERE version_id='policy-test'").fetchone()[0])
+        incomplete_candidates.pop("copay_percent")
+        conn.execute("UPDATE policy_versions SET policy_terms_json=? WHERE version_id='policy-test'", (json.dumps(incomplete_candidates),))
+    incomplete = app.evaluate_saved_claim(
+        "claim-test", user["user_id"],
+        {"total_amount": {"value": 7500.0}, "patient_name": {"value": "Synthetic Patient"}, "hospital_name": {"value": "Example Hospital"}, "line_items": [], "missing_fields": [], "review_fields": []},
+    )
+    assert incomplete["status"] == "manual_review"
+    assert incomplete["covered_amount"] == 7500.0
+    assert incomplete["deductible"] == 5000.0
+    assert incomplete["copayment"] is None
+    assert incomplete["payable_amount"] is None
+    assert "copay_percent" in incomplete["policy_terms_missing"]
+    assert any("co-payment percentage" in issue["reason"] for issue in incomplete["policy_terms_issues"])
 
     with pytest.raises(ValueError, match="Add the source page for annual limit"):
         app.save_policy_terms_review(
@@ -112,11 +134,17 @@ def test_real_policy_terms_are_not_used_until_reviewer_confirmed(tmp_path: Path,
     status = app.save_policy_terms_review(
         "policy-test",
         user["user_id"],
-        {"annual_limit": "100000", "deductible": "5000", "copay_percent": "10", "exclusions": "cosmetic surgery", "network_required": True, "preauthorization_required": False},
+        {"annual_limit": "100000", "deductible": "5000", "copay_percent": "10", "exclusions": "cosmetic surgery", "network_required": False, "preauthorization_required": False},
         {"annual_limit": 5, "deductible": 6, "copay_percent": 7, "exclusions": 4, "network_required": 3, "preauthorization_required": 8},
         {},
     )
     assert status == "confirmed"
+    confirmed_result = app.evaluate_saved_claim(
+        "claim-test", user["user_id"],
+        {"total_amount": {"value": 7500.0}, "patient_name": {"value": "Synthetic Patient"}, "hospital_name": {"value": "Example Hospital"}, "line_items": [], "missing_fields": [], "review_fields": []},
+    )
+    assert confirmed_result["policy_terms_review_status"] == "reviewer_confirmed"
+    assert confirmed_result["payable_amount"] == result["payable_amount"]
     with app.db() as conn:
         saved = conn.execute("SELECT terms_review_status,reviewed_policy_terms_json,terms_reviewed_by FROM policy_versions WHERE version_id='policy-test'").fetchone()
     assert saved["terms_review_status"] == "confirmed"
@@ -124,7 +152,7 @@ def test_real_policy_terms_are_not_used_until_reviewer_confirmed(tmp_path: Path,
     reviewed_policy = json.loads(saved["reviewed_policy_terms_json"])
     assert set(reviewed_policy) == {"annual_limit", "deductible", "copay_percent", "exclusions", "network_required", "preauthorization_required"}
     assert reviewed_policy["exclusions"]["method"] == "reviewer_confirmed"
-    assert reviewed_policy["network_required"] == {"term": "network_required", "value": True, "confidence": 1.0, "source_page": 3, "source_name": "policy.pdf", "method": "reviewer_confirmed"}
+    assert reviewed_policy["network_required"] == {"term": "network_required", "value": False, "confidence": 1.0, "source_page": 3, "source_name": "policy.pdf", "method": "reviewer_confirmed"}
     assert reviewed_policy["preauthorization_required"]["value"] is False
     calculated = app.evaluate_saved_claim(
         "claim-test",
@@ -134,6 +162,11 @@ def test_real_policy_terms_are_not_used_until_reviewer_confirmed(tmp_path: Path,
     assert calculated["rule_version"] != "policy-terms-review-required"
     assert calculated["line_item_results"][0]["status"] == "excluded"
 
+    app.save_policy_terms_review(
+        "policy-test", user["user_id"],
+        {"annual_limit": "100000", "deductible": "5000", "copay_percent": "10", "network_required": True},
+        {"annual_limit": 5, "deductible": 6, "copay_percent": 7, "network_required": 3}, {},
+    )
     app.save_adjudication_context("claim-test", user, {"network_status": "out_of_network", "trusted": True})
     network_result = app.evaluate_saved_claim(
         "claim-test",

@@ -26,6 +26,7 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .pytest-temp/
+.pytest-temp-debug*/
 .mypy_cache/
 
 # Streamlit secrets and logs

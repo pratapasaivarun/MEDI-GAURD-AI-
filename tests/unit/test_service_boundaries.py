@@ -2,6 +2,8 @@ from types import SimpleNamespace
 
 from mediguard.services.orchestration import assess_claim
 from mediguard.services.storage import validate_upload
+from mediguard.ui import claim_pages
+import pytest
 
 
 class Upload:
@@ -39,6 +41,17 @@ def test_orchestration_keeps_missing_settlement_out_of_comparison():
     result = assess_claim(services, "claim-id", "user-id")
     assert "comparison" not in result
     assert calls == []
+
+
+def test_claimant_submission_returns_rules_result_without_waiting_for_llm(monkeypatch):
+    result = {"normalized": {"total_amount": {"value": 1000}}, "rules": {"status": "approved"}}
+    monkeypatch.setattr(claim_pages, "assess_claim", lambda *_args: result)
+    monkeypatch.setattr(
+        claim_pages, "run_agents_for_claim",
+        lambda *_args, **_kwargs: pytest.fail("The claimant submit action must not wait for an LLM explanation."),
+    )
+
+    assert claim_pages._assess_claimant_submission("claim-id", "user-id") == result
 
 
 def test_storage_upload_validator_keeps_file_checks_in_service_layer():

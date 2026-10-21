@@ -75,6 +75,11 @@ def _claimant_result_for_claim(claim_id: str, user: dict) -> dict[str, Any] | No
     }
 
 
+def _assess_claimant_submission(claim_id: str, user_id: str) -> dict[str, Any]:
+    """Run extraction, Python rules, and settlement comparison without waiting on an LLM."""
+    return assess_claim(_app, claim_id, user_id)
+
+
 def _render_claimant_result(user: dict) -> None:
     claims = user_claims(user["user_id"], user)
     _page_header('CLAIM OUTCOME', 'Your claim result', 'A simple view of the policy review, your estimated responsibility, and next steps.', '✓')
@@ -566,7 +571,7 @@ def _render_claim_submission(user: dict) -> None:
         if st.button('Submit claim for assessment', type='primary', icon=':material/send:'):
             with st.status('Checking your documents and policy…', expanded=True) as status:
                 try:
-                    assessment = assess_claim(_app, claim_id, user['user_id'])
+                    assessment = _assess_claimant_submission(claim_id, user['user_id'])
                     normalized = assessment['normalized']
                     rules = assessment['rules']
                     st.session_state[f'normalized_{claim_id}'] = normalized
@@ -576,12 +581,7 @@ def _render_claim_submission(user: dict) -> None:
                         st.session_state[f'settlement_{claim_id}'] = assessment['settlement']
                     else:
                         status.write('Upload the settlement letter to compare the insurer payment with the policy estimate.')
-                    if rules['status'] == 'manual_review':
-                        status.update(label='Your claim needs a manual review.', state='complete')
-                    else:
-                        workflow = run_agents_for_claim(claim_id, user['user_id'], normalized, rules, progress_callback=status.write)
-                        st.session_state[f'workflow_{claim_id}'] = workflow
-                        status.update(label='Assessment complete.', state='complete')
+                    status.update(label='Assessment complete. The rules-based result is ready; explanation help is available on the result screen.', state='complete')
                     queue_page(st.session_state, 'Claim result')
                     st.rerun()
                 except Exception:

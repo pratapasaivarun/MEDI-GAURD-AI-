@@ -97,7 +97,7 @@ def _claimant_result_for_claim(claim_id: str, user: dict) -> dict[str, Any] | No
     not_paid = optional_float(claimant.get("amount_not_covered", responsibility))
     reasons = (rules or {}).get("warnings") or []
     term_issues = (rules or {}).get("policy_terms_issues") or []
-    reason = (term_issues[0].get("reason") if term_issues else (_claim_warning_message(reasons[0]) if reasons else "Your claim has been processed and the result is ready to review."))
+    reason = ("Some policy details need confirmation. See the unresolved items below." if term_issues else (_claim_warning_message(reasons[0]) if reasons else "Your claim has been processed and the result is ready to review."))
     return {
         "status": status,
         "amount_billed": billed,
@@ -171,7 +171,7 @@ def _render_claimant_result(user: dict) -> None:
         st.markdown("### What this means for you")
         st.write(result["reason"])
         for issue in result.get("policy_terms_issues", []):
-            st.write(f"• {issue['reason']}")
+            st.write(f"• {_claimant_policy_issue(issue)}")
         if result["requires_human_review"]:
             known_coverage = result.get("covered_before_cost_sharing")
             if known_coverage is not None:
@@ -211,11 +211,15 @@ def _render_claimant_result(user: dict) -> None:
         adjustments = []
         for item in rules.get("results", []):
             if item.get("status") in {"partial", "fail", "needs_review"}:
-                adjustments.append({"Policy check": str(item.get("rule_id", "")).replace("_", " ").title(), "Effect": item.get("calculation", "Policy adjustment applied"), "Amount affected": item.get("amount")})
+                adjustments.append({"Policy check": _claim_warning_message(item.get("rule_id", "")), "Effect": item.get("calculation", "Policy adjustment applied"), "Amount affected": item.get("amount")})
         if adjustments:
             st.markdown("#### Items or rules affecting coverage")
             st.dataframe(adjustments, hide_index=True)
-        warnings = rules.get("warnings") or []
+        warnings = [
+            warning for warning in (rules.get("warnings") or [])
+            if not result.get("policy_terms_issues")
+            or not str(warning).startswith("POLICY_TERMS_UNCONFIRMED:")
+        ]
         if warnings:
             st.write("Calculation notes: " + "; ".join(_claim_warning_message(item) for item in warnings))
     billing_anomalies = normalized.get("billing_anomalies") or {}

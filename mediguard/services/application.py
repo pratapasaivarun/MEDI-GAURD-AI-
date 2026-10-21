@@ -114,9 +114,43 @@ def is_trusted_fixture_hash(value: str | None) -> bool:
 
 
 def _claim_warning_message(value: Any) -> str:
-    if str(value) == "line_item_reconciliation_failed":
-        return "Itemized charges could not be reconciled to the bill total, so the aggregate bill total was used for this calculation."
-    return str(value)
+    text = str(value or "").strip()
+    code_messages = {
+        "line_item_reconciliation_failed": "Itemized charges could not be reconciled to the bill total, so the bill total was used for this estimate.",
+        "annual_limit_exceeded": "The policy's annual coverage limit has been reached.",
+        "room_limit_applied": "The daily room limit reduced the amount covered for room charges.",
+        "room_limit_proportional_applied": "The room limit also reduced related doctor and nursing charges under the policy.",
+        "icu_limit_not_stated": "The policy does not state a daily ICU limit, so ICU charges need review.",
+        "icu_limit_uncertain": "The daily ICU limit could not be confirmed from the available policy text.",
+        "total_amount_missing_or_invalid": "The bill total is missing or could not be read clearly.",
+        "waiting_period_applies": "A policy waiting period may affect some charges.",
+        "exclusion_match": "A bill item may match a policy exclusion and needs review.",
+        "sub_limit": "A policy limit applies to one or more bill items.",
+        "pre_post_window": "The policy's pre- or post-hospitalization time limit may affect a bill item.",
+    }
+    if text in code_messages:
+        return code_messages[text]
+    prefix_messages = {
+        "POLICY_TERMS_UNCONFIRMED:": "Some extracted policy terms still need reviewer confirmation:",
+        "UNCATEGORIZED_RANGE:": "One or more bill items could not be categorized; the estimate is shown as a range:",
+        "UNCATEGORIZED_ASSUMPTION:": "Some bill items are provisionally treated as general covered charges because no category-specific limit was found:",
+        "TOTAL_MISMATCH:": "The itemized charges differ from the bill total by more than 1%.",
+        "POSSIBLE_DUPLICATE:": "Possible duplicate charges were kept and need review.",
+        "DIAGNOSIS_EXCLUSION:": "The diagnosis may match a policy exclusion and needs review.",
+    }
+    for prefix, message in prefix_messages.items():
+        if text.startswith(prefix):
+            detail = text[len(prefix):].strip()
+            return f"{message} {detail}".strip()
+    if text.startswith("Missing required fields:"):
+        return "Some required bill details are missing: " + text.split(":", 1)[1].strip() + "."
+    if text.startswith("Fields require review:"):
+        return "Some bill details need source-page review: " + text.split(":", 1)[1].strip() + "."
+    if text.startswith("Line item requires reviewer confirmation:"):
+        return text.replace("Line item requires reviewer confirmation:", "This bill item needs reviewer confirmation:", 1)
+    if text.startswith("annual_limit_exceeded"):
+        return code_messages["annual_limit_exceeded"]
+    return text
 
 
 def utc_now() -> str:

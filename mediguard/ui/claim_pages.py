@@ -22,16 +22,20 @@ def _render_policy_terms_badge(review_status: str | None) -> None:
 def _claimant_result_for_claim(claim_id: str, user: dict) -> dict[str, Any] | None:
     """Return only claimant-safe amounts and explanation; hide raw agent/reviewer data."""
     claim = _claim_access(claim_id, user)
-    rules = st.session_state.get(f"rules_{claim_id}")
+    rules = None
     workflow = st.session_state.get(f"workflow_{claim_id}") or {}
+    # The reviewer can recompute this claim in another browser session. Always
+    # prefer the latest persisted rule output over this session's cached copy.
+    with db() as conn:
+        row = conn.execute("SELECT result_json FROM rule_evaluations WHERE claim_id=? ORDER BY rowid DESC LIMIT 1", (claim_id,)).fetchone()
+    if row:
+        try:
+            rules = json.loads(row["result_json"])
+            st.session_state[f"rules_{claim_id}"] = rules
+        except (TypeError, json.JSONDecodeError):
+            rules = None
     if not rules:
-        with db() as conn:
-            row = conn.execute("SELECT result_json FROM rule_evaluations WHERE claim_id=? ORDER BY created_at DESC LIMIT 1", (claim_id,)).fetchone()
-        if row:
-            try:
-                rules = json.loads(row["result_json"])
-            except (TypeError, json.JSONDecodeError):
-                rules = None
+        rules = st.session_state.get(f"rules_{claim_id}")
     if not rules and not workflow:
         return None
     with db() as conn:

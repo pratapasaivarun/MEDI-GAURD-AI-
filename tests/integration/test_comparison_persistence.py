@@ -1,5 +1,6 @@
 from decimal import Decimal
 import uuid
+from types import SimpleNamespace
 
 from mediguard.services import application as app
 
@@ -49,7 +50,10 @@ def test_comparison_reloads_from_database_after_session_state_is_empty(monkeypat
     assert saved_row is not None
     assert '"actual_patient_share": "1000.00"' in saved_row["comparison_json"]
 
-    session_state = {}
+    session_state = {
+        f"comparison_{claim_id}": SimpleNamespace(status="manual_review"),
+        f"settlement_{claim_id}": object(),
+    }
     loaded_result, loaded_settlement = app.get_comparison_for_view(claim_id, user, session_state)
 
     assert session_state[f"comparison_{claim_id}"].possible_difference == Decimal("0.00")

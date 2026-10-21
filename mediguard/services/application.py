@@ -1621,13 +1621,16 @@ def get_comparison_for_view(claim_id: str, user: dict | sqlite3.Row, session_sta
     session_state = st.session_state if session_state is None else session_state
     comparison_key = f"comparison_{claim_id}"
     settlement_key = f"settlement_{claim_id}"
-    comparison, settlement = session_state.get(comparison_key), session_state.get(settlement_key)
-    if comparison is None or settlement is None:
-        stored = load_settlement_comparison(claim_id, user)
-        if stored:
-            comparison, settlement = stored
-            session_state[comparison_key] = comparison
-            session_state[settlement_key] = settlement
+    # A reviewer may confirm terms in a different session and recompute an
+    # existing claim. Read the persisted comparison on every view so claimant
+    # refreshes cannot keep showing a stale provisional result.
+    stored = load_settlement_comparison(claim_id, user)
+    if stored:
+        comparison, settlement = stored
+        session_state[comparison_key] = comparison
+        session_state[settlement_key] = settlement
+    else:
+        comparison, settlement = session_state.get(comparison_key), session_state.get(settlement_key)
     return comparison, settlement
 
 

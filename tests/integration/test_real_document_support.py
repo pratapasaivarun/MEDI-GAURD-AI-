@@ -5,10 +5,12 @@ import os
 from pathlib import Path
 import sqlite3
 import sys
+from types import SimpleNamespace
 import pytest
 
 from mediguard.ingestion.extraction import run_extraction
 from mediguard.policy.policy_terms import extract_policy_terms
+from mediguard.ui import claim_pages
 
 
 def test_bill_layout_labels_and_net_total_are_extracted() -> None:
@@ -165,6 +167,12 @@ def test_unconfirmed_policy_terms_are_provisional_and_missing_terms_keep_safe_su
     assert confirmed_result["policy_terms_review_status"] == "reviewer_confirmed"
     assert confirmed_result["payable_amount"] == result["payable_amount"]
     assert recompute_audit["actor"] == user["user_id"]
+    claimant_session = {}
+    monkeypatch.setattr(claim_pages, "st", SimpleNamespace(session_state=claimant_session))
+    claimant_session["rules_claim-test"] = result
+    claimant_view = claim_pages._claimant_result_for_claim("claim-test", user)
+    assert claimant_view["policy_terms_review_status"] == "reviewer_confirmed"
+    assert claimant_view["amount_covered"] == result["payable_amount"]
     with app.db() as conn:
         saved = conn.execute("SELECT terms_review_status,reviewed_policy_terms_json,terms_reviewed_by FROM policy_versions WHERE version_id='policy-test'").fetchone()
     assert saved["terms_review_status"] == "confirmed"

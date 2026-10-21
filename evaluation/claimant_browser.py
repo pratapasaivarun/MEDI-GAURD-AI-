@@ -181,7 +181,10 @@ def run_claimant_browser_suite() -> dict[str, Any]:
             claimant.locator('input[type="password"]:visible').fill("Fictional-Claimant-Password-2026!")
             claimant.get_by_role("button", name="Sign in").click()
             claimant.get_by_role("button", name="Open").click()
-            claimant.get_by_text("Reviewer-confirmed policy terms", exact=False).wait_for(timeout=30000)
+            # The badge is repeated in the claim header and comparison panel.
+            # Wait for the first visible badge instead of relying on a strict
+            # locator that fails when the same status appears twice.
+            claimant.get_by_text("Reviewer-confirmed policy terms", exact=False).first.wait_for(timeout=30000)
             after = claimant.locator("body").inner_text()
             refresh_shot = screenshots / "claimant-after-review.png"
             claimant.screenshot(path=str(refresh_shot), full_page=True)
@@ -284,4 +287,23 @@ def run_claimant_browser_suite() -> dict[str, Any]:
               "screenshots_directory": str(screenshots), "failure": failure}
     if failure:
         result["server_log_tail"] = log_path.read_text(encoding="utf-8", errors="replace")[-5000:]
+    # Preserve a compact, reproducible record without copying page text or
+    # screenshots into the repository.
+    from datetime import datetime, timezone
+    summary = {
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "numerator": passed_count,
+        "denominator": 8,
+        "pass": result["pass"],
+        "reviewer_refresh": reviewer_refresh,
+        "cases": [{key: case.get(key) for key in ("case", "expected", "passed", "result_shown", "screenshot") if key in case}
+                  for case in outcomes],
+        "screenshots_directory": str(screenshots),
+        "failure": failure,
+    }
+    latest = ROOT / "evaluation" / "latest"
+    latest.mkdir(parents=True, exist_ok=True)
+    (latest / "claimant_browser_results.json").write_text(
+        json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
     return result

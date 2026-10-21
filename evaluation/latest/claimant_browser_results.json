@@ -1,0 +1,96 @@
+{
+  "created_at": "2026-10-21T05:17:54.880352+00:00",
+  "numerator": 8,
+  "denominator": 8,
+  "pass": true,
+  "reviewer_refresh": {
+    "passed": true,
+    "badge_before": true,
+    "badge_after": true,
+    "amounts_before": [
+      "INR 47,000.00",
+      "INR 22,500.00",
+      "INR 24,500.00",
+      "INR 24,500.00",
+      "INR 10,000.00",
+      "INR 2,500.00",
+      "INR 12,000.00",
+      "INR 24,500.00",
+      "INR 22,500.00",
+      "INR 22,500.00",
+      "INR 0.00"
+    ],
+    "amounts_after": [
+      "INR 47,000.00",
+      "INR 22,500.00",
+      "INR 24,500.00",
+      "INR 24,500.00",
+      "INR 10,000.00",
+      "INR 2,500.00",
+      "INR 12,000.00",
+      "INR 24,500.00",
+      "INR 22,500.00",
+      "INR 22,500.00",
+      "INR 0.00"
+    ],
+    "screenshots": [
+      "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm\\reviewer-policy-confirmed.png",
+      "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm\\claimant-after-review.png"
+    ]
+  },
+  "cases": [
+    {
+      "case": "a_match",
+      "expected": "no_discrepancy",
+      "passed": true,
+      "result_shown": true,
+      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm\\a_match-claimant-result.png"
+    },
+    {
+      "case": "b_wrongful_deduction",
+      "expected": "possible_discrepancy",
+      "passed": true,
+      "result_shown": true,
+      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm\\b_wrongful_deduction-claimant-result.png"
+    },
+    {
+      "case": "c_manual_review",
+      "expected": "manual_review",
+      "passed": true,
+      "result_shown": true,
+      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm\\c_manual_review-claimant-result.png"
+    },
+    {
+      "case": "empty_file",
+      "passed": true,
+      "result_shown": true,
+      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm\\empty_file.png"
+    },
+    {
+      "case": "wrong_type",
+      "passed": true,
+      "result_shown": true,
+      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm\\wrong_type.png"
+    },
+    {
+      "case": "oversized",
+      "passed": true,
+      "result_shown": true,
+      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm\\oversized.png"
+    },
+    {
+      "case": "corrupted_pdf",
+      "passed": true,
+      "result_shown": true,
+      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm\\corrupted_pdf.png"
+    },
+    {
+      "case": "missing_settlement",
+      "passed": true,
+      "result_shown": true,
+      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm\\missing_settlement.png"
+    }
+  ],
+  "screenshots_directory": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-jkh4w_sm",
+  "failure": null
+}

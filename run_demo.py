@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
+demo_port = int(os.getenv('MEDIGUARD_DEMO_PORT', '8506'))
 storage = ROOT / 'data' / 'final_demo'
 os.environ.update({
     'MEDIGUARD_DB_PATH': str(storage / 'mediguard.db'),
@@ -22,6 +23,6 @@ if os.getenv('MEDIGUARD_ADMIN_PASSWORD'):
     _core_demo_user()
 else:
     print('MEDIGUARD_ADMIN_PASSWORD is unset; no demo administrator was created.', flush=True)
-print('Synthetic local demonstration: http://127.0.0.1:8506', flush=True)
+print(f'Synthetic local demonstration: http://127.0.0.1:{demo_port}', flush=True)
 print('Demo claims persist under data/final_demo. Press Ctrl+C to stop.', flush=True)
-raise SystemExit(subprocess.call([sys.executable, '-m', 'streamlit', 'run', str(ROOT / 'app.py'), '--server.port', '8506', '--server.address', '127.0.0.1'], cwd=ROOT))
+raise SystemExit(subprocess.call([sys.executable, '-m', 'streamlit', 'run', str(ROOT / 'app.py'), '--server.port', str(demo_port), '--server.address', '127.0.0.1'], cwd=ROOT))

@@ -1,0 +1,33 @@
+name: Bug report
+description: Report a reproducible problem using fictional sample data.
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Do not attach real patient, policyholder, or insurer documents."
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Include the page or command and the message shown.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Start the demo ..."
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Python and operating system
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs
+      description: Remove names, credentials, local paths, and personal data.

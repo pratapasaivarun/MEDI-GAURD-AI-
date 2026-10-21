@@ -29,7 +29,7 @@ flowchart TD
   U --> DB[(SQLite + private local files + Chroma index)]
 ```
 
-A more detailed architecture image is [docs/architecture.svg](C:/MediGaurd%20AI/docs/architecture.svg).
+A more detailed architecture image is [the architecture diagram](../architecture.svg).
 
 ## Verification results
 
@@ -40,7 +40,7 @@ A more detailed architecture image is [docs/architecture.svg](C:/MediGaurd%20AI/
 - **Retrieval:** 24 labeled question-to-clause queries across 24 fictional policies (annual limit, deductible, co-payment, room limit). BGE run: precision@1 `14/24` (`58.33%`), macro precision@3 `23/72` (`31.94%`), precision@5 `24/120` (`20.00%`), recall@3 `23/24` (`95.83%`), and recall@5 `24/24` (`100%`). This is a small, synthetic-only benchmark; the weaker top-rank results, especially deductible queries, are a known retrieval issue. The former one-query score is obsolete.
 - **App status check:** The separate full app harness still reports `12/24` (`50%`) because reviewer-gated cases stop before rules run. This is not a rules accuracy score; it is retained only as an end-to-end gate/status check.
 - **LLM safety:** Automated tests cover fabricated numbers, down/timeout/malformed responses, and prove an explanation cannot mutate a comparison. A live three-case run with Ollama `ibm/granite4.1:8b` on/off produced identical rules status, rule payable, comparison status, expected/actual patient share, difference, decision status, and appeal availability in every case. The match explanation passed validation; the wrongful-deduction model response was rejected and used the template; manual review made no LLM call. The model produced explanations only; the Python comparison result remained unchanged.
-- **Browser:** Playwright ran the three fictional cases through the real Streamlit file-upload, reviewer policy-confirmation, rules and settlement-comparison screens. Match: no discrepancy, ₹0 difference, no appeal. Wrongful deduction: possible discrepancy, ₹2,700 difference, appeal available. Manual review: scanned bill page and mismatched totals, no appeal. The five upload-error paths were checked: empty, wrong type and oversized files were rejected; a malformed PDF was flagged during extraction; missing settlement showed a clear upload prompt. Screenshots are saved outside the repository in `C:\Users\prata\` and listed in `MILESTONE_LOG.md`. The first B run used a stale local Chroma index and safely stopped for review; an isolated clean index retrieved the policy clause and produced the expected possible discrepancy.
+- **Browser:** Playwright ran the three fictional cases through the real Streamlit file-upload, reviewer policy-confirmation, rules and settlement-comparison screens. Match: no discrepancy, ₹0 difference, no appeal. Wrongful deduction: possible discrepancy, ₹2,700 difference, appeal available. Manual review: scanned bill page and mismatched totals, no appeal. The five upload-error paths were checked: empty, wrong type and oversized files were rejected; a malformed PDF was flagged during extraction; missing settlement showed a clear upload prompt. Historical screenshots were saved outside the repository and recorded in the milestone log. The first B run used a stale local Chroma index and safely stopped for review; an isolated clean index retrieved the policy clause and produced the expected possible discrepancy.
 
 ## Limits and next actions
 

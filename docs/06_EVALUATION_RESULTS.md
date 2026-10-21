@@ -145,7 +145,7 @@ The run initially found six parser defects: pipe-separated total labels were mis
 
 The original 0/8 was initially caused by an app bug: policy indexing ran before the claim was linked to the policy edition, and an indexing error prevented linking. That order is fixed and covered by `tests/integration/test_claimant_policy_linkage.py`. A later rerun exposed a separate Playwright test issue: its selector matched the same reviewer badge twice. The locator now selects the first badge; it was a test-script defect. A BGE-enabled Playwright run under the pinned virtual environment did not reach the first result within its five-minute timeout; the successful 8/8 run used the system-Python runtime used by the open local app, which selects Chroma's fallback embedding. This is a real runtime/performance difference and remains a limitation of the BGE browser run.
 
-Screenshots are saved outside the repo at `C:\Users\prata\AppData\Local\Temp\mediguard-claimant-screenshots-jkh4w_sm`. The compact result is `evaluation/latest/claimant_browser_results.json`.
+Screenshots are saved outside the repo at `<USER_HOME>\AppData\Local\Temp\mediguard-claimant-screenshots-jkh4w_sm`. The compact result is `evaluation/latest/claimant_browser_results.json`.
 
 ## Explanation quality (live Ollama)
 

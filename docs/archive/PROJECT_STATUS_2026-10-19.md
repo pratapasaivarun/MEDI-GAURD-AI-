@@ -3,7 +3,7 @@
 # MediGuard AI — End-to-End Project Status
 
 **Audit date:** 2026-10-19
-**Repository:** `C:\MediGaurd AI`
+**Repository:** `<REPO_ROOT>`
 **Branch:** `fix/prototype-completion`
 **Audited commit:** `103b19c8c2ddbbc8772bca99006b6042d12978c4`
 **Scope:** read-only code/history review plus install, test, compile, evaluation, and Streamlit smoke checks. This report is not a clinical, legal, privacy, or penetration assessment. No application code was changed during this audit.
@@ -81,7 +81,7 @@ Environment: existing `.venv`, Python 3.13.1, Streamlit 1.62.0. Tesseract 5.4.0 
 |---|---|
 | `python -m pip install --no-index --no-input -r requirements.txt` | Exit 0. Every pinned requirement was already installed. |
 | `python -m pip check` | `No broken requirements found.` |
-| `python -m pytest -q --basetemp C:\Users\prata\mediguard_status_audit_pytest` | `166 passed in 104.66s (0:01:44)`. No failures or skips were reported. |
+| `python -m pytest -q --basetemp <USER_HOME>\mediguard_status_audit_pytest` | `166 passed in 104.66s (0:01:44)`. No failures or skips were reported. |
 | `python -m compileall -q ...` for app, business modules, UI and tests | Exit 0; `COMPILEALL_EXIT=0`. |
 | Streamlit launch at port 8517 with isolated storage | Started. `GET /_stcore/health` returned `HTTP=200`, body `ok`. Server was stopped after the check. This was a health smoke test, not a browser claim workflow. |
 | `evaluation/scripts/run_system_evaluation.py --rules-only --output ...` | Completed on 24 synthetic cases and loaded the configured backend (`BAAI/bge-small-en-v1.5`). It reported rule and decision accuracy as “Not Evaluated — Ground Truth/Data Required”; retrieval annotations count is 0. No trustworthy accuracy score was produced. |
@@ -92,12 +92,12 @@ Legacy extraction evaluation error:
 
 ```text
 Traceback (most recent call last):
-  File "C:\MediGaurd AI\evaluation\run_evaluation.py", line 309, in <module>
+  File "<REPO_ROOT>\evaluation\run_evaluation.py", line 309, in <module>
     raise SystemExit(main())
                      ~~~~^^
-  File "C:\MediGaurd AI\evaluation\run_evaluation.py", line 258, in main
+  File "<REPO_ROOT>\evaluation\run_evaluation.py", line 258, in main
     extraction = evaluate_extraction(args.repeats, annotations)
-  File "C:\MediGaurd AI\evaluation\run_evaluation.py", line 65, in evaluate_extraction
+  File "<REPO_ROOT>\evaluation\run_evaluation.py", line 65, in evaluate_extraction
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
                           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
   File "C:\Program Files\Python313\Lib\pathlib\_local.py", line 546, in read_text
@@ -109,7 +109,7 @@ Traceback (most recent call last):
   File "C:\Program Files\Python313\Lib\pathlib\_local.py", line 537, in open
     return io.open(self, mode, buffering, encoding, newline)
            ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-FileNotFoundError: [Errno 2] No such file or directory: 'C:\MediGaurd AI\fixtures\phase4\ground_truth.json'
+FileNotFoundError: [Errno 2] No such file or directory: '<REPO_ROOT>\fixtures\phase4\ground_truth.json'
 ```
 
 Docker build error:

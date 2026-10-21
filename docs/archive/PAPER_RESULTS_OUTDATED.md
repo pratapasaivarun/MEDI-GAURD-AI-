@@ -1,4 +1,4 @@
-> **Historical tables — outdated.** The tables below report earlier runs against a different fixture set. Current checks are 12/12 extracted bill fields, 13/24 direct rules status agreement with reviewer-confirmed terms, 12/24 end-to-end app status agreement including review gates, and 24 labeled retrieval questions. See `../06_EVALUATION_RESULTS.md` and `../MILESTONE_LOG.md` for current denominators and limits.
+> **Historical tables — outdated.** The tables below report earlier runs against a different fixture set. Current scores and their denominators are in [the evaluation results](../06_EVALUATION_RESULTS.md) and [the milestone log](../10_MILESTONE_LOG.md).
 
 # Paper-ready quantitative results
 

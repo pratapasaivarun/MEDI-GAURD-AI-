@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this project, please cite it as below."
+title: "MediGuard AI"
+type: software
+authors:
+  - family-names: Varun
+    given-names: "Pratapa Sai"
+version: "1.0-prototype"
+date-released: 2026-10-21
+license: MIT
+repository-code: "https://github.com/pratapasaivarun/MEDI-GAURD-AI-"

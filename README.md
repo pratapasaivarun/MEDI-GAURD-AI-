@@ -1,154 +1,153 @@
 # MediGuard AI
 
-## What it is
+**A fictional-data prototype for comparing health-insurance settlements with a transparent Python estimate.**
 
-MediGuard AI is a college prototype that reads a hospital bill, insurance policy, and settlement letter.
-Python calculates a provisional policy estimate and compares it with the insurer's settlement before a reviewer confirms the policy terms.
-It is for fictional examples only; provisional estimates are never final insurer decisions.
+[![CI](https://github.com/pratapasaivarun/MEDI-GAURD-AI-/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/pratapasaivarun/MEDI-GAURD-AI-/actions/workflows/tests.yml)
+[![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
+[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-## The key rule
+## What it does
 
-**Python decides; the LLM only explains.** Deterministic Python rules set amounts, status, and appeal eligibility. A local LLM can explain a completed result, but cannot change it. Invalid or unavailable model responses use a checked template.
+MediGuard AI compares an insurer's settlement with an estimate calculated from a hospital bill and policy. It flags deductions that may not agree with the policy evidence. Python rules decide every amount and status; an optional local language model only explains a completed result. This is a college prototype using fictional samples, not a system for deciding real claims.
 
-## Architecture
+## Screenshots
 
-```mermaid
-flowchart TD
-  B[Bill and policy PDFs] --> X[Extraction and OCR]
-  P[Policy PDF] --> T[Source-backed term candidates]
-  T -. review status and corrections .-> H[Reviewer confirmation]
-  P --> I[Policy clause index]
-  X --> R[Python rules]
-  T --> R
-  S[Settlement letter] --> SP[Settlement parser]
-  R --> C[Comparison engine]
-  SP --> C
-  I --> C
-  C --> A[LLM explanation or template]
-  C --> D[Appeal draft]
-  A --> U[Streamlit patient and reviewer app]
-  D --> U
-  U --> DB[(SQLite and local document storage)]
-  I --> V[(Local Chroma index)]
-```
+These are screenshots of the running Streamlit demo with fictional sample data. The browser viewport is 1440 × 900; no browser chrome is included.
 
-The [architecture guide](docs/02_ARCHITECTURE.md) describes each step and local service.
+| Settlement matches | Possible wrongful deduction | Manual review |
+|---|---|---|
+| ![Fictional matching claim result](docs/images/05-result-match.png) | ![Fictional wrongful-deduction result](docs/images/03-result-wrongful-deduction.png) | ![Fictional manual-review result](docs/images/06-manual-review.png) |
 
-## Folder map
+More screens: [sign-in](docs/images/01-login.png) · [document upload](docs/images/02-upload.png) · [appeal draft download](docs/images/04-appeal-download.png) · [reviewer confirmation](docs/images/07-reviewer-confirmation.png). To regenerate them, follow [the screenshot guide](docs/08_SCREENSHOT_CAPTURE.md).
 
-```text
-app.py                         Thin Streamlit entry point
-run_demo.py                    Fictional demo launcher
-.env.example                   Local settings template
-requirements.txt               Pinned app dependencies
-.gitignore                     Local files excluded from Git
-Dockerfile                     Kept for later; not part of this verification
-mediguard/                     Application modules grouped by responsibility
-  ingestion/ policy/ engine/ ai/ reporting/ services/ ui/
-config/                        Categories and trusted fictional fixture hashes
-samples/                       Fictional demo cases, policies, bills, and test documents
-tests/                         Unit, integration, and golden checks
-evaluation/                     Labels, evaluation scripts, and latest scores
-  scripts/ latest/
-docs/                           Numbered guides and archived project records
-.github/                       Automated test workflow
-```
+## Key features
 
-The small `.streamlit/config.toml` file sets the app theme and local server defaults. `.dockerignore` keeps secrets and local data out of any future image build; `.gitattributes` keeps text line endings predictable. Docker/hosting are outside the current scope.
+- Reads bill and policy PDFs, with OCR support for scanned pages.
+- Extracts policy terms with page evidence and lets a reviewer correct and confirm them.
+- Calculates deterministic estimates with Python rules and compares the result with parsed settlement deductions.
+- Shows provisional results before reviewer confirmation and preserves review reasons for uncertain inputs.
+- Creates a watermarked provisional appeal draft only when a supported discrepancy is found.
+- Uses optional local Ollama explanations; the model cannot change calculations or decisions.
 
-## Requirements
+## How it works
 
-- Windows 10/11 and Python 3.13 for the verified setup.
-- Tesseract OCR installed locally for scanned document pages. The example configuration points to the common Windows installer location; change `TESSERACT_CMD` in `.env` if yours differs.
-- Ollama is optional. It is used only for explanations. The checked model is `ibm/granite4.1:8b`; the deterministic rules work with Ollama off.
-- The configured BGE-small embedding model is downloaded locally the first time the clause index is used. Allow internet access for this first download, or prepare the model cache separately.
+![MediGuard AI architecture](docs/architecture.svg)
 
-## Setup on Windows PowerShell
+**Flow:** documents → extraction and policy terms → Python rules → settlement comparison → explanation/report → app screens.
 
-Run these commands from the repository root:
+## Quick start
+
+Python 3.13 is the verified runtime. Tesseract is optional for scanned-page OCR. Ollama is optional and only enables local explanations. Commands below install the app and developer test dependencies.
+
+### Windows PowerShell
 
 ```powershell
+git clone https://github.com/pratapasaivarun/MEDI-GAURD-AI-.git
+Set-Location MEDI-GAURD-AI-
 py -3.13 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --upgrade pip
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt -r tests/requirements-dev.txt
+\.venv\Scripts\python.exe -m pip install --upgrade pip
+\.venv\Scripts\python.exe -m pip install -r requirements.txt -r tests/requirements-dev.txt
 Copy-Item .env.example .env
+\.venv\Scripts\python.exe -m pytest -q tests
+\.venv\Scripts\python.exe run_demo.py
 ```
 
-Install Tesseract separately if scanned-page OCR is needed, then update `TESSERACT_CMD` in `.env` to its executable path. Keep `.env` local; never commit it. `MEDIGUARD_CORE_DEMO` remains `false` for the regular app.
-
-## Run the app and demo
-
-Run the regular app on port 8501:
-
-```powershell
-.\.venv\Scripts\python.exe -m streamlit run app.py --server.port 8501
-```
-
-Open [http://127.0.0.1:8501](http://127.0.0.1:8501). Claimants can register, upload documents, and see a provisional result. A reviewer can confirm or correct policy terms later; linked claims recompute, and the claimant sees the updated badge after refresh. Reviewer access uses the app's invitation flow.
-
-Claimant assessment reads the uploaded policy's extracted page evidence directly and does not load BGE or build a semantic index before showing the deterministic estimate. Semantic indexing is lazy: it starts only when the optional policy-evidence AI explanation or policy search is explicitly run. In a fresh clone on this laptop, the claimant-first browser run showed first results in **1.386 s, 1.465 s and 2.054 s** (maximum **2.054 s**; browser matrix **8/8**). This is one local measurement, not a guarantee for every computer or scan.
-
-For the isolated fictional demo, create a local reviewer password in the current PowerShell session and launch the demo:
+The demo opens at <http://127.0.0.1:8506>. Create a claimant account in the app. To test the reviewer workspace, set a temporary local admin password before starting `run_demo.py`:
 
 ```powershell
 $env:MEDIGUARD_ADMIN_PASSWORD = Read-Host "Choose a local demo password"
-.\.venv\Scripts\python.exe run_demo.py
+\.venv\Scripts\python.exe run_demo.py
 ```
 
-Open [http://127.0.0.1:8506](http://127.0.0.1:8506) and sign in as `demo@mediguard.local` with the password set above. Demo records are stored under ignored `data/final_demo/`. Stop either app with Ctrl+C.
-
-## The three demo cases
-
-All files are under `samples/demo_cases/` and carry a `FICTIONAL SAMPLE` label.
-
-- `a_match`: expected `no_discrepancy`; the provisional estimate matches the settlement; no appeal draft.
-- `b_wrongful_deduction`: expected `possible_discrepancy`; supported INR 2,700 patient-share difference; a watermarked provisional appeal draft is available before confirmation.
-- `c_manual_review`: expected `manual_review` because the bill includes a scanned page and the settlement total does not reconcile; a specific reason is shown and no appeal draft is available.
-
-See [03_RUNNING_THE_DEMO.md](docs/03_RUNNING_THE_DEMO.md) for the reviewer steps and detail.
-
-## Run tests and evaluations
-
-Create the environment as described above. The tests and offline evaluation run without Ollama or a browser. They use only fictional, hand-labeled samples.
+For the regular app, stop the demo with Ctrl+C and run:
 
 ```powershell
-$env:OLLAMA_HOST = 'http://127.0.0.1:1'
-$env:MEDIGUARD_EVAL_LIVE = 'false'
-$env:MEDIGUARD_EVAL_BROWSER = 'false'
-$testTemp = Join-Path $env:TEMP ("mediguard-pytest-" + [guid]::NewGuid().ToString("N"))
-.\.venv\Scripts\python.exe -m pytest -q tests --basetemp $testTemp
-.\.venv\Scripts\python.exe -m evaluation.run_all
+\.venv\Scripts\python.exe -m streamlit run app.py --server.port 8501
 ```
 
-To run the optional live checks, install Chromium once with `.\.venv\Scripts\python.exe -m playwright install chromium`, start Ollama with `ibm/granite4.1:8b` available, then set `MEDIGUARD_EVAL_LIVE=true` and `MEDIGUARD_EVAL_BROWSER=true` before `python -m evaluation.run_all`. The browser suite starts an isolated local app and saves screenshots in the system temporary folder, outside the repository.
+Open the regular app at <http://127.0.0.1:8501>.
 
-The 30 case labels are in `samples/evaluation_cases/ground_truth.json`; their PDFs and reviewer-confirmed terms (including date-window terms where applicable) are in `samples/evaluation_cases/cases/`. Independent policy-PDF extraction labels are in `samples/evaluation_cases/policy_pdf_term_labels.json`. The labeled retrieval set is `evaluation/retrieval_queries.json`. The command writes machine-readable results to `evaluation/latest/results.json` and the scorecard and case table to `docs/06_EVALUATION_RESULTS.md`.
+### macOS or Linux
 
-## Verified results
+```bash
+git clone https://github.com/pratapasaivarun/MEDI-GAURD-AI-.git
+cd MEDI-GAURD-AI-
+python3.13 -m venv .venv
+. .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt -r tests/requirements-dev.txt
+cp .env.example .env
+python -m pytest -q tests
+python run_demo.py
+```
 
-Latest recorded evaluation scores are validated on **30 synthetic cases**, with an additional **3 app-path demo cases**; these are not general accuracy claims. The hand-labeled expected results were committed before scoring.
+The demo opens at <http://127.0.0.1:8506>. To run the regular app instead, stop the demo and use `python -m streamlit run app.py --server.port 8501`. Install Tesseract using your operating system's package manager if you need OCR for scans; set `TESSERACT_CMD` in `.env` when its executable is not on `PATH`. Ollama is optional; see [the LLM safety guide](docs/05_LLM_SAFETY.md).
 
-- Automated suite: **248 passed, 3 skipped** with Ollama disabled. The three opt-in presentation tests pass when run with `MEDIGUARD_EVAL_BROWSER=true`.
-- Reviewer-confirmed terms decision agreement: **30/30** in the labeled rules/comparison evaluation. Without reviewer confirmation, the app-path status agreement is **6/30**; the other **24/30** are routed to Manual Review because “Eligible treatment” does not identify a category safely. A visible amount, range, or specific review reason is shown for **30/30** labeled cases. The separate 10-case adversarial set also shows a reasoned result for **10/10** cases.
-- Claimant-first Playwright: **8/8** on a fresh database (three demos and five upload/error scenarios); a second reviewer session confirmed terms, then claimant refresh changed the badge while all 11 displayed INR amounts remained identical. Screenshots are saved outside the repo; paths are recorded in `evaluation/latest/claimant_browser_results.json`.
-- Provisional app-path results: **6/30** labels agree before confirmation; **24/30** are Manual Review for the ambiguous “Eligible treatment” category. Amounts or ranges are visible in **30/30**, and provisional results match the later reviewer-confirmed app run in status and amounts for **30/30**. `edge_05` now calculates INR 0 after correcting the fictional policy and dated scanned-bill evidence without changing the expected label; it remains Manual Review because the settlement uses a generic “Exclusion” row that cannot be tied to the date-window category.
-- Extraction totals: **30/30 (100%)**; other labeled fields: **60/60 (100%)**.
-- Text-bill line items: precision **28/28 (100%)**, recall **28/28 (100%)**; OCR field accuracy **6/6 (100%)**.
-- Core policy-term extraction from source PDFs (annual limit, deductible and co-pay): **90/90**; the runner compares PDF extraction with hand labels and does not read reviewer-confirmed terms files.
-- Policy-term extraction from the 30 source policy PDFs, compared with separate source-PDF labels: deductible **30/30**, co-pay **30/30**, room cap **30/30**, ICU cap **30/30** (correctly absent), exclusions **30/30** (correctly absent), date window **30/30** (including `edge_05`), annual limit **30/30**. This 210/210 measurement includes terms correctly absent from PDFs and does not use reviewer-confirmed terms files.
-- Rules golden agreement: **24/24 (100%)**; property checks: **211/211 (100%)**.
-- Adversarial parser set: **10/10 cases**, **61/61 labeled field checks**, line-item precision/recall **1.00/1.00**. Labels were committed before scoring.
-- Comparison labels: **30/30 (100%)**; discrepancy false matches: **0/10**. Settlement paid-amount F1: **100% (28 labeled payments)**; deduction F1: **100% (37 labeled deductions)**.
-- Retrieval over 30 questions, using configured BGE-small in the project `.venv`: P@1 **30/30 (100%)**, P@3 **30/90 (33.3%)**, P@5 **30/150 (20%)**, recall@5 **30/30 (100%)**, MRR **1.000**. System Python lacks `sentence-transformers`, so it falls back to Chroma defaults; the app uses whichever backend is installed in its runtime. These are synthetic query scores, not broad policy-search accuracy.
-- Ollama ON/OFF with the provisional claimant path: **13/13** decisions, amounts, and grounded explanations unchanged (3 demo + 10 discrepancy cases). Ollama was called for two resolved demos; the other 11 unresolved cases safely used the template. Explanation checklist: **30/30** across ten live model texts.
-- Mean offline evaluation-run time: **0.602 seconds per case** for the latest 30-case run. The focused end-to-end claim timing above includes the explanation path and is reported separately.
-- Focused ten-claim timing: **0.632 s/claim** with Ollama off and **35.716 s/claim** with it on; on-mode Ollama/llama-server RSS peaked at **5,259.4 MiB**. Full method and warm-model details are in `docs/06_EVALUATION_RESULTS.md`.
+## Demo cases
 
-The CI workflow runs the offline tests and evaluation. Ollama and browser checks are optional local checks and are reported separately. The earlier **13/24** was rules-only status agreement with reviewer-confirmed policy terms supplied; **12/24** was the full-app result with reviewer gates included. They are distinct measurements from an older set, not one comparable overall accuracy figure; see `docs/06_EVALUATION_RESULTS.md` for the full explanation and the current case-by-case provisional app-path results.
-## Limitations
+All case documents are fictional and labeled **FICTIONAL SAMPLE**.
 
-Policy wording and OCR can be ambiguous, retrieval precision at 3/5 is low, and the reported scores apply only to small fictional labeled sets. Reviewers must inspect the cited policy page and all outputs. A broad clause exclusion filter can drop a coverage sentence when another sentence in the same passage contains exclusion wording. Appeal documents are drafts, not legal advice. Security, privacy, expert accuracy, and production performance have not been independently assessed. Hosting is not tested.
+| Case | Expected outcome |
+|---|---|
+| `a_match` | No discrepancy; no appeal draft. |
+| `b_wrongful_deduction` | Possible discrepancy of INR 2,700; provisional appeal draft offered. |
+| `c_manual_review` | Manual review because a scanned bill page and settlement total mismatch need attention; no appeal draft. |
 
-## Disclaimer
+## Evaluation results
 
-Use fictional data only. MediGuard AI is a college demonstration prototype, not an insurer decision system, legal service, or substitute for a qualified human review. Do not upload real patient records or use its output to make a claim decision.
+Scores below are measured on 30 synthetic cases, not on real insurance claims. The hand-labeled expected results are in `samples/evaluation_cases/ground_truth.json`; reviewer-confirmed terms are separate from the PDF-extraction labels. The evaluation writes `evaluation/latest/results.json`. See [the full scorecard](docs/06_EVALUATION_RESULTS.md) and run `python.exe -m evaluation.run_all` (Windows) or `python -m evaluation.run_all` (macOS/Linux) to reproduce the offline evaluation.
+
+| Measurement | Result |
+|---|---:|
+| Decision agreement with reviewer-confirmed terms | 30/30 |
+| Status agreement before reviewer confirmation | 6/30; 24/30 safely routed to Manual Review |
+| A visible amount, range, or specific review reason before confirmation | 30/30 |
+| Policy terms extracted from source PDFs | 210/210 |
+| Ollama on/off decision and amount equality | 13/13 (3 demo + 10 discrepancy cases) |
+
+## Project structure
+
+```text
+.
+├── app.py                 # Streamlit entry point
+├── run_demo.py            # Isolated fictional demo launcher
+├── mediguard/             # Application modules by responsibility
+│   ├── ingestion/         # Bill, PDF, OCR, and settlement parsing
+│   ├── policy/            # Policy term extraction and clause retrieval
+│   ├── engine/            # Typed models, deterministic rules, comparison
+│   ├── ai/                # Optional explanation only
+│   ├── reporting/         # Decision reports and appeal drafts
+│   ├── services/          # Authentication, storage, and orchestration
+│   └── ui/                # Claimant and reviewer screens
+├── config/                # Category mappings and trusted sample hashes
+├── samples/               # Fictional bills, policies, settlements, cases
+├── tests/                 # Unit, integration, browser, and golden tests
+├── evaluation/            # Labeled cases, metrics, and evaluation runners
+├── docs/                  # Numbered guides, results, and diagrams
+├── scripts/               # Reproducible screenshot capture utility
+└── .github/               # CI and contribution templates
+```
+
+## Limitations and scope
+
+This is a prototype for synthetic data and local demonstration only. OCR quality, policy wording, and retrieval can be uncertain; reviewers must inspect source pages. It is not legal or insurance advice and is not an insurer decision system. Browser checks are opt-in and do not run in hosted CI. The live LLM was exercised for generated explanations on two resolved demo cases; other unresolved cases used the safe template fallback. Hosting and production security have not been verified.
+
+## Documentation
+
+- [Project overview](docs/01_OVERVIEW.md)
+- [Architecture](docs/02_ARCHITECTURE.md)
+- [Run the demo](docs/03_RUNNING_THE_DEMO.md)
+- [Math examples](docs/04_MATH_GOLDEN_CASES.md)
+- [LLM safety](docs/05_LLM_SAFETY.md)
+- [Evaluation scorecard](docs/06_EVALUATION_RESULTS.md)
+- [Known limitations](docs/07_LIMITATIONS.md)
+- [Regenerate screenshots](docs/08_SCREENSHOT_CAPTURE.md)
+- [Documentation index](docs/README.md)
+
+## License
+
+MIT. See [LICENSE](LICENSE).
+
+## Contact
+
+Maintainer: Pratapa Sai Varun. For bugs or improvement ideas, open a GitHub issue in this repository.

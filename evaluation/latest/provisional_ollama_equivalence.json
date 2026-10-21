@@ -1,0 +1,262 @@
+{
+  "dataset": "3 fictional demos + 10 fictional discrepancy cases",
+  "path": "claimant upload -> process documents -> provisional assessment/comparison -> explanation",
+  "reviewer_confirmation_before_result": false,
+  "ollama_host": "http://localhost:11434",
+  "cases": [
+    {
+      "case_id": "a_match",
+      "kind": "demo",
+      "provisional": true,
+      "status": "no_discrepancy",
+      "payable_amount": "22500.0",
+      "expected_insurer_payment": "22500.0",
+      "actual_insurer_payment": "22500.00",
+      "possible_difference": "0.00",
+      "patient_share": "24500.0",
+      "decision_unchanged": true,
+      "off_explanation_grounded": true,
+      "on_explanation_grounded": true,
+      "off_mode_model_calls": 0,
+      "on_mode_model_calls": 1,
+      "manual_review_reasons": []
+    },
+    {
+      "case_id": "b_wrongful_deduction",
+      "kind": "demo",
+      "provisional": true,
+      "status": "possible_discrepancy",
+      "payable_amount": "22500.0",
+      "expected_insurer_payment": "22500.0",
+      "actual_insurer_payment": "19800.00",
+      "possible_difference": "2700.00",
+      "patient_share": "24500.0",
+      "decision_unchanged": true,
+      "off_explanation_grounded": true,
+      "on_explanation_grounded": true,
+      "off_mode_model_calls": 0,
+      "on_mode_model_calls": 1,
+      "manual_review_reasons": []
+    },
+    {
+      "case_id": "c_manual_review",
+      "kind": "demo",
+      "provisional": true,
+      "status": "manual_review",
+      "payable_amount": "22500.0",
+      "expected_insurer_payment": "22500.0",
+      "actual_insurer_payment": "22500.00",
+      "possible_difference": "-1000.00",
+      "patient_share": "24500.0",
+      "decision_unchanged": true,
+      "off_explanation_grounded": true,
+      "on_explanation_grounded": true,
+      "off_mode_model_calls": 0,
+      "on_mode_model_calls": 0,
+      "manual_review_reasons": [
+        "room_limit_applied",
+        "room_limit_proportional_applied",
+        "exclusions: page 1; the 0.85-confidence candidate was not applied, and no current bill line matches it. Confirm this term to check whether the result changes.",
+        "Settlement totals do not reconcile within INR 1.",
+        "BILL_TOTAL_MISMATCH: settlement bill total does not match the uploaded bill within INR 1."
+      ]
+    },
+    {
+      "case_id": "discrepancy_01",
+      "kind": "discrepancy",
+      "provisional": true,
+      "status": "manual_review",
+      "payable_amount": "8100.0",
+      "expected_insurer_payment": "8100.0",
+      "actual_insurer_payment": "7100.00",
+      "possible_difference": "1000.00",
+      "patient_share": "1900.0",
+      "decision_unchanged": true,
+      "off_explanation_grounded": true,
+      "on_explanation_grounded": true,
+      "off_mode_model_calls": 0,
+      "on_mode_model_calls": 0,
+      "manual_review_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ]
+    },
+    {
+      "case_id": "discrepancy_02",
+      "kind": "discrepancy",
+      "provisional": true,
+      "status": "manual_review",
+      "payable_amount": "18000.0",
+      "expected_insurer_payment": "18000.0",
+      "actual_insurer_payment": "17000.00",
+      "possible_difference": "1000.00",
+      "patient_share": "2000.0",
+      "decision_unchanged": true,
+      "off_explanation_grounded": true,
+      "on_explanation_grounded": true,
+      "off_mode_model_calls": 0,
+      "on_mode_model_calls": 0,
+      "manual_review_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ]
+    },
+    {
+      "case_id": "discrepancy_03",
+      "kind": "discrepancy",
+      "provisional": true,
+      "status": "manual_review",
+      "payable_amount": "14000.0",
+      "expected_insurer_payment": "14000.0",
+      "actual_insurer_payment": "13000.00",
+      "possible_difference": "1000.00",
+      "patient_share": "1000.0",
+      "decision_unchanged": true,
+      "off_explanation_grounded": true,
+      "on_explanation_grounded": true,
+      "off_mode_model_calls": 0,
+      "on_mode_model_calls": 0,
+      "manual_review_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ]
+    },
+    {
+      "case_id": "discrepancy_04",
+      "kind": "discrepancy",
+      "provisional": true,
+      "status": "manual_review",
+      "payable_amount": "10000.0",
+      "expected_insurer_payment": "10000.0",
+      "actual_insurer_payment": "9000.00",
+      "possible_difference": "1000.00",
+      "patient_share": "2000.0",
+      "decision_unchanged": true,
+      "off_explanation_grounded": true,
+      "on_explanation_grounded": true,
+      "off_mode_model_calls": 0,
+      "on_mode_model_calls": 0,
+      "manual_review_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ]
+    },
+    {
+      "case_id": "discrepancy_05",
+      "kind": "discrepancy",
+      "provisional": true,
+      "status": "manual_review",
+      "payable_amount": "22500.0",
+      "expected_insurer_payment": "22500.0",
+      "actual_insurer_payment": "21500.00",
+      "possible_difference": "1000.00",
+      "patient_share": "7500.0",
+      "decision_unchanged": true,
+      "off_explanation_grounded": true,
+      "on_explanation_grounded": true,
+      "off_mode_model_calls": 0,
+      "on_mode_model_calls": 0,
+      "manual_review_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ]
+    },
+    {
+      "case_id": "discrepancy_06",
+      "kind": "discrepancy",
+      "provisional": true,
+      "status": "manual_review",
+      "payable_amount": "8000.0",
+      "expected_insurer_payment": "8000.0",
+      "actual_insurer_payment": "7000.00",
+      "possible_difference": "1000.00",
+      "patient_share": "0",
+      "decision_unchanged": true,
+      "off_explanation_grounded": true,
+      "on_explanation_grounded": true,
+      "off_mode_model_calls": 0,
+      "on_mode_model_calls": 0,
+      "manual_review_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ]
+    },
+    {
+      "case_id": "discrepancy_07",
+      "kind": "discrepancy",
+      "provisional": true,
+      "status": "manual_review",
+      "payable_amount": "16000.0",
+      "expected_insurer_payment": "16000.0",
+      "actual_insurer_payment": "15000.00",
+      "possible_difference": "1000.00",
+      "patient_share": "9000.0",
+      "decision_unchanged": true,
+      "off_explanation_grounded": true,
+      "on_explanation_grounded": true,
+      "off_mode_model_calls": 0,
+      "on_mode_model_calls": 0,
+      "manual_review_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ]
+    },
+    {
+      "case_id": "discrepancy_08",
+      "kind": "discrepancy",
+      "provisional": true,
+      "status": "manual_review",
+      "payable_amount": "27000.0",
+      "expected_insurer_payment": "27000.0",
+      "actual_insurer_payment": "26000.00",
+      "possible_difference": "1000.00",
+      "patient_share": "13000.0",
+      "decision_unchanged": true,
+      "off_explanation_grounded": true,
+      "on_explanation_grounded": true,
+      "off_mode_model_calls": 0,
+      "on_mode_model_calls": 0,
+      "manual_review_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ]
+    },
+    {
+      "case_id": "discrepancy_09",
+      "kind": "discrepancy",
+      "provisional": true,
+      "status": "manual_review",
+      "payable_amount": "13500.0",
+      "expected_insurer_payment": "13500.0",
+      "actual_insurer_payment": "12500.00",
+      "possible_difference": "1000.00",
+      "patient_share": "4500.0",
+      "decision_unchanged": true,
+      "off_explanation_grounded": true,
+      "on_explanation_grounded": true,
+      "off_mode_model_calls": 0,
+      "on_mode_model_calls": 0,
+      "manual_review_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ]
+    },
+    {
+      "case_id": "discrepancy_10",
+      "kind": "discrepancy",
+      "provisional": true,
+      "status": "manual_review",
+      "payable_amount": "40500.0",
+      "expected_insurer_payment": "40500.0",
+      "actual_insurer_payment": "39500.00",
+      "possible_difference": "1000.00",
+      "patient_share": "9500.0",
+      "decision_unchanged": true,
+      "off_explanation_grounded": true,
+      "on_explanation_grounded": true,
+      "off_mode_model_calls": 0,
+      "on_mode_model_calls": 0,
+      "manual_review_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ]
+    }
+  ],
+  "decision_and_number_grounding": {
+    "numerator": 13,
+    "denominator": 13,
+    "pass": true
+  },
+  "model_calls_on": 2,
+  "model_calls_off": 0
+}

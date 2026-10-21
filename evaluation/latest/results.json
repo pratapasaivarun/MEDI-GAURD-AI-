@@ -1,7 +1,7 @@
 {
   "label": "FICTIONAL SAMPLE \u2014 hand-calculated before evaluation",
   "validated_on": "30 synthetic cases",
-  "created_at": "2026-10-21T08:54:24+0530",
+  "created_at": "2026-10-21T10:23:06+0530",
   "case_count": 30,
   "group_counts": {
     "match": 10,
@@ -66,7 +66,7 @@
       "pass": true,
       "backend": {
         "configured": "BAAI/bge-small-en-v1.5",
-        "active": "chromadb_default_fallback"
+        "active": "BAAI/bge-small-en-v1.5"
       },
       "note": "Relevant clause means its labeled text and page occur in a top-five retrieved chunk."
     },
@@ -170,7 +170,7 @@
     },
     "seconds_per_claim": {
       "denominator": 30,
-      "mean_seconds": 0.6023460366646759
+      "mean_seconds": 0.5180450466733115
     }
   },
   "confusion_matrix": {
@@ -225,7 +225,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.08534579997649416
+      "seconds": 0.21873000002233312
     },
     {
       "case_id": "match_02",
@@ -251,7 +251,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.03565229999367148
+      "seconds": 0.023062199994456023
     },
     {
       "case_id": "match_03",
@@ -287,7 +287,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.011748800054192543
+      "seconds": 0.013694000022951514
     },
     {
       "case_id": "match_04",
@@ -323,7 +323,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.018274700036272407
+      "seconds": 0.014494300005026162
     },
     {
       "case_id": "match_05",
@@ -359,7 +359,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.02382279996527359
+      "seconds": 0.01419519999762997
     },
     {
       "case_id": "match_06",
@@ -385,7 +385,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.01576740003656596
+      "seconds": 0.012138199992477894
     },
     {
       "case_id": "match_07",
@@ -421,7 +421,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.015342300001066178
+      "seconds": 0.013682199991308153
     },
     {
       "case_id": "match_08",
@@ -457,7 +457,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.030164299998432398
+      "seconds": 0.013530399999581277
     },
     {
       "case_id": "match_09",
@@ -493,7 +493,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.03230750001966953
+      "seconds": 0.012726900051347911
     },
     {
       "case_id": "match_10",
@@ -529,7 +529,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.03248860000167042
+      "seconds": 0.012851000006776303
     },
     {
       "case_id": "discrepancy_01",
@@ -565,7 +565,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.02887799998279661
+      "seconds": 0.012982999964151531
     },
     {
       "case_id": "discrepancy_02",
@@ -601,7 +601,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.03266299999086186
+      "seconds": 0.014690899988636374
     },
     {
       "case_id": "discrepancy_03",
@@ -637,7 +637,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.030475899984594434
+      "seconds": 0.014931900019291788
     },
     {
       "case_id": "discrepancy_04",
@@ -673,7 +673,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.011404199991375208
+      "seconds": 0.01253730000462383
     },
     {
       "case_id": "discrepancy_05",
@@ -709,7 +709,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.03420619998360053
+      "seconds": 0.01415690005524084
     },
     {
       "case_id": "discrepancy_06",
@@ -745,7 +745,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.03638799994951114
+      "seconds": 0.012922100024297833
     },
     {
       "case_id": "discrepancy_07",
@@ -781,7 +781,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.015383699967060238
+      "seconds": 0.01422060001641512
     },
     {
       "case_id": "discrepancy_08",
@@ -817,7 +817,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.012906299962196499
+      "seconds": 0.014563500008080155
     },
     {
       "case_id": "discrepancy_09",
@@ -853,7 +853,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.037386100040748715
+      "seconds": 0.014511600020341575
     },
     {
       "case_id": "discrepancy_10",
@@ -889,7 +889,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.01420710003003478
+      "seconds": 0.013834399986080825
     },
     {
       "case_id": "manual_01",
@@ -919,7 +919,7 @@
         "Settlement amount paid was not identified."
       ],
       "cause": "match",
-      "seconds": 0.009312600013799965
+      "seconds": 0.013283100037369877
     },
     {
       "case_id": "manual_02",
@@ -951,7 +951,7 @@
         "Settlement claim reference does not match the case reference."
       ],
       "cause": "match",
-      "seconds": 0.05585230002179742
+      "seconds": 0.013058000011369586
     },
     {
       "case_id": "manual_03",
@@ -983,7 +983,7 @@
         "Settlement totals do not reconcile within INR 1."
       ],
       "cause": "match",
-      "seconds": 17.168812799965963
+      "seconds": 14.928052200004458
     },
     {
       "case_id": "manual_04",
@@ -1013,7 +1013,7 @@
         "Settlement totals do not reconcile within INR 1."
       ],
       "cause": "match",
-      "seconds": 0.05148680001730099
+      "seconds": 0.013430199993308634
     },
     {
       "case_id": "manual_05",
@@ -1043,7 +1043,7 @@
         "Conflicting settlement amounts paid were found."
       ],
       "cause": "match",
-      "seconds": 0.051163500000257045
+      "seconds": 0.011608499975409359
     },
     {
       "case_id": "edge_01",
@@ -1079,7 +1079,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.04179049999220297
+      "seconds": 0.016039500012993813
     },
     {
       "case_id": "edge_02",
@@ -1109,7 +1109,7 @@
         "total_amount_missing_or_invalid"
       ],
       "cause": "match",
-      "seconds": 0.023342199972830713
+      "seconds": 0.011992299987468868
     },
     {
       "case_id": "edge_03",
@@ -1135,7 +1135,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.040318300016224384
+      "seconds": 0.017044200038071722
     },
     {
       "case_id": "edge_04",
@@ -1179,7 +1179,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.03339549998054281
+      "seconds": 0.014826199971139431
     },
     {
       "case_id": "edge_05",
@@ -1215,7 +1215,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.04009359999326989
+      "seconds": 0.013560599996708333
     }
   ],
   "extraction_cases": [

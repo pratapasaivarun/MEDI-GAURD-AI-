@@ -34,7 +34,7 @@ def run_claimant_browser_suite() -> dict[str, Any]:
     screenshots = Path(tempfile.mkdtemp(prefix="mediguard-claimant-screenshots-"))
     port = _free_port()
     email_admin = "browser-admin@fictional.test"
-    password_admin = "Fictional-Admin-Password-2026!"
+    password_admin = "<your-demo-password>"
     env = os.environ.copy()
     env.update({
         "MEDIGUARD_DB_PATH": str(work / "claims.db"),
@@ -70,8 +70,8 @@ def run_claimant_browser_suite() -> dict[str, Any]:
         page.locator('input[aria-label="Email"]:visible').last.fill(email)
         passwords = page.locator('input[type="password"]:visible')
         p1 = passwords.first
-        p1.fill("Fictional-Claimant-Password-2026!")
-        passwords.nth(1).fill("Fictional-Claimant-Password-2026!")
+        p1.fill("<your-demo-password>")
+        passwords.nth(1).fill("<your-demo-password>")
         page.get_by_role("button", name="Create account").click()
         page.get_by_text("Register claim", exact=False).click()
         page.get_by_role("textbox", name="Claim number").fill(claim_no)
@@ -181,7 +181,7 @@ def run_claimant_browser_suite() -> dict[str, Any]:
             claimant.get_by_role("button", name="Continue as user").click()
             claimant.get_by_role("tab", name="Sign in").click()
             claimant.locator('input[aria-label="Email"]:visible').fill("clm-fict-0417@fictional.test")
-            claimant.locator('input[type="password"]:visible').fill("Fictional-Claimant-Password-2026!")
+            claimant.locator('input[type="password"]:visible').fill("<your-demo-password>")
             claimant.get_by_role("button", name="Sign in").click()
             claimant.get_by_role("button", name="Open").click()
             # The badge is repeated in the claim header and comparison panel.

@@ -41,7 +41,7 @@ def claimant_app(tmp_path_factory):
     )
 
     app.init_db()
-    password = "Fictional-Playwright-Password-2026!"
+    password = "<your-demo-password>"
     user = dict(app.register_user("browser-claimant@fictional.test", "Fictional Browser Claimant", password))
     names = ("a_match", "b_wrongful_deduction", "c_manual_review")
     claim_labels = {}

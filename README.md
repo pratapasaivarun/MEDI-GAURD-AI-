@@ -113,6 +113,7 @@ Scores below are measured on 30 synthetic cases, not on real insurance claims. T
 .
 ├── app.py                 # Streamlit entry point
 ├── run_demo.py            # Isolated fictional demo launcher
+├── .streamlit/            # App theme and local Streamlit defaults
 ├── mediguard/             # Application modules by responsibility
 │   ├── ingestion/         # Bill, PDF, OCR, and settlement parsing
 │   ├── policy/            # Policy term extraction and clause retrieval

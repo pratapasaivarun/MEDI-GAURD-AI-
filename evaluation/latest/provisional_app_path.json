@@ -1,0 +1,821 @@
+{
+  "dataset": "30 fictional evaluation cases plus 10 fictional adversarial extraction cases",
+  "path": "claimant upload -> process_claim_documents -> evaluate_saved_claim -> run_settlement_comparison",
+  "reviewer_confirmation_before_first_result": false,
+  "evaluation_cases": [
+    {
+      "case_id": "match_01",
+      "expected": "no_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 8100,
+      "provisional_payable": 8100.0,
+      "provisional_difference": 0.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 8100.0,
+      "confirmed_difference": 0.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "match_02",
+      "expected": "no_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 18000,
+      "provisional_payable": 18000.0,
+      "provisional_difference": 0.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 18000.0,
+      "confirmed_difference": 0.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "match_03",
+      "expected": "no_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 14000,
+      "provisional_payable": 14000.0,
+      "provisional_difference": 0.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 14000.0,
+      "confirmed_difference": 0.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "match_04",
+      "expected": "no_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 10000,
+      "provisional_payable": 10000.0,
+      "provisional_difference": 0.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 10000.0,
+      "confirmed_difference": 0.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "match_05",
+      "expected": "no_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 22500,
+      "provisional_payable": 22500.0,
+      "provisional_difference": 0.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 22500.0,
+      "confirmed_difference": 0.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "match_06",
+      "expected": "no_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 8000,
+      "provisional_payable": 8000.0,
+      "provisional_difference": 0.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 8000.0,
+      "confirmed_difference": 0.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "match_07",
+      "expected": "no_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 16000,
+      "provisional_payable": 16000.0,
+      "provisional_difference": 0.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 16000.0,
+      "confirmed_difference": 0.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "match_08",
+      "expected": "no_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 27000,
+      "provisional_payable": 27000.0,
+      "provisional_difference": 0.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 27000.0,
+      "confirmed_difference": 0.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "match_09",
+      "expected": "no_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 13500,
+      "provisional_payable": 13500.0,
+      "provisional_difference": 0.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 13500.0,
+      "confirmed_difference": 0.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "match_10",
+      "expected": "no_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 40500,
+      "provisional_payable": 40500.0,
+      "provisional_difference": 0.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 40500.0,
+      "confirmed_difference": 0.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "discrepancy_01",
+      "expected": "possible_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 8100,
+      "provisional_payable": 8100.0,
+      "provisional_difference": 1000.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 8100.0,
+      "confirmed_difference": 1000.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "discrepancy_02",
+      "expected": "possible_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 18000,
+      "provisional_payable": 18000.0,
+      "provisional_difference": 1000.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 18000.0,
+      "confirmed_difference": 1000.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "discrepancy_03",
+      "expected": "possible_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 14000,
+      "provisional_payable": 14000.0,
+      "provisional_difference": 1000.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 14000.0,
+      "confirmed_difference": 1000.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "discrepancy_04",
+      "expected": "possible_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 10000,
+      "provisional_payable": 10000.0,
+      "provisional_difference": 1000.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 10000.0,
+      "confirmed_difference": 1000.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "discrepancy_05",
+      "expected": "possible_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 22500,
+      "provisional_payable": 22500.0,
+      "provisional_difference": 1000.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 22500.0,
+      "confirmed_difference": 1000.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "discrepancy_06",
+      "expected": "possible_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 8000,
+      "provisional_payable": 8000.0,
+      "provisional_difference": 1000.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 8000.0,
+      "confirmed_difference": 1000.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "discrepancy_07",
+      "expected": "possible_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 16000,
+      "provisional_payable": 16000.0,
+      "provisional_difference": 1000.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 16000.0,
+      "confirmed_difference": 1000.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "discrepancy_08",
+      "expected": "possible_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 27000,
+      "provisional_payable": 27000.0,
+      "provisional_difference": 1000.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 27000.0,
+      "confirmed_difference": 1000.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "discrepancy_09",
+      "expected": "possible_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 13500,
+      "provisional_payable": 13500.0,
+      "provisional_difference": 1000.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 13500.0,
+      "confirmed_difference": 1000.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "discrepancy_10",
+      "expected": "possible_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 40500,
+      "provisional_payable": 40500.0,
+      "provisional_difference": 1000.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 40500.0,
+      "confirmed_difference": 1000.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "manual_01",
+      "expected": "manual_review",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": null,
+      "provisional_payable": 8100.0,
+      "provisional_difference": 8100.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation.",
+        "Settlement amount paid was not identified."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 8100.0,
+      "confirmed_difference": 8100.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "manual_02",
+      "expected": "manual_review",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": null,
+      "provisional_payable": 18000.0,
+      "provisional_difference": 0.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation.",
+        "Settlement totals do not reconcile within INR 1.",
+        "CLAIM_ID_MISMATCH: settlement claim reference does not match the selected claim."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 18000.0,
+      "confirmed_difference": 0.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "manual_03",
+      "expected": "manual_review",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": null,
+      "provisional_payable": 14000.0,
+      "provisional_difference": 0.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation.",
+        "Settlement deductions could not be read from the letter.",
+        "Settlement totals do not reconcile within INR 1."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 14000.0,
+      "confirmed_difference": 0.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "manual_04",
+      "expected": "manual_review",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": null,
+      "provisional_payable": 10000.0,
+      "provisional_difference": 0.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Treatment charges. The extracted line item requires reviewer confirmation.",
+        "Settlement totals do not reconcile within INR 1."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 10000.0,
+      "confirmed_difference": 0.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "manual_05",
+      "expected": "manual_review",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": null,
+      "provisional_payable": 22500.0,
+      "provisional_difference": 22500.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation.",
+        "Conflicting settlement amounts paid were found."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 22500.0,
+      "confirmed_difference": 22500.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "edge_01",
+      "expected": "no_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 0,
+      "provisional_payable": 0.0,
+      "provisional_difference": 0.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 0.0,
+      "confirmed_difference": 0.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "edge_02",
+      "expected": "manual_review",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": null,
+      "provisional_payable": 0.0,
+      "provisional_difference": 0.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "total_amount_missing_or_invalid"
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 0.0,
+      "confirmed_difference": 0.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "edge_03",
+      "expected": "no_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 10000,
+      "provisional_payable": 10000.0,
+      "provisional_difference": 0.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 10000.0,
+      "confirmed_difference": 0.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "edge_04",
+      "expected": "no_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 8100,
+      "provisional_payable": 12600.0,
+      "provisional_difference": 4500.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Eligible treatment. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 12600.0,
+      "confirmed_difference": 4500.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    },
+    {
+      "case_id": "edge_05",
+      "expected": "no_discrepancy",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": 0,
+      "provisional_payable": 9000.0,
+      "provisional_difference": 9000.0,
+      "policy_terms_missing": [],
+      "specific_reasons": [
+        "Line item requires reviewer confirmation: Treatment charges. The extracted line item requires reviewer confirmation."
+      ],
+      "policy_version_linked": true,
+      "confirmed_actual": "manual_review",
+      "confirmed_payable": 9000.0,
+      "confirmed_difference": 9000.0,
+      "provisional_amounts_equal_confirmed": true,
+      "provisional_status_equal_confirmed": true
+    }
+  ],
+  "evaluation_status_match": {
+    "numerator": 6,
+    "denominator": 30
+  },
+  "evaluation_result_shown": {
+    "numerator": 30,
+    "denominator": 30
+  },
+  "evaluation_provisional_equals_confirmed": {
+    "numerator": 30,
+    "denominator": 30
+  },
+  "adversarial_cases": [
+    {
+      "case_id": "adv_01_split_columns",
+      "expected": "Manual Review (safe app expectation: the casebook has no policy document or decision label)",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": null,
+      "provisional_payable": null,
+      "provisional_difference": null,
+      "policy_terms_missing": [
+        "active_policy_terms"
+      ],
+      "specific_reasons": [
+        "No matching policy edition is linked to this claim. Link an edition in Claim review first.",
+        "Policy edition: no matching policy page is linked to this claim. Ingest and link the applicable policy edition before calculation."
+      ],
+      "policy_version_linked": false
+    },
+    {
+      "case_id": "adv_02_noisy_ocr",
+      "expected": "Manual Review (safe app expectation: the casebook has no policy document or decision label)",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": null,
+      "provisional_payable": null,
+      "provisional_difference": null,
+      "policy_terms_missing": [
+        "active_policy_terms"
+      ],
+      "specific_reasons": [
+        "No matching policy edition is linked to this claim. Link an edition in Claim review first.",
+        "Policy edition: no matching policy page is linked to this claim. Ingest and link the applicable policy edition before calculation."
+      ],
+      "policy_version_linked": false
+    },
+    {
+      "case_id": "adv_03_low_resolution_scan",
+      "expected": "Manual Review (safe app expectation: the casebook has no policy document or decision label)",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": null,
+      "provisional_payable": null,
+      "provisional_difference": null,
+      "policy_terms_missing": [
+        "active_policy_terms"
+      ],
+      "specific_reasons": [
+        "No matching policy edition is linked to this claim. Link an edition in Claim review first.",
+        "Policy edition: no matching policy page is linked to this claim. Ingest and link the applicable policy edition before calculation."
+      ],
+      "policy_version_linked": false
+    },
+    {
+      "case_id": "adv_04_ambiguous_settlement_wording",
+      "expected": "Manual Review (safe app expectation: the casebook has no policy document or decision label)",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": null,
+      "provisional_payable": null,
+      "provisional_difference": null,
+      "policy_terms_missing": [
+        "active_policy_terms"
+      ],
+      "specific_reasons": [
+        "No matching policy edition is linked to this claim. Link an edition in Claim review first.",
+        "Policy edition: no matching policy page is linked to this claim. Ingest and link the applicable policy edition before calculation.",
+        "Settlement amount paid was not identified.",
+        "Settlement deductions could not be read from the letter."
+      ],
+      "policy_version_linked": false
+    },
+    {
+      "case_id": "adv_05_exact_daily_cap",
+      "expected": "Manual Review (safe app expectation: the casebook has no policy document or decision label)",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": null,
+      "provisional_payable": null,
+      "provisional_difference": null,
+      "policy_terms_missing": [
+        "active_policy_terms"
+      ],
+      "specific_reasons": [
+        "No matching policy edition is linked to this claim. Link an edition in Claim review first.",
+        "Policy edition: no matching policy page is linked to this claim. Ingest and link the applicable policy edition before calculation."
+      ],
+      "policy_version_linked": false
+    },
+    {
+      "case_id": "adv_06_one_rupee_over_cap",
+      "expected": "Manual Review (safe app expectation: the casebook has no policy document or decision label)",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": null,
+      "provisional_payable": null,
+      "provisional_difference": null,
+      "policy_terms_missing": [
+        "active_policy_terms"
+      ],
+      "specific_reasons": [
+        "No matching policy edition is linked to this claim. Link an edition in Claim review first.",
+        "Policy edition: no matching policy page is linked to this claim. Ingest and link the applicable policy edition before calculation."
+      ],
+      "policy_version_linked": false
+    },
+    {
+      "case_id": "adv_07_multiple_deductions",
+      "expected": "Manual Review (safe app expectation: the casebook has no policy document or decision label)",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": null,
+      "provisional_payable": null,
+      "provisional_difference": null,
+      "policy_terms_missing": [
+        "active_policy_terms"
+      ],
+      "specific_reasons": [
+        "No matching policy edition is linked to this claim. Link an edition in Claim review first.",
+        "Policy edition: no matching policy page is linked to this claim. Ingest and link the applicable policy edition before calculation."
+      ],
+      "policy_version_linked": false
+    },
+    {
+      "case_id": "adv_08_missing_claim_reference",
+      "expected": "Manual Review (safe app expectation: the casebook has no policy document or decision label)",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": null,
+      "provisional_payable": null,
+      "provisional_difference": null,
+      "policy_terms_missing": [
+        "active_policy_terms"
+      ],
+      "specific_reasons": [
+        "No matching policy edition is linked to this claim. Link an edition in Claim review first.",
+        "Policy edition: no matching policy page is linked to this claim. Ingest and link the applicable policy edition before calculation.",
+        "Settlement claim reference was not identified.",
+        "CLAIM_ID_MISSING: settlement claim reference was not identified."
+      ],
+      "policy_version_linked": false
+    },
+    {
+      "case_id": "adv_09_subtotal_tax_grand_total",
+      "expected": "Manual Review (safe app expectation: the casebook has no policy document or decision label)",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": null,
+      "provisional_payable": null,
+      "provisional_difference": null,
+      "policy_terms_missing": [
+        "active_policy_terms"
+      ],
+      "specific_reasons": [
+        "No matching policy edition is linked to this claim. Link an edition in Claim review first.",
+        "Policy edition: no matching policy page is linked to this claim. Ingest and link the applicable policy edition before calculation."
+      ],
+      "policy_version_linked": false
+    },
+    {
+      "case_id": "adv_10_slash_reference",
+      "expected": "Manual Review (safe app expectation: the casebook has no policy document or decision label)",
+      "actual": "manual_review",
+      "result_shown": true,
+      "provisional": true,
+      "expected_payable": null,
+      "provisional_payable": null,
+      "provisional_difference": null,
+      "policy_terms_missing": [
+        "active_policy_terms"
+      ],
+      "specific_reasons": [
+        "No matching policy edition is linked to this claim. Link an edition in Claim review first.",
+        "Policy edition: no matching policy page is linked to this claim. Ingest and link the applicable policy edition before calculation."
+      ],
+      "policy_version_linked": false
+    }
+  ],
+  "adversarial_result_shown": {
+    "numerator": 10,
+    "denominator": 10
+  },
+  "adversarial_decision_labels": "The casebook labels extraction and settlement parsing only; it supplies no policy PDF or final decision labels. Manual Review is the correct safe app outcome because no policy edition is supplied.",
+  "embedding_backend": {
+    "configured": "BAAI/bge-small-en-v1.5",
+    "active": "BAAI/bge-small-en-v1.5"
+  }
+}

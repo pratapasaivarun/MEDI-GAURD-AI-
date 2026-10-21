@@ -457,8 +457,8 @@ def run() -> int:
         if live_checks["ollama"].get("number_grounding"):
             metrics["llm_number_grounding"] = live_checks["ollama"]["number_grounding"]
     if os.getenv("MEDIGUARD_EVAL_BROWSER", "true").strip().casefold() in {"1", "true", "yes", "on"}:
-        from evaluation.run_browser import run_browser_suite
-        live_checks["browser"] = run_browser_suite()
+        from evaluation.claimant_browser import run_claimant_browser_suite
+        live_checks["browser"] = run_claimant_browser_suite()
         metrics["browser_e2e"] = live_checks["browser"]
     else:
         metrics["browser_e2e"] = unavailable("3 demo cases and 5 upload/error cases pass", "MEDIGUARD_EVAL_BROWSER=false; Playwright checks are run separately.")

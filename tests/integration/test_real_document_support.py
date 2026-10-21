@@ -131,6 +131,19 @@ def test_unconfirmed_policy_terms_are_provisional_and_missing_terms_keep_safe_su
     assert exclusions["value"] == ["cosmetic surgery"]
     assert exclusions["needs_review"] is True
 
+    saved_normalized = {
+        "document_type": "medical_bill",
+        "total_amount": {"value": 7500.0},
+        "patient_name": {"value": "Synthetic Patient"},
+        "hospital_name": {"value": "Example Hospital"},
+        "line_items": [],
+        "missing_fields": [],
+        "review_fields": [],
+    }
+    monkeypatch.setattr(app, "claim_documents", lambda *_: [{
+        "document_type": "medical_bill", "extracted_json": json.dumps(saved_normalized),
+    }])
+    monkeypatch.setattr(app, "run_extraction", lambda _payloads: saved_normalized)
     status = app.save_policy_terms_review(
         "policy-test",
         user["user_id"],
@@ -139,12 +152,19 @@ def test_unconfirmed_policy_terms_are_provisional_and_missing_terms_keep_safe_su
         {},
     )
     assert status == "confirmed"
-    confirmed_result = app.evaluate_saved_claim(
-        "claim-test", user["user_id"],
-        {"total_amount": {"value": 7500.0}, "patient_name": {"value": "Synthetic Patient"}, "hospital_name": {"value": "Example Hospital"}, "line_items": [], "missing_fields": [], "review_fields": []},
-    )
+    # Confirmation must recompute a previously evaluated claim from its saved
+    # extraction without requiring the claimant to rerun the analysis.
+    with app.db() as conn:
+        recomputed_row = conn.execute(
+            "SELECT result_json FROM rule_evaluations WHERE claim_id='claim-test' ORDER BY rowid DESC LIMIT 1"
+        ).fetchone()
+        recompute_audit = conn.execute(
+            "SELECT actor,event_type FROM audit_events WHERE claim_id='claim-test' AND event_type='rules_evaluated' ORDER BY rowid DESC LIMIT 1"
+        ).fetchone()
+    confirmed_result = json.loads(recomputed_row["result_json"])
     assert confirmed_result["policy_terms_review_status"] == "reviewer_confirmed"
     assert confirmed_result["payable_amount"] == result["payable_amount"]
+    assert recompute_audit["actor"] == user["user_id"]
     with app.db() as conn:
         saved = conn.execute("SELECT terms_review_status,reviewed_policy_terms_json,terms_reviewed_by FROM policy_versions WHERE version_id='policy-test'").fetchone()
     assert saved["terms_review_status"] == "confirmed"

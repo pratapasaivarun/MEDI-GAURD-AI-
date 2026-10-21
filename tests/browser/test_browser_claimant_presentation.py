@@ -193,7 +193,7 @@ def open_result(page, claim_label):
     selector.press("ArrowDown")
     selector.press("Enter")
     page.wait_for_function(
-        "claimNumber => [...document.querySelectorAll('input[role=combobox]')].some(input => (input.getAttribute('aria-label') || '').includes(claimNumber))",
+        "claimNumber => [...document.querySelectorAll('input[role=combobox]')].some(input => input.getAttribute('aria-label') === 'Choose a claim' && input.value.includes(claimNumber))",
         arg=claim_number,
         timeout=10000,
     )

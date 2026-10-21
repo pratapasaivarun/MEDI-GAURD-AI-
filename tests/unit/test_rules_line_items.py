@@ -59,6 +59,36 @@ def test_manual_review_warning_names_the_unconfirmed_bill_item():
     assert any("Eligible treatment" in warning and "reviewer confirmation" in warning for warning in result["warnings"])
 
 
+def test_confident_uncategorized_line_shows_general_coverage_assumption_without_hiding_result():
+    terms = PolicyTerms(annual_limit=Decimal("500000"), deductible=Decimal("0"), copay_percent=Decimal("10"))
+    result = evaluate_claim(
+        Decimal("1000"), terms,
+        line_items=[{"description": "Eligible treatment", "category": "other", "amount": Decimal("1000"), "confidence": 1.0, "needs_review": True}],
+    )
+    assert result["status"] == "approved"
+    assert result["payable_amount"] == 900
+    assert result["payable_range"] is None
+    assert result["uncategorized_lines"] == [{
+        "description": "Eligible treatment", "amount": 1000.0,
+        "assumption": "treated as a general covered charge for the upper estimate",
+    }]
+    assert any("UNCATEGORIZED_ASSUMPTION" in warning for warning in result["warnings"])
+
+
+def test_confident_uncategorized_line_with_possible_exclusion_shows_conservative_range():
+    terms = PolicyTerms(
+        annual_limit=Decimal("500000"), deductible=Decimal("0"), copay_percent=Decimal("10"),
+        source={"exclusions": {"value": ["cosmetic surgery"]}},
+    )
+    result = evaluate_claim(
+        Decimal("1000"), terms,
+        line_items=[{"description": "Eligible treatment", "category": "other", "amount": Decimal("1000"), "confidence": 1.0, "needs_review": True}],
+    )
+    assert result["status"] == "approved"
+    assert result["payable_range"] == {"lower": 0.0, "upper": 900.0, "reasons": ["policy exclusions could apply"]}
+    assert any("UNCATEGORIZED_RANGE" in warning for warning in result["warnings"])
+
+
 def test_patient_name_requires_exact_surname_and_accepts_initial():
     assert verify_patient_name_match("Anil Kumar", "Sunil Kumar")["result"] == "MISMATCH"
     assert verify_patient_name_match("A. Kumar", "Anil Kumar")["result"] == "MINOR_VARIATION"

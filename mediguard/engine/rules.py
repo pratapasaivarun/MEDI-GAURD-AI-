@@ -512,15 +512,39 @@ def evaluate_claim(
     room_ratio = min(Decimal("1"), room_cap / ratio_basis) if room_cap is not None and ratio_basis > room_cap and ratio_basis else Decimal("1")
 
     line_results: list[dict[str, Any]] = []
+    uncategorized_lines: list[dict[str, Any]] = []
+    unknown_category_risks: list[str] = []
     total_room_reduction = Decimal("0")
     non_payables = {str(value).lower() for value in terms.source.get("non_payable_categories", {}).get("value", [])}
     for index, item in enumerate(items):
         amount = money(item.get("amount"))
         category = str(item.get("category") or "other").lower()
+        # Extraction marks OTHER lines for review because their benefit class
+        # is unknown. If the text itself was extracted confidently, do not hide
+        # every estimate behind Manual Review: calculate a general-charge
+        # estimate and expose the uncertainty to the claimant.
+        category_unknown = normalize_category(category, "OTHER") == "OTHER"
+        confidently_extracted = float(item.get("confidence", 0) or 0) >= 0.85
+        unknown_category = category_unknown and confidently_extracted
+        item_for_rules = {**item, "needs_review": False} if unknown_category else item
+        if unknown_category:
+            uncategorized_lines.append({
+                "description": str(item.get("description") or "Uncategorized charge"),
+                "amount": float(amount),
+                "assumption": "treated as a general covered charge for the upper estimate",
+            })
+            if terms.source.get("exclusions", {}).get("value"):
+                unknown_category_risks.append("policy exclusions could apply")
+            if terms.sub_limits:
+                unknown_category_risks.append("category-specific sub-limits could apply")
+            if terms.room_limit_per_day is not None:
+                unknown_category_risks.append("the room cap could apply if this line is a room charge")
+            if terms.icu_limit_per_day is not None or terms.sub_limits.get("icu") is not None:
+                unknown_category_risks.append("the ICU cap could apply if this line is an ICU charge")
         if category in non_payables or any(term in str(item.get("description") or "").lower() for term in non_payables):
             evaluated = {"description": item.get("description", "Unspecified item"), "category": category, "amount": float(amount), "status": "excluded", "covered_amount": 0.0, "applied_rule": "non_payable", "calculation": "This category is listed as non-payable in the reviewed policy terms."}
         else:
-            evaluated = evaluate_line_item(item, terms, context)
+            evaluated = evaluate_line_item(item_for_rules, terms, context)
 
         if item in room_items and room_cap is not None:
             previously_allowed = sum((money(row.get("covered_amount")) for row in line_results if normalize_category(row.get("category"), "") in room_categories), Decimal("0"))
@@ -578,6 +602,31 @@ def evaluate_claim(
         max(Decimal("0"), after_deductible - copayment)
         if after_deductible is not None and copayment is not None and annual_limit is not None and not missing_terms else None
     )
+    payable_range = None
+    if uncategorized_lines and unknown_category_risks and payable is not None:
+        # Conservative lower bound: an unknown-category charge could fall
+        # under an applicable exclusion/cap, so do not claim that amount as
+        # definitely eligible. Known, categorized lines keep their calculated
+        # amounts. Upper bound is the ordinary general-charge result above.
+        unknown_amount = sum((money(row["amount"]) for row in uncategorized_lines), Decimal("0"))
+        lower_covered = max(Decimal("0"), covered - unknown_amount)
+        if annual_limit is not None:
+            lower_covered = min(lower_covered, annual_limit)
+        lower_deductible = min(money(terms.deductible), lower_covered) if terms.deductible is not None else None
+        lower_after_deductible = max(Decimal("0"), lower_covered - lower_deductible) if lower_deductible is not None else None
+        lower_copay = (lower_after_deductible * money(terms.copay_percent) / Decimal("100")).quantize(MONEY, rounding=ROUND_HALF_UP) if lower_after_deductible is not None and terms.copay_percent is not None else None
+        lower_payable = max(Decimal("0"), lower_after_deductible - lower_copay) if lower_after_deductible is not None and lower_copay is not None else None
+        if lower_payable is not None:
+            payable_range = {
+                "lower": float(min(lower_payable, payable)),
+                "upper": float(max(lower_payable, payable)),
+                "reasons": list(dict.fromkeys(unknown_category_risks)),
+            }
+    if uncategorized_lines:
+        if unknown_category_risks:
+            warnings.append("UNCATEGORIZED_RANGE: " + "; ".join(list(dict.fromkeys(unknown_category_risks))) + ". The estimate is shown as a range until each listed line is categorized.")
+        else:
+            warnings.append("UNCATEGORIZED_ASSUMPTION: listed uncategorized lines were treated as general covered charges; no category-specific cap or exclusion was identified in the available terms.")
     status = "partially_approved" if any(item.get("status") in {"partial", "excluded"} for item in line_results) or (annual_limit is not None and total > annual_limit) or mismatch else "approved"
     if hard_reject:
         status = "rejected"
@@ -601,5 +650,5 @@ def evaluate_claim(
         RuleResult("copayment", RULE_VERSION, "pass" if copayment is not None else "needs_review", {"after_deductible": float(after_deductible) if after_deductible is not None else None, "copay_percent": float(terms.copay_percent) if terms.copay_percent is not None else None}, f"{after_deductible} x {terms.copay_percent}% = {copayment}" if copayment is not None else "Co-payment cannot be calculated until the deductible and co-payment terms are known.", copayment),
         RuleResult("payable_amount", RULE_VERSION, "pass" if payable is not None else "needs_review", {"eligible_after_deductible": float(after_deductible) if after_deductible is not None else None, "copayment": float(copayment) if copayment is not None else None}, f"{after_deductible} - {copayment} = {payable}" if payable is not None else "Insurer payment cannot be calculated until all required policy terms are known.", payable),
     ]
-    return {"status": status, "rule_version": RULE_VERSION, "results": [row.to_dict() for row in rule_results], "line_item_reconciliation_failed": mismatch, "line_item_notice": "Itemized charges differ from the bill total by more than 1%; reviewer confirmation is required." if mismatch else None, "line_item_results": line_results, "covered_amount": float(covered), "covered_before_cost_sharing": float(covered), "deductible": float(deductible) if deductible is not None else None, "copayment": float(copayment) if copayment is not None else None, "payable_amount": float(payable) if payable is not None else None, "patient_share": float(max(Decimal("0"), total - payable)) if payable is not None else None, "policy_terms_missing": missing_terms, "warnings": warnings, "policy_terms": terms.source}
+    return {"status": status, "rule_version": RULE_VERSION, "results": [row.to_dict() for row in rule_results], "line_item_reconciliation_failed": mismatch, "line_item_notice": "Itemized charges differ from the bill total by more than 1%; reviewer confirmation is required." if mismatch else None, "line_item_results": line_results, "covered_amount": float(covered), "covered_before_cost_sharing": float(covered), "deductible": float(deductible) if deductible is not None else None, "copayment": float(copayment) if copayment is not None else None, "payable_amount": float(payable) if payable is not None else None, "payable_range": payable_range, "uncategorized_lines": uncategorized_lines, "patient_share": float(max(Decimal("0"), total - payable)) if payable is not None else None, "policy_terms_missing": missing_terms, "warnings": warnings, "policy_terms": terms.source}
 

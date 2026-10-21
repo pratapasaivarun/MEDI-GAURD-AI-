@@ -155,8 +155,17 @@ def _render_claimant_result(user: dict) -> None:
         st.error("The automated assessment indicates that the current policy information does not cover this claim.")
     amount_columns = st.columns(3, gap="medium")
     amount_columns[0].metric("Total bill", f"INR {result['amount_billed']:,.2f}", border=True)
-    amount_columns[1].metric("Estimated insurance share", f"INR {result['amount_covered']:,.2f}" if result["amount_covered"] is not None else "Not calculable", border=True)
-    amount_columns[2].metric("Estimated amount you pay", f"INR {result['amount_claimant_pays']:,.2f}" if result["amount_claimant_pays"] is not None else "Not calculable", border=True)
+    estimate_range = (result.get("rules") or {}).get("payable_range")
+    if estimate_range:
+        low = float(estimate_range["lower"])
+        high = float(estimate_range["upper"])
+        covered_label = f"INR {low:,.2f}–{high:,.2f}"
+        pays_label = f"INR {max(0.0, result['amount_billed'] - high):,.2f}–{max(0.0, result['amount_billed'] - low):,.2f}"
+    else:
+        covered_label = f"INR {result['amount_covered']:,.2f}" if result["amount_covered"] is not None else "Not calculable"
+        pays_label = f"INR {result['amount_claimant_pays']:,.2f}" if result["amount_claimant_pays"] is not None else "Not calculable"
+    amount_columns[1].metric("Estimated insurance share", covered_label, border=True)
+    amount_columns[2].metric("Estimated amount you pay", pays_label, border=True)
     with st.container(border=True):
         st.markdown("### What this means for you")
         st.write(result["reason"])
@@ -176,6 +185,13 @@ def _render_claimant_result(user: dict) -> None:
             st.caption("Deductible and copayment are policy cost-sharing amounts, not rejected charges. Excluded or policy-limited amounts are charges the policy does not pay.")
             st.caption("This is decision-support information. Final determination should be confirmed by an authorized reviewer.")
     rules = result.get("rules", {})
+    unknown_lines = rules.get("uncategorized_lines") or []
+    if unknown_lines:
+        st.warning("Uncategorized bill lines are listed below. They are provisionally treated as general covered charges for the upper estimate; any possible category-specific restriction is reflected in the estimate range.")
+        for unknown in unknown_lines:
+            st.write(f"• {unknown['description']} — INR {float(unknown['amount']):,.2f}")
+        if estimate_range:
+            st.caption("Estimate range causes: " + "; ".join(estimate_range.get("reasons", [])) + ".")
     workflow = st.session_state.get(f"workflow_{claim_id}") or {}
     # Persisted claim status includes agent failures and reviewer sign-off, even
     # after a new browser session loses its cached workflow.

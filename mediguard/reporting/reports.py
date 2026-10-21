@@ -95,6 +95,20 @@ def _footer(canvas: Any, doc: Any) -> None:
     canvas.restoreState()
 
 
+def _appeal_page(canvas: Any, doc: Any, provisional: bool) -> None:
+    _footer(canvas, doc)
+    if provisional:
+        canvas.saveState()
+        canvas.setFillColor(colors.HexColor("#B91C1C"))
+        if hasattr(canvas, "setFillAlpha"):
+            canvas.setFillAlpha(0.16)
+        canvas.setFont("Helvetica-Bold", 34)
+        canvas.translate(A4[0] / 2, A4[1] / 2)
+        canvas.rotate(35)
+        canvas.drawCentredString(0, 0, "PROVISIONAL DRAFT")
+        canvas.restoreState()
+
+
 def _document() -> tuple[io.BytesIO, SimpleDocTemplate]:
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
@@ -509,6 +523,7 @@ def build_comparison_appeal_letter_text(
     settlement: SettlementData,
     explanation: str | None = None,
     signature: str = "Claimant or authorized representative",
+    provisional: bool = False,
 ) -> str:
     """Build a fixed-template appeal draft using the comparison's financial facts."""
     from mediguard.ai.agents import validate_comparison_explanation
@@ -558,6 +573,8 @@ def build_comparison_appeal_letter_text(
         signature.strip() or "Claimant or authorized representative",
         ESTIMATE_DISCLAIMER,
     ])
+    if provisional:
+        body.insert(0, "PROVISIONAL DRAFT — policy terms have not yet been reviewer-confirmed. Do not send as a final appeal.")
     letter = "\n\n".join(body)
     if any(word in letter.lower() for word in FORBIDDEN_APPEAL_WORDS):
         raise ValueError("Appeal draft contains wording outside the approved neutral template.")
@@ -577,26 +594,32 @@ def build_hospital_note_text(claim: dict[str, Any], comparison: ComparisonResult
     ])
 
 
-def build_comparison_appeal_letter_pdf(claim: dict[str, Any], comparison: ComparisonResult, settlement: SettlementData, explanation: str | None = None, signature: str = "Claimant or authorized representative") -> bytes:
-    letter = build_comparison_appeal_letter_text(claim, comparison, settlement, explanation, signature)
+def build_comparison_appeal_letter_pdf(claim: dict[str, Any], comparison: ComparisonResult, settlement: SettlementData, explanation: str | None = None, signature: str = "Claimant or authorized representative", provisional: bool = False) -> bytes:
+    letter = build_comparison_appeal_letter_text(claim, comparison, settlement, explanation, signature, provisional)
     styles = _styles()
     buffer, doc = _document()
     story = [Paragraph("MediGuard AI", styles["subtitle"]), Paragraph("Request for Review", styles["title"])]
     for paragraph in letter.split("\n\n"):
         safe = escape(paragraph).replace("\n", "<br/>")
         story.append(Paragraph(safe, styles["letter"]))
-    doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
+    page_callback = lambda canvas, page_doc: _appeal_page(canvas, page_doc, provisional)
+    doc.build(story, onFirstPage=page_callback, onLaterPages=page_callback)
     return buffer.getvalue()
 
 
-def build_comparison_appeal_letter_docx(claim: dict[str, Any], comparison: ComparisonResult, settlement: SettlementData, explanation: str | None = None, signature: str = "Claimant or authorized representative") -> bytes:
+def build_comparison_appeal_letter_docx(claim: dict[str, Any], comparison: ComparisonResult, settlement: SettlementData, explanation: str | None = None, signature: str = "Claimant or authorized representative", provisional: bool = False) -> bytes:
     from docx import Document
+    from docx.shared import RGBColor
 
-    letter = build_comparison_appeal_letter_text(claim, comparison, settlement, explanation, signature)
+    letter = build_comparison_appeal_letter_text(claim, comparison, settlement, explanation, signature, provisional)
     document = Document()
     document.add_heading("Request for Review", level=1)
     for paragraph in letter.split("\n\n"):
-        document.add_paragraph(paragraph)
+        rendered = document.add_paragraph(paragraph)
+        if provisional and paragraph.startswith("PROVISIONAL DRAFT"):
+            for run in rendered.runs:
+                run.bold = True
+                run.font.color.rgb = RGBColor(185, 28, 28)
     output = io.BytesIO()
     document.save(output)
     return output.getvalue()

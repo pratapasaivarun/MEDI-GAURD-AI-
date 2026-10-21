@@ -1,4 +1,8 @@
 from decimal import Decimal
+from io import BytesIO
+
+from docx import Document
+import fitz
 
 import mediguard.ai.agents as agents
 from mediguard.engine.models import CategoryComparison, Clause, ComparisonResult, SettlementData
@@ -52,6 +56,27 @@ def test_pdf_and_docx_report_builders_emit_valid_container_signatures():
     assert build_comparison_appeal_letter_docx(claim, comparison, settlement).startswith(b"PK")
     assert build_hospital_note_pdf(claim, comparison).startswith(b"%PDF")
     assert build_hospital_note_docx(claim, comparison).startswith(b"PK")
+
+
+def test_provisional_appeal_is_marked_in_text_pdf_and_word_but_confirmed_is_not():
+    comparison = _comparison()
+    settlement = SettlementData("CLM-2026-0417", Decimal("102600"), [], Decimal("11400"), False, [], Decimal("132000"))
+    claim = {"claim_number": "CLM-2026-0417", "patient_name": "Ravi Reddy"}
+
+    provisional_text = build_comparison_appeal_letter_text(claim, comparison, settlement, provisional=True)
+    confirmed_text = build_comparison_appeal_letter_text(claim, comparison, settlement)
+    assert provisional_text.startswith("PROVISIONAL DRAFT")
+    assert "PROVISIONAL DRAFT" not in confirmed_text
+
+    provisional_pdf = fitz.open(stream=build_comparison_appeal_letter_pdf(claim, comparison, settlement, provisional=True), filetype="pdf")
+    confirmed_pdf = fitz.open(stream=build_comparison_appeal_letter_pdf(claim, comparison, settlement), filetype="pdf")
+    assert "PROVISIONAL DRAFT" in provisional_pdf[0].get_text()
+    assert "PROVISIONAL DRAFT" not in confirmed_pdf[0].get_text()
+
+    provisional_docx = Document(BytesIO(build_comparison_appeal_letter_docx(claim, comparison, settlement, provisional=True)))
+    confirmed_docx = Document(BytesIO(build_comparison_appeal_letter_docx(claim, comparison, settlement)))
+    assert "PROVISIONAL DRAFT" in "\n".join(paragraph.text for paragraph in provisional_docx.paragraphs)
+    assert "PROVISIONAL DRAFT" not in "\n".join(paragraph.text for paragraph in confirmed_docx.paragraphs)
 
 
 def test_fabricated_llm_number_falls_back_to_fixed_explanation(monkeypatch):

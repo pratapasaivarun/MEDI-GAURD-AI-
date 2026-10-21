@@ -347,16 +347,20 @@ def _render_settlement_comparison(
             st.write(explanation)
     if appeal_draft_available(comparison):
         st.markdown('#### Review documents')
-        st.caption('These drafts use the comparison figures and should be checked and personalized before sending.')
+        provisional_appeal = bool(rules and rules.get("policy_terms_review_status") == "provisional")
+        if provisional_appeal:
+            st.warning('PROVISIONAL DRAFT: policy terms are not reviewer-confirmed. This draft is watermarked and must be reviewed before use.')
+        else:
+            st.caption('These drafts use the comparison figures and should be checked and personalized before sending.')
         a, b = st.columns(2, gap='medium')
         with a:
-            st.download_button('Appeal letter (PDF)', build_comparison_appeal_letter_pdf(claim, comparison, settlement, explanation), file_name=f"{claim.get('claim_number','claim')}-appeal-draft.pdf", mime='application/pdf', key=f"appeal_pdf_{claim.get('claim_id','claim')}")
-            st.download_button('Appeal letter (Word)', build_comparison_appeal_letter_docx(claim, comparison, settlement, explanation), file_name=f"{claim.get('claim_number','claim')}-appeal-draft.docx", mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document', key=f"appeal_docx_{claim.get('claim_id','claim')}")
+            st.download_button('Appeal letter (PDF)', build_comparison_appeal_letter_pdf(claim, comparison, settlement, explanation, provisional=provisional_appeal), file_name=f"{claim.get('claim_number','claim')}-appeal-draft.pdf", mime='application/pdf', key=f"appeal_pdf_{claim.get('claim_id','claim')}")
+            st.download_button('Appeal letter (Word)', build_comparison_appeal_letter_docx(claim, comparison, settlement, explanation, provisional=provisional_appeal), file_name=f"{claim.get('claim_number','claim')}-appeal-draft.docx", mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document', key=f"appeal_docx_{claim.get('claim_id','claim')}")
         with b:
             st.download_button('Hospital billing note (PDF)', build_hospital_note_pdf(claim, comparison), file_name=f"{claim.get('claim_number','claim')}-hospital-note.pdf", mime='application/pdf', key=f"hospital_pdf_{claim.get('claim_id','claim')}")
             st.download_button('Hospital billing note (Word)', build_hospital_note_docx(claim, comparison), file_name=f"{claim.get('claim_number','claim')}-hospital-note.docx", mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document', key=f"hospital_docx_{claim.get('claim_id','claim')}")
         with st.expander('Preview appeal letter'):
-            st.text(build_comparison_appeal_letter_text(claim, comparison, settlement, explanation))
+            st.text(build_comparison_appeal_letter_text(claim, comparison, settlement, explanation, provisional=provisional_appeal))
         with st.expander('Preview hospital note'):
             st.text(build_hospital_note_text(claim, comparison))
     elif comparison.status == 'manual_review':

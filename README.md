@@ -48,7 +48,8 @@ py -3.13 -m venv .venv
 \.venv\Scripts\python.exe -m pip install --upgrade pip
 \.venv\Scripts\python.exe -m pip install -r requirements.txt -r tests/requirements-dev.txt
 Copy-Item .env.example .env
-\.venv\Scripts\python.exe -m pytest -q tests
+$testTemp = Join-Path $env:TEMP ("mediguard-pytest-" + [guid]::NewGuid().ToString("N"))
+\.venv\Scripts\python.exe -m pytest -q tests --basetemp $testTemp
 \.venv\Scripts\python.exe run_demo.py
 ```
 
@@ -77,7 +78,8 @@ python3.13 -m venv .venv
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt -r tests/requirements-dev.txt
 cp .env.example .env
-python -m pytest -q tests
+test_temp="$(mktemp -d)"
+python -m pytest -q tests --basetemp "$test_temp"
 python run_demo.py
 ```
 

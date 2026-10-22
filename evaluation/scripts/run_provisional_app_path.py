@@ -133,6 +133,7 @@ def main() -> int:
     os.environ["MEDIGUARD_STORAGE_DIR"] = str(work / "storage")
     os.environ["CHROMA_DIR"] = str(work / "chroma")
     os.environ["MEDIGUARD_TRUSTED_FIXTURES"] = "false"
+    os.environ["MEDIGUARD_ANALYSIS_ENABLED"] = "false"
 
     import sys
     sys.path.insert(0, str(ROOT))

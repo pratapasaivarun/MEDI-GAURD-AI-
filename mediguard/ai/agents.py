@@ -252,51 +252,13 @@ def validate_comparison_explanation(text: str, comparison: ComparisonResult) -> 
 
 
 def explain_comparison(comparison: ComparisonResult, use_llm: bool = True, claim_id: str | None = None) -> str:
-    """Explain fixed comparison facts; invalid model text is discarded."""
-    fallback = comparison_template_explanation(comparison)
-    if not use_llm or comparison.status == "manual_review":
-        return fallback
-    categories = [
-        {
-            "category": row.category,
-            "insurer_deducted": str(row.insurer_deducted),
-            "engine_disallowed": str(row.engine_disallowed),
-            "difference": str(row.difference),
-            "status": row.status,
-            "payout_effect": str(row.payout_effect),
-            "clause": row.clause.text if row.clause else None,
-            "page": row.clause.page if row.clause else None,
-        }
-        for row in comparison.categories
-    ]
-    prompt = {
-        "status": comparison.status,
-        "expected_patient_share": str(comparison.expected_patient_share),
-        "actual_patient_share": str(comparison.actual_patient_share),
-        "possible_difference": str(comparison.possible_difference),
-        "categories": categories,
-    }
-    schema = {"type": "object", "properties": {"explanation": {"type": "string"}}, "required": ["explanation"]}
-    try:
-        response = _ollama_json(
-            "Explain the supplied comparison in plain English in no more than 120 words. The figures and policy clauses are fixed facts: do not change them, add figures, or infer a decision. When a supporting clause is supplied, identify its correct term and page. Describe a difference as a possible discrepancy; do not claim fraud, illegality, guaranteed entitlement, or a guaranteed appeal outcome. If the actual patient share is higher than the expected patient share, say the patient's share is higher by the supplied difference; never call that positive, beneficial, or an increase in insurer payment. Return only the requested JSON.",
-            json.dumps(prompt),
-            agent_name="comparison_explainer",
-            response_schema=schema,
-            caller="agents.py:explain_comparison",
-            prompt_version="comparison_explainer_v1",
-            acceptance_validator=lambda value: (
-                validate_comparison_explanation(value.get("explanation"), comparison),
-                "Explanation passed amount and citation grounding checks" if validate_comparison_explanation(value.get("explanation"), comparison) else "Explanation failed amount or citation grounding checks",
-            ),
-            claim_id=claim_id,
-        )
-        explanation = response.get("explanation")
-        if validate_comparison_explanation(explanation, comparison):
-            return explanation.strip()
-    except Exception:
-        pass
-    return fallback
+    """Return the immediate deterministic explanation template.
+
+    Kept as a compatibility name for reports/evaluations. Automatic model
+    analysis is queued separately and never runs during a Streamlit rerun.
+    """
+    del use_llm, claim_id
+    return comparison_template_explanation(comparison)
 
 
 def _ollama_json(system: str, prompt: str, list_key: str = "items", agent_name: str = "unknown", response_schema: dict[str, Any] | None = None, *, caller: str | None = None, prompt_version: str | None = None, acceptance_validator: Callable[[dict[str, Any]], tuple[bool, str]] | None = None, claim_id: str | None = None) -> dict[str, Any]:
@@ -418,84 +380,20 @@ def policy_agent_node(state: ClaimWorkflowState) -> ClaimWorkflowState:
 
 
 def decision_agent_node(state: ClaimWorkflowState) -> ClaimWorkflowState:
-    progress = state.get("progress_callback")
-    if not state.get("policy_evidence"):
-        decision = {"status": "manual_review", "reasons": ["No policy evidence was retrieved; an authorized reviewer must verify coverage."], "policy_citations": [], "confidence": 0, "reviewer_note": "Automatic decision was blocked because policy evidence was unavailable.", "line_item_notes": [], "_fallback": True}
-        if progress:
-            progress("No policy evidence was retrieved. Safe Manual Review result created; Decision Agent was not called.")
-        return {**state, "decision": decision}
-    if progress:
-        progress("Decision Agent: generating final structured decision...")
-    normalized = state.get("normalized_claim", {})
-    compact_claim = {key: value.get("value") for key, value in normalized.items() if isinstance(value, dict) and value.get("value") is not None and key in {"patient_name", "hospital_name", "policy_number", "diagnosis", "total_amount"}}
-    policy_findings = state.get("policy_findings", {})
-    compact_policy = {"evidence": policy_findings.get("findings", [])[:2], "missing_evidence": policy_findings.get("missing_evidence", [])[:3]}
+    """Legacy graph adapter: forward only Python's deterministic rule result."""
     rules = state.get("rule_results", {})
-    compact_rules = {key: rules.get(key) for key in ("status", "covered_amount", "deductible", "copayment", "payable_amount", "warnings") if key in rules}
-    line_item_results = rules.get("line_item_results") or []
-    if line_item_results:
-        compact_rules["line_item_results"] = [
-            {
-                "item_index": index,
-                "status": item.get("status"),
-                "covered_amount": item.get("covered_amount"),
-                "applied_rule": item.get("applied_rule"),
-                "category": item.get("category"),
-            }
-            for index, item in enumerate(line_item_results)
-        ]
-    prompt = json.dumps({"claim": compact_claim, "policy": compact_policy, "rules": compact_rules}, ensure_ascii=False, separators=(",", ":"))
-    try:
-        decision = _ollama_json(
-            "You are the Medi Gaurd Decision Agent. Use only supplied facts. Return compact JSON with status, reasons, policy_citations, confidence, reviewer_note, and optional line_item_notes. Use at most 3 short reasons and one short reviewer_note. Each line_item_notes entry must be {item_index: int, note: str}; provide at most one short sentence only for an item whose status is not covered. Only reference item_index values that appear in the line_item_results you were given below. If no line_item_results were provided, return an empty line_item_notes list and explain the decision only at the claim level, exactly as before. Never change calculated amounts; use manual_review when evidence is missing or low-confidence.",
-            prompt,
-            list_key="reasons",
-            agent_name="decision_agent",
-            response_schema=DECISION_RESPONSE_SCHEMA,
-            caller="agents.py:decision_agent_node",
-            prompt_version="decision_agent_v1",
-        )
-    except RuntimeError as exc:
-        decision = {"status": "manual_review", "reasons": ["Decision Agent response was unavailable or invalid."], "policy_citations": [], "confidence": 0, "reviewer_note": "An authorized reviewer must confirm the determination.", "line_item_notes": [], "_fallback": True, "_error": str(exc)}
-    allowed = {"approved", "partially_approved", "rejected", "manual_review"}
-    rule_status = state.get("rule_results", {}).get("status", "manual_review")
-    # The LLM explains the deterministic result; it never adjudicates around
-    # coverage arithmetic, exclusions, or safety gates computed by rules.py.
-    decision["status"] = "manual_review" if decision.get("_fallback") else (rule_status if rule_status in allowed else "manual_review")
-    evidence_ids = {str(item.get("clause_id")) for item in state.get("policy_evidence", [])}
-    raw_citations = decision.get("policy_citations") or []
-    raw_citations = raw_citations if isinstance(raw_citations, list) else []
-    citations = [str(item) for item in raw_citations if str(item) in evidence_ids]
-    decision["policy_citations"] = citations or sorted(evidence_ids)[:2]
-    allowed_item_indices = {
-        index for index, item in enumerate(line_item_results)
-        if str(item.get("status") or "covered") != "covered"
+    decision = {
+        "status": rules.get("status", "manual_review"),
+        "reasons": list(rules.get("warnings") or []),
+        "policy_citations": [],
+        "confidence": 1.0,
+        "reviewer_note": "The estimate and status come from deterministic Python rules.",
+        "line_item_notes": [],
     }
-    line_item_notes = []
-    seen_indices: set[int] = set()
-    raw_line_item_notes = decision.get("line_item_notes") or []
-    raw_line_item_notes = raw_line_item_notes if isinstance(raw_line_item_notes, list) else []
-    for item in raw_line_item_notes:
-        if not isinstance(item, dict):
-            continue
-        index = item.get("item_index")
-        note = str(item.get("note") or "").strip()
-        if isinstance(index, bool) or not isinstance(index, int) or index not in allowed_item_indices or index in seen_indices or not note:
-            continue
-        line_item_notes.append({"item_index": index, "note": note[:240]})
-        seen_indices.add(index)
-    decision["line_item_notes"] = line_item_notes
-    _record_metrics({
-        "agent": "decision_agent_groundedness",
-        "policy_citations_received": len(raw_citations),
-        "policy_citations_dropped": len(raw_citations) - len(citations),
-        "line_item_notes_received": len(raw_line_item_notes),
-        "line_item_notes_dropped": len(raw_line_item_notes) - len(line_item_notes),
-        "timestamp": time.time(),
-    })
+    progress = state.get("progress_callback")
     if progress:
-        progress("Decision Agent complete. Rendering evidence-backed result...")
-    return {**state, "decision": decision, "llm_calls": state.get("llm_calls", 0) + 1}
+        progress("Deterministic decision stage complete. Optional analysis runs separately.")
+    return {**state, "decision": decision, "llm_calls": state.get("llm_calls", 0)}
 
 
 def build_claim_graph():

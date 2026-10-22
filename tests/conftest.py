@@ -25,3 +25,13 @@ def reset_streamlit_session_state():
             del st.session_state[key]
     except Exception:
         pass
+
+
+@pytest.fixture(autouse=True)
+def keep_background_llm_jobs_off_in_tests(monkeypatch):
+    """All tests use deterministic outputs; queue behavior has direct mocks."""
+    try:
+        from mediguard.services import application
+        monkeypatch.setattr(application, "_ensure_analysis_worker", lambda: None)
+    except Exception:
+        pass

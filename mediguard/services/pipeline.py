@@ -15,6 +15,7 @@ from langgraph.graph import END, StateGraph
 class ClaimPipelineState(TypedDict, total=False):
     claim_id: str
     user_id: str
+    audit_actor_id: str
     normalized: dict[str, Any]
     rules: dict[str, Any]
     comparison: Any
@@ -30,7 +31,13 @@ def _build_graph(app_services: Any):
         return {"normalized": normalized}
 
     def policy_node(state: ClaimPipelineState) -> dict[str, Any]:
-        rules = app_services.evaluate_saved_claim(state["claim_id"], state["user_id"], state["normalized"])
+        audit_actor_id = state.get("audit_actor_id")
+        if audit_actor_id:
+            rules = app_services.evaluate_saved_claim(
+                state["claim_id"], state["user_id"], state["normalized"], audit_actor_id=audit_actor_id
+            )
+        else:
+            rules = app_services.evaluate_saved_claim(state["claim_id"], state["user_id"], state["normalized"])
         return {"rules": rules}
 
     def decision_node(state: ClaimPipelineState) -> dict[str, Any]:
@@ -81,12 +88,15 @@ def _cached_graph(app_services: Any):
     return _build_graph(app_services)
 
 
-def run_claim_pipeline(app_services: Any, claim_id: str, user_id: str) -> dict[str, Any]:
+def run_claim_pipeline(app_services: Any, claim_id: str, user_id: str, *, audit_actor_id: str | None = None) -> dict[str, Any]:
     """Run the automatic document, policy, decision and output stages."""
     try:
         graph = _cached_graph(app_services)
     except TypeError:
         # Unhashable test doubles can still use the exact same graph.
         graph = _build_graph(app_services)
-    state = graph.invoke({"claim_id": str(claim_id), "user_id": str(user_id)})
+    initial = {"claim_id": str(claim_id), "user_id": str(user_id)}
+    if audit_actor_id:
+        initial["audit_actor_id"] = str(audit_actor_id)
+    state = graph.invoke(initial)
     return state["result"]

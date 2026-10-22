@@ -2,10 +2,6 @@
 
 **30 synthetic cases; fictional data only.**
 
-Policy-term scores below are measured by extracting directly from each case's `policy.pdf` and comparing with separately committed source-PDF labels. The measurement does not load reviewer-confirmed term files. Core fields (annual limit, deductible, co-pay) are 90/90. The expanded term-by-term extraction results are: deductible 30/30; co-pay 30/30; room cap 30/30; ICU cap 30/30 (absent as labeled); exclusions 30/30 (absent as labeled); date window 30/30; annual limit 30/30. Total across these seven checks: 210/210. See `evaluation/latest/policy_pdf_term_scores.json` for case-level values.
-
-Fixture audit note (2026-10-21): the hand-labeled `edge_05` outcome remained INR 0, but its original policy PDF had no date-window rule and its scanned bill had no service date. That made the label impossible to verify from its source documents. The expected-results file was left unchanged. The fictional source policy and scanned bill were corrected to show a 30-day pre-hospitalization window and a service date 70 days before admission; the date-window clause is extracted from page 1 and the dated charge is excluded by the documented rule. The reviewer form now accepts both date-window terms with source-page references. If a future bill line has no readable date while a date-window term applies, the app states that the check could not be done and routes the line to review.
-
 Ground truth was committed before this evaluation run. The runner never writes to expected labels.
 
 ## Scorecard
@@ -17,7 +13,7 @@ Ground truth was committed before this evaluation run. The runner never writes t
 | line_item_precision_recall | Precision 100.0%; recall 100.0% | 28/28 | measured | MEASURED |
 | ocr_field_accuracy | 100.0% | 6/6 | 0.9 | PASS |
 | policy_pdf_core_term_accuracy | 100.0% | 90/90 | 0.95 | PASS |
-| policy_pdf_term_accuracy | 100.0% across seven term types | 210/210 | measured by term | MEASURED |
+| policy_pdf_term_accuracy | deductible 30/30; copay_percent 30/30; room_limit_per_day 30/30; icu_limit_per_day 30/30; exclusions 30/30; date_window 30/30; annual_limit 30/30 | 210/210 | measured per term; no aggregate target | MEASURED |
 | retrieval | P@1 100.0%; P@3 33.3%; P@5 20.0%; R@5 100.0%; MRR 1.000 | P@1 30/30; P@3 30/90; P@5 30/150; R@5 30/30/labeled retrieved slots | P@1 ≥.8, R@5 ≥.9 | PASS |
 | rules_golden_agreement | 100.0% | 24/24 | 1.0 | PASS |
 | rules_properties | 100.0% | 211/211 | 1.0 | PASS |
@@ -25,29 +21,13 @@ Ground truth was committed before this evaluation run. The runner never writes t
 | settlement_deductions_f1 | F1 100.0% | 37/37 | measured | MEASURED |
 | comparison_decision_accuracy | 100.0% | 30/30 | 1.0 | PASS |
 | comparison_false_match_rate | 0/10 false matches; rate 0.0% | 0/10 | 0.0 | PASS |
-| llm_number_grounding | 100.0% | 4/4 | 1.0 | PASS |
-| ollama_decision_equality | n/a | 0/0 | 1.0 | NOT RUN |
+| llm_number_grounding | 100.0% | 6/6 | None | PASS |
+| ollama_decision_equality | 100.0% | 3/3 | 1.0 | PASS |
 | fault_injection | 100.0% | 3/3 | 1.0 | PASS |
 | report_rules | 100.0% | 2/2 | 1.0 | PASS |
 | browser_e2e | n/a | 0/0 | 3 demo cases and 5 upload/error cases pass | NOT RUN |
 | security | 100.0% | 3/3 | 1.0 | PASS |
-| seconds_per_claim | 0.518045 s/claim | 30/30 | measured | MEASURED |
-
-### Confirmed-term, provisional, and live checks
-
-These measurements come from separate runs: the offline scorecard above reports `run_all`; the app-path and live checks below are recorded in their own JSON files and in the Milestone log.
-
-| Check | Result | Meaning |
-|---|---:|---|
-| Reviewer-confirmed terms, rules/comparison status agreement | **30/30** | The evaluator supplies the hand-labeled reviewer terms and scenario context. |
-| No-confirmation app-path status agreement | **6/30** | **24/30** labeled cases become Manual Review because “Eligible treatment” does not support a safe category assignment. |
-| Result shown before confirmation | **30/30** | Every labeled case shows an amount/range or a Manual Review with a specific reason. |
-| Provisional versus reviewer-confirmed app status and amounts unchanged | **30/30** | The paired app-path run records equal statuses and amounts for all 30 cases. |
-| Claimant-first browser matrix | **8/8** | Three fictional demos, five upload/error cases, and reviewer confirmation/claimant refresh; all 11 displayed INR amounts stayed the same after confirmation. |
-| Ollama ON/OFF decision and amount equality | **13/13** | Three demos plus ten discrepancy cases. Ollama produced explanations for two resolved demos; the other 11 Manual Review results used the template. |
-| Fresh-clone first result time | **1.386 s, 1.465 s, 2.054 s** | Three demo claims; maximum **2.054 s** on this laptop. |
-
-The no-confirmation **6/30** status score is distinct from the **30/30** reviewer-confirmed terms rules/comparison score and from the **30/30** result-shown score. The latter measures whether the claimant receives a usable result or a specific review reason, not whether an ambiguous category can be decided automatically.
+| seconds_per_claim | 0.022547 s/claim | 30/30 | measured | MEASURED |
 
 ## Confusion matrix
 
@@ -247,6 +227,10 @@ Full records are in `evaluation/latest/provisional_ollama_equivalence.json`. “
 
 ### Embedding backend and “Pending review” check
 
-The earlier Chroma fallback came from running evaluation with system Python (`C:\Program Files\Python313\python.exe`), which has Chroma but no `sentence-transformers`. In the fresh-clone `.venv`, `run_all` loaded `BAAI/bge-small-en-v1.5`; retrieval on 30 synthetic queries scored P@1 **30/30**, P@3 **30/90**, P@5 **30/150**, recall@5 **30/30**, and MRR **1.000**. Claimant assessment does not load or wait for BGE: the fresh-clone browser matrix showed results within **2.054 seconds** at the slowest of three demo cases. Semantic policy search still requires the configured embedding package and its first model download.
+The earlier Chroma fallback came from running evaluation with system Python (`C:\Program Files\Python313\python.exe`), which has Chroma but no `sentence-transformers`. In the fresh-clone `.venv`, `run_all` loaded `BAAI/bge-small-en-v1.5`; retrieval on 30 synthetic queries scored P@1 **30/30**, P@3 **30/90**, P@5 **30/150**, recall@5 **30/30**, and MRR **1.000**. Claimant assessment does not load or wait for BGE: the latest claimant-first browser matrix took **1.948 s**, **1.626 s**, and **2.627 s** for the three demo cases; the slowest first result was **2.627 s**. Semantic policy search still requires the configured embedding package and its first model download.
 
 No claimant UI source contains the literal status “Pending review.” Unavailable amounts are labeled “Not calculable” with the unresolved term/document reason displayed nearby; the comparison uses “Manual review is needed because…” and lists the specific issue. A clean-database Playwright check confirmed those screens. This is a source and browser check, not proof about every possible future screen or state.
+
+### Current background explanation queue (2026-10-22)
+
+The asynchronous `analysis.py` path was run against the three fictional demos with Ollama on and compared with deterministic template output with Ollama off. The Python comparison stayed identical in **3/3** cases and explanation number grounding passed **6/6** checks. Manual Review skipped the model call and used its reviewer-required template. For the other two cases, the model response was rejected and the deterministic template shown: the match response called the claim approved, and the discrepancy response's deduction assessment conflicted with Python. The two rejected calls are recorded in `data/llm_metrics.jsonl`; no model-written explanation was accepted in this run.

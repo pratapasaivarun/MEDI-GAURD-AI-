@@ -31,6 +31,7 @@ from mediguard.engine.models import SettlementData, SettlementDeduction  # noqa:
 from mediguard.ingestion.extraction import extract_document, run_extraction  # noqa: E402
 from mediguard.ingestion.settlement import parse_settlement  # noqa: E402
 from mediguard.ai.llm_gateway import claim_context  # noqa: E402
+from mediguard.ai import analysis as claim_analysis  # noqa: E402
 from mediguard.policy.policy_terms import extract_policy_terms  # noqa: E402
 from evaluation.scripts.score_policy_terms_from_pdfs import run as score_policy_terms_from_pdfs  # noqa: E402
 
@@ -77,14 +78,14 @@ def run_ollama_equivalence() -> dict[str, Any]:
     snapshots = []
     valid_texts = 0
     expected_texts = 6
-    original_call = agents._ollama_json
-    calls: list[str] = []
+    original_call = claim_analysis.llm_gateway.chat_json
+    calls: list[dict[str, Any]] = []
 
-    def tracked_call(*args: Any, **kwargs: Any) -> dict[str, Any]:
-        calls.append(str(kwargs.get("agent_name", "unknown")))
+    def tracked_call(*args: Any, **kwargs: Any):
+        calls.append({key: kwargs.get(key) for key in ("caller", "claim_id", "prompt_version")})
         return original_call(*args, **kwargs)
 
-    agents._ollama_json = tracked_call
+    claim_analysis.llm_gateway.chat_json = tracked_call
     try:
         for case_name in ("a_match", "b_wrongful_deduction", "c_manual_review"):
             manifest = json.loads((case_root / case_name / "case.json").read_text(encoding="utf-8"))
@@ -108,9 +109,17 @@ def run_ollama_equivalence() -> dict[str, Any]:
             snapshot = (comparison.status, comparison.expected_patient_share,
                         comparison.actual_patient_share, comparison.possible_difference,
                         comparison.expected_insurer_payment, comparison.actual_insurer_payment)
-            with claim_context(case_name):
-                off_text = agents.explain_comparison(comparison, use_llm=False)
-                on_text = agents.explain_comparison(comparison, use_llm=True)
+            template = agents.comparison_template_explanation(comparison)
+            payload = claim_analysis.build_analysis_payload({"comparison": comparison})
+            if comparison.status == "manual_review":
+                # Match the live app: unresolved comparisons do not trigger an
+                # LLM request; the safe reviewer-required template is shown.
+                on_result = {"accepted": False, "explanation": template}
+            else:
+                with claim_context(case_name):
+                    on_result = claim_analysis.analyze_payload(payload, case_name, template)
+            off_text = template
+            on_text = on_result["explanation"]
             unchanged = snapshot == (comparison.status, comparison.expected_patient_share,
                                     comparison.actual_patient_share, comparison.possible_difference,
                                     comparison.expected_insurer_payment, comparison.actual_insurer_payment)
@@ -122,10 +131,11 @@ def run_ollama_equivalence() -> dict[str, Any]:
                               "actual_insurer_payment": str(comparison.actual_insurer_payment),
                               "possible_difference": str(comparison.possible_difference),
                               "off_explanation": off_text, "on_explanation": on_text,
+                              "analysis_accepted": bool(on_result["accepted"]),
                               "comparison_unchanged": unchanged,
                               "both_explanations_number_grounded": off_valid and on_valid})
     finally:
-        agents._ollama_json = original_call
+        claim_analysis.llm_gateway.chat_json = original_call
     equal = sum(row["comparison_unchanged"] for row in snapshots)
     result = {"numerator": equal, "denominator": len(snapshots), "score": equal / max(1, len(snapshots)),
               "target": 1.0, "pass": equal == len(snapshots), "model": model,

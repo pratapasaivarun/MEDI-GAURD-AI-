@@ -341,3 +341,17 @@ The upload matrix rejected an empty PDF, a `.txt` uploaded as a bill, and a 15 M
 **Expected output:** all tests pass.
 
 **Observed output:** `232 passed in 110.07s`. The selected `a_match` reviewer-workspace browser run passed `1/1`. The latest full reviewer-workspace Playwright run returned `0/8` because it reached Manual Review with “No matching policy edition is linked to this claim.” The cause is not isolated between the browser flow and app state. The claimant-first flow and upload errors are still unverified.
+
+## Phase 4 — Background, grounded explanations
+
+**What changed:** Claim results now show the deterministic comparison first. Optional explanation work is queued once per unchanged claim facts and runs in a background worker; rerendering the Streamlit screen does not make another model call. The model cannot return a claim decision or change amounts. Explanations that contradict a manual-review result or fail number, clause, or deduction checks are rejected and replaced by the Python-written template. Reviewer-only conflicting candidates remain separated from claimant output. Gateway records include the caller, claim id, prompt version, duration, and acceptance reason.
+
+**Verify commands:**
+
+- `.venv\Scripts\python.exe -m pytest -q --basetemp=.pytest-temp-debug-phase4`
+- `$env:OLLAMA_HOST='http://localhost:11434'; $env:OLLAMA_TIMEOUT_SECONDS='60'; $env:MEDIGUARD_ANALYSIS_ENABLED='false'; $env:MEDIGUARD_LLM_EXTRACTION_FALLBACK='false'; $env:MEDIGUARD_EVAL_BROWSER='false'; .venv\Scripts\python.exe -m evaluation.run_all --ollama-on`
+- `python evaluation/scripts/run_provisional_app_path.py`
+
+**Expected output:** the full suite passes; the three live demo comparisons are identical with Ollama on and off, and unsafe model text falls back to the template; the claimant app path shows results for all 30 labeled cases and all 10 extraction-only cases.
+
+**Observed output:** `275 passed, 3 skipped in 37.22s`. The deterministic 40-case app-path output matched the permanent Ollama-off snapshot on status, amounts/ranges, reasons, flags, policy link, and result visibility: **40/40**. Evaluation using the pinned `.venv` loaded BGE-small; retrieval scored P@1 **30/30** and recall@5 **30/30**. The claimant-first browser matrix passed **8/8**, including reviewer refresh; the latest first-result times were 1.948 s, 1.626 s, and 2.627 s. Live Ollama comparison and number grounding passed **3/3** and **6/6**. Manual Review skipped the model call; the two resolved-case explanations were rejected (claim-decision wording and a deduction assessment that conflicted with Python), so deterministic templates were shown. No amounts or statuses changed. No calculation rules or expected labels changed.

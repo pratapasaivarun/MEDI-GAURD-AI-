@@ -1,14 +1,14 @@
 {
-  "created_at": "2026-10-21T15:28:48.783992+00:00",
+  "created_at": "2026-10-22T17:40:30.597579+00:00",
   "numerator": 8,
   "denominator": 8,
   "pass": true,
   "time_to_first_result_seconds": [
-    1.422,
-    1.433,
-    2.036
+    1.948,
+    1.626,
+    2.627
   ],
-  "max_time_to_first_result_seconds": 2.036,
+  "max_time_to_first_result_seconds": 2.627,
   "reviewer_refresh": {
     "passed": true,
     "badge_before": true,
@@ -40,8 +40,8 @@
       "INR 0.00"
     ],
     "screenshots": [
-      "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-zh5tcalo\\reviewer-policy-confirmed.png",
-      "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-zh5tcalo\\claimant-after-review.png"
+      "<outside-repository-temp>/reviewer-policy-confirmed.png",
+      "<outside-repository-temp>/claimant-after-review.png"
     ]
   },
   "cases": [
@@ -50,53 +50,53 @@
       "expected": "no_discrepancy",
       "passed": true,
       "result_shown": true,
-      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-zh5tcalo\\a_match-claimant-result.png"
+      "screenshot": "<outside-repository-temp>/a_match-claimant-result.png"
     },
     {
       "case": "b_wrongful_deduction",
       "expected": "possible_discrepancy",
       "passed": true,
       "result_shown": true,
-      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-zh5tcalo\\b_wrongful_deduction-claimant-result.png"
+      "screenshot": "<outside-repository-temp>/b_wrongful_deduction-claimant-result.png"
     },
     {
       "case": "c_manual_review",
       "expected": "manual_review",
       "passed": true,
       "result_shown": true,
-      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-zh5tcalo\\c_manual_review-claimant-result.png"
+      "screenshot": "<outside-repository-temp>/c_manual_review-claimant-result.png"
     },
     {
       "case": "empty_file",
       "passed": true,
       "result_shown": true,
-      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-zh5tcalo\\empty_file.png"
+      "screenshot": "<outside-repository-temp>/empty_file.png"
     },
     {
       "case": "wrong_type",
       "passed": true,
       "result_shown": true,
-      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-zh5tcalo\\wrong_type.png"
+      "screenshot": "<outside-repository-temp>/wrong_type.png"
     },
     {
       "case": "oversized",
       "passed": true,
       "result_shown": true,
-      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-zh5tcalo\\oversized.png"
+      "screenshot": "<outside-repository-temp>/oversized.png"
     },
     {
       "case": "corrupted_pdf",
       "passed": true,
       "result_shown": true,
-      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-zh5tcalo\\corrupted_pdf.png"
+      "screenshot": "<outside-repository-temp>/corrupted_pdf.png"
     },
     {
       "case": "missing_settlement",
       "passed": true,
       "result_shown": true,
-      "screenshot": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-zh5tcalo\\missing_settlement.png"
+      "screenshot": "<outside-repository-temp>/missing_settlement.png"
     }
   ],
-  "screenshots_directory": "C:\\Users\\prata\\AppData\\Local\\Temp\\mediguard-claimant-screenshots-zh5tcalo",
+  "screenshots_directory": "<outside-repository-temp>/mediguard-claimant-screenshots-ag2ukvtu",
   "failure": null
 }

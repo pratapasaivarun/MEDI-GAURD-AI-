@@ -6,6 +6,7 @@ import secrets
 import os
 import re
 import sqlite3
+import sys
 import time
 import threading
 import uuid
@@ -25,6 +26,7 @@ from mediguard.ingestion.extraction import check_submission_deadline, parse_amou
 from mediguard.engine.rules import evaluate_claim
 from mediguard.ai.agents import _ollama_json, confidence_label, explain_comparison, recommend_next_steps, retrieve_policy_evidence, run_claim_workflow, warm_ollama
 from mediguard.ai import llm_gateway
+from mediguard.ai import analysis as claim_analysis
 from mediguard.ai.llm_gateway import claim_context
 from mediguard.policy.policy_index import index_policy_documents, retrieve_policy_evidence as retrieve_indexed_policy_evidence
 from mediguard.ingestion.extraction import extract_document
@@ -59,6 +61,8 @@ APP_BASE_URL = os.getenv("APP_BASE_URL", "http://localhost:8501").rstrip("/")
 ALLOWED_ROLES = {"claimant", "reviewer", "admin"}
 _warmup_lock = threading.Lock()
 _warmup_started = False
+_analysis_worker_lock = threading.Lock()
+_analysis_worker_thread: threading.Thread | None = None
 
 
 def start_ollama_warmup_background() -> bool:
@@ -548,6 +552,19 @@ def init_db() -> None:
                 PRIMARY KEY(claim_id, field_name),
                 FOREIGN KEY(claim_id) REFERENCES claims(claim_id)
             );
+            CREATE TABLE IF NOT EXISTS analysis_jobs (
+                job_id TEXT PRIMARY KEY,
+                claim_id TEXT NOT NULL,
+                facts_hash TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'queued',
+                payload_json TEXT NOT NULL,
+                result_json TEXT,
+                error TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                UNIQUE(claim_id, facts_hash),
+                FOREIGN KEY(claim_id) REFERENCES claims(claim_id)
+            );
             """
         )
         # Lightweight migration for databases created by the foundation milestone.
@@ -583,6 +600,140 @@ def init_db() -> None:
                 conn.execute(f"ALTER TABLE policy_versions ADD COLUMN {column} {definition}")
             except sqlite3.OperationalError:
                 pass
+
+
+def _analysis_worker() -> None:
+    """Drain queued explanation jobs serially without touching Streamlit APIs."""
+    while True:
+        with db() as conn:
+            row = conn.execute(
+                "SELECT * FROM analysis_jobs WHERE status='queued' ORDER BY created_at LIMIT 1"
+            ).fetchone()
+            if row is None:
+                return
+            changed = conn.execute(
+                "UPDATE analysis_jobs SET status='running',updated_at=? WHERE job_id=? AND status='queued'",
+                (utc_now(), row["job_id"]),
+            ).rowcount
+            if changed != 1:
+                continue
+            job = dict(row)
+        try:
+            payload = json.loads(job["payload_json"])
+            fallback = str(payload.pop("fallback_explanation", "The Python rules completed this estimate."))
+            generated = claim_analysis.analyze_payload(payload, job["claim_id"], fallback)
+            result = {
+                "accepted": bool(generated.get("accepted")),
+                "reason": str(generated.get("reason") or ""),
+                "explanation": str(generated.get("explanation") or fallback),
+                "deductions": generated.get("deductions") if isinstance(generated.get("deductions"), list) else [],
+                "reviewer_candidate": generated.get("reviewer_candidate") if isinstance(generated.get("reviewer_candidate"), dict) else None,
+            }
+            status = "complete" if result.get("accepted") else "fallback"
+            error = None if result.get("accepted") else str(result.get("reason") or "Analysis was not accepted")
+        except Exception as exc:
+            logging.getLogger(__name__).exception("Background claim analysis failed")
+            result = {"accepted": False, "reason": type(exc).__name__, "explanation": "The Python result is available. Optional explanation text could not be prepared."}
+            status = "fallback"
+            error = type(exc).__name__
+        with db() as conn:
+            conn.execute(
+                "UPDATE analysis_jobs SET status=?,result_json=?,error=?,updated_at=? WHERE job_id=?",
+                (status, json.dumps(result, ensure_ascii=False), error, utc_now(), job["job_id"]),
+            )
+
+
+def _ensure_analysis_worker() -> None:
+    global _analysis_worker_thread
+    with _analysis_worker_lock:
+        if _analysis_worker_thread and _analysis_worker_thread.is_alive():
+            return
+        _analysis_worker_thread = threading.Thread(
+            target=_analysis_worker, name="mediguard-analysis-worker", daemon=True,
+        )
+        _analysis_worker_thread.start()
+
+
+def resume_pending_analysis_jobs() -> bool:
+    """Resume persisted queued explanations after an app process restart."""
+    with db() as conn:
+        pending = conn.execute("SELECT 1 FROM analysis_jobs WHERE status='queued' LIMIT 1").fetchone()
+    if pending:
+        _ensure_analysis_worker()
+        return True
+    return False
+
+
+def enqueue_analysis_job(claim_id: str, user_id: str, result: dict[str, Any]) -> str:
+    """Queue at most one analysis per claim and unchanged facts/prompt version."""
+    user = get_user(user_id)
+    _claim_access(claim_id, user)
+    payload = claim_analysis.build_analysis_payload(result)
+    comparison = result.get("comparison")
+    if comparison is not None:
+        payload["fallback_explanation"] = explain_comparison(comparison, use_llm=False)
+    else:
+        warnings = list((result.get("rules") or {}).get("warnings") or [])
+        payload["fallback_explanation"] = (
+            "The Python rules calculated the available information. " + " ".join(str(item) for item in warnings[:2])
+            if warnings else "The Python rules calculated the available information; no settlement comparison was supplied."
+        )
+    facts_json = json.dumps({"prompt_version": claim_analysis.PROMPT_VERSION, "payload": payload}, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    analysis_enabled = (
+        os.getenv("MEDIGUARD_ANALYSIS_ENABLED", "true").strip().lower() == "true"
+        and comparison is not None
+        and getattr(comparison, "status", None) != "manual_review"
+    )
+    facts_hash = hashlib.sha256(f"{analysis_enabled}:{facts_json}".encode("utf-8")).hexdigest()
+    job_id = str(uuid.uuid4())
+    now = utc_now()
+    with db() as conn:
+        inserted = conn.execute(
+            "INSERT OR IGNORE INTO analysis_jobs(job_id,claim_id,facts_hash,status,payload_json,result_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)",
+            (job_id, claim_id, facts_hash, "queued" if analysis_enabled else "fallback",
+             json.dumps(payload, ensure_ascii=False),
+             None if analysis_enabled else json.dumps({
+                 "accepted": False,
+                 "reason": "Optional analysis is disabled or the comparison requires manual review",
+                 "explanation": payload["fallback_explanation"],
+                 "deductions": [],
+             }),
+             now, now),
+        ).rowcount == 1
+        row = conn.execute("SELECT job_id,status FROM analysis_jobs WHERE claim_id=? AND facts_hash=?", (claim_id, facts_hash)).fetchone()
+    if inserted and row and row["status"] == "queued":
+        _ensure_analysis_worker()
+    return str(row["job_id"] if row else job_id)
+
+
+def claim_analysis_job(claim_id: str, user_id: str) -> dict[str, Any] | None:
+    """Read the latest safe explanation job for an authorized claimant/reviewer."""
+    user = get_user(user_id)
+    _claim_access(claim_id, user)
+    with db() as conn:
+        row = conn.execute(
+            "SELECT status,result_json,created_at,updated_at FROM analysis_jobs WHERE claim_id=? ORDER BY created_at DESC LIMIT 1",
+            (claim_id,),
+        ).fetchone()
+    if not row:
+        return None
+    try:
+        result = json.loads(row["result_json"] or "{}")
+    except (TypeError, json.JSONDecodeError):
+        result = {}
+    # Never expose the model's candidate status or amounts if a future model
+    # accidentally returns them; only display the explicitly allowed fields.
+    safe_result = {"status": row["status"], "explanation": result.get("explanation"),
+                   "deductions": result.get("deductions", []), "created_at": row["created_at"],
+                   "updated_at": row["updated_at"]}
+    if user["role"] in {"reviewer", "admin"}:
+        candidate = result.get("reviewer_candidate")
+        if isinstance(candidate, dict):
+            safe_result["reviewer_candidate"] = {
+                "explanation": str(candidate.get("explanation") or ""),
+                "deductions": claim_analysis._safe_deductions(candidate.get("deductions", [])),
+            }
+    return safe_result
 
 
 def get_or_create_user(email: str, display_name: str) -> sqlite3.Row:
@@ -1461,26 +1612,14 @@ def recompute_policy_claims(version_id: str, reviewer_id: str) -> int:
             (version_id,),
         ).fetchall()
     recomputed = 0
+    from mediguard.services.orchestration import assess_claim
     for claim_row in claims:
         claim_id = claim_row["claim_id"]
         owner = get_user(claim_row["user_id"])
-        documents = claim_documents(claim_id, owner)
-        payloads = []
-        for document in documents:
-            if document["document_type"] == "settlement" or not document["extracted_json"]:
-                continue
-            try:
-                payloads.append(json.loads(document["extracted_json"]))
-            except (TypeError, json.JSONDecodeError):
-                continue
-        if not any(item.get("document_type") == "medical_bill" for item in payloads):
-            continue
-        with claim_context(claim_id):
-            normalized = apply_claim_extraction_reviews(claim_id, run_extraction(payloads))
-        rules = evaluate_saved_claim(claim_id, owner["user_id"], normalized, audit_actor_id=reviewer_id)
-        settlement_documents = [item for item in documents if item["document_type"] == "settlement"]
-        if settlement_documents:
-            comparison, settlement = run_settlement_comparison(claim_id, owner["user_id"], normalized, rules)
+        assessed = assess_claim(sys.modules[__name__], claim_id, owner["user_id"], audit_actor_id=reviewer_id)
+        normalized, rules = assessed["normalized"], assessed["rules"]
+        if "comparison" in assessed:
+            comparison, settlement = assessed["comparison"], assessed["settlement"]
             st.session_state[f"comparison_{claim_id}"] = comparison
             st.session_state[f"settlement_{claim_id}"] = settlement
         st.session_state[f"normalized_{claim_id}"] = normalized
@@ -2129,7 +2268,7 @@ def main() -> None:
     st.set_page_config(page_title='MediGuard AI', page_icon='🛡️', layout='wide', initial_sidebar_state='expanded')
     from mediguard.ui.styles import APP_CSS
     st.markdown(APP_CSS, unsafe_allow_html=True)
-    init_db(); validate_security_config(); bootstrap_admin_from_env()
+    init_db(); resume_pending_analysis_jobs(); validate_security_config(); bootstrap_admin_from_env()
     import sys
     from mediguard.ui.routing import render_current_page
     render_current_page(sys.modules[__name__])

@@ -1,7 +1,7 @@
 {
   "label": "FICTIONAL SAMPLE \u2014 hand-calculated before evaluation",
   "validated_on": "30 synthetic cases",
-  "created_at": "2026-10-21T10:23:06+0530",
+  "created_at": "2026-10-22T23:28:21+0530",
   "case_count": 30,
   "group_counts": {
     "match": 10,
@@ -43,13 +43,1511 @@
       "pass": true,
       "note": "OCR-marked PDFs: 2; methods: Tesseract only when reported by extraction."
     },
-    "policy_term_accuracy": {
+    "policy_pdf_core_term_accuracy": {
       "numerator": 90,
       "denominator": 90,
       "score": 1.0,
       "target": 0.95,
       "pass": true,
-      "note": ""
+      "note": "Three terms (annual limit, deductible, co-pay) extracted from source PDFs and compared with hand labels; reviewer-confirmed terms files are not read."
+    },
+    "policy_pdf_term_accuracy": {
+      "basis": "extract_policy_terms(policy.pdf) compared with separately committed source-PDF labels; no reviewer-confirmed JSON was read",
+      "cases": 30,
+      "scores": {
+        "deductible": {
+          "numerator": 30,
+          "denominator": 30,
+          "score": 1.0
+        },
+        "copay_percent": {
+          "numerator": 30,
+          "denominator": 30,
+          "score": 1.0
+        },
+        "room_limit_per_day": {
+          "numerator": 30,
+          "denominator": 30,
+          "score": 1.0
+        },
+        "icu_limit_per_day": {
+          "numerator": 30,
+          "denominator": 30,
+          "score": 1.0
+        },
+        "exclusions": {
+          "numerator": 30,
+          "denominator": 30,
+          "score": 1.0
+        },
+        "date_window": {
+          "numerator": 30,
+          "denominator": 30,
+          "score": 1.0
+        },
+        "annual_limit": {
+          "numerator": 30,
+          "denominator": 30,
+          "score": 1.0
+        }
+      },
+      "case_rows": {
+        "deductible": [
+          {
+            "case_id": "match_01",
+            "expected": 1000,
+            "actual": "1000",
+            "match": true
+          },
+          {
+            "case_id": "match_02",
+            "expected": 0,
+            "actual": "0",
+            "match": true
+          },
+          {
+            "case_id": "match_03",
+            "expected": 1000,
+            "actual": "1000",
+            "match": true
+          },
+          {
+            "case_id": "match_04",
+            "expected": 2000,
+            "actual": "2000",
+            "match": true
+          },
+          {
+            "case_id": "match_05",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "match_06",
+            "expected": 0,
+            "actual": "0",
+            "match": true
+          },
+          {
+            "case_id": "match_07",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "match_08",
+            "expected": 10000,
+            "actual": "10000",
+            "match": true
+          },
+          {
+            "case_id": "match_09",
+            "expected": 3000,
+            "actual": "3000",
+            "match": true
+          },
+          {
+            "case_id": "match_10",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_01",
+            "expected": 1000,
+            "actual": "1000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_02",
+            "expected": 0,
+            "actual": "0",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_03",
+            "expected": 1000,
+            "actual": "1000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_04",
+            "expected": 2000,
+            "actual": "2000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_05",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_06",
+            "expected": 0,
+            "actual": "0",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_07",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_08",
+            "expected": 10000,
+            "actual": "10000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_09",
+            "expected": 3000,
+            "actual": "3000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_10",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "manual_01",
+            "expected": 1000,
+            "actual": "1000",
+            "match": true
+          },
+          {
+            "case_id": "manual_02",
+            "expected": 0,
+            "actual": "0",
+            "match": true
+          },
+          {
+            "case_id": "manual_03",
+            "expected": 1000,
+            "actual": "1000",
+            "match": true
+          },
+          {
+            "case_id": "manual_04",
+            "expected": 2000,
+            "actual": "2000",
+            "match": true
+          },
+          {
+            "case_id": "manual_05",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "edge_01",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "edge_02",
+            "expected": 0,
+            "actual": "0",
+            "match": true
+          },
+          {
+            "case_id": "edge_03",
+            "expected": 0,
+            "actual": "0",
+            "match": true
+          },
+          {
+            "case_id": "edge_04",
+            "expected": 1000,
+            "actual": "1000",
+            "match": true
+          },
+          {
+            "case_id": "edge_05",
+            "expected": 0,
+            "actual": "0",
+            "match": true
+          }
+        ],
+        "copay_percent": [
+          {
+            "case_id": "match_01",
+            "expected": 10,
+            "actual": "10",
+            "match": true
+          },
+          {
+            "case_id": "match_02",
+            "expected": 10,
+            "actual": "10",
+            "match": true
+          },
+          {
+            "case_id": "match_03",
+            "expected": 0,
+            "actual": "0",
+            "match": true
+          },
+          {
+            "case_id": "match_04",
+            "expected": 0,
+            "actual": "0",
+            "match": true
+          },
+          {
+            "case_id": "match_05",
+            "expected": 10,
+            "actual": "10",
+            "match": true
+          },
+          {
+            "case_id": "match_06",
+            "expected": 0,
+            "actual": "0",
+            "match": true
+          },
+          {
+            "case_id": "match_07",
+            "expected": 20,
+            "actual": "20",
+            "match": true
+          },
+          {
+            "case_id": "match_08",
+            "expected": 10,
+            "actual": "10",
+            "match": true
+          },
+          {
+            "case_id": "match_09",
+            "expected": 10,
+            "actual": "10",
+            "match": true
+          },
+          {
+            "case_id": "match_10",
+            "expected": 10,
+            "actual": "10",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_01",
+            "expected": 10,
+            "actual": "10",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_02",
+            "expected": 10,
+            "actual": "10",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_03",
+            "expected": 0,
+            "actual": "0",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_04",
+            "expected": 0,
+            "actual": "0",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_05",
+            "expected": 10,
+            "actual": "10",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_06",
+            "expected": 0,
+            "actual": "0",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_07",
+            "expected": 20,
+            "actual": "20",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_08",
+            "expected": 10,
+            "actual": "10",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_09",
+            "expected": 10,
+            "actual": "10",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_10",
+            "expected": 10,
+            "actual": "10",
+            "match": true
+          },
+          {
+            "case_id": "manual_01",
+            "expected": 10,
+            "actual": "10",
+            "match": true
+          },
+          {
+            "case_id": "manual_02",
+            "expected": 10,
+            "actual": "10",
+            "match": true
+          },
+          {
+            "case_id": "manual_03",
+            "expected": 0,
+            "actual": "0",
+            "match": true
+          },
+          {
+            "case_id": "manual_04",
+            "expected": 0,
+            "actual": "0",
+            "match": true
+          },
+          {
+            "case_id": "manual_05",
+            "expected": 10,
+            "actual": "10",
+            "match": true
+          },
+          {
+            "case_id": "edge_01",
+            "expected": 10,
+            "actual": "10",
+            "match": true
+          },
+          {
+            "case_id": "edge_02",
+            "expected": 10,
+            "actual": "10",
+            "match": true
+          },
+          {
+            "case_id": "edge_03",
+            "expected": 0,
+            "actual": "0",
+            "match": true
+          },
+          {
+            "case_id": "edge_04",
+            "expected": 10,
+            "actual": "10",
+            "match": true
+          },
+          {
+            "case_id": "edge_05",
+            "expected": 10,
+            "actual": "10",
+            "match": true
+          }
+        ],
+        "room_limit_per_day": [
+          {
+            "case_id": "match_01",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "match_02",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "match_03",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "match_04",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "match_05",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "match_06",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "match_07",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "match_08",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "match_09",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "match_10",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_01",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_02",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_03",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_04",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_05",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_06",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_07",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_08",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_09",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_10",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "manual_01",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "manual_02",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "manual_03",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "manual_04",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "manual_05",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "edge_01",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "edge_02",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "edge_03",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "edge_04",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          },
+          {
+            "case_id": "edge_05",
+            "expected": 5000,
+            "actual": "5000",
+            "match": true
+          }
+        ],
+        "icu_limit_per_day": [
+          {
+            "case_id": "match_01",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "match_02",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "match_03",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "match_04",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "match_05",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "match_06",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "match_07",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "match_08",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "match_09",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "match_10",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_01",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_02",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_03",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_04",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_05",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_06",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_07",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_08",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_09",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_10",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "manual_01",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "manual_02",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "manual_03",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "manual_04",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "manual_05",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "edge_01",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "edge_02",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "edge_03",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "edge_04",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "edge_05",
+            "expected": null,
+            "actual": null,
+            "match": true
+          }
+        ],
+        "exclusions": [
+          {
+            "case_id": "match_01",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "match_02",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "match_03",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "match_04",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "match_05",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "match_06",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "match_07",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "match_08",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "match_09",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "match_10",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_01",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_02",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_03",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_04",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_05",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_06",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_07",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_08",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_09",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_10",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "manual_01",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "manual_02",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "manual_03",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "manual_04",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "manual_05",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "edge_01",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "edge_02",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "edge_03",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "edge_04",
+            "expected": null,
+            "actual": null,
+            "match": true
+          },
+          {
+            "case_id": "edge_05",
+            "expected": null,
+            "actual": null,
+            "match": true
+          }
+        ],
+        "date_window": [
+          {
+            "case_id": "match_01",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "match_02",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "match_03",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "match_04",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "match_05",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "match_06",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "match_07",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "match_08",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "match_09",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "match_10",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_01",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_02",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_03",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_04",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_05",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_06",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_07",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_08",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_09",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_10",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "manual_01",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "manual_02",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "manual_03",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "manual_04",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "manual_05",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "edge_01",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "edge_02",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "edge_03",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "edge_04",
+            "expected": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "actual": {
+              "pre_hospitalization_days": null,
+              "post_hospitalization_days": null
+            },
+            "match": true
+          },
+          {
+            "case_id": "edge_05",
+            "expected": {
+              "pre_hospitalization_days": 30,
+              "post_hospitalization_days": 60
+            },
+            "actual": {
+              "pre_hospitalization_days": 30,
+              "post_hospitalization_days": 60
+            },
+            "match": true
+          }
+        ],
+        "annual_limit": [
+          {
+            "case_id": "match_01",
+            "expected": 10000,
+            "actual": "10000",
+            "match": true
+          },
+          {
+            "case_id": "match_02",
+            "expected": 20000,
+            "actual": "20000",
+            "match": true
+          },
+          {
+            "case_id": "match_03",
+            "expected": 15000,
+            "actual": "15000",
+            "match": true
+          },
+          {
+            "case_id": "match_04",
+            "expected": 12000,
+            "actual": "12000",
+            "match": true
+          },
+          {
+            "case_id": "match_05",
+            "expected": 30000,
+            "actual": "30000",
+            "match": true
+          },
+          {
+            "case_id": "match_06",
+            "expected": 10000,
+            "actual": "10000",
+            "match": true
+          },
+          {
+            "case_id": "match_07",
+            "expected": 25000,
+            "actual": "25000",
+            "match": true
+          },
+          {
+            "case_id": "match_08",
+            "expected": 40000,
+            "actual": "40000",
+            "match": true
+          },
+          {
+            "case_id": "match_09",
+            "expected": 18000,
+            "actual": "18000",
+            "match": true
+          },
+          {
+            "case_id": "match_10",
+            "expected": 50000,
+            "actual": "50000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_01",
+            "expected": 10000,
+            "actual": "10000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_02",
+            "expected": 20000,
+            "actual": "20000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_03",
+            "expected": 15000,
+            "actual": "15000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_04",
+            "expected": 12000,
+            "actual": "12000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_05",
+            "expected": 30000,
+            "actual": "30000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_06",
+            "expected": 10000,
+            "actual": "10000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_07",
+            "expected": 25000,
+            "actual": "25000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_08",
+            "expected": 40000,
+            "actual": "40000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_09",
+            "expected": 18000,
+            "actual": "18000",
+            "match": true
+          },
+          {
+            "case_id": "discrepancy_10",
+            "expected": 50000,
+            "actual": "50000",
+            "match": true
+          },
+          {
+            "case_id": "manual_01",
+            "expected": 10000,
+            "actual": "10000",
+            "match": true
+          },
+          {
+            "case_id": "manual_02",
+            "expected": 20000,
+            "actual": "20000",
+            "match": true
+          },
+          {
+            "case_id": "manual_03",
+            "expected": 15000,
+            "actual": "15000",
+            "match": true
+          },
+          {
+            "case_id": "manual_04",
+            "expected": 12000,
+            "actual": "12000",
+            "match": true
+          },
+          {
+            "case_id": "manual_05",
+            "expected": 30000,
+            "actual": "30000",
+            "match": true
+          },
+          {
+            "case_id": "edge_01",
+            "expected": 10000,
+            "actual": "10000",
+            "match": true
+          },
+          {
+            "case_id": "edge_02",
+            "expected": 10000,
+            "actual": "10000",
+            "match": true
+          },
+          {
+            "case_id": "edge_03",
+            "expected": 10000,
+            "actual": "10000",
+            "match": true
+          },
+          {
+            "case_id": "edge_04",
+            "expected": 15000,
+            "actual": "15000",
+            "match": true
+          },
+          {
+            "case_id": "edge_05",
+            "expected": 10000,
+            "actual": "10000",
+            "match": true
+          }
+        ]
+      },
+      "failures": []
     },
     "retrieval": {
       "queries": 30,
@@ -119,21 +1617,74 @@
       "target": 0.0
     },
     "llm_number_grounding": {
-      "numerator": 4,
-      "denominator": 4,
+      "numerator": 6,
+      "denominator": 6,
+      "score": 1.0,
+      "pass": true
+    },
+    "ollama_decision_equality": {
+      "numerator": 3,
+      "denominator": 3,
       "score": 1.0,
       "target": 1.0,
       "pass": true,
-      "note": "Focused LLM safety tests reject fabricated numbers and preserve comparison facts."
-    },
-    "ollama_decision_equality": {
-      "numerator": 0,
-      "denominator": 0,
-      "score": null,
-      "target": 1.0,
-      "pass": null,
-      "status": "NOT RUN",
-      "reason": "Live Ollama comparison is recorded separately from the deterministic run."
+      "model": "ibm/granite4.1:8b",
+      "llm_calls": [
+        {
+          "caller": "analysis.py:analyze_payload",
+          "claim_id": "a_match",
+          "prompt_version": "analysis_v1"
+        },
+        {
+          "caller": "analysis.py:analyze_payload",
+          "claim_id": "b_wrongful_deduction",
+          "prompt_version": "analysis_v1"
+        }
+      ],
+      "case_results": [
+        {
+          "case": "a_match",
+          "status": "no_discrepancy",
+          "expected_insurer_payment": "22500",
+          "actual_insurer_payment": "22500",
+          "possible_difference": "0",
+          "off_explanation": "The insurer deductions match the deterministic policy calculation based on the documents provided. This remains an estimate for reviewer confirmation.",
+          "on_explanation": "The insurer deductions match the deterministic policy calculation based on the documents provided. This remains an estimate for reviewer confirmation.",
+          "analysis_accepted": false,
+          "comparison_unchanged": true,
+          "both_explanations_number_grounded": true
+        },
+        {
+          "case": "b_wrongful_deduction",
+          "status": "possible_discrepancy",
+          "expected_insurer_payment": "22500",
+          "actual_insurer_payment": "19800",
+          "possible_difference": "2700",
+          "off_explanation": "The documents show a possible difference of INR 2,700.00. The investigation deduction of INR 3,000.00 is greater than the amount supported by the deterministic rules. The supporting clause is on page 1. Please ask an authorized reviewer to confirm the documents and calculation.",
+          "on_explanation": "The documents show a possible difference of INR 2,700.00. The investigation deduction of INR 3,000.00 is greater than the amount supported by the deterministic rules. The supporting clause is on page 1. Please ask an authorized reviewer to confirm the documents and calculation.",
+          "analysis_accepted": false,
+          "comparison_unchanged": true,
+          "both_explanations_number_grounded": true
+        },
+        {
+          "case": "c_manual_review",
+          "status": "manual_review",
+          "expected_insurer_payment": "22500",
+          "actual_insurer_payment": "22500",
+          "possible_difference": "-1000",
+          "off_explanation": "An authorized reviewer must confirm the settlement values and supporting policy evidence before this comparison can be relied on.",
+          "on_explanation": "An authorized reviewer must confirm the settlement values and supporting policy evidence before this comparison can be relied on.",
+          "analysis_accepted": false,
+          "comparison_unchanged": true,
+          "both_explanations_number_grounded": true
+        }
+      ],
+      "number_grounding": {
+        "numerator": 6,
+        "denominator": 6,
+        "score": 1.0,
+        "pass": true
+      }
     },
     "fault_injection": {
       "numerator": 3,
@@ -170,7 +1721,7 @@
     },
     "seconds_per_claim": {
       "denominator": 30,
-      "mean_seconds": 0.5180450466733115
+      "mean_seconds": 0.022547393336814516
     }
   },
   "confusion_matrix": {
@@ -225,7 +1776,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.21873000002233312
+      "seconds": 0.2233169000246562
     },
     {
       "case_id": "match_02",
@@ -251,7 +1802,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.023062199994456023
+      "seconds": 0.024333600013051182
     },
     {
       "case_id": "match_03",
@@ -287,7 +1838,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.013694000022951514
+      "seconds": 0.013614700001198798
     },
     {
       "case_id": "match_04",
@@ -323,7 +1874,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.014494300005026162
+      "seconds": 0.012067999981809407
     },
     {
       "case_id": "match_05",
@@ -359,7 +1910,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.01419519999762997
+      "seconds": 0.013676400005351752
     },
     {
       "case_id": "match_06",
@@ -385,7 +1936,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.012138199992477894
+      "seconds": 0.012951800017617643
     },
     {
       "case_id": "match_07",
@@ -421,7 +1972,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.013682199991308153
+      "seconds": 0.03818129998398945
     },
     {
       "case_id": "match_08",
@@ -457,7 +2008,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.013530399999581277
+      "seconds": 0.013157500012312084
     },
     {
       "case_id": "match_09",
@@ -493,7 +2044,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.012726900051347911
+      "seconds": 0.013263100001495332
     },
     {
       "case_id": "match_10",
@@ -529,7 +2080,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.012851000006776303
+      "seconds": 0.015180199989117682
     },
     {
       "case_id": "discrepancy_01",
@@ -565,7 +2116,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.012982999964151531
+      "seconds": 0.013034100004006177
     },
     {
       "case_id": "discrepancy_02",
@@ -601,7 +2152,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.014690899988636374
+      "seconds": 0.013124699995387346
     },
     {
       "case_id": "discrepancy_03",
@@ -637,7 +2188,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.014931900019291788
+      "seconds": 0.03338670002995059
     },
     {
       "case_id": "discrepancy_04",
@@ -673,7 +2224,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.01253730000462383
+      "seconds": 0.016281699994578958
     },
     {
       "case_id": "discrepancy_05",
@@ -709,7 +2260,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.01415690005524084
+      "seconds": 0.015910600021015853
     },
     {
       "case_id": "discrepancy_06",
@@ -745,7 +2296,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.012922100024297833
+      "seconds": 0.013715100008994341
     },
     {
       "case_id": "discrepancy_07",
@@ -781,7 +2332,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.01422060001641512
+      "seconds": 0.014152700023259968
     },
     {
       "case_id": "discrepancy_08",
@@ -817,7 +2368,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.014563500008080155
+      "seconds": 0.027601199981290847
     },
     {
       "case_id": "discrepancy_09",
@@ -853,7 +2404,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.014511600020341575
+      "seconds": 0.010494599991943687
     },
     {
       "case_id": "discrepancy_10",
@@ -889,7 +2440,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.013834399986080825
+      "seconds": 0.01299949997337535
     },
     {
       "case_id": "manual_01",
@@ -919,7 +2470,7 @@
         "Settlement amount paid was not identified."
       ],
       "cause": "match",
-      "seconds": 0.013283100037369877
+      "seconds": 0.011329300003126264
     },
     {
       "case_id": "manual_02",
@@ -951,7 +2502,7 @@
         "Settlement claim reference does not match the case reference."
       ],
       "cause": "match",
-      "seconds": 0.013058000011369586
+      "seconds": 0.012747999979183078
     },
     {
       "case_id": "manual_03",
@@ -983,7 +2534,7 @@
         "Settlement totals do not reconcile within INR 1."
       ],
       "cause": "match",
-      "seconds": 14.928052200004458
+      "seconds": 0.012298399989958853
     },
     {
       "case_id": "manual_04",
@@ -1013,7 +2564,7 @@
         "Settlement totals do not reconcile within INR 1."
       ],
       "cause": "match",
-      "seconds": 0.013430199993308634
+      "seconds": 0.01299980003386736
     },
     {
       "case_id": "manual_05",
@@ -1043,7 +2594,7 @@
         "Conflicting settlement amounts paid were found."
       ],
       "cause": "match",
-      "seconds": 0.011608499975409359
+      "seconds": 0.01436270005069673
     },
     {
       "case_id": "edge_01",
@@ -1079,7 +2630,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.016039500012993813
+      "seconds": 0.013018199999351054
     },
     {
       "case_id": "edge_02",
@@ -1109,7 +2660,7 @@
         "total_amount_missing_or_invalid"
       ],
       "cause": "match",
-      "seconds": 0.011992299987468868
+      "seconds": 0.012126000015996397
     },
     {
       "case_id": "edge_03",
@@ -1135,7 +2686,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.017044200038071722
+      "seconds": 0.010851399973034859
     },
     {
       "case_id": "edge_04",
@@ -1179,7 +2730,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.014826199971139431
+      "seconds": 0.013483799993991852
     },
     {
       "case_id": "edge_05",
@@ -1215,7 +2766,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.013560599996708333
+      "seconds": 0.012759800010826439
     }
   ],
   "extraction_cases": [
@@ -2218,12 +3769,12 @@
       "policy_match": true,
       "line_items": [
         {
-          "description": "Treatment charges",
+          "description": "Eligible treatment",
           "amount": 10000.0,
           "category": "OTHER",
           "cpt_codes": [],
-          "date": null,
-          "confidence": 95.3968253968254,
+          "date": "2026-06-01",
+          "confidence": 95.32638888888889,
           "needs_review": true,
           "evidence": [
             {
@@ -2231,8 +3782,8 @@
               "source_name": "bill.pdf",
               "page": 1,
               "method": "tesseract",
-              "text": "FICTIONAL SAMPLE HOSPITAL BILL \u2014 NOT A REAL CLAIM\nPatient: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nTreatment charges: INR 10000\nGrand Total: INR 10000",
-              "confidence": 95.3968253968254
+              "text": "FICTIONAL SAMPLE HOSPITAL BILL \u2014 NOT A REAL CLAIM\nPatient: Sample Patient\nPolicy number: POL-EVAL-FICTIONAL-2026\nAdmission date: 10 Aug 2026\nDischarge date: 14 Aug 2026\nDescription | Date | Qty | Rate | Amount\nEligible treatment | 01 Jun 2026 | 1 | 10000 | 10000\nGrand Total: INR 10000",
+              "confidence": 95.32638888888889
             }
           ]
         }
@@ -3433,7 +4984,72 @@
       "first_relevant_rank": 1
     }
   ],
-  "live_checks": {},
+  "live_checks": {
+    "ollama": {
+      "numerator": 3,
+      "denominator": 3,
+      "score": 1.0,
+      "target": 1.0,
+      "pass": true,
+      "model": "ibm/granite4.1:8b",
+      "llm_calls": [
+        {
+          "caller": "analysis.py:analyze_payload",
+          "claim_id": "a_match",
+          "prompt_version": "analysis_v1"
+        },
+        {
+          "caller": "analysis.py:analyze_payload",
+          "claim_id": "b_wrongful_deduction",
+          "prompt_version": "analysis_v1"
+        }
+      ],
+      "case_results": [
+        {
+          "case": "a_match",
+          "status": "no_discrepancy",
+          "expected_insurer_payment": "22500",
+          "actual_insurer_payment": "22500",
+          "possible_difference": "0",
+          "off_explanation": "The insurer deductions match the deterministic policy calculation based on the documents provided. This remains an estimate for reviewer confirmation.",
+          "on_explanation": "The insurer deductions match the deterministic policy calculation based on the documents provided. This remains an estimate for reviewer confirmation.",
+          "analysis_accepted": false,
+          "comparison_unchanged": true,
+          "both_explanations_number_grounded": true
+        },
+        {
+          "case": "b_wrongful_deduction",
+          "status": "possible_discrepancy",
+          "expected_insurer_payment": "22500",
+          "actual_insurer_payment": "19800",
+          "possible_difference": "2700",
+          "off_explanation": "The documents show a possible difference of INR 2,700.00. The investigation deduction of INR 3,000.00 is greater than the amount supported by the deterministic rules. The supporting clause is on page 1. Please ask an authorized reviewer to confirm the documents and calculation.",
+          "on_explanation": "The documents show a possible difference of INR 2,700.00. The investigation deduction of INR 3,000.00 is greater than the amount supported by the deterministic rules. The supporting clause is on page 1. Please ask an authorized reviewer to confirm the documents and calculation.",
+          "analysis_accepted": false,
+          "comparison_unchanged": true,
+          "both_explanations_number_grounded": true
+        },
+        {
+          "case": "c_manual_review",
+          "status": "manual_review",
+          "expected_insurer_payment": "22500",
+          "actual_insurer_payment": "22500",
+          "possible_difference": "-1000",
+          "off_explanation": "An authorized reviewer must confirm the settlement values and supporting policy evidence before this comparison can be relied on.",
+          "on_explanation": "An authorized reviewer must confirm the settlement values and supporting policy evidence before this comparison can be relied on.",
+          "analysis_accepted": false,
+          "comparison_unchanged": true,
+          "both_explanations_number_grounded": true
+        }
+      ],
+      "number_grounding": {
+        "numerator": 6,
+        "denominator": 6,
+        "score": 1.0,
+        "pass": true
+      }
+    }
+  },
   "failures": [],
   "target_failures": [],
   "limits": [

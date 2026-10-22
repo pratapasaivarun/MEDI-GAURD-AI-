@@ -152,10 +152,10 @@ def test_unconfirmed_policy_terms_are_provisional_and_missing_terms_keep_safe_su
         "missing_fields": [],
         "review_fields": [],
     }
-    monkeypatch.setattr(app, "claim_documents", lambda *_: [{
-        "document_type": "medical_bill", "extracted_json": json.dumps(saved_normalized),
-    }])
-    monkeypatch.setattr(app, "run_extraction", lambda _payloads: saved_normalized)
+    # The reviewer-confirmation graph begins at document processing. Keep the
+    # test focused on policy recomputation by supplying the already-extracted
+    # normalized claim at that service boundary.
+    monkeypatch.setattr(app, "process_claim_documents", lambda *_: saved_normalized)
     status = app.save_policy_terms_review(
         "policy-test",
         user["user_id"],

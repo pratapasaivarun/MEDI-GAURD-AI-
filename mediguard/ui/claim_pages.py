@@ -4,6 +4,7 @@ from mediguard.services import application as _app
 globals().update(vars(_app))
 import logging
 from mediguard.services.orchestration import assess_claim
+from mediguard.ai.agents import comparison_template_explanation
 from mediguard.ui.navigation import queue_page
 
 logger = logging.getLogger(__name__)
@@ -375,6 +376,40 @@ def appeal_draft_available(comparison: Any) -> bool:
     return comparison is not None and getattr(comparison, "status", None) == "possible_discrepancy"
 
 
+@st.fragment(run_every="2s")
+def _render_background_analysis(claim_id: str, user_id: str, role: str, comparison) -> None:
+    """Poll persisted analysis only; reruns never make model requests."""
+    job = claim_analysis_job(claim_id, user_id)
+    explanation = (job or {}).get("explanation") or comparison_template_explanation(comparison)
+    with st.container(border=True):
+        st.markdown('#### What the comparison means')
+        st.write(explanation)
+        if not job or job["status"] in {"queued", "running"}:
+            st.caption('Optional explanation is being prepared in the background. The Python calculation above is already available.')
+        elif job["status"] == "fallback":
+            st.caption('Showing the rules-based explanation because optional analysis was unavailable or did not pass checks.')
+        if role in {"reviewer", "admin"} and job and job.get("deductions"):
+            st.markdown('#### Reviewer-only deduction analysis')
+            st.dataframe([{
+                "Deduction": row.get("deduction_id"),
+                "Assessment": row.get("assessment"),
+                "Clause": row.get("clause_id") or "No supporting clause identified",
+                "Rationale": row.get("rationale"),
+            } for row in job["deductions"]], hide_index=True)
+        candidate = (job or {}).get("reviewer_candidate")
+        if role in {"reviewer", "admin"} and candidate:
+            st.warning('The optional analysis disagreed with the Python comparison and is shown only for reviewer assessment.')
+            with st.expander('Reviewer-only conflicting analysis'):
+                st.write(candidate.get("explanation", ""))
+                if candidate.get("deductions"):
+                    st.dataframe([{
+                        "Deduction": row.get("deduction_id"),
+                        "Assessment": row.get("assessment"),
+                        "Clause": row.get("clause_id") or "No supporting clause identified",
+                        "Rationale": row.get("rationale"),
+                    } for row in candidate["deductions"]], hide_index=True)
+
+
 def needs_bill_total_confirmation(settlement: SettlementData) -> bool:
     return any(
         str(reason).startswith("SETTLEMENT_TOTAL_FROM_BILL:")
@@ -447,10 +482,13 @@ def _render_settlement_comparison(
         } for row in comparison.categories], hide_index=True)
     explanation = None
     if comparison.status != 'manual_review':
-        explanation = explain_comparison(comparison, claim_id=str(claim.get("claim_id") or ""))
-        with st.container(border=True):
-            st.markdown('#### What the comparison means')
-            st.write(explanation)
+        explanation = comparison_template_explanation(comparison)
+        if user and claim.get("claim_id"):
+            _render_background_analysis(str(claim["claim_id"]), str(user["user_id"]), str(user["role"]), comparison)
+        else:
+            with st.container(border=True):
+                st.markdown('#### What the comparison means')
+                st.write(explanation)
     if appeal_draft_available(comparison):
         st.markdown('#### Review documents')
         provisional_appeal = bool(rules and rules.get("policy_terms_review_status") == "provisional")
@@ -741,8 +779,18 @@ def _render_claim_review(user: dict) -> None:
             else:
                 try:
                     for uploaded, kind in files: save_document(claim_id, user, uploaded, kind)
+                    try:
+                        assessed = _assess_claimant_submission(claim_id, user['user_id'])
+                        st.session_state[f'normalized_{claim_id}'] = assessed['normalized']
+                        st.session_state[f'rules_{claim_id}'] = assessed['rules']
+                        if 'comparison' in assessed:
+                            st.session_state[f'comparison_{claim_id}'] = assessed['comparison']
+                            st.session_state[f'settlement_{claim_id}'] = assessed['settlement']
+                    except Exception:
+                        logger.exception("Automatic claim assessment after upload failed")
+                        st.warning('Your files were saved, but automatic assessment could not finish. Reopen the claim to retry it.')
                     _remember_claim_review_tab(claim_id, 1)
-                    st.success(f'Saved {len(files)} document(s).'); st.rerun()
+                    st.success(f'Saved {len(files)} document(s). Automatic assessment has started.'); st.rerun()
                 except (ValueError, PermissionError):
                     logger.exception("Reviewer document upload was rejected")
                     st.error('One or more files could not be saved. Check the supported file type, size and file contents.')

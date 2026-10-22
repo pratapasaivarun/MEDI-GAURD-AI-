@@ -875,31 +875,15 @@ def _render_claim_review(user: dict) -> None:
                         st.metric(label, f"INR {float(value):,.2f}" if value is not None else 'Not calculable', border=True)
                 if rules.get('warnings'): st.warning('; '.join(rules['warnings']))
                 with st.expander('Why this result? Rule trace', expanded=True): st.dataframe(rules.get('results',[]), hide_index=True)
-                workflow=st.session_state.get(f'workflow_{claim_id}')
-                if st.button('Run Policy Agent + Decision Agent', type='primary'):
-                    with st.status('Retrieving policy evidence...', expanded=True) as status:
-                        st.caption('Local AI processing can take 1–2 minutes on CPU. Keep this page open while it completes.')
-                        try:
-                            started=time.perf_counter(); workflow=run_agents_for_claim(claim_id,user['user_id'],normalized,rules,progress_callback=lambda msg: status.write(msg)); workflow['elapsed_seconds']=round(time.perf_counter()-started,2); st.session_state[f'workflow_{claim_id}']=workflow; status.update(label='Two-agent analysis complete',state='complete')
-                        except Exception:
-                            logger.exception("Claim explanation workflow failed")
-                            status.update(label='Agent workflow failed',state='error')
-                            st.error('The explanation service is unavailable. The deterministic calculation remains available for review.')
-                    _remember_claim_review_tab(claim_id, 3)
-                    st.rerun()
-                if workflow:
-                    decision=workflow.get('decision',{}); decision_status = _safe_status(decision.get('status','manual_review')); st.markdown(evidence_recommendation_header_html(decision_status), unsafe_allow_html=True)
-                    for reason in decision.get('reasons',[]): st.write(f'• {reason}')
-                    st.caption(f"Policy source: {workflow.get('policy_source','none')} · LLM calls: {workflow.get('llm_calls',0)} · Time: {workflow.get('elapsed_seconds','n/a')}s")
-                    with st.expander('Policy evidence and agent reasoning'): st.json({'decision':decision,'policy_findings':workflow.get('policy_findings',{})})
-                    if user['role'] in {'reviewer','admin'}:
-                        with st.container(border=True):
-                            st.markdown('### Reviewer Sign-off')
-                            final=st.selectbox('Final determination',['approved','partially_approved','rejected','manual_review'],format_func=_status_badge,key=f'final_{claim_id}')
-                            comments=st.text_area('Reviewer comments',key=f'comments_{claim_id}')
-                            if st.button('Confirm sign-off',key=f'save_final_{claim_id}',type='primary'):
-                                if not comments.strip(): st.warning('Reviewer comments are required.')
-                                else: save_reviewer_decision(claim_id,user['user_id'],decision.get('status','manual_review'),final,comments); st.success('Reviewer decision saved and audited.')
+                if user['role'] in {'reviewer','admin'}:
+                    with st.container(border=True):
+                        st.markdown('### Reviewer Sign-off')
+                        st.caption('The Python rules provide the automated estimate. Reviewer sign-off records your determination separately.')
+                        final=st.selectbox('Final determination',['approved','partially_approved','rejected','manual_review'],format_func=_status_badge,key=f'final_{claim_id}')
+                        comments=st.text_area('Reviewer comments',key=f'comments_{claim_id}')
+                        if st.button('Confirm sign-off',key=f'save_final_{claim_id}',type='primary'):
+                            if not comments.strip(): st.warning('Reviewer comments are required.')
+                            else: save_reviewer_decision(claim_id,user['user_id'],rules.get('status','manual_review'),final,comments); st.success('Reviewer decision saved and audited.')
             else: st.info('Run deterministic rules before starting the agents.')
     with tabs[4]:
         normalized = st.session_state.get(f'normalized_{claim_id}')

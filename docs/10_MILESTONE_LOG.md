@@ -355,3 +355,13 @@ The upload matrix rejected an empty PDF, a `.txt` uploaded as a bill, and a 15 M
 **Expected output:** the full suite passes; the three live demo comparisons are identical with Ollama on and off, and unsafe model text falls back to the template; the claimant app path shows results for all 30 labeled cases and all 10 extraction-only cases.
 
 **Observed output:** `275 passed, 3 skipped in 37.22s`. The deterministic 40-case app-path output matched the permanent Ollama-off snapshot on status, amounts/ranges, reasons, flags, policy link, and result visibility: **40/40**. Evaluation using the pinned `.venv` loaded BGE-small; retrieval scored P@1 **30/30** and recall@5 **30/30**. The claimant-first browser matrix passed **8/8**, including reviewer refresh; the latest first-result times were 1.948 s, 1.626 s, and 2.627 s. Live Ollama comparison and number grounding passed **3/3** and **6/6**. Manual Review skipped the model call; the two resolved-case explanations were rejected (claim-decision wording and a deduction assessment that conflicted with Python), so deterministic templates were shown. No amounts or statuses changed. No calculation rules or expected labels changed.
+
+## Phase 5 — Category suggester evidence gate
+
+**What changed:** Added fixed BGE category prototypes and a reproducible score script. The feature remains disabled because the available labels do not validate it: all 27 scorable examples use the same generic description, and the prototype selected the wrong category on all 27. One other label is outside the supported category list, and the adversarial set has no category labels. Existing reviewer category editing remains available; there is no automatic suggestion or category change.
+
+**Verify command:** `.venv\Scripts\python.exe evaluation\scripts\score_category_suggestions.py`
+
+**Expected output:** `BGE-small category prototype score: 0/27`, `Invalid category labels: 1; adversarial category labels: 0`, and `Suggester enabled: False`.
+
+**Observed output:** The measured result matched the expected output. Full details are in `evaluation/latest/category_suggestion_evaluation.json`; the evidence and limitation are described in `docs/06_EVALUATION_RESULTS.md`.

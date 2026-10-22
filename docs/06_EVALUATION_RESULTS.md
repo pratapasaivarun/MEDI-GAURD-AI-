@@ -200,6 +200,12 @@ All 30 labeled cases were uploaded through the claimant app path without reviewe
 
 The 10 adversarial extraction-only cases also showed a reasoned result **10/10**. These fixtures deliberately contain no policy PDF or final decision label; Manual Review is the safe outcome. Exact per-case strings are in `evaluation/latest/provisional_app_path.json`. Reproduce with `python -m evaluation.scripts.run_provisional_app_path`.
 
+## Category suggester evidence gate (Phase 5)
+
+Category suggestions are **disabled** because the labeled evidence does not meet the required 90% accuracy gate. A reproducible BGE-small top-1 check against fixed semantic prototypes scored **0/27** valid labeled bill lines. All 27 valid labels use the same generic description, “Eligible treatment”; BGE maps it to `ADMISSION`, while the expected category is `INVESTIGATION`. One additional label (`edge_04`) is `EXCLUSION`, which is outside the configured bill-category list and cannot be scored fairly. The ten adversarial cases contain **0** category labels. These data do not support an on-demand classifier or any accept action, so no category is suggested or applied. The reviewer can still set a category manually using the existing review form.
+
+Reproduce with `.venv\Scripts\python.exe evaluation\scripts\score_category_suggestions.py`. The case-level output is `evaluation/latest/category_suggestion_evaluation.json`. Do not interpret this narrow and skewed 0/27 result as a general category accuracy estimate; it is evidence that this dataset cannot validate a suggester.
+
 | Adversarial cases | Expected | Actual | Result shown | Reason |
 |---|---|---|---:|---|
 | adv_01_split_columns | Manual Review (no policy/decision labels supplied) | manual_review | yes | No matching policy edition is linked to this claim. Link an edition in Claim review first.; Policy edition: no matching policy page is linked to this claim. Ingest and link the applicable policy edition before calculation. |

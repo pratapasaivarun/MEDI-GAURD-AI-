@@ -1,0 +1,210 @@
+{
+  "method": "BGE-small cosine similarity against fixed config prototypes; top-1",
+  "threshold": 0.9,
+  "correct": 0,
+  "denominator": 27,
+  "accuracy": 0.0,
+  "label_distribution": {
+    "INVESTIGATION": 27,
+    "EXCLUSION": 1
+  },
+  "invalid_labels": [
+    {
+      "case_id": "edge_04",
+      "expected": "EXCLUSION"
+    }
+  ],
+  "adversarial_category_labels": 0,
+  "enabled": false,
+  "cases": [
+    {
+      "case_id": "match_01",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "match_02",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "match_03",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "match_04",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "match_05",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "match_06",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "match_07",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "match_08",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "match_09",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "match_10",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "discrepancy_01",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "discrepancy_02",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "discrepancy_03",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "discrepancy_04",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "discrepancy_05",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "discrepancy_06",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "discrepancy_07",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "discrepancy_08",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "discrepancy_09",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "discrepancy_10",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "manual_01",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "manual_02",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "manual_03",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "manual_05",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "edge_01",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "edge_03",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    },
+    {
+      "case_id": "edge_04",
+      "description": "Eligible treatment",
+      "expected": "INVESTIGATION",
+      "predicted": "ADMISSION",
+      "match": false
+    }
+  ]
+}

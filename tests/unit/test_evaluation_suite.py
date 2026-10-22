@@ -9,6 +9,12 @@ from evaluation.run_all import build_claim, eq, retrieval_metrics
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def test_evaluation_run_defaults_to_ollama_off(monkeypatch):
+    assert evaluation._parse_args([]).ollama_on is False
+    assert evaluation._parse_args(["--ollama-on"]).ollama_on is True
+    assert evaluation.run.__defaults__ == (False,)
+
+
 def test_benchmark_has_30_fictional_cases_and_30_labeled_retrieval_queries():
     labels = json.loads((ROOT / "samples/evaluation_cases/ground_truth.json").read_text(encoding="utf-8"))
     queries = json.loads((ROOT / "evaluation/retrieval_queries.json").read_text(encoding="utf-8"))

@@ -6,6 +6,7 @@ truth is loaded from the committed hand labels and is never rewritten here.
 from __future__ import annotations
 
 import json
+import argparse
 import os
 import re
 import sys
@@ -257,7 +258,7 @@ def run_case(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def run() -> int:
+def run(ollama_on: bool = False) -> int:
     labels = json.loads(LABELS_PATH.read_text(encoding="utf-8"))
     if labels.get("synthetic_only") is not True or not labels.get("label", "").startswith("FICTIONAL SAMPLE"):
         raise SystemExit("Refusing to evaluate labels without the fictional-only marker.")
@@ -453,7 +454,7 @@ def run() -> int:
         "seconds_per_claim": {"denominator": len(results), "mean_seconds": sum(row["seconds"] for row in results) / max(1, len(results))},
     }
     live_checks: dict[str, Any] = {}
-    if os.getenv("MEDIGUARD_EVAL_LIVE", "true").strip().casefold() in {"1", "true", "yes", "on"}:
+    if ollama_on:
         live_checks["ollama"] = run_ollama_equivalence()
         metrics["ollama_decision_equality"] = live_checks["ollama"]
         if live_checks["ollama"].get("number_grounding"):
@@ -548,5 +549,11 @@ def run() -> int:
     return 0 if not failures and not target_failures else 1
 
 
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run the deterministic fictional MediGuard evaluation suite.")
+    parser.add_argument("--ollama-on", action="store_true", help="also run the separate live Ollama explanation/equivalence check")
+    return parser.parse_args(argv)
+
+
 if __name__ == "__main__":
-    raise SystemExit(run())
+    raise SystemExit(run(ollama_on=_parse_args().ollama_on))

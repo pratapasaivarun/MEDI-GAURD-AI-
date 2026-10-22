@@ -365,3 +365,13 @@ The upload matrix rejected an empty PDF, a `.txt` uploaded as a bill, and a 15 M
 **Expected output:** `BGE-small category prototype score: 0/27`, `Invalid category labels: 1; adversarial category labels: 0`, and `Suggester enabled: False`.
 
 **Observed output:** The measured result matched the expected output. Full details are in `evaluation/latest/category_suggestion_evaluation.json`; the evidence and limitation are described in `docs/06_EVALUATION_RESULTS.md`.
+
+## Phase 6 — Read-only, deterministic-first Q&A
+
+**What changed:** Claim Q&A keeps the existing deterministic answers first. If they cannot answer, the optional model receives the versioned `qa_v1` prompt and up to three retrieved policy clauses. The response is checked for numbers and clause IDs against those supplied facts. With no policy evidence or any rejected/failed model response, the screen uses the fixed “I can't find that in this claim's documents.” response. Q&A does not update claim records or calculations.
+
+**Verify command:** `.venv\Scripts\python.exe -m pytest -q --basetemp=.pytest-temp-debug-phase6`
+
+**Expected output:** all tests pass, including deterministic-first, missing-evidence, unsupported-number, unsupported-clause, and read-only Q&A checks.
+
+**Observed output:** `279 passed, 3 skipped in 30.01s`. The deterministic-first, no-evidence, number/citation validation, and read-only checks passed.

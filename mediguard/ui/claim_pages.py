@@ -5,6 +5,7 @@ globals().update(vars(_app))
 import logging
 from mediguard.services.orchestration import assess_claim
 from mediguard.ai.agents import comparison_template_explanation
+from mediguard.ai.qa import answer_question as _answer_claim_question
 from mediguard.ui.navigation import queue_page
 
 logger = logging.getLogger(__name__)
@@ -574,24 +575,7 @@ def _render_claim_assistant_chat(claim_id: str, normalized: dict[str, Any], resu
         except Exception:
             evidence = []
         answer = _claim_answer_from_saved_data(question, result, normalized, evidence)
-        if answer is None:
-            try:
-                snippets = '\n'.join(f"- {str(item.get('text', ''))[:500]}" for item in evidence)
-                if not snippets:
-                    raise ValueError('No policy evidence is available for this claim.')
-                answer = str(_ollama_json(
-                    'You are a medical-insurance claim assistant. Answer only from the supplied claim result and policy evidence. Be concise, use plain language, do not invent coverage, and recommend manual review when evidence is insufficient. The answer field must contain a complete, non-empty answer.',
-                    f"Question: {question}\n\nClaim result: {json.dumps(result, ensure_ascii=False)}\n\nPolicy evidence:\n{snippets}",
-                    agent_name='claimant_assistant',
-                    response_schema={'type': 'object', 'properties': {'answer': {'type': 'string'}}, 'required': ['answer']},
-                    caller='claim_pages.py:_render_claim_assistant_chat',
-                    prompt_version='claimant_qa_v1',
-                    claim_id=claim_id,
-                ).get('answer', '')).strip()
-                if not answer:
-                    raise ValueError('The assistant did not return an answer.')
-            except Exception:
-                answer = 'I cannot verify that from the available claim evidence. Please request a manual review so an authorized reviewer can confirm it.'
+        answer = _answer_claim_question(question, answer, result, evidence, claim_id)
         st.write(answer)
     st.session_state[history_key].append({'role': 'assistant', 'content': answer})
 

@@ -447,7 +447,7 @@ def _render_settlement_comparison(
         } for row in comparison.categories], hide_index=True)
     explanation = None
     if comparison.status != 'manual_review':
-        explanation = explain_comparison(comparison)
+        explanation = explain_comparison(comparison, claim_id=str(claim.get("claim_id") or ""))
         with st.container(border=True):
             st.markdown('#### What the comparison means')
             st.write(explanation)
@@ -546,6 +546,9 @@ def _render_claim_assistant_chat(claim_id: str, normalized: dict[str, Any], resu
                     f"Question: {question}\n\nClaim result: {json.dumps(result, ensure_ascii=False)}\n\nPolicy evidence:\n{snippets}",
                     agent_name='claimant_assistant',
                     response_schema={'type': 'object', 'properties': {'answer': {'type': 'string'}}, 'required': ['answer']},
+                    caller='claim_pages.py:_render_claim_assistant_chat',
+                    prompt_version='claimant_qa_v1',
+                    claim_id=claim_id,
                 ).get('answer', '')).strip()
                 if not answer:
                     raise ValueError('The assistant did not return an answer.')

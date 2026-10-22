@@ -7,6 +7,7 @@ import os
 import re
 import sqlite3
 import time
+import threading
 import uuid
 from contextlib import contextmanager
 from datetime import date, datetime, timezone
@@ -15,7 +16,6 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
-import requests
 import streamlit as st
 from dotenv import load_dotenv
 
@@ -24,6 +24,8 @@ load_dotenv()
 from mediguard.ingestion.extraction import check_submission_deadline, parse_amount, parse_bill_date, run_extraction
 from mediguard.engine.rules import evaluate_claim
 from mediguard.ai.agents import _ollama_json, confidence_label, explain_comparison, recommend_next_steps, retrieve_policy_evidence, run_claim_workflow, warm_ollama
+from mediguard.ai import llm_gateway
+from mediguard.ai.llm_gateway import claim_context
 from mediguard.policy.policy_index import index_policy_documents, retrieve_policy_evidence as retrieve_indexed_policy_evidence
 from mediguard.ingestion.extraction import extract_document
 from mediguard.engine.category_names import ROOM_CATEGORY, normalize_category
@@ -55,6 +57,27 @@ APP_ENV = os.getenv("APP_ENV", "development").lower()
 APP_BASE_URL = os.getenv("APP_BASE_URL", "http://localhost:8501").rstrip("/")
 # The academic prototype uses a local demo identity; production authentication is deferred.
 ALLOWED_ROLES = {"claimant", "reviewer", "admin"}
+_warmup_lock = threading.Lock()
+_warmup_started = False
+
+
+def start_ollama_warmup_background() -> bool:
+    """Start one best-effort model warm-up without blocking Streamlit's UI thread."""
+    global _warmup_started
+    with _warmup_lock:
+        if _warmup_started:
+            return False
+        _warmup_started = True
+
+    def warm() -> None:
+        try:
+            warm_ollama()
+        except Exception:
+            # Ollama is optional and a failed warm-up must not affect claims.
+            logging.getLogger(__name__).info("Optional Ollama warm-up was unavailable", exc_info=True)
+
+    threading.Thread(target=warm, name="mediguard-ollama-warmup", daemon=True).start()
+    return True
 
 
 def get_db_path() -> Path:
@@ -1008,7 +1031,8 @@ def ingest_policy_version(uploaded_file, policy_number: str, version_label: str,
     text = "\\n".join(item.text for item in evidence)
     payload = {"document_id": version_id, "source_name": uploaded_file.name, "text": text, "evidence": [item.to_dict() for item in evidence], "raw_by_page": raw_by_page}
     indexed = index_policy_documents([payload], version_id)
-    extracted_terms = extract_policy_terms(evidence)
+    with claim_context(version_id):
+        extracted_terms = extract_policy_terms(evidence)
     required_terms = {"annual_limit", "deductible", "copay_percent"}
     trusted_terms_confirmed = trusted_fixtures_enabled() and is_trusted_fixture_hash(hashlib.sha256(content).hexdigest()) and required_terms.issubset(extracted_terms["terms_json"])
     reviewed_terms = extracted_terms["terms_json"] if trusted_terms_confirmed else None
@@ -1052,7 +1076,8 @@ def process_claim_documents(claim_id: str, user_id: str) -> dict:
         except Exception as exc:
             with db() as conn:
                 conn.execute("UPDATE documents SET processing_status=?, extraction_error=? WHERE document_id=?", ("needs_review", str(exc), doc["document_id"]))
-    normalized = run_extraction(payloads)
+    with claim_context(claim_id):
+        normalized = run_extraction(payloads)
     normalized = apply_claim_extraction_reviews(claim_id, normalized)
     # Quality gate: an extraction error or missing line-item structure must not
     # silently continue into financial adjudication.
@@ -1069,7 +1094,8 @@ def process_claim_documents(claim_id: str, user_id: str) -> dict:
             # Core MVP behavior: a policy uploaded with a claim is automatically
             # registered as the active edition for that matching policy number.
             # The advanced Policy Management page remains deferred.
-            extracted_terms = extract_policy_terms([item for payload in policy_payloads for item in payload.get("evidence", [])])
+            with claim_context(claim_id):
+                extracted_terms = extract_policy_terms([item for payload in policy_payloads for item in payload.get("evidence", [])])
             normalized["policy_terms"] = extracted_terms
             extracted_policy_number = str(((normalized.get("policy_number") or {}).get("value") or "")).strip()
             with db() as conn:
@@ -1449,7 +1475,8 @@ def recompute_policy_claims(version_id: str, reviewer_id: str) -> int:
                 continue
         if not any(item.get("document_type") == "medical_bill" for item in payloads):
             continue
-        normalized = apply_claim_extraction_reviews(claim_id, run_extraction(payloads))
+        with claim_context(claim_id):
+            normalized = apply_claim_extraction_reviews(claim_id, run_extraction(payloads))
         rules = evaluate_saved_claim(claim_id, owner["user_id"], normalized, audit_actor_id=reviewer_id)
         settlement_documents = [item for item in documents if item["document_type"] == "settlement"]
         if settlement_documents:
@@ -1552,7 +1579,8 @@ def run_settlement_comparison(
         settlement = SettlementData(None, Decimal("0"), needs_review=True, review_reasons=["Upload exactly one settlement letter before comparison."])
     else:
         path = secure_document_path(settlement_docs[0], user)
-        settlement = parse_settlement(path.read_bytes(), settlement_docs[0]["original_name"])
+        with claim_context(claim_id):
+            settlement = parse_settlement(path.read_bytes(), settlement_docs[0]["original_name"])
 
     total_field = normalized.get("total_amount") or {}
     bill_total = Decimal(str(total_field.get("value") or 0))
@@ -1842,14 +1870,8 @@ def run_agents_for_claim(claim_id: str, user_id: str, normalized: dict, rules: d
             indexed = index_policy_documents(policy_payloads, policy_id)
             with db() as conn:
                 conn.execute("UPDATE policy_versions SET indexed_chunks=? WHERE version_id=?", (int(indexed.get("chunks_indexed", 0)), policy_id))
-    if not st.session_state.get("ollama_warmed"):
-        try:
-            warm_ollama()
-            st.session_state["ollama_warmed"] = True
-        except requests.RequestException:
-            # Let the workflow persist its manual-review fallback if inference fails.
-            pass
-    workflow = run_claim_workflow(normalized, policy_text, rules, policy_id=policy_id, progress_callback=progress_callback)
+    with claim_context(claim_id):
+        workflow = run_claim_workflow(normalized, policy_text, rules, policy_id=policy_id, progress_callback=progress_callback)
     workflow["policy_source"] = policy_source
     with db() as conn:
         # The agent is an explanation helper. Preserve the deterministic rules
@@ -1877,16 +1899,7 @@ def latest_reviewer_decision(claim_id: str):
 
 
 def ollama_status() -> tuple[bool, str]:
-    try:
-        response = requests.get(f"{OLLAMA_HOST}/api/tags", timeout=3)
-        if response.ok:
-            models = [m.get("name") for m in response.json().get("models", [])]
-            if OLLAMA_MODEL in models:
-                return True, f"Connected — {OLLAMA_MODEL} available"
-            return False, f"Connected — configured model not found locally ({OLLAMA_MODEL})"
-        return False, f"Ollama returned HTTP {response.status_code}"
-    except requests.RequestException as exc:
-        return False, f"Ollama unavailable: {exc}"
+    return llm_gateway.availability(timeout=3, caller="application.py:ollama_status")
 
 
 def _core_demo_user() -> dict[str, Any]:
@@ -2112,6 +2125,7 @@ def appeal_draft_available(comparison: Any) -> bool:
 
 
 def main() -> None:
+    start_ollama_warmup_background()
     st.set_page_config(page_title='MediGuard AI', page_icon='🛡️', layout='wide', initial_sidebar_state='expanded')
     from mediguard.ui.styles import APP_CSS
     st.markdown(APP_CSS, unsafe_allow_html=True)

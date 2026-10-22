@@ -7,6 +7,7 @@ import re
 import requests
 from decimal import Decimal
 from typing import Any, Iterable
+from mediguard.ai import llm_gateway
 
 
 def _json_value(value: Any) -> Any:
@@ -65,7 +66,6 @@ def _llm_extract_policy_terms_fallback(rows: list[dict[str, Any]]) -> dict[str, 
     """Fallback LLM policy terms extraction when regex fails on complex policy PDFs."""
     if not rows:
         return None
-    ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
     ollama_model = os.getenv("OLLAMA_MODEL", "ibm/granite4.1:8b")
 
     combined_text = "\n".join(row["text"] for row in rows[:15])
@@ -82,26 +82,41 @@ Return ONLY valid JSON matching this schema:
 Policy Document Text:
 {combined_text[:3500]}
 """
+    response = None
     try:
-        response = requests.post(
-            f"{ollama_host}/api/generate",
-            json={
-                "model": ollama_model,
-                "prompt": prompt,
-                "stream": False,
-                "format": "json",
-                "options": {"num_predict": 350, "temperature": 0.1},
-            },
-            timeout=15,
+        response = llm_gateway.generate_text(
+            prompt, caller="policy_terms.py:_llm_extract_policy_terms_fallback",
+            prompt_version="policy_terms_fallback_v1", model=ollama_model,
+            timeout=15, num_predict=350, temperature=0.0,
         )
-        if response.status_code == 200:
-            payload = response.json()
-            resp_content = payload.get("response")
-            if isinstance(resp_content, dict):
-                return resp_content
-            elif isinstance(resp_content, str):
-                return json.loads(resp_content)
-    except Exception:
+        if response.ok:
+            parsed = response.parsed
+            if parsed is None and response.text:
+                parsed = json.loads(response.text)
+            allowed = ("annual_limit", "deductible", "copay_percent", "room_limit_per_day", "waiting_period_months")
+            valid_fields: list[str] = []
+            invalid_fields: list[str] = []
+            if isinstance(parsed, dict):
+                for name in allowed:
+                    value = parsed.get(name)
+                    if value is None:
+                        continue
+                    try:
+                        number = Decimal(str(value))
+                        if number.is_finite() and number >= 0 and not (name == "copay_percent" and number > 100):
+                            valid_fields.append(name)
+                        else:
+                            invalid_fields.append(name)
+                    except Exception:
+                        invalid_fields.append(name)
+            accepted = bool(valid_fields)
+            reason = (f"Accepted valid terms: {', '.join(valid_fields)}" if accepted else
+                      (f"Rejected invalid or missing term values: {', '.join(invalid_fields) or 'no recognized terms'}"))
+            response.finalize(accepted, reason, "policy terms fallback")
+            return parsed if accepted else None
+    except Exception as exc:
+        if response is not None and response.ok:
+            response.finalize(False, f"Policy payload parsing failed: {type(exc).__name__}", "policy terms fallback")
         pass
     return None
 

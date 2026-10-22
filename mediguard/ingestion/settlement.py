@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 import requests
+from mediguard.ai import llm_gateway
 
 from mediguard.ingestion.extraction import _infer_line_category, extract_pdf_text
 from mediguard.engine.models import SettlementData, SettlementDeduction
@@ -54,7 +55,6 @@ def _extract_labeled_amount(text: str, labels: str) -> Decimal | None:
 
 
 def _llm_deductions(text: str) -> list[SettlementDeduction] | None:
-    host = os.getenv("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
     model = os.getenv("OLLAMA_MODEL", "ibm/granite4.1:8b")
     prompt = (
         "Extract settlement claim_id, amount_paid, bill_total, copay_applied, and deductions "
@@ -63,35 +63,46 @@ def _llm_deductions(text: str) -> list[SettlementDeduction] | None:
         "copay_applied:number|null, deductions:[{description:string,amount:number,reason:string}]}. "
         "Do not infer missing values.\n<settlement>\n" + text[:6000] + "\n</settlement>"
     )
+    response = None
     try:
-        response = requests.post(
-            f"{host}/api/generate",
-            json={"model": model, "prompt": prompt, "stream": False, "format": "json", "options": {"temperature": 0.1, "num_predict": 768}},
+        response = llm_gateway.generate_text(
+            prompt, caller="settlement.py:_llm_deductions",
+            prompt_version="settlement_deductions_v1", model=model,
             timeout=float(os.getenv("OLLAMA_TIMEOUT_SECONDS", "15")),
+            num_predict=768, temperature=0.0,
         )
-        if response.status_code != 200:
+        if not response.ok:
             return None
-        value = response.json().get("response")
-        payload = json.loads(value) if isinstance(value, str) else value
+        payload = response.parsed
+        if payload is None and response.text:
+            payload = json.loads(response.text)
         if not isinstance(payload, dict) or _money(payload.get("amount_paid")) is None:
+            response.finalize(False, "Settlement payload must contain a valid paid amount", "settlement deductions")
             return None
         raw_deductions = payload.get("deductions")
         if not isinstance(raw_deductions, list) or not raw_deductions:
+            response.finalize(False, "Settlement payload must contain at least one deduction", "settlement deductions")
             return None
         result = []
         for row in raw_deductions:
             if not isinstance(row, dict) or not isinstance(row.get("description"), str):
+                response.finalize(False, "A deduction must have a text description", "settlement deductions")
                 return None
             amount = _money(row.get("amount"))
             if amount is None or amount <= 0:
+                response.finalize(False, "A deduction amount was missing or invalid", "settlement deductions")
                 return None
             reason = row.get("reason", "")
             if not isinstance(reason, str):
+                response.finalize(False, "A deduction reason must be text", "settlement deductions")
                 return None
             category = _infer_line_category(row["description"])
             result.append(SettlementDeduction(category, amount, reason, True))
+        response.finalize(True, "Paid amount and all deduction rows passed settlement validation", "settlement deductions")
         return result
-    except (requests.RequestException, ValueError, TypeError, json.JSONDecodeError):
+    except (requests.RequestException, ValueError, TypeError, json.JSONDecodeError) as exc:
+        if response is not None and response.ok:
+            response.finalize(False, f"Settlement payload parsing failed: {type(exc).__name__}", "settlement deductions")
         return None
 
 

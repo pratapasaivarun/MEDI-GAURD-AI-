@@ -30,6 +30,7 @@ from mediguard.engine.comparison import compare  # noqa: E402
 from mediguard.engine.models import SettlementData, SettlementDeduction  # noqa: E402
 from mediguard.ingestion.extraction import extract_document, run_extraction  # noqa: E402
 from mediguard.ingestion.settlement import parse_settlement  # noqa: E402
+from mediguard.ai.llm_gateway import claim_context  # noqa: E402
 from mediguard.policy.policy_terms import extract_policy_terms  # noqa: E402
 from evaluation.scripts.score_policy_terms_from_pdfs import run as score_policy_terms_from_pdfs  # noqa: E402
 
@@ -107,8 +108,9 @@ def run_ollama_equivalence() -> dict[str, Any]:
             snapshot = (comparison.status, comparison.expected_patient_share,
                         comparison.actual_patient_share, comparison.possible_difference,
                         comparison.expected_insurer_payment, comparison.actual_insurer_payment)
-            off_text = agents.explain_comparison(comparison, use_llm=False)
-            on_text = agents.explain_comparison(comparison, use_llm=True)
+            with claim_context(case_name):
+                off_text = agents.explain_comparison(comparison, use_llm=False)
+                on_text = agents.explain_comparison(comparison, use_llm=True)
             unchanged = snapshot == (comparison.status, comparison.expected_patient_share,
                                     comparison.actual_patient_share, comparison.possible_difference,
                                     comparison.expected_insurer_payment, comparison.actual_insurer_payment)
@@ -209,7 +211,7 @@ def build_claim(row: dict[str, Any]) -> tuple[ClaimResult, TypedPolicyTerms]:
     return claim, terms
 
 
-def run_case(row: dict[str, Any]) -> dict[str, Any]:
+def _run_case(row: dict[str, Any]) -> dict[str, Any]:
     started = time.perf_counter()
     folder = CASES_DIR / row["case_id"]
     claim, terms = build_claim(row)
@@ -258,6 +260,12 @@ def run_case(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def run_case(row: dict[str, Any]) -> dict[str, Any]:
+    """Run one evaluation case with an attribution id for any optional LLM calls."""
+    with claim_context(str(row["case_id"])):
+        return _run_case(row)
+
+
 def run(ollama_on: bool = False) -> int:
     labels = json.loads(LABELS_PATH.read_text(encoding="utf-8"))
     if labels.get("synthetic_only") is not True or not labels.get("label", "").startswith("FICTIONAL SAMPLE"):
@@ -274,42 +282,43 @@ def run(ollama_on: bool = False) -> int:
         expected_file = json.loads((case_dir / "expected-results.json").read_text(encoding="utf-8"))
         if expected_file != row:
             raise SystemExit(f"Per-case expected-results changed from committed labels: {row['case_id']}")
-        results.append(run_case(row))
-        bill_record, methods = document(case_dir / "bill.pdf", "medical_bill")
-        methods_by_case[row["case_id"]] = methods
-        normalized = run_extraction([bill_record])
-        extraction_rows.append({
-            "case_id": row["case_id"], "ocr": any("tesseract" in m for m in methods),
-            "expected_total": row["billed"], "actual_total": val(normalized.get("total_amount")),
-            "total_match": eq(val(normalized.get("total_amount")), row["billed"]),
-            "expected_patient": "Sample Patient", "actual_patient": val(normalized.get("patient_name")),
-            "patient_match": eq(val(normalized.get("patient_name")), "Sample Patient"),
-            "expected_policy": "POL-EVAL-FICTIONAL-2026", "actual_policy": val(normalized.get("policy_number")),
-            "policy_match": eq(val(normalized.get("policy_number")), "POL-EVAL-FICTIONAL-2026"),
-            "line_items": normalized.get("line_items", []),
-        })
-        expected_items = row.get("expected_line_items")
-        if expected_items is not None:
-            expected_keys = Counter((re.sub(r"\W+", " ", item["description"]).strip().casefold(),
-                                     Decimal(str(item["amount"])).quantize(CENT)) for item in expected_items)
-            actual_keys = Counter((re.sub(r"\W+", " ", str(item.get("description", ""))).strip().casefold(),
-                                   Decimal(str(val(item.get("amount", 0)) or 0)).quantize(CENT))
-                                  for item in normalized.get("line_items", []))
-            matched = sum((expected_keys & actual_keys).values())
-            line_item_rows.append({"case_id": row["case_id"], "expected_count": sum(expected_keys.values()),
-                                   "actual_count": sum(actual_keys.values()), "matched": matched})
-        policy_record, _ = document(case_dir / "policy.pdf", "policy")
-        detected = extract_policy_terms(policy_record["evidence"])
-        detected_values = detected.get("terms_json", {})
-        expected_terms = {"annual_limit": max(10000, row["billed"]), "deductible": row["deductible"],
-                          "copay_percent": row["copay_percent"]}
-        for name, expected in expected_terms.items():
-            actual = val(detected_values.get(name))
-            policy_rows.append({"case_id": row["case_id"], "term": name,
-                                "expected": expected, "actual": actual, "match": eq(actual, expected)})
-        from mediguard.policy.policy_index import index_policy_documents
-        index_policy_documents([policy_record], row["case_id"])
-        indexed_policy_ids.add(row["case_id"])
+        with claim_context(str(row["case_id"])):
+            results.append(run_case(row))
+            bill_record, methods = document(case_dir / "bill.pdf", "medical_bill")
+            methods_by_case[row["case_id"]] = methods
+            normalized = run_extraction([bill_record])
+            extraction_rows.append({
+                "case_id": row["case_id"], "ocr": any("tesseract" in m for m in methods),
+                "expected_total": row["billed"], "actual_total": val(normalized.get("total_amount")),
+                "total_match": eq(val(normalized.get("total_amount")), row["billed"]),
+                "expected_patient": "Sample Patient", "actual_patient": val(normalized.get("patient_name")),
+                "patient_match": eq(val(normalized.get("patient_name")), "Sample Patient"),
+                "expected_policy": "POL-EVAL-FICTIONAL-2026", "actual_policy": val(normalized.get("policy_number")),
+                "policy_match": eq(val(normalized.get("policy_number")), "POL-EVAL-FICTIONAL-2026"),
+                "line_items": normalized.get("line_items", []),
+            })
+            expected_items = row.get("expected_line_items")
+            if expected_items is not None:
+                expected_keys = Counter((re.sub(r"\W+", " ", item["description"]).strip().casefold(),
+                                         Decimal(str(item["amount"])).quantize(CENT)) for item in expected_items)
+                actual_keys = Counter((re.sub(r"\W+", " ", str(item.get("description", ""))).strip().casefold(),
+                                       Decimal(str(val(item.get("amount", 0)) or 0)).quantize(CENT))
+                                      for item in normalized.get("line_items", []))
+                matched = sum((expected_keys & actual_keys).values())
+                line_item_rows.append({"case_id": row["case_id"], "expected_count": sum(expected_keys.values()),
+                                       "actual_count": sum(actual_keys.values()), "matched": matched})
+            policy_record, _ = document(case_dir / "policy.pdf", "policy")
+            detected = extract_policy_terms(policy_record["evidence"])
+            detected_values = detected.get("terms_json", {})
+            expected_terms = {"annual_limit": max(10000, row["billed"]), "deductible": row["deductible"],
+                              "copay_percent": row["copay_percent"]}
+            for name, expected in expected_terms.items():
+                actual = val(detected_values.get(name))
+                policy_rows.append({"case_id": row["case_id"], "term": name,
+                                    "expected": expected, "actual": actual, "match": eq(actual, expected)})
+            from mediguard.policy.policy_index import index_policy_documents
+            index_policy_documents([policy_record], row["case_id"])
+            indexed_policy_ids.add(row["case_id"])
 
     retrieval_labels = json.loads((ROOT / "evaluation" / "retrieval_queries.json").read_text(encoding="utf-8"))
     retrieval_rows = []

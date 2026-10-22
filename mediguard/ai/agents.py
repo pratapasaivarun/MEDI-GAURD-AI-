@@ -17,7 +17,7 @@ from typing import Any, Callable, TypedDict
 
 from mediguard.engine.models import ComparisonResult
 
-import requests
+from mediguard.ai import llm_gateway
 
 try:
     from langgraph.graph import END, START, StateGraph
@@ -45,12 +45,9 @@ def confidence_label(score: float) -> str:
 
 def warm_ollama() -> None:
     """Preload Granite once before the first real agent call in a session."""
-    response = requests.post(
-        f"{OLLAMA_HOST}/api/generate",
-        json={"model": OLLAMA_MODEL, "prompt": "Return only OK.", "stream": False, "keep_alive": OLLAMA_KEEP_ALIVE, "options": {"num_predict": 4, "num_ctx": OLLAMA_NUM_CTX, "num_thread": OLLAMA_NUM_THREAD}},
-        timeout=(5, OLLAMA_TIMEOUT),
-    )
-    response.raise_for_status()
+    result = llm_gateway.warmup(timeout=OLLAMA_TIMEOUT)
+    if result.ok:
+        result.finalize(True, "Warm-up response received", "model warm-up")
 
 
 class ClaimWorkflowState(TypedDict, total=False):
@@ -254,7 +251,7 @@ def validate_comparison_explanation(text: str, comparison: ComparisonResult) -> 
     return True
 
 
-def explain_comparison(comparison: ComparisonResult, use_llm: bool = True) -> str:
+def explain_comparison(comparison: ComparisonResult, use_llm: bool = True, claim_id: str | None = None) -> str:
     """Explain fixed comparison facts; invalid model text is discarded."""
     fallback = comparison_template_explanation(comparison)
     if not use_llm or comparison.status == "manual_review":
@@ -286,6 +283,13 @@ def explain_comparison(comparison: ComparisonResult, use_llm: bool = True) -> st
             json.dumps(prompt),
             agent_name="comparison_explainer",
             response_schema=schema,
+            caller="agents.py:explain_comparison",
+            prompt_version="comparison_explainer_v1",
+            acceptance_validator=lambda value: (
+                validate_comparison_explanation(value.get("explanation"), comparison),
+                "Explanation passed amount and citation grounding checks" if validate_comparison_explanation(value.get("explanation"), comparison) else "Explanation failed amount or citation grounding checks",
+            ),
+            claim_id=claim_id,
         )
         explanation = response.get("explanation")
         if validate_comparison_explanation(explanation, comparison):
@@ -295,32 +299,36 @@ def explain_comparison(comparison: ComparisonResult, use_llm: bool = True) -> st
     return fallback
 
 
-def _ollama_json(system: str, prompt: str, list_key: str = "items", agent_name: str = "unknown", response_schema: dict[str, Any] | None = None) -> dict[str, Any]:
+def _ollama_json(system: str, prompt: str, list_key: str = "items", agent_name: str = "unknown", response_schema: dict[str, Any] | None = None, *, caller: str | None = None, prompt_version: str | None = None, acceptance_validator: Callable[[dict[str, Any]], tuple[bool, str]] | None = None, claim_id: str | None = None) -> dict[str, Any]:
     started = time.perf_counter()
     prompt_chars = len(system) + len(prompt)
     prompt_token_estimate = max(1, round(prompt_chars / 4))
-    request_payload = {
-        "model": OLLAMA_MODEL,
-        "stream": False,
-        "format": response_schema or "json",
-        "keep_alive": OLLAMA_KEEP_ALIVE,
-        # A mixed claim can require several grounded item notes. 192 tokens
-        # truncated valid JSON at the configured generation boundary, so leave
-        # sufficient room for the complete structured response.
-        "options": {"temperature": 0.0, "num_predict": OLLAMA_NUM_PREDICT, "num_ctx": OLLAMA_NUM_CTX, "num_thread": OLLAMA_NUM_THREAD},
-        "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
-    }
-    response = requests.post(
-        f"{OLLAMA_HOST}/api/chat",
-        json=request_payload,
-        timeout=(5, OLLAMA_TIMEOUT),
+    result = llm_gateway.chat_json(
+        system, prompt, caller=caller or f"agents.py:{agent_name}",
+        prompt_version=prompt_version or f"{agent_name}_v1", schema=response_schema,
+        model=OLLAMA_MODEL, timeout=(5, OLLAMA_TIMEOUT), num_predict=OLLAMA_NUM_PREDICT,
+        num_ctx=OLLAMA_NUM_CTX, num_thread=OLLAMA_NUM_THREAD, keep_alive=OLLAMA_KEEP_ALIVE,
+        temperature=0.0, claim_id=claim_id,
     )
-    response.raise_for_status()
-    response_payload = response.json()
     elapsed = time.perf_counter() - started
-    _record_metrics({"agent": agent_name, "elapsed_seconds": round(elapsed, 3), "prompt_chars": prompt_chars, "prompt_token_estimate": prompt_token_estimate, "keep_alive": request_payload.get("keep_alive"), "num_predict": request_payload.get("options", {}).get("num_predict"), "load_duration_ns": response_payload.get("load_duration"), "prompt_eval_count": response_payload.get("prompt_eval_count"), "eval_count": response_payload.get("eval_count"), "timestamp": time.time()})
-    content = response_payload.get("message", {}).get("content", "{}")
-    return _parse_json_response(content, list_key)
+    response_payload = result.payload
+    _record_metrics({"agent": agent_name, "elapsed_seconds": round(elapsed, 3), "prompt_chars": prompt_chars, "prompt_token_estimate": prompt_token_estimate, "keep_alive": OLLAMA_KEEP_ALIVE, "num_predict": OLLAMA_NUM_PREDICT, "load_duration_ns": response_payload.get("load_duration"), "prompt_eval_count": response_payload.get("prompt_eval_count"), "eval_count": response_payload.get("eval_count"), "timestamp": time.time()})
+    if not result.ok:
+        raise RuntimeError(result.error or f"Ollama request failed: {result.status}")
+    try:
+        content = result.text or json.dumps(result.parsed, ensure_ascii=False)
+        parsed = _parse_json_response(content, list_key)
+        accepted, reason = (True, "Valid response JSON accepted")
+        if acceptance_validator is not None:
+            try:
+                accepted, reason = acceptance_validator(parsed)
+            except Exception as exc:
+                accepted, reason = False, f"Acceptance validator failed: {type(exc).__name__}"
+    except Exception as exc:
+        result.finalize(False, f"Response parsing failed: {type(exc).__name__}", agent_name)
+        raise
+    result.finalize(bool(accepted), reason, agent_name)
+    return parsed
 
 
 def retrieve_policy_evidence(policy_text: str, normalized_claim: dict[str, Any], policy_id: str = "", limit: int = 8, query: str = "") -> list[dict[str, Any]]:
@@ -444,8 +452,10 @@ def decision_agent_node(state: ClaimWorkflowState) -> ClaimWorkflowState:
             list_key="reasons",
             agent_name="decision_agent",
             response_schema=DECISION_RESPONSE_SCHEMA,
+            caller="agents.py:decision_agent_node",
+            prompt_version="decision_agent_v1",
         )
-    except (RuntimeError, requests.RequestException) as exc:
+    except RuntimeError as exc:
         decision = {"status": "manual_review", "reasons": ["Decision Agent response was unavailable or invalid."], "policy_citations": [], "confidence": 0, "reviewer_note": "An authorized reviewer must confirm the determination.", "line_item_notes": [], "_fallback": True, "_error": str(exc)}
     allowed = {"approved", "partially_approved", "rejected", "manual_review"}
     rule_status = state.get("rule_results", {}).get("status", "manual_review")

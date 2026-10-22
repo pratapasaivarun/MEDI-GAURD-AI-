@@ -1,35 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="780" viewBox="0 0 1200 780" role="img" aria-labelledby="title desc">
-<title id="title">MediGuard AI prototype architecture</title>
-<desc id="desc">Fictional medical bill, policy and settlement letter enter the application. Extraction and policy indexing feed deterministic claim rules. Settlement parsing feeds comparison. Explanations and reports use the comparison, and a reviewer confirms the result. SQLite and private local files store the prototype data.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1040" viewBox="0 0 1200 1040" role="img" aria-labelledby="title desc">
+<title id="title">MediGuard AI workflow architecture</title>
+<desc id="desc">A deterministic LangGraph Supervisor routes four deterministic workers. Python rules and comparison determine amounts and status. A background Analysis Agent and on-demand Q and A use one Ollama gateway only for checked explanations. Reports and reviewer screens use local data.</desc>
 <defs>
   <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#91a6b7"/></marker>
   <style>
-   .bg{fill:#101820}.box{rx:14;stroke-width:2}.input{fill:#17212b;stroke:#607080}.extract{fill:#673d0b;stroke:#d99728}.policy{fill:#075448;stroke:#24a987}.rules{fill:#673d0b;stroke:#d99728}.compare{fill:#3d348b;stroke:#8c81ed}.assist{fill:#075448;stroke:#24a987}.report{fill:#673d0b;stroke:#d99728}.app{fill:#47320c;stroke:#efb23c}.store{fill:#17212b;stroke:#607080}.t{font:600 20px Segoe UI,Arial;fill:#f4f7fb}.s{font:15px Segoe UI,Arial;fill:#c5d1de}.gold{fill:#ffc866}.green{fill:#7de0c4}.purple{fill:#c4bdff}.line{stroke:#91a6b7;stroke-width:3;fill:none;marker-end:url(#arrow)}.plain{stroke:#91a6b7;stroke-width:3;fill:none}
+   .bg{fill:#101820}.box{rx:14;stroke-width:2}.input{fill:#17212b;stroke:#607080}.worker{fill:#075448;stroke:#24a987}.rules{fill:#673d0b;stroke:#d99728}.supervisor{fill:#3d348b;stroke:#8c81ed}.assist{fill:#075448;stroke:#24a987}.report{fill:#673d0b;stroke:#d99728}.app{fill:#47320c;stroke:#efb23c}.store{fill:#17212b;stroke:#607080}.t{font:600 20px Segoe UI,Arial;fill:#f4f7fb}.s{font:15px Segoe UI,Arial;fill:#c5d1de}.gold{fill:#ffc866}.green{fill:#7de0c4}.purple{fill:#c4bdff}.line{stroke:#91a6b7;stroke-width:3;fill:none;marker-end:url(#arrow)}.plain{stroke:#91a6b7;stroke-width:3;fill:none;stroke-dasharray:8 6}
   </style>
 </defs>
-<rect class="bg" width="1200" height="780"/>
-<text x="600" y="40" text-anchor="middle" class="t" font-size="27">MediGuard AI · fictional-data prototype</text>
-<!-- inputs -->
-<rect class="box input" x="55" y="75" width="300" height="68"/><text x="205" y="105" text-anchor="middle" class="t">Hospital bill</text><text x="205" y="128" text-anchor="middle" class="s">PDF text or scanned pages</text>
-<rect class="box input" x="450" y="75" width="300" height="68"/><text x="600" y="105" text-anchor="middle" class="t">Insurance policy PDF</text><text x="600" y="128" text-anchor="middle" class="s">Terms and source clauses</text>
-<rect class="box input" x="845" y="75" width="300" height="68"/><text x="995" y="105" text-anchor="middle" class="t">Settlement letter</text><text x="995" y="128" text-anchor="middle" class="s">Payment and deductions</text>
-<!-- extraction -->
-<path class="line" d="M205 143 V175"/><path class="line" d="M600 143 V175"/>
-<rect class="box extract" x="55" y="180" width="695" height="80"/><text x="402" y="213" text-anchor="middle" class="t gold">extraction.py</text><text x="402" y="238" text-anchor="middle" class="s">Fields · line items · totals · dates · OCR; uncertain fields flagged for review</text>
-<rect class="box compare" x="845" y="180" width="300" height="80"/><text x="995" y="213" text-anchor="middle" class="t purple">Settlement parser</text><text x="995" y="238" text-anchor="middle" class="s">settlement.py: paid amount + deductions</text>
-<!-- terms / index -->
-<path class="line" d="M402 260 V295"/><path class="line" d="M600 260 V295"/>
-<rect class="box policy" x="55" y="300" width="695" height="80"/><text x="402" y="333" text-anchor="middle" class="t green">policy_terms.py + policy_index.py</text><text x="402" y="358" text-anchor="middle" class="s">Candidate limits + searchable clause evidence and page numbers</text>
-<!-- deterministic rules -->
-<path class="line" d="M402 380 V420"/>
-<rect class="box rules" x="55" y="425" width="695" height="80"/><text x="402" y="458" text-anchor="middle" class="t gold">rules.py · deterministic Decimal calculations</text><text x="402" y="483" text-anchor="middle" class="s">Caps · exclusions · sub-limits · sum insured · deductible · co-pay</text>
-<!-- comparison -->
-<path class="line" d="M402 505 V548"/><path class="line" d="M995 260 V548"/>
-<rect class="box compare" x="180" y="553" width="840" height="80"/><text x="600" y="586" text-anchor="middle" class="t purple">comparison.py · policy estimate vs insurer settlement</text><text x="600" y="611" text-anchor="middle" class="s">no discrepancy · possible discrepancy · manual review</text>
-<!-- llm / reports and app -->
-<path class="line" d="M420 633 V670 H280 V690"/><path class="line" d="M780 633 V670 H920 V690"/>
-<rect class="box assist" x="70" y="695" width="420" height="64"/><text x="280" y="723" text-anchor="middle" class="t green">agents.py · optional explanation only</text><text x="280" y="746" text-anchor="middle" class="s">Ollama or template fallback; cannot change rules amounts</text>
-<rect class="box report" x="710" y="695" width="420" height="64"/><text x="920" y="723" text-anchor="middle" class="t gold">reports.py · appeal and review drafts</text><text x="920" y="746" text-anchor="middle" class="s">Generated only when comparison evidence supports a draft</text>
-<!-- note -->
-<text x="600" y="675" text-anchor="middle" class="s">ui/ + app.py: upload validation · reviewer confirmation · result display · SQLite/local files</text>
+<rect class="bg" width="1200" height="1040"/>
+<text x="600" y="42" text-anchor="middle" class="t" font-size="28">MediGuard AI · deterministic claim review workflow</text>
+<text x="600" y="70" text-anchor="middle" class="s">Python decides every amount and status · fictional-data prototype</text>
+<!-- Documents -->
+<rect class="box input" x="45" y="100" width="330" height="75"/><text x="210" y="132" text-anchor="middle" class="t">Hospital bill</text><text x="210" y="157" text-anchor="middle" class="s">Text PDF or scanned pages</text>
+<rect class="box input" x="435" y="100" width="330" height="75"/><text x="600" y="132" text-anchor="middle" class="t">Policy PDF</text><text x="600" y="157" text-anchor="middle" class="s">Terms and source clauses</text>
+<rect class="box input" x="825" y="100" width="330" height="75"/><text x="990" y="132" text-anchor="middle" class="t">Settlement letter</text><text x="990" y="157" text-anchor="middle" class="s">Paid amount and deductions</text>
+<!-- Deterministic workers -->
+<path class="line" d="M210 175 V215"/><path class="line" d="M600 175 V215"/><path class="line" d="M990 175 V215"/>
+<rect class="box worker" x="45" y="220" width="720" height="88"/><text x="405" y="254" text-anchor="middle" class="t green">Document worker · mediguard/ingestion</text><text x="405" y="281" text-anchor="middle" class="s">extraction.py · OCR, fields, line items and dates · settlement.py · paid amount and deductions</text>
+<rect class="box worker" x="435" y="335" width="720" height="88"/><text x="795" y="369" text-anchor="middle" class="t green">Policy worker · mediguard/policy</text><text x="795" y="396" text-anchor="middle" class="s">policy_terms.py · candidate terms · policy_index.py · page-level clauses with BGE-small</text>
+<path class="line" d="M600 175 V330"/>
+<rect class="box supervisor" x="270" y="450" width="660" height="90"/><text x="600" y="486" text-anchor="middle" class="t purple">LangGraph Supervisor · pipeline.py</text><text x="600" y="514" text-anchor="middle" class="s">Deterministic router; runs automatically after upload and reviewer confirmation</text>
+<path class="line" d="M405 308 V445"/><path class="line" d="M795 423 V445"/>
+<rect class="box rules" x="80" y="570" width="500" height="90"/><text x="330" y="606" text-anchor="middle" class="t gold">Decision worker · rules.py + comparison.py</text><text x="330" y="634" text-anchor="middle" class="s">Decimal policy estimate · insurer comparison · Python owns verdict</text>
+<rect class="box report" x="620" y="570" width="500" height="90"/><text x="870" y="606" text-anchor="middle" class="t gold">Output worker · reporting/reports.py</text><text x="870" y="634" text-anchor="middle" class="s">Decision report · appeal draft only when discrepancy is supported</text>
+<path class="line" d="M500 540 V565"/><path class="line" d="M700 540 V555 H870 V565"/><path class="line" d="M580 615 H615"/>
+<!-- LLM and app -->
+<rect class="box assist" x="45" y="700" width="500" height="105"/><text x="295" y="736" text-anchor="middle" class="t green">Background Analysis Agent · analysis.py</text><text x="295" y="765" text-anchor="middle" class="s">Explains completed result; validates numbers and clauses</text><text x="295" y="787" text-anchor="middle" class="s">Template fallback · never returns status or amounts</text>
+<rect class="box assist" x="655" y="700" width="500" height="105"/><text x="905" y="736" text-anchor="middle" class="t green">Claimant Q&amp;A · ai/qa.py</text><text x="905" y="765" text-anchor="middle" class="s">Saved facts first · model only for unanswered question</text><text x="905" y="787" text-anchor="middle" class="s">Numbers and cited clauses validated · read-only</text>
+<path class="line" d="M330 660 V695"/><path class="line" d="M870 660 V695"/>
+<rect class="box supervisor" x="380" y="835" width="440" height="75"/><text x="600" y="866" text-anchor="middle" class="t purple">Single audited gateway · llm_gateway.py</text><text x="600" y="890" text-anchor="middle" class="s">Only active route to local Ollama; bounded, cached and logged</text>
+<path class="line" d="M295 805 V830 H460"/><path class="line" d="M905 805 V830 H740"/>
+<rect class="box input" x="450" y="935" width="300" height="65"/><text x="600" y="963" text-anchor="middle" class="t">Optional local Ollama</text><text x="600" y="987" text-anchor="middle" class="s">Explanation text only</text><path class="line" d="M600 910 V930"/>
+<rect class="box app" x="45" y="935" width="330" height="65"/><text x="210" y="963" text-anchor="middle" class="t gold">app.py + mediguard/ui</text><text x="210" y="987" text-anchor="middle" class="s">Claimant and reviewer screens</text>
+<path class="plain" d="M80 615 H25 V965 H40"/><path class="plain" d="M1120 615 H1175 V965 H760"/>
+<rect class="box store" x="825" y="935" width="330" height="65"/><text x="990" y="963" text-anchor="middle" class="t">Local storage</text><text x="990" y="987" text-anchor="middle" class="s">SQLite · uploaded files · Chroma index</text>
 </svg>

@@ -1,7 +1,20 @@
-# LLM safety check
+# LLM safety and usage
 
-The deterministic Python rules calculate payable amounts and the comparison engine determines the status and appeal gate. The LLM receives the completed result only to produce explanatory text. The application validates the model response and falls back to a fixed template if the model is down, times out, returns malformed content, or introduces unsupported numeric facts.
+The deterministic Python rules calculate payable amounts and the comparison engine determines status and appeal eligibility. The Analysis Agent receives a completed comparison only to produce explanatory text. Its output is checked and falls back to a fixed template if the model is unavailable, times out, returns malformed content, or introduces unsupported numeric facts. Model output never enters calculations, status, or appeal gates.
 
-The three fictional demo cases were run with Ollama off and with the local `ibm/granite4.1:8b` model available. For each case, the rules status, rule payable, comparison status, expected and actual patient share, difference, decision status, and appeal availability were identical between runs. Case A's explanation passed validation. Case B's generated explanation was rejected and the template was used. Case C stayed in manual review and did not call the model.
+The three fictional demo cases were run with Ollama off and with the local `ibm/granite4.1:8b` model available. Rules status, rule payable, comparison status, expected and actual patient share, difference, decision status, and appeal availability were identical. The three demo cases plus ten discrepancy cases passed the on/off decision and amount comparison **13/13**. See [the milestone log](10_MILESTONE_LOG.md) for the live request and validator outcome details.
 
-Automated checks cover unavailable model, timeout, malformed response, unsupported numbers, and no mutation of comparison amounts/status. The live parity record is in [the milestone log](10_MILESTONE_LOG.md). This verifies the prototype path and these fixtures only; it is not a general guarantee for every future prompt or model.
+## LLM usage table
+
+| Call site | Trigger | Calls | Validation | Fallback |
+|---|---|---:|---|---|
+| `mediguard/ai/analysis.py` — background Analysis Agent | After the deterministic pipeline finishes, when analysis is enabled and the comparison is eligible | At most 1 per unchanged claim-facts hash; manual-review results skip the call | Numbers must be in the Python result or supplied clauses; clause IDs and deduction assessments must match supplied evidence and Python comparison; model status/amounts are not consumed | Deterministic explanation template |
+| `mediguard/ai/qa.py` — claimant Q&A | User asks a question that deterministic saved facts cannot answer | 0 or 1 for that submitted question; no call without retrieved evidence | At most 80 words; every number must occur in supplied facts or clauses; cited clause IDs must be retrieved IDs | “I can't find that in this claim's documents.” |
+| `mediguard/ingestion/extraction.py` — extraction fallback | Only when `MEDIGUARD_LLM_EXTRACTION_FALLBACK=true`; off by default | 0 on the standard path | Parsed fields are schema-checked and flagged for review by the caller | Deterministic extraction and review flags |
+| `mediguard/policy/policy_terms.py` — policy-term fallback | Only when the extraction fallback flag is enabled and deterministic terms are insufficient | 0 on the standard path | Candidate terms remain unverified and require reviewer source-page confirmation | Deterministic term extraction and reviewer confirmation |
+| `mediguard/ingestion/settlement.py` — settlement fallback | Only when the extraction fallback flag is enabled and deterministic parsing cannot resolve the letter | 0 on the standard path | Parsed response is schema-checked; uncertain values remain review items | Deterministic settlement parsing and manual review |
+| Category suggester | Disabled by the labeled-accuracy evidence gate | 0 | Not enabled: BGE prototype score is 0/27, one additional label is outside the category set, and adversarial cases have no category labels | Reviewer edits category directly |
+
+Every active request uses the one gateway in `mediguard/ai/llm_gateway.py`; failures do not block the deterministic result. The system is a multi-agent workflow orchestrated by LangGraph with a deterministic Supervisor; it has one background LLM-assisted Analysis Agent, and Python decides every amount.
+
+Automated checks cover unavailable model, timeout, malformed response, unsupported numbers/citations, and no mutation of claim/comparison values. The live LLM evidence is from fictional synthetic cases only; it does not establish general model reliability.

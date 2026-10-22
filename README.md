@@ -27,7 +27,9 @@ More screens: [sign-in](docs/images/01-login.png) · [document upload](docs/imag
 - Calculates deterministic estimates with Python rules and compares the result with parsed settlement deductions.
 - Shows provisional results before reviewer confirmation and preserves review reasons for uncertain inputs.
 - Creates a watermarked provisional appeal draft only when a supported discrepancy is found.
-- Uses optional local Ollama explanations; the model cannot change calculations or decisions.
+- Uses a LangGraph Supervisor with four deterministic workers and one background LLM-assisted Analysis Agent; Python decides every amount and status.
+- Answers claimant questions from saved claim facts first; optional Ollama Q&A is evidence-checked and read-only.
+- Keeps category suggestions disabled because the labeled category evidence scored 0/27 and adversarial category labels are absent.
 
 ## How it works
 
@@ -106,6 +108,7 @@ Scores below are measured on 30 synthetic cases, not on real insurance claims. T
 | A visible amount, range, or specific review reason before confirmation | 30/30 |
 | Policy terms extracted from source PDFs | 210/210 |
 | Ollama on/off decision and amount equality | 13/13 (3 demo + 10 discrepancy cases) |
+| BGE category prototype evidence gate | 0/27 valid labeled items; disabled (not enough representative labels) |
 
 ## Project structure
 

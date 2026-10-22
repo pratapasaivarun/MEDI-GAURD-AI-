@@ -375,3 +375,13 @@ The upload matrix rejected an empty PDF, a `.txt` uploaded as a bill, and a 15 M
 **Expected output:** all tests pass, including deterministic-first, missing-evidence, unsupported-number, unsupported-clause, and read-only Q&A checks.
 
 **Observed output:** `279 passed, 3 skipped in 30.01s`. The deterministic-first, no-evidence, number/citation validation, and read-only checks passed.
+
+## Phase 7 — Architecture and LLM usage documentation
+
+**What changed:** Updated the architecture guide and SVG to show the deterministic LangGraph Supervisor, four deterministic workers, background Analysis Agent, on-demand Q&A, single Ollama gateway, and local data stores. Added the required LLM call-site/trigger/count/validation/fallback table. README and changelog now describe the same architecture and mark the category suggester disabled based on the measured gate.
+
+**Verify command:** `.venv\Scripts\python.exe -m pytest -q --basetemp=.pytest-temp-debug-phase7`
+
+**Expected output:** all tests pass; documentation names match the implemented call paths and no calculation code or expectations change.
+
+**Observed output:** `279 passed, 3 skipped in 30.38s`. No calculations or test expectations changed.

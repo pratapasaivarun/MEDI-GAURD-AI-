@@ -35,6 +35,7 @@ def test_ambiguous_dates_only_flag_when_admission_discharge_order_changes(monkey
 
 
 def test_valid_llm_fields_are_always_flagged_for_review(monkeypatch):
+    monkeypatch.setenv("MEDIGUARD_LLM_EXTRACTION_FALLBACK", "true")
     monkeypatch.setattr(extraction, "_llm_extract_claim_fallback", lambda _text: {
         "patient_name": "Ravi Reddy",
         "total_amount": 5000,
@@ -59,6 +60,7 @@ def test_llm_payload_validation_rejects_invalid_amounts_and_dates():
 
 
 def test_bill_text_is_marked_untrusted_in_llm_prompt(monkeypatch):
+    monkeypatch.setenv("MEDIGUARD_LLM_EXTRACTION_FALLBACK", "true")
     captured = {}
 
     class Response:

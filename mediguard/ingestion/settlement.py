@@ -238,7 +238,8 @@ def parse_settlement(file_bytes: bytes, filename: str) -> SettlementData:
         and copay is None
     )
     if not rows and not explicit_no_deductions and not payment_equals_bill_total and copay is None:
-        rows = _llm_deductions(text) or []
+        if llm_gateway.extraction_fallback_enabled():
+            rows = _llm_deductions(text) or []
         if rows:
             needs_review = True
             review_reasons.append("Deduction details were extracted by the language model and need confirmation.")

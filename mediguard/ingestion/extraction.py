@@ -706,7 +706,7 @@ def normalize_documents(documents: list[dict[str, Any]]) -> NormalizedClaim:
     # totals must remain Manual Review.
 
     temp_missing = [req for req in ("patient_name", "hospital_name", "total_amount") if getattr(claim, req) is None]
-    if (temp_missing or not claim.line_items) and all_text.strip():
+    if (temp_missing or not claim.line_items) and all_text.strip() and llm_gateway.extraction_fallback_enabled():
         llm_parsed = _llm_extract_claim_fallback(all_text)
         if llm_parsed and isinstance(llm_parsed, dict):
             if not claim.patient_name and llm_parsed.get("patient_name"):

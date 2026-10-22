@@ -10,6 +10,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from mediguard.ai import llm_gateway
 
 
+def test_extraction_fallback_is_opt_in(monkeypatch):
+    monkeypatch.delenv("MEDIGUARD_LLM_EXTRACTION_FALLBACK", raising=False)
+    assert llm_gateway.extraction_fallback_enabled() is False
+    monkeypatch.setenv("MEDIGUARD_LLM_EXTRACTION_FALLBACK", "TRUE")
+    assert llm_gateway.extraction_fallback_enabled() is True
+
+
 @contextmanager
 def fake_ollama(response_factory):
     state = {"calls": 0}

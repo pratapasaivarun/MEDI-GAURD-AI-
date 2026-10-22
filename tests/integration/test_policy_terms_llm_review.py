@@ -5,6 +5,7 @@ from mediguard.services import application as app
 
 
 def test_llm_policy_term_is_unverified_with_reduced_confidence(monkeypatch):
+    monkeypatch.setenv("MEDIGUARD_LLM_EXTRACTION_FALLBACK", "true")
     monkeypatch.setattr(
         policy_terms,
         "_llm_extract_policy_terms_fallback",

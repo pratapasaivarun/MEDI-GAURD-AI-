@@ -35,6 +35,16 @@ _response_cache: dict[tuple[str, str, str, str], tuple[str, str | None, Any, dic
 _metrics_lock = threading.Lock()
 
 
+def extraction_fallback_enabled() -> bool:
+    """Return whether unstructured document fields may use an LLM fallback.
+
+    Deterministic extraction remains the default. This flag applies only to
+    bill, policy-term, and settlement parsing fallbacks; explanation calls are
+    controlled separately by their own user/app settings.
+    """
+    return os.getenv("MEDIGUARD_LLM_EXTRACTION_FALLBACK", "false").strip().lower() == "true"
+
+
 def set_metrics_path(path: str | Path) -> None:
     """Set metrics output for the current process (primarily isolated evaluations)."""
     global METRICS_PATH

@@ -230,7 +230,8 @@ def extract_policy_terms(source: Any) -> dict[str, Any]:
             "method": "deterministic_regex",
         }
 
-    if any(terms.get(k) is None for k in ("annual_limit", "deductible", "copay_percent")):
+    if (any(terms.get(k) is None for k in ("annual_limit", "deductible", "copay_percent"))
+            and llm_gateway.extraction_fallback_enabled()):
         llm_terms = _llm_extract_policy_terms_fallback(rows)
         if llm_terms and isinstance(llm_terms, dict):
             src_name = rows[0].get("source_name", "policy") if rows else "policy"

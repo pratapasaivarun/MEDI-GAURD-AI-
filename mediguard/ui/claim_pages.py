@@ -98,9 +98,9 @@ def _claimant_result_for_claim(claim_id: str, user: dict) -> dict[str, Any] | No
     # explanatory text only; a recorded reviewer decision may supersede it.
     status = reviewer_decision["final_status"] if reviewer_decision else (rules or {}).get("status", "manual_review")
     claimant = (rules or {}).get("claimant_result") or {}
-    billed = float(claimant.get("amount_billed", 0) or 0)
     def optional_float(value):
         return float(value) if value is not None else None
+    billed = optional_float(claimant.get("amount_billed"))
     payable_raw = claimant.get("amount_covered", (rules or {}).get("payable_amount"))
     responsibility_raw = claimant.get("amount_claimant_pays", (rules or {}).get("claimant_responsibility"))
     covered = optional_float(payable_raw)
@@ -328,17 +328,24 @@ def _render_claimant_result(user: dict) -> None:
             _render_settlement_comparison(dict(claim), comparison, settlement, user, normalized, rules)
     else:
         st.info("Upload the insurer's settlement letter to compare it and enable a draft.")
-    _render_claim_assistant(claim_id, normalized, result, workflow)
+    _render_claim_assistant(claim_id, normalized, result, workflow, comparison, settlement)
     if st.button("Back to dashboard"):
         queue_page(st.session_state, "Dashboard"); st.rerun()
 
 
-def _render_claim_assistant(claim_id: str, normalized: dict[str, Any], result: dict[str, Any], workflow: dict[str, Any]) -> None:
+def _render_claim_assistant(
+    claim_id: str,
+    normalized: dict[str, Any],
+    result: dict[str, Any],
+    workflow: dict[str, Any],
+    comparison: Any = None,
+    settlement: Any = None,
+) -> None:
     """A claimant-facing, evidence-bounded question interface for one claim."""
     with st.container(border=True):
         st.subheader('💬 Ask about this claim', anchor=False)
         st.caption('Ask in plain language. Answers are grounded only in this claim’s documents and decision data. ✨')
-        _render_claim_assistant_chat(claim_id, normalized, result, workflow)
+        _render_claim_assistant_chat(claim_id, normalized, result, workflow, comparison, settlement)
 
 
 def _inr(value: Any) -> str:
@@ -524,46 +531,14 @@ def _render_settlement_comparison(
         st.info('No appeal draft is available because no possible settlement discrepancy was identified.')
 
 
-def _claim_answer_from_saved_data(question: str, result: dict[str, Any], normalized: dict[str, Any], evidence: list[dict[str, Any]]) -> str | None:
-    """Answer stable claim facts without depending on model availability."""
-    asked = question.lower().strip()
-    amount_words = ("how much", "amount", "claim got", "claim receive", "claim received", "payable", "paid", "payout", "covered", "insurance pay", "insurance cover")
-    if result.get("status") == "manual_review":
-        if any(word in asked for word in amount_words) or "deductible" in asked or "copay" in asked or "co-pay" in asked or any(word in asked for word in ("excluded", "not covered", "limited", "why", "review", "status")):
-            reason = str(result.get("reason") or "A source value could not be verified.")
-            return f"A coverage or payment estimate is not available yet. Reason: {reason} Next step: ask an authorized reviewer to check the named source value or document issue."
-    if any(word in asked for word in amount_words):
-        return (
-            f"The insurance-covered payable amount is {_inr(result.get('amount_covered'))}. "
-            f"The total bill is {_inr(result.get('amount_billed'))}, and the claimant responsibility is {_inr(result.get('amount_claimant_pays'))}."
-        )
-    if "deductible" in asked:
-        return f"The deductible is {_inr(result.get('deductible'))}. It is included in the claimant responsibility."
-    if "copay" in asked or "co-pay" in asked:
-        return f"The copayment is {_inr(result.get('copayment'))}. It is included in the claimant responsibility."
-    if any(word in asked for word in ("excluded", "not covered", "limited")):
-        return f"The excluded or policy-limited amount is {_inr(result.get('amount_excluded_or_limited'))}."
-    if any(word in asked for word in ("status", "approved", "decision", "result")):
-        status = _status_badge(str(result.get('status', 'manual_review')))
-        return f"The current claim status is {status}. {result.get('reason') or 'An authorized reviewer should confirm the final determination.'}"
-    if re.search(r"\bpatient\b", asked):
-        patient = normalized.get('patient_name', {})
-        patient = patient.get('value') if isinstance(patient, dict) else patient
-        return f"The claim patient is {patient}." if patient else None
-    if any(word in asked for word in ("hospital", "provider")):
-        hospital = normalized.get('hospital_name', {})
-        hospital = hospital.get('value') if isinstance(hospital, dict) else hospital
-        return f"The listed provider is {hospital}." if hospital else None
-    if any(word in asked for word in ("policy", "coverage", "waiting period", "room limit")) and evidence:
-        source = evidence[0]
-        clause = " ".join(str(source.get('text', '')).split())
-        citation = str(source.get('clause_id') or 'retrieved policy evidence')
-        if clause:
-            return f"The most relevant policy evidence ({citation}) says: {clause[:550]}"
-    return None
-
-
-def _render_claim_assistant_chat(claim_id: str, normalized: dict[str, Any], result: dict[str, Any], workflow: dict[str, Any]) -> None:
+def _render_claim_assistant_chat(
+    claim_id: str,
+    normalized: dict[str, Any],
+    result: dict[str, Any],
+    workflow: dict[str, Any],
+    comparison: Any = None,
+    settlement: Any = None,
+) -> None:
     """The interactive portion is kept separate to retain the result card structure."""
     history_key = f'claim_questions_{claim_id}'
     st.session_state.setdefault(history_key, [])
@@ -584,8 +559,15 @@ def _render_claim_assistant_chat(claim_id: str, normalized: dict[str, Any], resu
             evidence = workflow.get('policy_evidence') or retrieve_policy_evidence(saved_policy_text(claim_id), normalized, limit=3, query=question)
         except Exception:
             evidence = []
-        answer = _claim_answer_from_saved_data(question, result, normalized, evidence)
-        answer = _answer_claim_question(question, answer, result, evidence, claim_id)
+        answer = _answer_claim_question(
+            question,
+            result,
+            evidence,
+            claim_id,
+            normalized=normalized,
+            comparison=comparison,
+            settlement=settlement,
+        )
         st.write(answer)
     st.session_state[history_key].append({'role': 'assistant', 'content': answer})
 
@@ -950,5 +932,4 @@ def _render_claim_review(user: dict) -> None:
         if comparison and settlement:
             _render_settlement_comparison(dict(selected_claim), comparison, settlement, user, normalized, rules)
     st.caption('Decision support only. Final determination must be confirmed by an authorized reviewer.')
-
 

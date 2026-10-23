@@ -2,6 +2,7 @@ from types import SimpleNamespace
 
 from mediguard.services.orchestration import assess_claim
 from mediguard.services.storage import validate_upload
+from mediguard.ai import qa
 from mediguard.ui import claim_pages
 import pytest
 
@@ -69,15 +70,15 @@ def test_policy_reviewer_panel_lists_missing_terms_and_requires_source_pages():
 
 
 def test_claim_assistant_names_the_specific_manual_review_reason():
-    answer = claim_pages._claim_answer_from_saved_data(
+    answer = qa.answer_question(
         "Why is my claim under review?",
         {"status": "manual_review", "reason": "Co-payment percentage: page not identified; no reliable value is available."},
-        {}, [],
+        [],
+        "claim-1",
     )
     assert "Co-payment percentage" in answer
     assert "page not identified" in answer
-    assert "source value or document issue" in answer
-    assert "confirm the bill details and applicable policy terms first" not in answer
+    assert "authorized reviewer" in answer
 
 
 def test_reviewer_workspace_remembers_the_active_step_after_a_rerun(monkeypatch):

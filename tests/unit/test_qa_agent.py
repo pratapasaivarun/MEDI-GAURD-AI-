@@ -25,8 +25,8 @@ def test_qa_deterministic_answer_wins_without_calling_model_or_mutating_claim(mo
     result = {"status": "approved", "amount_covered": 12000}
     before = deepcopy(result)
     monkeypatch.setattr(qa.llm_gateway, "chat_json", lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("must not call model")))
-    answer = qa.answer_question("How much is covered?", "The covered amount is INR 12,000.00.", result, [], "claim-1")
-    assert answer == "The covered amount is INR 12,000.00."
+    answer = qa.answer_question("How much will insurance pay?", result, [], "claim-1")
+    assert answer == "The insurer payable estimate is INR 12,000.00."
     assert result == before
 
 
@@ -43,8 +43,9 @@ def test_qa_accepts_grounded_model_answer_and_keeps_claim_read_only(monkeypatch)
 
     response = Response()
     monkeypatch.setattr(qa.llm_gateway, "chat_json", lambda *_args, **_kwargs: response)
+    monkeypatch.setattr(qa.llm_gateway, "is_ollama_available", lambda **_kwargs: True)
     evidence = [{"clause_id": "4.2", "page": 3, "text": "Pharmacy charges are payable."}]
-    answer = qa.answer_question("Are pharmacy charges covered?", None, result, evidence, "claim-1")
+    answer = qa.answer_question("What does clause 4.2 say?", result, evidence, "claim-1")
     assert answer == response.parsed["answer"]
     assert response.finalized[0] is True
     assert result == before
@@ -64,5 +65,6 @@ def test_qa_ollama_offline_returns_safe_fallback(monkeypatch):
             pass
 
     monkeypatch.setattr(qa.llm_gateway, "chat_json", lambda *_args, **_kwargs: OfflineResponse())
-    answer = qa.answer_question("What does clause 4.2 say?", None, result, evidence, "claim-1")
+    monkeypatch.setattr(qa.llm_gateway, "is_ollama_available", lambda **_kwargs: True)
+    answer = qa.answer_question("What does clause 4.2 say?", result, evidence, "claim-1")
     assert answer == qa.NO_EVIDENCE_ANSWER

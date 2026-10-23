@@ -214,13 +214,13 @@ def test_zero_automatic_llm_calls_end_to_end(fake_ollama_service, monkeypatch):
     assert len(post_explain_requests) == 1, f"Clicking 'Explain with AI' must make exactly 1 LLM request (got {len(post_explain_requests)})"
 
     # 6. Q&A: deterministic question causes 0 LLM calls
-    det_ans = qa.answer_question("What is the status?", "The claim status is possible discrepancy.", {"status": "possible_discrepancy"}, [], claim_id)
-    assert det_ans == "The claim status is possible discrepancy."
+    det_ans = qa.answer_question("What is the status?", {"status": "possible_discrepancy"}, [], claim_id)
+    assert "possible_discrepancy" in det_ans
     assert len([r for r in server.requests if r["method"] == "POST"]) == 1, "Deterministic Q&A must make 0 additional LLM calls"
 
-    # Q&A: non-deterministic question (fallback to LLM) causes exactly 1 request
+    # Q&A: unmatched question uses the model only when it is available
     evidence = [{"clause_id": "4.2", "page": 3, "text": "Pharmacy charges are payable under the policy."}]
-    qa_ans = qa.answer_question("Are pharmacy charges covered?", None, {"status": "possible_discrepancy"}, evidence, claim_id)
+    qa_ans = qa.answer_question("What does clause 4.2 say?", {"status": "possible_discrepancy"}, evidence, claim_id)
     assert "Pharmacy charges are payable" in qa_ans
     post_qa_requests = [r for r in server.requests if r["method"] == "POST"]
     assert len(post_qa_requests) == 2, f"Fallback Q&A must make exactly 1 additional LLM request (total 2, got {len(post_qa_requests)})"

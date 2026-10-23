@@ -14,6 +14,7 @@ from types import SimpleNamespace
 import pytest
 import requests
 
+from mediguard.ai import qa
 from mediguard.services import application as app
 import mediguard.ingestion.extraction as extraction
 from mediguard.ai.agents import explain_comparison
@@ -121,7 +122,7 @@ def run_case(monkeypatch, tmp_path):
 
 
 @pytest.mark.parametrize("case_name", ["a_match", "b_wrongful_deduction", "c_manual_review"])
-def test_fictional_demo_case_runs_through_app_pipeline_with_ollama_off(run_case, case_name):
+def test_fictional_demo_case_runs_through_app_pipeline_with_ollama_off(run_case, case_name, monkeypatch):
     (manifest, normalized, rules, comparison, settlement, claim, explanation,
      ocr_evidence, provisional_rules, provisional_comparison) = run_case(case_name)
     expected = manifest["expected"]
@@ -137,6 +138,32 @@ def test_fictional_demo_case_runs_through_app_pipeline_with_ollama_off(run_case,
     assert normalized["patient_name"]["value"] == manifest["patient_name"]
     assert normalized["hospital_name"]["value"] == manifest["hospital_name"]
     assert normalized["policy_number"]["value"] == manifest["policy_number"]
+    monkeypatch.setattr(
+        qa, "answer_with_llm",
+        lambda *_args, **_kwargs: pytest.fail("A deterministic payable-breakdown intent must not call Ollama."),
+    )
+    qa_answer = qa.answer_question(
+        "Why do I have to pay INR 24,500 when the hospital bill is 47,000 "
+        "and I have insurance? Pasted note: see the attached statement.",
+        rules,
+        [],
+        manifest["case_id"],
+        normalized=normalized,
+        comparison=comparison,
+        settlement=settlement,
+    )
+    saved_claimant = rules["claimant_result"]
+    for key in (
+        "amount_claimant_pays",
+        "deductible",
+        "copayment",
+        "amount_excluded_or_limited",
+        "covered_before_cost_sharing",
+        "amount_covered",
+    ):
+        expected_amount = saved_claimant.get(key)
+        assert qa._money(expected_amount) in qa_answer
+    assert "cost-sharing, not rejected charges" in qa_answer
     if case_name == "c_manual_review":
         assert any(
             evidence.page == 2 for evidence in ocr_evidence
@@ -161,4 +188,3 @@ def test_fictional_demo_case_runs_through_app_pipeline_with_ollama_off(run_case,
         assert "PROVISIONAL DRAFT" in " ".join(p.text for p in Document(BytesIO(docx)).paragraphs)
     else:
         assert not app.appeal_draft_available(comparison)
-

@@ -172,7 +172,11 @@ def run_claimant_browser_suite() -> dict[str, Any]:
                 if field.input_value() in {"0", ""}:
                     field.fill("1")
             admin.get_by_role("button", name="Confirm all terms").click()
-            admin.get_by_text("Status: confirmed", exact=False).wait_for(timeout=30000)
+            try:
+                admin.get_by_text("Status: confirmed", exact=False).wait_for(timeout=5000)
+            except Exception:
+                admin.get_by_text(re.compile("POL-FICT-001.*policy.pdf")).click()
+                admin.get_by_text("Status: confirmed", exact=False).wait_for(timeout=30000)
             reviewer_shot = screenshots / "reviewer-policy-confirmed.png"
             admin.screenshot(path=str(reviewer_shot), full_page=True)
             claimant = pages["a_match"]

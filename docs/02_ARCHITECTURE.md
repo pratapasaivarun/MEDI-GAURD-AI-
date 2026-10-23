@@ -1,28 +1,45 @@
 # Architecture
 
-MediGuard is a LangGraph workflow with a deterministic Supervisor, four deterministic workers, and one LLM-assisted Analysis Agent. The Supervisor routes the claim stages automatically. Python rules determine every amount, status, and appeal gate; the optional model only provides checked explanation text.
+MediGuard AI is a LangGraph workflow of five deterministic agents (Supervisor, Document, Policy, Decision, Output) with an optional on-demand LLM explanation and Q&A; Python decides every amount. The Supervisor routes the claim stages automatically. Python rules determine every amount, status, and appeal gate; the optional model only provides checked explanation text.
 
 ```mermaid
 flowchart TD
-  B[Bill PDF or scan] --> D[Document worker\nextraction.py + settlement.py]
+  B[Bill PDF or scan] --> D[Document agent\nextraction.py + settlement.py]
   S[Settlement letter] --> D
-  P[Policy PDF] --> P1[Policy worker\npolicy_terms.py + policy_index.py]
+  P[Policy PDF] --> P1[Policy agent\npolicy_terms.py + policy_index.py]
   D --> G[LangGraph Supervisor\npipeline.py]
   P1 --> G
-  G --> E[Decision worker\nrules.py + comparison.py]
-  E --> O[Output worker\nreports.py + appeal gate]
-  O --> A[Background Analysis Agent\nanalysis.py]
+  G --> E[Decision agent\nrules.py + comparison.py]
+  E --> O[Output agent\nreports.py + appeal gate]
   O --> U[Streamlit pages\nclaimant + reviewer]
-  A --> U
-  U --> Q[On-demand Q&A fallback\nqa.py; deterministic first]
-  Q -->|single gateway| L[Local Ollama]
-  A -->|single gateway| L
+  U --> X[On-demand AI explanation\nagents.py + analysis.py]
+  U --> Q[On-demand Q&A assistant\nqa.py; deterministic first]
+  X -->|single gateway| L[Local Ollama]
+  Q -->|single gateway| L
   O --> DB[(SQLite + private local files)]
   P1 --> V[(Local Chroma index + BGE-small)]
 ```
 
 ![MediGuard architecture](architecture.svg)
 
-The document worker extracts bill fields, line items, dates, payment and deductions; OCR uses local Tesseract when installed. The policy worker extracts policy terms and indexes page-level clauses. The decision worker calls the existing Decimal-based Python rules and settlement comparison. The output worker stores the result and creates reports; a possible discrepancy can produce an appeal draft. The background Analysis Agent can explain the completed comparison, while claimant Q&A uses deterministic saved facts first and makes a checked model call only when those facts cannot answer. Category suggestions are disabled because labeled data did not clear the 90% evidence gate.
+The Document agent extracts bill fields, line items, dates, payment, and settlement deductions; OCR uses local Tesseract when installed. The Policy agent extracts policy terms and indexes page-level clauses with Chroma. The Decision agent executes Decimal-based deterministic Python rules and settlement comparison. The Output agent prepares structured results and creates appeal drafts for supported discrepancies. The optional on-demand AI explanation explains the completed comparison on user request, while claimant Q&A uses deterministic saved facts first and falls back to a grounded model query only when those facts cannot answer. Category suggestions are disabled because labeled data did not clear the 90% evidence gate.
 
-All active Ollama traffic goes through `mediguard/ai/llm_gateway.py`. SQLite stores claim, review, and background-job records; uploaded files and Chroma data remain in local storage. The deterministic result path does not require a remote service. The Streamlit entry point is [app.py](../app.py); see [03 Running the demo](03_RUNNING_THE_DEMO.md).
+### LLM usage
+
+All active Ollama traffic goes through `mediguard/ai/llm_gateway.py`. Python rules decide every amount, status, and appeal eligibility.
+
+| Call site | Trigger | Validation | Fallback |
+|---|---|---|---|
+| `extraction.py` (`_llm_extract_claim_fallback`) | Opt-in via `MEDIGUARD_LLM_EXTRACTION_FALLBACK=true` (default false) | Schema check, positive Decimal amounts | Manual review reason for missing fields |
+| `policy_terms.py` (`_llm_extract_policy_terms_fallback`) | Opt-in via `MEDIGUARD_LLM_EXTRACTION_FALLBACK=true` (default false) | Schema check, numeric range regex checks | Regex / keyword parsing |
+| `settlement.py` (`_llm_deductions`) | Opt-in via `MEDIGUARD_LLM_EXTRACTION_FALLBACK=true` (default false) | Schema check, deduction parser | Manual review reason for missing fields |
+| `agents.py` (`explain_comparison`) | User clicks "Explain with AI" on result screen | `validate_comparison_explanation` (grounded numbers & clause citations) | Rules template explanation |
+| `qa.py` (`answer_question`) | Claimant submits question not answered by saved claim facts | `validate_qa_output` (grounded numbers & retrieved clauses) | `"I can't find that in this claim's documents."` |
+
+### System limits
+
+- **Browser tests**: Interactive Playwright browser flows are run locally for evaluation and validation; they are not run in CI environments without GUI displays.
+- **LLM evaluation**: LLM safety and grounding evidence is evaluated on synthetic and adversarial benchmark cases, not real protected health information.
+- **Local compute**: Runs on local CPU via Ollama (`ibm/granite4.1:8b`); no external cloud LLM dependencies are required.
+
+The Streamlit entry point is [app.py](../app.py); see [03 Running the demo](03_RUNNING_THE_DEMO.md).

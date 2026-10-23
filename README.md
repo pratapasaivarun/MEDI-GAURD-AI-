@@ -27,7 +27,7 @@ More screens: [sign-in](docs/images/01-login.png) · [document upload](docs/imag
 - Calculates deterministic estimates with Python rules and compares the result with parsed settlement deductions.
 - Shows provisional results before reviewer confirmation and preserves review reasons for uncertain inputs.
 - Creates a watermarked provisional appeal draft only when a supported discrepancy is found.
-- Uses a LangGraph Supervisor with four deterministic workers and one background LLM-assisted Analysis Agent; Python decides every amount and status.
+- Uses a LangGraph workflow of five deterministic agents (Supervisor, Document, Policy, Decision, Output) with an optional on-demand LLM explanation and Q&A; Python decides every amount.
 - Answers claimant questions from saved claim facts first; optional Ollama Q&A is evidence-checked and read-only.
 - Keeps category suggestions disabled because the labeled category evidence scored 0/27 and adversarial category labels are absent.
 

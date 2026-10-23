@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1040" viewBox="0 0 1200 1040" role="img" aria-labelledby="title desc">
 <title id="title">MediGuard AI workflow architecture</title>
-<desc id="desc">A deterministic LangGraph Supervisor routes four deterministic workers. Python rules and comparison determine amounts and status. A background Analysis Agent and on-demand Q and A use one Ollama gateway only for checked explanations. Reports and reviewer screens use local data.</desc>
+<desc id="desc">A LangGraph workflow of five deterministic agents (Supervisor, Document, Policy, Decision, Output) with an optional on-demand LLM explanation and Q&amp;A; Python decides every amount. A single audited LLM gateway provides bounded, cached, and validated model requests.</desc>
 <defs>
   <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#91a6b7"/></marker>
   <style>

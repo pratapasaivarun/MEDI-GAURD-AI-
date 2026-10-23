@@ -22,7 +22,7 @@ flowchart TD
 
 ![MediGuard architecture](architecture.svg)
 
-The Document agent extracts bill fields, line items, dates, payment, and settlement deductions; OCR uses local Tesseract when installed. The Policy agent extracts policy terms and indexes page-level clauses with Chroma. The Decision agent executes Decimal-based deterministic Python rules and settlement comparison. The Output agent prepares structured results and creates appeal drafts for supported discrepancies. The optional on-demand AI explanation explains the completed comparison on user request, while claimant Q&A uses deterministic saved facts first and falls back to a grounded model query only when those facts cannot answer. Category suggestions are disabled because labeled data did not clear the 90% evidence gate.
+The Document agent extracts bill fields, line items, dates, payment, and settlement deductions; OCR uses local Tesseract when installed. The Policy agent extracts policy terms and indexes page-level clauses with Chroma. The Decision agent executes Decimal-based deterministic Python rules and settlement comparison. The Output agent prepares structured results and creates appeal drafts for supported discrepancies. The optional on-demand AI explanation explains the completed comparison on user request. Claimant Q&A classifies supported intents and builds answers only from saved decision data; only unmatched claim questions can use the optional, grounded model fallback. Category suggestions are disabled because labeled data did not clear the 90% evidence gate.
 
 ### LLM usage
 
@@ -36,7 +36,7 @@ All active Ollama traffic goes through `mediguard/ai/llm_gateway.py`. Python rul
 | `policy_terms.py` (`_llm_extract_policy_terms_fallback`) | Opt-in via `MEDIGUARD_LLM_EXTRACTION_FALLBACK=true` (default false) | Schema check, numeric range regex checks | Regex / keyword parsing |
 | `settlement.py` (`_llm_deductions`) | Opt-in via `MEDIGUARD_LLM_EXTRACTION_FALLBACK=true` (default false) | Schema check, deduction parser | Manual review reason for missing fields |
 | `agents.py` (`explain_comparison`) | User clicks "Explain with AI" on result screen | `validate_comparison_explanation` (grounded numbers & clause citations) | Rules template explanation |
-| `qa.py` (`answer_question`) | Claimant submits question not answered by saved claim facts | `validate_qa_output` (grounded numbers & retrieved clauses) | `"I can't find that in this claim's documents."` |
+| `qa.py` (`answer_question`) | Supported intents use saved decision data; only an unmatched claim question can trigger the optional fallback | Deterministic answers make 0 model calls; fallback checks model availability and validates numbers and retrieved clauses | Disabled/unavailable model: cannot answer from saved facts plus three example questions; failed model response: fixed safe answer |
 
 ### System limits
 

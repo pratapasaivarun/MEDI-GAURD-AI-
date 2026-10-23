@@ -25,9 +25,9 @@ Ground truth was committed before this evaluation run. The runner never writes t
 | ollama_decision_equality | n/a | 0/0 | 1.0 | NOT RUN |
 | fault_injection | 100.0% | 3/3 | 1.0 | PASS |
 | report_rules | 100.0% | 2/2 | 1.0 | PASS |
-| browser_e2e | n/a | 0/0 | 3 demo cases and 5 upload/error cases pass | NOT RUN |
+| browser_e2e | 100.0% | 8/8 | None | PASS |
 | security | 100.0% | 3/3 | 1.0 | PASS |
-| seconds_per_claim | 0.051957 s/claim | 30/30 | measured | MEASURED |
+| seconds_per_claim | 0.021811 s/claim | 30/30 | measured | MEASURED |
 
 ## Confusion matrix
 

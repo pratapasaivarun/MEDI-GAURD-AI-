@@ -48,3 +48,21 @@ def test_qa_accepts_grounded_model_answer_and_keeps_claim_read_only(monkeypatch)
     assert answer == response.parsed["answer"]
     assert response.finalized[0] is True
     assert result == before
+
+
+def test_qa_ollama_offline_returns_safe_fallback(monkeypatch):
+    result = {"status": "possible_discrepancy", "amount_covered": 9000}
+    evidence = [{"clause_id": "4.2", "page": 3, "text": "Pharmacy charges are payable."}]
+
+    class OfflineResponse:
+        ok = False
+        error = "Ollama offline"
+        status = "unavailable"
+        parsed = None
+
+        def finalize(self, accepted, reason, accepted_into):
+            pass
+
+    monkeypatch.setattr(qa.llm_gateway, "chat_json", lambda *_args, **_kwargs: OfflineResponse())
+    answer = qa.answer_question("What does clause 4.2 say?", None, result, evidence, "claim-1")
+    assert answer == qa.NO_EVIDENCE_ANSWER

@@ -228,7 +228,7 @@ def test_playwright_claimant_text_has_no_internal_codes_or_duplicate_term_issue(
 def test_playwright_only_wrongful_deduction_has_provisional_appeal_downloads(claimant_app):
     def check(page, labels):
         open_result(page, labels["b_wrongful_deduction"])
-        page.get_by_text("PROVISIONAL DRAFT", exact=False).wait_for(timeout=10000)
+        page.get_by_text("PROVISIONAL DRAFT", exact=False).first.wait_for(timeout=10000)
         pdf_button = page.get_by_role("button", name="Appeal letter (PDF)")
         docx_button = page.get_by_role("button", name="Appeal letter (Word)")
         pdf_button.wait_for(timeout=10000)

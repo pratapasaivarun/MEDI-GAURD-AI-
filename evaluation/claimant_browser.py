@@ -234,6 +234,7 @@ def run_claimant_browser_suite() -> dict[str, Any]:
                 uploader = page.get_by_label("Medical bill and supporting documents").locator("input[type=file]")
                 uploader.set_input_files(str(error_dir / filename))
                 page.get_by_text(filename, exact=True).wait_for(timeout=15000)
+                page.wait_for_timeout(750)
                 page.get_by_role("button", name="Save documents").click()
                 if case_name != "corrupted_pdf":
                     page.get_by_text("One or more files could not be saved", exact=False).wait_for(timeout=15000)

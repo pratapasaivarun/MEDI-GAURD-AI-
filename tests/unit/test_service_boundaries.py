@@ -87,6 +87,18 @@ def test_reviewer_workspace_remembers_the_active_step_after_a_rerun(monkeypatch)
     assert claim_pages._claim_review_tab_default("claim-1") == "5 · Compare settlement & draft letters"
 
 
+def test_reviewer_tabs_track_selection_across_streamlit_reruns(monkeypatch):
+    captured = {}
+    tabs = [object() for _ in range(5)]
+    monkeypatch.setattr(claim_pages, "st", SimpleNamespace(
+        session_state={},
+        tabs=lambda labels, **kwargs: captured.update(labels=labels, kwargs=kwargs) or tabs,
+    ))
+    assert claim_pages._claim_review_tabs("claim-1") is tabs
+    assert captured["kwargs"]["key"] == "claim_review_tabs_claim-1"
+    assert captured["kwargs"]["on_change"] == "rerun"
+
+
 def test_policy_link_picker_prefers_confirmed_matching_edition_when_none_linked():
     editions = [
         {"version_id": "claim-upload", "policy_number": "POL-FICT-001", "terms_review_status": "pending"},

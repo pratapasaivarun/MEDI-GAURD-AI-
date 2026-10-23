@@ -21,7 +21,8 @@ import requests
 
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "ibm/granite4.1:8b")
-OLLAMA_TIMEOUT = float(os.getenv("OLLAMA_TIMEOUT_SECONDS", "120"))
+OLLAMA_TIMEOUT = float(os.getenv("OLLAMA_TIMEOUT_SECONDS", "15"))
+OLLAMA_EXPLAIN_TIMEOUT = float(os.getenv("OLLAMA_EXPLAIN_TIMEOUT_SECONDS", "120"))
 OLLAMA_NUM_CTX = max(256, min(int(os.getenv("OLLAMA_NUM_CTX", "2048")), 8192))
 OLLAMA_NUM_THREAD = max(1, int(os.getenv("OLLAMA_NUM_THREAD", str(os.cpu_count() or 4))))
 OLLAMA_NUM_PREDICT = max(1, min(int(os.getenv("OLLAMA_NUM_PREDICT", "320")), 2048))
@@ -72,7 +73,8 @@ def current_claim_id() -> str | None:
 
 
 def _write_event(event: dict[str, Any]) -> None:
-    row = {"timestamp": time.time(), **event}
+    now = time.time()
+    row = {"ts": now, "timestamp": now, **event}
     try:
         METRICS_PATH.parent.mkdir(parents=True, exist_ok=True)
         with _metrics_lock, METRICS_PATH.open("a", encoding="utf-8") as handle:
@@ -161,10 +163,14 @@ class GatewayResult:
             "prompt_version": self.prompt_version,
             "status": self.status,
             "duration_seconds": round(self.elapsed_seconds, 6),
+            "duration_ms": round(self.elapsed_seconds * 1000.0, 2),
+            "prompt_eval_count": self.payload.get("prompt_eval_count") if isinstance(self.payload, dict) else None,
+            "eval_count": self.payload.get("eval_count") if isinstance(self.payload, dict) else None,
             "cache_hit": self.cache_hit,
             "accepted": bool(accepted),
             "accepted_into": accepted_into,
             "acceptance_reason": str(reason),
+            "reject_reason": str(reason) if not accepted else None,
             "error": self.error,
         })
     def _mark_cached(self, key: tuple[str, str, str, str], value: tuple[str, str | None, Any, dict[str, Any], str | None]) -> None:
@@ -346,13 +352,23 @@ def availability(timeout: float = 3.0, caller: str = "llm_gateway:availability")
             status, reason = "http_error", f"Ollama returned HTTP {response.status_code}"
     except requests.RequestException as exc:
         reason = f"Ollama unavailable: {type(exc).__name__}: {exc}"
+    elapsed = time.perf_counter() - started
     _write_event({"request_id": str(uuid.uuid4()), "claim_id": current_claim_id() or "application",
                   "caller": caller, "endpoint": "/api/tags",
                   "model": OLLAMA_MODEL, "prompt_version": "availability_v1",
-                  "status": status, "duration_seconds": round(time.perf_counter() - started, 6),
+                  "status": status, "duration_seconds": round(elapsed, 6),
+                  "duration_ms": round(elapsed * 1000.0, 2),
                   "accepted": status == "ok", "accepted_into": "availability check",
-                  "acceptance_reason": reason, "cache_hit": False})
+                  "acceptance_reason": reason,
+                  "reject_reason": reason if status != "ok" else None,
+                  "cache_hit": False})
     return status == "ok", reason
+
+
+def is_ollama_available(timeout: float = 3.0) -> bool:
+    """Convenience predicate: check if Ollama is running and has the model."""
+    ok, _ = availability(timeout=timeout, caller="llm_gateway:is_ollama_available")
+    return ok
 
 
 def warmup(timeout: float | None = None) -> GatewayResult:
@@ -360,3 +376,17 @@ def warmup(timeout: float | None = None) -> GatewayResult:
                          prompt_version="warmup_v1", timeout=timeout or OLLAMA_TIMEOUT,
                          num_predict=4, temperature=0.0, json_mode=False,
                          claim_id="application-startup")
+
+
+def warm_ollama(blocking: bool = False, timeout: float | None = None) -> None:
+    """Non-blocking warm-up in a daemon thread (or blocking if requested)."""
+    if blocking:
+        warmup(timeout=timeout)
+    else:
+        thread = threading.Thread(
+            target=warmup,
+            args=(timeout,),
+            name="mediguard-gateway-warmup",
+            daemon=True,
+        )
+        thread.start()

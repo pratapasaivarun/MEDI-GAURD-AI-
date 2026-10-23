@@ -176,3 +176,91 @@ def test_gateway_retries_transient_failure_at_most_once(tmp_path, monkeypatch):
         assert state["calls"] == 2
         result.finalize(True, "valid JSON", "output")
 
+
+def test_gateway_availability_and_convenience_function(tmp_path, monkeypatch):
+    monkeypatch.setattr(llm_gateway, "METRICS_PATH", tmp_path / "metrics.jsonl")
+
+    class TagsHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            raw = json.dumps({"models": [{"name": llm_gateway.OLLAMA_MODEL}]}).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(raw)))
+            self.end_headers()
+            self.wfile.write(raw)
+
+        def log_message(self, *_args):
+            return
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), TagsHandler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        host = f"http://127.0.0.1:{server.server_port}"
+        monkeypatch.setattr(llm_gateway, "OLLAMA_HOST", host)
+        assert llm_gateway.is_ollama_available() is True
+        ok, reason = llm_gateway.availability()
+        assert ok is True
+        assert "available" in reason
+        row = json.loads((tmp_path / "metrics.jsonl").read_text(encoding="utf-8").splitlines()[-1])
+        assert row["status"] == "ok"
+        assert row["duration_ms"] >= 0
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=1)
+
+
+def test_gateway_chat_json_logs_duration_ms_and_token_counts(tmp_path, monkeypatch):
+    response_payload = {
+        "message": {"role": "assistant", "content": '{"summary": "test passed"}'},
+        "prompt_eval_count": 42,
+        "eval_count": 18,
+    }
+
+    class ChatHandler(BaseHTTPRequestHandler):
+        def do_POST(self):
+            raw = json.dumps(response_payload).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(raw)))
+            self.end_headers()
+            self.wfile.write(raw)
+
+        def log_message(self, *_args):
+            return
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), ChatHandler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        host = f"http://127.0.0.1:{server.server_port}"
+        monkeypatch.setattr(llm_gateway, "OLLAMA_HOST", host)
+        monkeypatch.setattr(llm_gateway, "METRICS_PATH", tmp_path / "metrics.jsonl")
+        res = llm_gateway.chat_json("system msg", "user msg", caller="test:chat", prompt_version="chat_v1", timeout=2)
+        assert res.ok
+        assert res.parsed == {"summary": "test passed"}
+        res.finalize(True, "all checks passed", "test_output")
+        row = json.loads((tmp_path / "metrics.jsonl").read_text(encoding="utf-8").splitlines()[-1])
+        assert row["status"] == "ok"
+        assert row["duration_ms"] >= 0
+        assert row["ts"] > 0
+        assert row["prompt_eval_count"] == 42
+        assert row["eval_count"] == 18
+        assert row["accepted"] is True
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=1)
+
+
+def test_gateway_warm_ollama_nonblocking(monkeypatch):
+    called = []
+    monkeypatch.setattr(llm_gateway, "warmup", lambda *args, **kwargs: called.append(True) or llm_gateway.GatewayResult(
+        "id", "ok", "caller", "ver", "/api/generate", "model", 0.01, None
+    ))
+    llm_gateway.warm_ollama(blocking=False)
+    time.sleep(0.1)
+    assert len(called) == 1
+
+

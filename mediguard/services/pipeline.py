@@ -7,9 +7,13 @@ not become graph state.
 from __future__ import annotations
 
 from functools import lru_cache
+import logging
+import time
 from typing import Any, TypedDict
 
 from langgraph.graph import END, StateGraph
+
+logger = logging.getLogger(__name__)
 
 
 class ClaimPipelineState(TypedDict, total=False):
@@ -22,15 +26,22 @@ class ClaimPipelineState(TypedDict, total=False):
     settlement: Any
     appeal_eligible: bool
     analysis_job: str
+    node_timings: dict[str, float]
     result: dict[str, Any]
 
 
 def _build_graph(app_services: Any):
     def document_node(state: ClaimPipelineState) -> dict[str, Any]:
+        started = time.perf_counter()
         normalized = app_services.process_claim_documents(state["claim_id"], state["user_id"])
-        return {"normalized": normalized}
+        elapsed = round(time.perf_counter() - started, 4)
+        logger.info("Pipeline node 'document' completed in %.4fs", elapsed)
+        timings = dict(state.get("node_timings") or {})
+        timings["document"] = elapsed
+        return {"normalized": normalized, "node_timings": timings}
 
     def policy_node(state: ClaimPipelineState) -> dict[str, Any]:
+        started = time.perf_counter()
         audit_actor_id = state.get("audit_actor_id")
         if audit_actor_id:
             rules = app_services.evaluate_saved_claim(
@@ -38,35 +49,59 @@ def _build_graph(app_services: Any):
             )
         else:
             rules = app_services.evaluate_saved_claim(state["claim_id"], state["user_id"], state["normalized"])
-        return {"rules": rules}
+        elapsed = round(time.perf_counter() - started, 4)
+        logger.info("Pipeline node 'policy' completed in %.4fs", elapsed)
+        timings = dict(state.get("node_timings") or {})
+        timings["policy"] = elapsed
+        return {"rules": rules, "node_timings": timings}
 
     def decision_node(state: ClaimPipelineState) -> dict[str, Any]:
+        started = time.perf_counter()
         claim = app_services.get_user(state["user_id"])
         documents = app_services.claim_documents(state["claim_id"], claim)
+        timings = dict(state.get("node_timings") or {})
         if not any(document["document_type"] == "settlement" for document in documents):
-            return {}
+            elapsed = round(time.perf_counter() - started, 4)
+            logger.info("Pipeline node 'decision' skipped (no settlement letter) in %.4fs", elapsed)
+            timings["decision"] = elapsed
+            return {"node_timings": timings}
         comparison, settlement = app_services.run_settlement_comparison(
             state["claim_id"], state["user_id"], state["normalized"], state["rules"]
         )
-        return {"comparison": comparison, "settlement": settlement}
+        elapsed = round(time.perf_counter() - started, 4)
+        logger.info("Pipeline node 'decision' completed in %.4fs", elapsed)
+        timings["decision"] = elapsed
+        return {"comparison": comparison, "settlement": settlement, "node_timings": timings}
 
     def output_node(state: ClaimPipelineState) -> dict[str, Any]:
+        started = time.perf_counter()
         comparison = state.get("comparison")
         appeal_check = getattr(app_services, "appeal_draft_available", None)
         appeal_eligible = bool(comparison is not None and callable(appeal_check) and appeal_check(comparison))
         result: dict[str, Any] = {"normalized": state["normalized"], "rules": state["rules"]}
         if comparison is not None:
             result.update(comparison=comparison, settlement=state.get("settlement"))
-        return {"appeal_eligible": appeal_eligible, "result": result}
+        elapsed = round(time.perf_counter() - started, 4)
+        logger.info("Pipeline node 'output' completed in %.4fs", elapsed)
+        timings = dict(state.get("node_timings") or {})
+        timings["output"] = elapsed
+        return {"appeal_eligible": appeal_eligible, "result": result, "node_timings": timings}
 
     def enqueue_analysis_node(state: ClaimPipelineState) -> dict[str, Any]:
         # Phase 4 supplies this optional queue hook. Until then the pipeline
         # records that analysis is deferred and never starts a model call here.
+        started = time.perf_counter()
         enqueue = getattr(app_services, "enqueue_analysis_job", None)
+        timings = dict(state.get("node_timings") or {})
         if not callable(enqueue):
-            return {"analysis_job": "deferred"}
+            elapsed = round(time.perf_counter() - started, 4)
+            timings["enqueue_analysis"] = elapsed
+            return {"analysis_job": "deferred", "node_timings": timings}
         job_id = enqueue(state["claim_id"], state["user_id"], state["result"])
-        return {"analysis_job": str(job_id or "queued")}
+        elapsed = round(time.perf_counter() - started, 4)
+        logger.info("Pipeline node 'enqueue_analysis' completed in %.4fs", elapsed)
+        timings["enqueue_analysis"] = elapsed
+        return {"analysis_job": str(job_id or "queued"), "node_timings": timings}
 
     graph = StateGraph(ClaimPipelineState)
     graph.add_node("document", document_node)

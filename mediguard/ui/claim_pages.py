@@ -2,9 +2,11 @@
 
 from mediguard.services import application as _app
 globals().update(vars(_app))
+import hashlib
+import json
 import logging
 from mediguard.services.orchestration import assess_claim
-from mediguard.ai.agents import comparison_template_explanation
+from mediguard.ai.agents import comparison_template_explanation, explain_comparison
 from mediguard.ai.qa import answer_question as _answer_claim_question
 from mediguard.ui.navigation import queue_page
 
@@ -31,6 +33,16 @@ def _remember_claim_review_tab(claim_id: str, tab_index: int) -> None:
 def _claim_review_tab_default(claim_id: str) -> str:
     selected = st.session_state.get(_claim_review_tab_key(claim_id))
     return selected if selected in _CLAIM_REVIEW_TAB_LABELS else _CLAIM_REVIEW_TAB_LABELS[0]
+
+
+def _claim_review_tabs(claim_id: str):
+    """Create tracked tabs so a selected review step survives Streamlit reruns."""
+    return st.tabs(
+        _CLAIM_REVIEW_TAB_LABELS,
+        default=_claim_review_tab_default(claim_id),
+        key=f"claim_review_tabs_{claim_id}",
+        on_change="rerun",
+    )
 
 
 def _policy_edition_default_index(editions, linked_id: str | None, claim_policy_number: str | None) -> int:
@@ -484,12 +496,42 @@ def _render_settlement_comparison(
     explanation = None
     if comparison.status != 'manual_review':
         explanation = comparison_template_explanation(comparison)
-        if user and claim.get("claim_id"):
-            _render_background_analysis(str(claim["claim_id"]), str(user["user_id"]), str(user["role"]), comparison)
-        else:
-            with st.container(border=True):
-                st.markdown('#### What the comparison means')
-                st.write(explanation)
+        claim_id = str(claim.get("claim_id") or "")
+        with st.container(border=True):
+            st.markdown('#### What the comparison means')
+            st.write(explanation)
+            if claim_id:
+                facts_str = json.dumps({
+                    "status": str(comparison.status),
+                    "expected": str(comparison.expected_insurer_payment),
+                    "actual": str(comparison.actual_insurer_payment),
+                    "diff": str(comparison.possible_difference),
+                    "cats": [(r.category, str(r.insurer_deducted), str(r.difference)) for r in comparison.categories],
+                }, sort_keys=True)
+                facts_hash = hashlib.sha256(facts_str.encode("utf-8")).hexdigest()[:16]
+                cache_key = f"ai_explanation_{claim_id}_{facts_hash}"
+                ai_text = st.session_state.get(cache_key)
+                if ai_text is not None:
+                    st.markdown("---")
+                    st.markdown("##### AI Explanation (Advisory)")
+                    st.write(ai_text)
+                    st.caption("AI-generated explanation — advisory only. All amounts and decisions are determined by deterministic rules.")
+                else:
+                    if st.button("Explain with AI", key=f"btn_explain_ai_{claim_id}"):
+                        with st.spinner("Generating AI explanation..."):
+                            generated = explain_comparison(comparison, use_llm=True, claim_id=claim_id)
+                            st.session_state[cache_key] = generated
+                            st.rerun()
+        if user and user.get("role") in {"reviewer", "admin"} and claim_id:
+            job = claim_analysis_job(claim_id, str(user.get("user_id", "")))
+            if job and job.get("deductions"):
+                with st.expander("Reviewer deduction analysis"):
+                    st.dataframe([{
+                        "Deduction": row.get("deduction_id"),
+                        "Assessment": row.get("assessment"),
+                        "Clause": row.get("clause_id") or "No supporting clause identified",
+                        "Rationale": row.get("rationale"),
+                    } for row in job["deductions"]], hide_index=True)
     if appeal_draft_available(comparison):
         st.markdown('#### Review documents')
         provisional_appeal = bool(rules and rules.get("policy_terms_review_status") == "provisional")
@@ -741,7 +783,7 @@ def _render_claim_review(user: dict) -> None:
                 reviewer_rules = None
     if reviewer_rules:
         _render_policy_terms_badge(reviewer_rules.get("policy_terms_review_status"))
-    tabs = st.tabs(_CLAIM_REVIEW_TAB_LABELS, default=_claim_review_tab_default(claim_id))
+    tabs = _claim_review_tabs(claim_id)
     with tabs[0]:
         st.markdown('### Your review path')
         path_columns = st.columns(4, gap='small')

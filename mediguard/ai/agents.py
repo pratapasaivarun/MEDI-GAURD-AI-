@@ -1,10 +1,9 @@
-"""LangGraph agents used after document preprocessing.
+"""LangGraph workflow of five deterministic agents (Supervisor, Document, Policy, Decision, Output) with an optional on-demand LLM explanation and Q&A; Python decides every amount.
 
-The workflow is Document Processing → Supervisor → Policy Agent → Rule Engine
-→ Decision Agent. The Policy Agent retrieves policy evidence only, the Rule
-Engine calculates deterministic outcomes, and the Decision Agent uses the LLM
-to explain the rule result and format the output. Document extraction has no
-LLM fallback.
+The Policy Agent retrieves policy evidence only, the Rule Engine calculates
+deterministic outcomes, and the Decision Agent forwards the deterministic
+rule result. An optional on-demand LLM explanation is available on the result
+screen; document extraction has no automatic LLM fallback.
 """
 from __future__ import annotations
 
@@ -252,23 +251,62 @@ def validate_comparison_explanation(text: str, comparison: ComparisonResult) -> 
 
 
 def explain_comparison(comparison: ComparisonResult, use_llm: bool = True, claim_id: str | None = None) -> str:
-    """Return the immediate deterministic explanation template.
+    """Explain fixed comparison facts; invalid model text is discarded."""
+    fallback = comparison_template_explanation(comparison)
+    if not use_llm or comparison.status == "manual_review":
+        return fallback
+    categories = [
+        {
+            "category": row.category,
+            "insurer_deducted": str(row.insurer_deducted),
+            "engine_disallowed": str(row.engine_disallowed),
+            "difference": str(row.difference),
+            "status": row.status,
+            "payout_effect": str(row.payout_effect),
+            "clause": row.clause.text if row.clause else None,
+            "page": row.clause.page if row.clause else None,
+        }
+        for row in comparison.categories
+    ]
+    prompt = {
+        "status": comparison.status,
+        "expected_patient_share": str(comparison.expected_patient_share),
+        "actual_patient_share": str(comparison.actual_patient_share),
+        "possible_difference": str(comparison.possible_difference),
+        "categories": categories,
+    }
+    schema = {"type": "object", "properties": {"explanation": {"type": "string"}}, "required": ["explanation"]}
+    explain_timeout = getattr(llm_gateway, "OLLAMA_EXPLAIN_TIMEOUT", 120.0)
+    try:
+        data = _ollama_json(
+            "Explain this health insurance settlement comparison concisely. State the difference if any, the reason from the policy clauses provided, and whether the policyholder should appeal. Never contradict the numbers in the prompt.",
+            json.dumps(prompt),
+            list_key="explanation",
+            agent_name="comparison_explainer",
+            response_schema=schema,
+            claim_id=claim_id,
+            timeout=explain_timeout,
+            acceptance_validator=lambda parsed: (
+                validate_comparison_explanation(str(parsed.get("explanation") or ""), comparison),
+                "Explanation numbers and citations validated",
+            ),
+        )
+        explanation = str(data.get("explanation") or "").strip()
+        if validate_comparison_explanation(explanation, comparison):
+            return explanation
+    except Exception:
+        pass
+    return fallback
 
-    Kept as a compatibility name for reports/evaluations. Automatic model
-    analysis is queued separately and never runs during a Streamlit rerun.
-    """
-    del use_llm, claim_id
-    return comparison_template_explanation(comparison)
 
-
-def _ollama_json(system: str, prompt: str, list_key: str = "items", agent_name: str = "unknown", response_schema: dict[str, Any] | None = None, *, caller: str | None = None, prompt_version: str | None = None, acceptance_validator: Callable[[dict[str, Any]], tuple[bool, str]] | None = None, claim_id: str | None = None) -> dict[str, Any]:
+def _ollama_json(system: str, prompt: str, list_key: str = "items", agent_name: str = "unknown", response_schema: dict[str, Any] | None = None, *, caller: str | None = None, prompt_version: str | None = None, acceptance_validator: Callable[[dict[str, Any]], tuple[bool, str]] | None = None, claim_id: str | None = None, timeout: Any = None) -> dict[str, Any]:
     started = time.perf_counter()
     prompt_chars = len(system) + len(prompt)
     prompt_token_estimate = max(1, round(prompt_chars / 4))
     result = llm_gateway.chat_json(
         system, prompt, caller=caller or f"agents.py:{agent_name}",
         prompt_version=prompt_version or f"{agent_name}_v1", schema=response_schema,
-        model=OLLAMA_MODEL, timeout=(5, OLLAMA_TIMEOUT), num_predict=OLLAMA_NUM_PREDICT,
+        model=OLLAMA_MODEL, timeout=timeout or (5, OLLAMA_TIMEOUT), num_predict=OLLAMA_NUM_PREDICT,
         num_ctx=OLLAMA_NUM_CTX, num_thread=OLLAMA_NUM_THREAD, keep_alive=OLLAMA_KEEP_ALIVE,
         temperature=0.0, claim_id=claim_id,
     )

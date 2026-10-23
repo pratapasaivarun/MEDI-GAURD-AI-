@@ -389,39 +389,6 @@ def appeal_draft_available(comparison: Any) -> bool:
     return comparison is not None and getattr(comparison, "status", None) == "possible_discrepancy"
 
 
-@st.fragment(run_every="2s")
-def _render_background_analysis(claim_id: str, user_id: str, role: str, comparison) -> None:
-    """Poll persisted analysis only; reruns never make model requests."""
-    job = claim_analysis_job(claim_id, user_id)
-    explanation = (job or {}).get("explanation") or comparison_template_explanation(comparison)
-    with st.container(border=True):
-        st.markdown('#### What the comparison means')
-        st.write(explanation)
-        if not job or job["status"] in {"queued", "running"}:
-            st.caption('Optional explanation is being prepared in the background. The Python calculation above is already available.')
-        elif job["status"] == "fallback":
-            st.caption('Showing the rules-based explanation because optional analysis was unavailable or did not pass checks.')
-        if role in {"reviewer", "admin"} and job and job.get("deductions"):
-            st.markdown('#### Reviewer-only deduction analysis')
-            st.dataframe([{
-                "Deduction": row.get("deduction_id"),
-                "Assessment": row.get("assessment"),
-                "Clause": row.get("clause_id") or "No supporting clause identified",
-                "Rationale": row.get("rationale"),
-            } for row in job["deductions"]], hide_index=True)
-        candidate = (job or {}).get("reviewer_candidate")
-        if role in {"reviewer", "admin"} and candidate:
-            st.warning('The optional analysis disagreed with the Python comparison and is shown only for reviewer assessment.')
-            with st.expander('Reviewer-only conflicting analysis'):
-                st.write(candidate.get("explanation", ""))
-                if candidate.get("deductions"):
-                    st.dataframe([{
-                        "Deduction": row.get("deduction_id"),
-                        "Assessment": row.get("assessment"),
-                        "Clause": row.get("clause_id") or "No supporting clause identified",
-                        "Rationale": row.get("rationale"),
-                    } for row in candidate["deductions"]], hide_index=True)
-
 
 def needs_bill_total_confirmation(settlement: SettlementData) -> bool:
     return any(
@@ -524,14 +491,15 @@ def _render_settlement_comparison(
                             st.rerun()
         if user and user.get("role") in {"reviewer", "admin"} and claim_id:
             job = claim_analysis_job(claim_id, str(user.get("user_id", "")))
-            if job and job.get("deductions"):
+            deductions = (job or {}).get("deductions") or []
+            if deductions:
                 with st.expander("Reviewer deduction analysis"):
                     st.dataframe([{
                         "Deduction": row.get("deduction_id"),
                         "Assessment": row.get("assessment"),
                         "Clause": row.get("clause_id") or "No supporting clause identified",
                         "Rationale": row.get("rationale"),
-                    } for row in job["deductions"]], hide_index=True)
+                    } for row in deductions], hide_index=True)
     if appeal_draft_available(comparison):
         st.markdown('#### Review documents')
         provisional_appeal = bool(rules and rules.get("policy_terms_review_status") == "provisional")

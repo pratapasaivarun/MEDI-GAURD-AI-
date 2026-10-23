@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1040" viewBox="0 0 1200 1040" role="img" aria-labelledby="title desc">
 <title id="title">MediGuard AI workflow architecture</title>
-<desc id="desc">A LangGraph workflow of five deterministic agents (Supervisor, Document, Policy, Decision, Output) with an optional on-demand LLM explanation and Q&amp;A; Python decides every amount. A single audited LLM gateway provides bounded, cached, and validated model requests.</desc>
+<desc id="desc">A LangGraph workflow of five deterministic agents (Supervisor, Document, Policy, Decision, Output) with zero automatic LLM calls by default; optional on-demand LLM explanation and Q&amp;A; Python decides every amount. A single audited LLM gateway provides bounded, cached, and validated model requests.</desc>
 <defs>
   <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#91a6b7"/></marker>
   <style>
@@ -25,7 +25,7 @@
 <rect class="box report" x="620" y="570" width="500" height="90"/><text x="870" y="606" text-anchor="middle" class="t gold">Output worker · reporting/reports.py</text><text x="870" y="634" text-anchor="middle" class="s">Decision report · appeal draft only when discrepancy is supported</text>
 <path class="line" d="M500 540 V565"/><path class="line" d="M700 540 V555 H870 V565"/><path class="line" d="M580 615 H615"/>
 <!-- LLM and app -->
-<rect class="box assist" x="45" y="700" width="500" height="105"/><text x="295" y="736" text-anchor="middle" class="t green">Background Analysis Agent · analysis.py</text><text x="295" y="765" text-anchor="middle" class="s">Explains completed result; validates numbers and clauses</text><text x="295" y="787" text-anchor="middle" class="s">Template fallback · never returns status or amounts</text>
+<rect class="box assist" x="45" y="700" width="500" height="105"/><text x="295" y="736" text-anchor="middle" class="t green">Optional Background Analysis Agent · analysis.py</text><text x="295" y="765" text-anchor="middle" class="s">Off by default (MEDIGUARD_ANALYSIS_ENABLED=false)</text><text x="295" y="787" text-anchor="middle" class="s">Validates numbers &amp; clauses · never alters amounts</text>
 <rect class="box assist" x="655" y="700" width="500" height="105"/><text x="905" y="736" text-anchor="middle" class="t green">Claimant Q&amp;A · ai/qa.py</text><text x="905" y="765" text-anchor="middle" class="s">Saved facts first · model only for unanswered question</text><text x="905" y="787" text-anchor="middle" class="s">Numbers and cited clauses validated · read-only</text>
 <path class="line" d="M330 660 V695"/><path class="line" d="M870 660 V695"/>
 <rect class="box supervisor" x="380" y="835" width="440" height="75"/><text x="600" y="866" text-anchor="middle" class="t purple">Single audited gateway · llm_gateway.py</text><text x="600" y="890" text-anchor="middle" class="s">Only active route to local Ollama; bounded, cached and logged</text>

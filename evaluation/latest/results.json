@@ -1,7 +1,7 @@
 {
   "label": "FICTIONAL SAMPLE \u2014 hand-calculated before evaluation",
   "validated_on": "30 synthetic cases",
-  "created_at": "2026-10-22T23:28:21+0530",
+  "created_at": "2026-10-23T13:06:03+0530",
   "case_count": 30,
   "group_counts": {
     "match": 10,
@@ -1617,74 +1617,21 @@
       "target": 0.0
     },
     "llm_number_grounding": {
-      "numerator": 6,
-      "denominator": 6,
-      "score": 1.0,
-      "pass": true
-    },
-    "ollama_decision_equality": {
-      "numerator": 3,
-      "denominator": 3,
+      "numerator": 4,
+      "denominator": 4,
       "score": 1.0,
       "target": 1.0,
       "pass": true,
-      "model": "ibm/granite4.1:8b",
-      "llm_calls": [
-        {
-          "caller": "analysis.py:analyze_payload",
-          "claim_id": "a_match",
-          "prompt_version": "analysis_v1"
-        },
-        {
-          "caller": "analysis.py:analyze_payload",
-          "claim_id": "b_wrongful_deduction",
-          "prompt_version": "analysis_v1"
-        }
-      ],
-      "case_results": [
-        {
-          "case": "a_match",
-          "status": "no_discrepancy",
-          "expected_insurer_payment": "22500",
-          "actual_insurer_payment": "22500",
-          "possible_difference": "0",
-          "off_explanation": "The insurer deductions match the deterministic policy calculation based on the documents provided. This remains an estimate for reviewer confirmation.",
-          "on_explanation": "The insurer deductions match the deterministic policy calculation based on the documents provided. This remains an estimate for reviewer confirmation.",
-          "analysis_accepted": false,
-          "comparison_unchanged": true,
-          "both_explanations_number_grounded": true
-        },
-        {
-          "case": "b_wrongful_deduction",
-          "status": "possible_discrepancy",
-          "expected_insurer_payment": "22500",
-          "actual_insurer_payment": "19800",
-          "possible_difference": "2700",
-          "off_explanation": "The documents show a possible difference of INR 2,700.00. The investigation deduction of INR 3,000.00 is greater than the amount supported by the deterministic rules. The supporting clause is on page 1. Please ask an authorized reviewer to confirm the documents and calculation.",
-          "on_explanation": "The documents show a possible difference of INR 2,700.00. The investigation deduction of INR 3,000.00 is greater than the amount supported by the deterministic rules. The supporting clause is on page 1. Please ask an authorized reviewer to confirm the documents and calculation.",
-          "analysis_accepted": false,
-          "comparison_unchanged": true,
-          "both_explanations_number_grounded": true
-        },
-        {
-          "case": "c_manual_review",
-          "status": "manual_review",
-          "expected_insurer_payment": "22500",
-          "actual_insurer_payment": "22500",
-          "possible_difference": "-1000",
-          "off_explanation": "An authorized reviewer must confirm the settlement values and supporting policy evidence before this comparison can be relied on.",
-          "on_explanation": "An authorized reviewer must confirm the settlement values and supporting policy evidence before this comparison can be relied on.",
-          "analysis_accepted": false,
-          "comparison_unchanged": true,
-          "both_explanations_number_grounded": true
-        }
-      ],
-      "number_grounding": {
-        "numerator": 6,
-        "denominator": 6,
-        "score": 1.0,
-        "pass": true
-      }
+      "note": "Focused LLM safety tests reject fabricated numbers and preserve comparison facts."
+    },
+    "ollama_decision_equality": {
+      "numerator": 0,
+      "denominator": 0,
+      "score": null,
+      "target": 1.0,
+      "pass": null,
+      "status": "NOT RUN",
+      "reason": "Live Ollama comparison is recorded separately from the deterministic run."
     },
     "fault_injection": {
       "numerator": 3,
@@ -1721,7 +1668,7 @@
     },
     "seconds_per_claim": {
       "denominator": 30,
-      "mean_seconds": 0.022547393336814516
+      "mean_seconds": 0.05195696333394153
     }
   },
   "confusion_matrix": {
@@ -1776,7 +1723,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.2233169000246562
+      "seconds": 0.27039420000073733
     },
     {
       "case_id": "match_02",
@@ -1802,7 +1749,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.024333600013051182
+      "seconds": 0.04994690000603441
     },
     {
       "case_id": "match_03",
@@ -1838,7 +1785,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.013614700001198798
+      "seconds": 0.03908410000440199
     },
     {
       "case_id": "match_04",
@@ -1874,7 +1821,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.012067999981809407
+      "seconds": 0.0355414000005112
     },
     {
       "case_id": "match_05",
@@ -1910,7 +1857,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.013676400005351752
+      "seconds": 0.03310580000106711
     },
     {
       "case_id": "match_06",
@@ -1936,7 +1883,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.012951800017617643
+      "seconds": 0.03277389999857405
     },
     {
       "case_id": "match_07",
@@ -1972,7 +1919,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.03818129998398945
+      "seconds": 0.03471559999888996
     },
     {
       "case_id": "match_08",
@@ -2008,7 +1955,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.013157500012312084
+      "seconds": 0.03818200000387151
     },
     {
       "case_id": "match_09",
@@ -2044,7 +1991,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.013263100001495332
+      "seconds": 0.04134939999494236
     },
     {
       "case_id": "match_10",
@@ -2080,7 +2027,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.015180199989117682
+      "seconds": 0.036672900001576636
     },
     {
       "case_id": "discrepancy_01",
@@ -2116,7 +2063,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.013034100004006177
+      "seconds": 0.05244880000100238
     },
     {
       "case_id": "discrepancy_02",
@@ -2152,7 +2099,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.013124699995387346
+      "seconds": 0.04391079999913927
     },
     {
       "case_id": "discrepancy_03",
@@ -2188,7 +2135,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.03338670002995059
+      "seconds": 0.05624839999654796
     },
     {
       "case_id": "discrepancy_04",
@@ -2224,7 +2171,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.016281699994578958
+      "seconds": 0.05721260000427719
     },
     {
       "case_id": "discrepancy_05",
@@ -2260,7 +2207,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.015910600021015853
+      "seconds": 0.0471797999998671
     },
     {
       "case_id": "discrepancy_06",
@@ -2296,7 +2243,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.013715100008994341
+      "seconds": 0.04855890000180807
     },
     {
       "case_id": "discrepancy_07",
@@ -2332,7 +2279,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.014152700023259968
+      "seconds": 0.04629720000230009
     },
     {
       "case_id": "discrepancy_08",
@@ -2368,7 +2315,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.027601199981290847
+      "seconds": 0.045896299998275936
     },
     {
       "case_id": "discrepancy_09",
@@ -2404,7 +2351,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.010494599991943687
+      "seconds": 0.04524350000428967
     },
     {
       "case_id": "discrepancy_10",
@@ -2440,7 +2387,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.01299949997337535
+      "seconds": 0.04590160000225296
     },
     {
       "case_id": "manual_01",
@@ -2470,7 +2417,7 @@
         "Settlement amount paid was not identified."
       ],
       "cause": "match",
-      "seconds": 0.011329300003126264
+      "seconds": 0.04781479999655858
     },
     {
       "case_id": "manual_02",
@@ -2502,7 +2449,7 @@
         "Settlement claim reference does not match the case reference."
       ],
       "cause": "match",
-      "seconds": 0.012747999979183078
+      "seconds": 0.048811600005137734
     },
     {
       "case_id": "manual_03",
@@ -2534,7 +2481,7 @@
         "Settlement totals do not reconcile within INR 1."
       ],
       "cause": "match",
-      "seconds": 0.012298399989958853
+      "seconds": 0.04371800000080839
     },
     {
       "case_id": "manual_04",
@@ -2564,7 +2511,7 @@
         "Settlement totals do not reconcile within INR 1."
       ],
       "cause": "match",
-      "seconds": 0.01299980003386736
+      "seconds": 0.04441729999962263
     },
     {
       "case_id": "manual_05",
@@ -2594,7 +2541,7 @@
         "Conflicting settlement amounts paid were found."
       ],
       "cause": "match",
-      "seconds": 0.01436270005069673
+      "seconds": 0.03993669999908889
     },
     {
       "case_id": "edge_01",
@@ -2630,7 +2577,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.013018199999351054
+      "seconds": 0.042736399998830166
     },
     {
       "case_id": "edge_02",
@@ -2660,7 +2607,7 @@
         "total_amount_missing_or_invalid"
       ],
       "cause": "match",
-      "seconds": 0.012126000015996397
+      "seconds": 0.04488069999933941
     },
     {
       "case_id": "edge_03",
@@ -2686,7 +2633,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.010851399973034859
+      "seconds": 0.04636179999943124
     },
     {
       "case_id": "edge_04",
@@ -2730,7 +2677,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.013483799993991852
+      "seconds": 0.054296700000122655
     },
     {
       "case_id": "edge_05",
@@ -2766,7 +2713,7 @@
       "rule_warnings": [],
       "comparison_reasons": [],
       "cause": "match",
-      "seconds": 0.012759800010826439
+      "seconds": 0.04507079999893904
     }
   ],
   "extraction_cases": [
@@ -4984,72 +4931,7 @@
       "first_relevant_rank": 1
     }
   ],
-  "live_checks": {
-    "ollama": {
-      "numerator": 3,
-      "denominator": 3,
-      "score": 1.0,
-      "target": 1.0,
-      "pass": true,
-      "model": "ibm/granite4.1:8b",
-      "llm_calls": [
-        {
-          "caller": "analysis.py:analyze_payload",
-          "claim_id": "a_match",
-          "prompt_version": "analysis_v1"
-        },
-        {
-          "caller": "analysis.py:analyze_payload",
-          "claim_id": "b_wrongful_deduction",
-          "prompt_version": "analysis_v1"
-        }
-      ],
-      "case_results": [
-        {
-          "case": "a_match",
-          "status": "no_discrepancy",
-          "expected_insurer_payment": "22500",
-          "actual_insurer_payment": "22500",
-          "possible_difference": "0",
-          "off_explanation": "The insurer deductions match the deterministic policy calculation based on the documents provided. This remains an estimate for reviewer confirmation.",
-          "on_explanation": "The insurer deductions match the deterministic policy calculation based on the documents provided. This remains an estimate for reviewer confirmation.",
-          "analysis_accepted": false,
-          "comparison_unchanged": true,
-          "both_explanations_number_grounded": true
-        },
-        {
-          "case": "b_wrongful_deduction",
-          "status": "possible_discrepancy",
-          "expected_insurer_payment": "22500",
-          "actual_insurer_payment": "19800",
-          "possible_difference": "2700",
-          "off_explanation": "The documents show a possible difference of INR 2,700.00. The investigation deduction of INR 3,000.00 is greater than the amount supported by the deterministic rules. The supporting clause is on page 1. Please ask an authorized reviewer to confirm the documents and calculation.",
-          "on_explanation": "The documents show a possible difference of INR 2,700.00. The investigation deduction of INR 3,000.00 is greater than the amount supported by the deterministic rules. The supporting clause is on page 1. Please ask an authorized reviewer to confirm the documents and calculation.",
-          "analysis_accepted": false,
-          "comparison_unchanged": true,
-          "both_explanations_number_grounded": true
-        },
-        {
-          "case": "c_manual_review",
-          "status": "manual_review",
-          "expected_insurer_payment": "22500",
-          "actual_insurer_payment": "22500",
-          "possible_difference": "-1000",
-          "off_explanation": "An authorized reviewer must confirm the settlement values and supporting policy evidence before this comparison can be relied on.",
-          "on_explanation": "An authorized reviewer must confirm the settlement values and supporting policy evidence before this comparison can be relied on.",
-          "analysis_accepted": false,
-          "comparison_unchanged": true,
-          "both_explanations_number_grounded": true
-        }
-      ],
-      "number_grounding": {
-        "numerator": 6,
-        "denominator": 6,
-        "score": 1.0,
-        "pass": true
-      }
-    }
-  },
+  "live_checks": {},
   "failures": [],
   "target_failures": [],
   "limits": [

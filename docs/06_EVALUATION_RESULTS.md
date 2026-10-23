@@ -21,13 +21,13 @@ Ground truth was committed before this evaluation run. The runner never writes t
 | settlement_deductions_f1 | F1 100.0% | 37/37 | measured | MEASURED |
 | comparison_decision_accuracy | 100.0% | 30/30 | 1.0 | PASS |
 | comparison_false_match_rate | 0/10 false matches; rate 0.0% | 0/10 | 0.0 | PASS |
-| llm_number_grounding | 100.0% | 6/6 | None | PASS |
-| ollama_decision_equality | 100.0% | 3/3 | 1.0 | PASS |
+| llm_number_grounding | 100.0% | 4/4 | 1.0 | PASS |
+| ollama_decision_equality | n/a | 0/0 | 1.0 | NOT RUN |
 | fault_injection | 100.0% | 3/3 | 1.0 | PASS |
 | report_rules | 100.0% | 2/2 | 1.0 | PASS |
 | browser_e2e | n/a | 0/0 | 3 demo cases and 5 upload/error cases pass | NOT RUN |
 | security | 100.0% | 3/3 | 1.0 | PASS |
-| seconds_per_claim | 0.022547 s/claim | 30/30 | measured | MEASURED |
+| seconds_per_claim | 0.051957 s/claim | 30/30 | measured | MEASURED |
 
 ## Confusion matrix
 

@@ -22,6 +22,7 @@ def _resolved_result(status="no_discrepancy"):
 
 
 def test_analysis_job_deduplicates_unchanged_facts_and_requeues_changed_facts(monkeypatch, tmp_path):
+    monkeypatch.setenv("MEDIGUARD_ANALYSIS_ENABLED", "true")
     monkeypatch.setenv("MEDIGUARD_DB_PATH", str(tmp_path / "analysis-jobs.db"))
     monkeypatch.setenv("MEDIGUARD_STORAGE_DIR", str(tmp_path / "storage"))
     app.init_db()
@@ -46,6 +47,7 @@ def test_analysis_job_deduplicates_unchanged_facts_and_requeues_changed_facts(mo
 
 
 def test_analysis_worker_stores_only_safe_result_fields(monkeypatch, tmp_path):
+    monkeypatch.setenv("MEDIGUARD_ANALYSIS_ENABLED", "true")
     monkeypatch.setenv("MEDIGUARD_DB_PATH", str(tmp_path / "analysis-worker.db"))
     monkeypatch.setenv("MEDIGUARD_STORAGE_DIR", str(tmp_path / "storage"))
     app.init_db()
@@ -77,6 +79,7 @@ def test_analysis_worker_stores_only_safe_result_fields(monkeypatch, tmp_path):
 
 
 def test_background_worker_does_not_call_streamlit(monkeypatch, tmp_path):
+    monkeypatch.setenv("MEDIGUARD_ANALYSIS_ENABLED", "true")
     monkeypatch.setenv("MEDIGUARD_DB_PATH", str(tmp_path / "analysis-no-streamlit.db"))
     monkeypatch.setenv("MEDIGUARD_STORAGE_DIR", str(tmp_path / "storage"))
     app.init_db()

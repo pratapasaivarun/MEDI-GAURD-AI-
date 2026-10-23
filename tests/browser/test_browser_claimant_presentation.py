@@ -160,6 +160,7 @@ def with_signed_in_page(claimant_app, check):
                 page = browser.new_page()
                 page.set_default_timeout(7000)
                 page.goto(base_url, wait_until="domcontentloaded")
+                page.get_by_role("button", name="Continue as user").wait_for(timeout=15000)
                 page.get_by_role("button", name="Continue as user").click()
                 page.locator('input[aria-label="Email"]').first.fill(email)
                 page.locator('input[aria-label="Password"]').first.fill(password)

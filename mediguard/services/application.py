@@ -66,7 +66,13 @@ _analysis_worker_thread: threading.Thread | None = None
 
 
 def start_ollama_warmup_background() -> bool:
-    """Start one best-effort model warm-up without blocking Streamlit's UI thread."""
+    """Start one best-effort model warm-up without blocking Streamlit's UI thread.
+
+    Gated on MEDIGUARD_OLLAMA_WARMUP (default false). When false this function
+    returns immediately and no network request is made at app start.
+    """
+    if os.getenv("MEDIGUARD_OLLAMA_WARMUP", "false").strip().lower() != "true":
+        return False
     global _warmup_started
     with _warmup_lock:
         if _warmup_started:
@@ -655,7 +661,13 @@ def _ensure_analysis_worker() -> None:
 
 
 def resume_pending_analysis_jobs() -> bool:
-    """Resume persisted queued explanations after an app process restart."""
+    """Resume persisted queued explanations after an app process restart.
+
+    Only runs when MEDIGUARD_ANALYSIS_ENABLED=true (default false) to prevent
+    leftover rows from a previous enabled session from starting the worker.
+    """
+    if os.getenv("MEDIGUARD_ANALYSIS_ENABLED", "false").strip().lower() != "true":
+        return False
     with db() as conn:
         pending = conn.execute("SELECT 1 FROM analysis_jobs WHERE status='queued' LIMIT 1").fetchone()
     if pending:
@@ -680,7 +692,7 @@ def enqueue_analysis_job(claim_id: str, user_id: str, result: dict[str, Any]) ->
         )
     facts_json = json.dumps({"prompt_version": claim_analysis.PROMPT_VERSION, "payload": payload}, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     analysis_enabled = (
-        os.getenv("MEDIGUARD_ANALYSIS_ENABLED", "true").strip().lower() == "true"
+        os.getenv("MEDIGUARD_ANALYSIS_ENABLED", "false").strip().lower() == "true"
         and comparison is not None
         and getattr(comparison, "status", None) != "manual_review"
     )

@@ -46,6 +46,55 @@ def test_assess_claim_runs_deterministic_stages_in_graph_order():
 
     result = assess_claim(Services(), "claim-1", "user-1")
 
+    # By default, MEDIGUARD_ANALYSIS_ENABLED is false; enqueue_analysis node is bypassed
+    assert events == ["document", "policy", "get_user", "documents", "decision", "output"]
+    assert result == {
+        "normalized": normalized,
+        "rules": rules,
+        "comparison": comparison,
+        "settlement": settlement,
+    }
+
+
+def test_assess_claim_runs_analysis_when_enabled(monkeypatch):
+    monkeypatch.setenv("MEDIGUARD_ANALYSIS_ENABLED", "true")
+    events = []
+    normalized = {"total_amount": {"value": 12000}}
+    rules = {"status": "possible_discrepancy", "payable_amount": 8000}
+    comparison = SimpleNamespace(status="possible_discrepancy")
+    settlement = SimpleNamespace(amount_paid=7000)
+
+    class Services:
+        def process_claim_documents(self, claim_id, user_id):
+            events.append("document")
+            return normalized
+
+        def evaluate_saved_claim(self, claim_id, user_id, value):
+            events.append("policy")
+            return rules
+
+        def get_user(self, user_id):
+            events.append("get_user")
+            return {"user_id": user_id}
+
+        def claim_documents(self, claim_id, user):
+            events.append("documents")
+            return [{"document_type": "settlement"}]
+
+        def run_settlement_comparison(self, claim_id, user_id, value, rules_value):
+            events.append("decision")
+            return comparison, settlement
+
+        @staticmethod
+        def appeal_draft_available(value):
+            events.append("output")
+            return value.status == "possible_discrepancy"
+
+        def enqueue_analysis_job(self, claim_id, user_id, result):
+            events.append("enqueue_analysis")
+            return "job-1"
+
+    result = assess_claim(Services(), "claim-1", "user-1")
     assert events == ["document", "policy", "get_user", "documents", "decision", "output", "enqueue_analysis"]
     assert result == {
         "normalized": normalized,

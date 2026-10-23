@@ -3,11 +3,16 @@
 The graph carries claim ids and compact stage results. Application services
 are captured by the node functions, so database handles and document bytes do
 not become graph state.
+
+Background analysis (enqueue_analysis_node) is gated on
+MEDIGUARD_ANALYSIS_ENABLED (default false). When the flag is false the node is
+bypassed via a conditional edge and no LLM call is ever started automatically.
 """
 from __future__ import annotations
 
 from functools import lru_cache
 import logging
+import os
 import time
 from typing import Any, TypedDict
 
@@ -88,8 +93,8 @@ def _build_graph(app_services: Any):
         return {"appeal_eligible": appeal_eligible, "result": result, "node_timings": timings}
 
     def enqueue_analysis_node(state: ClaimPipelineState) -> dict[str, Any]:
-        # Phase 4 supplies this optional queue hook. Until then the pipeline
-        # records that analysis is deferred and never starts a model call here.
+        # Background analysis is off by default (MEDIGUARD_ANALYSIS_ENABLED=false).
+        # This node is only reached when the conditional edge below routes here.
         started = time.perf_counter()
         enqueue = getattr(app_services, "enqueue_analysis_job", None)
         timings = dict(state.get("node_timings") or {})
@@ -103,6 +108,12 @@ def _build_graph(app_services: Any):
         timings["enqueue_analysis"] = elapsed
         return {"analysis_job": str(job_id or "queued"), "node_timings": timings}
 
+    def _should_enqueue_analysis(state: ClaimPipelineState) -> str:
+        """Conditional edge: skip analysis unless MEDIGUARD_ANALYSIS_ENABLED=true."""
+        if os.getenv("MEDIGUARD_ANALYSIS_ENABLED", "false").strip().lower() == "true":
+            return "enqueue_analysis"
+        return END
+
     graph = StateGraph(ClaimPipelineState)
     graph.add_node("document", document_node)
     graph.add_node("policy", policy_node)
@@ -113,7 +124,8 @@ def _build_graph(app_services: Any):
     graph.add_edge("document", "policy")
     graph.add_edge("policy", "decision")
     graph.add_edge("decision", "output")
-    graph.add_edge("output", "enqueue_analysis")
+    # Conditional: only enter the analysis node when analysis is explicitly enabled.
+    graph.add_conditional_edges("output", _should_enqueue_analysis)
     graph.add_edge("enqueue_analysis", END)
     return graph.compile()
 

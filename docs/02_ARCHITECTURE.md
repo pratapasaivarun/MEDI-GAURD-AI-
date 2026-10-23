@@ -1,6 +1,6 @@
 # Architecture
 
-MediGuard AI is a LangGraph workflow of five deterministic agents (Supervisor, Document, Policy, Decision, Output) with an optional on-demand LLM explanation and Q&A; Python decides every amount. The Supervisor routes the claim stages automatically. Python rules determine every amount, status, and appeal gate; the optional model only provides checked explanation text.
+MediGuard AI is a LangGraph workflow of five deterministic agents (Supervisor, Document, Policy, Decision, Output) with zero automatic LLM calls by default; optional on-demand LLM explanation and Q&A; Python decides every amount. The Supervisor routes the claim stages automatically. Python rules determine every amount, status, and appeal gate; the optional model only provides checked explanation text. Optional background analysis and startup warm-up are disabled by default.
 
 ```mermaid
 flowchart TD
@@ -26,10 +26,12 @@ The Document agent extracts bill fields, line items, dates, payment, and settlem
 
 ### LLM usage
 
-All active Ollama traffic goes through `mediguard/ai/llm_gateway.py`. Python rules decide every amount, status, and appeal eligibility.
+All active Ollama traffic goes through `mediguard/ai/llm_gateway.py`. Python rules decide every amount, status, and appeal eligibility. By default, there are **zero automatic LLM calls**.
 
 | Call site | Trigger | Validation | Fallback |
 |---|---|---|---|
+| `analysis.py` (`analyze_payload`) | Opt-in via `MEDIGUARD_ANALYSIS_ENABLED=true` (default false) | Grounded numbers, clauses, and Python comparison alignment | Deterministic template explanation |
+| `llm_gateway.py` (`warmup`) | Opt-in via `MEDIGUARD_OLLAMA_WARMUP=true` (default false) | Background daemon ping (`Return only OK.`) | Logged failure, claims unaffected |
 | `extraction.py` (`_llm_extract_claim_fallback`) | Opt-in via `MEDIGUARD_LLM_EXTRACTION_FALLBACK=true` (default false) | Schema check, positive Decimal amounts | Manual review reason for missing fields |
 | `policy_terms.py` (`_llm_extract_policy_terms_fallback`) | Opt-in via `MEDIGUARD_LLM_EXTRACTION_FALLBACK=true` (default false) | Schema check, numeric range regex checks | Regex / keyword parsing |
 | `settlement.py` (`_llm_deductions`) | Opt-in via `MEDIGUARD_LLM_EXTRACTION_FALLBACK=true` (default false) | Schema check, deduction parser | Manual review reason for missing fields |

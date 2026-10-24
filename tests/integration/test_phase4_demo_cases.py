@@ -173,13 +173,33 @@ def test_fictional_demo_case_runs_through_app_pipeline_with_ollama_off(run_case,
         comparison=comparison,
         settlement=settlement,
     )
-    if expected["expected_status"] == "manual_review":
-        assert "settlement comparison is under Manual Review" in manual_review_answer
-        assert "BILL_TOTAL_MISMATCH" in manual_review_answer
-        assert "room_limit_applied" not in manual_review_answer
-    else:
-        assert "not marked for Manual Review" in manual_review_answer
+    if expected["expected_status"] != "manual_review":
         assert "claim was sent to Manual Review" not in manual_review_answer
+    manual_review_questions = (
+        "Why was my claim sent to manual review?",
+        "Why is my claim under Manual Review?",
+        "What needs a reviewer before this claim is final?",
+        "Why is my settlement comparison under review?",
+        "What is preventing a final decision on my claim?",
+    )
+    for question in manual_review_questions:
+        answer = qa.answer_question(
+            question,
+            rules,
+            [],
+            manifest["case_id"],
+            normalized=normalized,
+            comparison=comparison,
+            settlement=settlement,
+        )
+        if expected["expected_status"] == "manual_review":
+            assert "settlement comparison is under Manual Review" in answer
+            assert "BILL_TOTAL_MISMATCH" in answer
+            assert "room_limit_applied" not in answer
+            assert "room_limit_proportional_applied" not in answer
+        else:
+            assert "not marked for Manual Review" in answer
+            assert "claim was sent to Manual Review" not in answer
     if case_name == "c_manual_review":
         assert any(
             evidence.page == 2 for evidence in ocr_evidence

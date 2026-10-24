@@ -83,7 +83,16 @@ def classify_intent(question: str) -> str | None:
         asked,
     ):
         return "unconfirmed_term"
-    if "manual review" in asked or "manual_review" in asked or re.search(r"\bunder review\b|\bsent to review\b", asked):
+    if (
+        "manual review" in asked
+        or "manual_review" in asked
+        or re.search(
+            r"\bunder review\b|\bsent to review\b|"
+            r"\bneeds?\s+(?:an?\s+)?(?:authorized\s+)?reviewer\b|"
+            r"\bpreventing\s+(?:a\s+)?final\s+(?:claim\s+)?decision\b",
+            asked,
+        )
+    ):
         return "manual_review"
     if any(term in asked for term in (
         "settlement difference", "settlement payment", "settlement vs",

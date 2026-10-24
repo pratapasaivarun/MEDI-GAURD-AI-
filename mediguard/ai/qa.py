@@ -247,6 +247,16 @@ def _build_unconfirmed_term(result: dict[str, Any], _context: dict[str, Any]) ->
     return "No specific unconfirmed term is listed in the saved decision data. If a term remains unconfirmed, it was not applied and the result may change after authorized review."
 
 
+def _is_review_reason(value: Any) -> bool:
+    return bool(re.search(
+        r"\b(?:review|missing|required|mismatch|conflict|unconfirmed|cannot|"
+        r"not identified|not match|does not|outside|uncertain|reconcil|"
+        r"ambiguous|duplicate|confirm|unavailable|uncategorized|invalid|failed)\b",
+        str(value or ""),
+        re.IGNORECASE,
+    ))
+
+
 def _build_next_steps_appeal(_result: dict[str, Any], context: dict[str, Any]) -> str:
     comparison = context.get("comparison")
     if comparison is None:
@@ -262,22 +272,45 @@ def _build_next_steps_appeal(_result: dict[str, Any], context: dict[str, Any]) -
 def _build_manual_review(result: dict[str, Any], context: dict[str, Any]) -> str:
     reasons = []
     rules = _saved_rules(result)
-    claimant_reason = result.get("reason") or _claimant_facts(result).get("reason")
-    if claimant_reason and claimant_reason not in reasons:
-        reasons.append(str(claimant_reason))
-    for issue in result.get("policy_terms_issues") or rules.get("policy_terms_issues") or []:
-        if isinstance(issue, dict) and issue.get("reason") and issue["reason"] not in reasons:
-            reasons.append(str(issue["reason"]))
-    for warning in rules.get("warnings") or []:
-        if warning and str(warning) not in reasons:
-            reasons.append(str(warning))
     comparison = context.get("comparison")
-    for reason in _object_value(comparison, "review_reasons", []) or []:
-        if reason and str(reason) not in reasons:
-            reasons.append(str(reason))
+    claim_status = str(result.get("status") or rules.get("status") or "").lower()
+    comparison_status = str(_object_value(comparison, "status", "") or "").lower()
+    claim_needs_review = claim_status == "manual_review" or str(rules.get("status") or "").lower() == "manual_review"
+    comparison_needs_review = comparison_status == "manual_review"
+
+    if claim_needs_review:
+        claimant_reason = result.get("reason") or _claimant_facts(result).get("reason")
+        if claimant_reason and claimant_reason not in reasons:
+            reasons.append(str(claimant_reason))
+        for issue in result.get("policy_terms_issues") or rules.get("policy_terms_issues") or []:
+            if isinstance(issue, dict) and issue.get("reason") and issue["reason"] not in reasons:
+                reasons.append(str(issue["reason"]))
+        for warning in rules.get("warnings") or []:
+            if warning and _is_review_reason(warning) and str(warning) not in reasons:
+                reasons.append(str(warning))
+    if comparison_needs_review:
+        for reason in _object_value(comparison, "review_reasons", []) or []:
+            if reason and _is_review_reason(reason) and str(reason) not in reasons:
+                reasons.append(str(reason))
+
+    if not claim_needs_review and not comparison_needs_review:
+        claim_label = claim_status.replace("_", " ") if claim_status else "unavailable"
+        comparison_label = comparison_status.replace("_", " ") if comparison_status else "unavailable"
+        return (
+            "The saved claim is not marked for Manual Review "
+            f"(current status: {claim_label}); the saved settlement comparison is not marked for Manual Review "
+            f"(status: {comparison_label})."
+        )
+
+    if claim_needs_review and comparison_needs_review:
+        lead = "The claim and settlement comparison are under Manual Review"
+    elif comparison_needs_review:
+        lead = "The settlement comparison is under Manual Review"
+    else:
+        lead = "The claim was sent to Manual Review"
     if reasons:
-        return "The claim was sent to Manual Review because the saved decision records: " + " ".join(reasons) + " An authorized reviewer must resolve this before the result is final."
-    return "The saved decision marks this claim for Manual Review but does not record a specific reason. An authorized reviewer must check the source documents."
+        return f"{lead} because the saved decision records: " + " ".join(reasons) + " An authorized reviewer must resolve this before the result is final."
+    return f"{lead} but does not record a specific reason. An authorized reviewer must check the source documents."
 
 
 def _build_status(result: dict[str, Any], _context: dict[str, Any]) -> str:

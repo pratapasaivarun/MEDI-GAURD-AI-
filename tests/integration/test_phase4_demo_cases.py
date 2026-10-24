@@ -164,6 +164,22 @@ def test_fictional_demo_case_runs_through_app_pipeline_with_ollama_off(run_case,
         expected_amount = saved_claimant.get(key)
         assert qa._money(expected_amount) in qa_answer
     assert "cost-sharing, not rejected charges" in qa_answer
+    manual_review_answer = qa.answer_question(
+        "Why was my claim sent to manual review?",
+        rules,
+        [],
+        manifest["case_id"],
+        normalized=normalized,
+        comparison=comparison,
+        settlement=settlement,
+    )
+    if expected["expected_status"] == "manual_review":
+        assert "settlement comparison is under Manual Review" in manual_review_answer
+        assert "BILL_TOTAL_MISMATCH" in manual_review_answer
+        assert "room_limit_applied" not in manual_review_answer
+    else:
+        assert "not marked for Manual Review" in manual_review_answer
+        assert "claim was sent to Manual Review" not in manual_review_answer
     if case_name == "c_manual_review":
         assert any(
             evidence.page == 2 for evidence in ocr_evidence

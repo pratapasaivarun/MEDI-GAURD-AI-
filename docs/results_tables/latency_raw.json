@@ -1,0 +1,303 @@
+{
+  "created_at": "2026-10-24T09:24:11.826477+00:00",
+  "runs_per_case": 10,
+  "ollama": "off (test fixture points OLLAMA_HOST at 127.0.0.1:1)",
+  "tesseract_version": "tesseract v5.4.0.20240606",
+  "measurement": "service path from saving the three demo documents through extraction, rules, and settlement comparison; excludes app/database initialization",
+  "ocr_included": "Yes. c_manual_review calls the configured Tesseract OCR backend for its scanned bill page; the runner verifies tesseract evidence on every measured run.",
+  "percentile_method": "linear interpolation at index 0.95 * (n - 1)",
+  "results": [
+    {
+      "case": "a_match",
+      "runs": 10,
+      "median_seconds": 0.29471400000147696,
+      "min_seconds": 0.23779020000074524,
+      "max_seconds": 0.6627237999964564,
+      "p95_seconds": 0.5409281049973285,
+      "observations_seconds": [
+        0.6627237999964564,
+        0.3266187999979593,
+        0.3256833000014012,
+        0.3259872999988147,
+        0.24034329999994952,
+        0.23779020000074524,
+        0.2568040000005567,
+        0.39206669999839505,
+        0.2637447000015527,
+        0.2578250000005937
+      ]
+    },
+    {
+      "case": "b_wrongful_deduction",
+      "runs": 10,
+      "median_seconds": 0.2660954499988293,
+      "min_seconds": 0.25605129999894416,
+      "max_seconds": 0.6086150000010093,
+      "p95_seconds": 0.45657098000010554,
+      "observations_seconds": [
+        0.26489419999779784,
+        0.2598204000023543,
+        0.25605129999894416,
+        0.2672966999998607,
+        0.27073939999900176,
+        0.26822360000005574,
+        0.26316900000165333,
+        0.2622679000014614,
+        0.2696592000029341,
+        0.6086150000010093
+      ]
+    },
+    {
+      "case": "c_manual_review",
+      "runs": 10,
+      "median_seconds": 0.9416305499998998,
+      "min_seconds": 0.8256481000025815,
+      "max_seconds": 1.6468589999967662,
+      "p95_seconds": 1.3686660749970536,
+      "observations_seconds": [
+        1.6468589999967662,
+        0.9558007000014186,
+        0.9531060000008438,
+        0.9301550999989558,
+        1.0286524999974063,
+        0.927730799998244,
+        0.9090532999980496,
+        0.9244001000006392,
+        0.8256481000025815,
+        0.9763403999968432
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "case": "a_match",
+      "run": 1,
+      "time_to_first_result_seconds": 0.6627237999964564,
+      "status": "no_discrepancy",
+      "ocr_evidence_methods": []
+    },
+    {
+      "case": "a_match",
+      "run": 2,
+      "time_to_first_result_seconds": 0.3266187999979593,
+      "status": "no_discrepancy",
+      "ocr_evidence_methods": []
+    },
+    {
+      "case": "a_match",
+      "run": 3,
+      "time_to_first_result_seconds": 0.3256833000014012,
+      "status": "no_discrepancy",
+      "ocr_evidence_methods": []
+    },
+    {
+      "case": "a_match",
+      "run": 4,
+      "time_to_first_result_seconds": 0.3259872999988147,
+      "status": "no_discrepancy",
+      "ocr_evidence_methods": []
+    },
+    {
+      "case": "a_match",
+      "run": 5,
+      "time_to_first_result_seconds": 0.24034329999994952,
+      "status": "no_discrepancy",
+      "ocr_evidence_methods": []
+    },
+    {
+      "case": "a_match",
+      "run": 6,
+      "time_to_first_result_seconds": 0.23779020000074524,
+      "status": "no_discrepancy",
+      "ocr_evidence_methods": []
+    },
+    {
+      "case": "a_match",
+      "run": 7,
+      "time_to_first_result_seconds": 0.2568040000005567,
+      "status": "no_discrepancy",
+      "ocr_evidence_methods": []
+    },
+    {
+      "case": "a_match",
+      "run": 8,
+      "time_to_first_result_seconds": 0.39206669999839505,
+      "status": "no_discrepancy",
+      "ocr_evidence_methods": []
+    },
+    {
+      "case": "a_match",
+      "run": 9,
+      "time_to_first_result_seconds": 0.2637447000015527,
+      "status": "no_discrepancy",
+      "ocr_evidence_methods": []
+    },
+    {
+      "case": "a_match",
+      "run": 10,
+      "time_to_first_result_seconds": 0.2578250000005937,
+      "status": "no_discrepancy",
+      "ocr_evidence_methods": []
+    },
+    {
+      "case": "b_wrongful_deduction",
+      "run": 1,
+      "time_to_first_result_seconds": 0.26489419999779784,
+      "status": "possible_discrepancy",
+      "ocr_evidence_methods": []
+    },
+    {
+      "case": "b_wrongful_deduction",
+      "run": 2,
+      "time_to_first_result_seconds": 0.2598204000023543,
+      "status": "possible_discrepancy",
+      "ocr_evidence_methods": []
+    },
+    {
+      "case": "b_wrongful_deduction",
+      "run": 3,
+      "time_to_first_result_seconds": 0.25605129999894416,
+      "status": "possible_discrepancy",
+      "ocr_evidence_methods": []
+    },
+    {
+      "case": "b_wrongful_deduction",
+      "run": 4,
+      "time_to_first_result_seconds": 0.2672966999998607,
+      "status": "possible_discrepancy",
+      "ocr_evidence_methods": []
+    },
+    {
+      "case": "b_wrongful_deduction",
+      "run": 5,
+      "time_to_first_result_seconds": 0.27073939999900176,
+      "status": "possible_discrepancy",
+      "ocr_evidence_methods": []
+    },
+    {
+      "case": "b_wrongful_deduction",
+      "run": 6,
+      "time_to_first_result_seconds": 0.26822360000005574,
+      "status": "possible_discrepancy",
+      "ocr_evidence_methods": []
+    },
+    {
+      "case": "b_wrongful_deduction",
+      "run": 7,
+      "time_to_first_result_seconds": 0.26316900000165333,
+      "status": "possible_discrepancy",
+      "ocr_evidence_methods": []
+    },
+    {
+      "case": "b_wrongful_deduction",
+      "run": 8,
+      "time_to_first_result_seconds": 0.2622679000014614,
+      "status": "possible_discrepancy",
+      "ocr_evidence_methods": []
+    },
+    {
+      "case": "b_wrongful_deduction",
+      "run": 9,
+      "time_to_first_result_seconds": 0.2696592000029341,
+      "status": "possible_discrepancy",
+      "ocr_evidence_methods": []
+    },
+    {
+      "case": "b_wrongful_deduction",
+      "run": 10,
+      "time_to_first_result_seconds": 0.6086150000010093,
+      "status": "possible_discrepancy",
+      "ocr_evidence_methods": []
+    },
+    {
+      "case": "c_manual_review",
+      "run": 1,
+      "time_to_first_result_seconds": 1.6468589999967662,
+      "status": "manual_review",
+      "ocr_evidence_methods": [
+        "tesseract"
+      ]
+    },
+    {
+      "case": "c_manual_review",
+      "run": 2,
+      "time_to_first_result_seconds": 0.9558007000014186,
+      "status": "manual_review",
+      "ocr_evidence_methods": [
+        "tesseract"
+      ]
+    },
+    {
+      "case": "c_manual_review",
+      "run": 3,
+      "time_to_first_result_seconds": 0.9531060000008438,
+      "status": "manual_review",
+      "ocr_evidence_methods": [
+        "tesseract"
+      ]
+    },
+    {
+      "case": "c_manual_review",
+      "run": 4,
+      "time_to_first_result_seconds": 0.9301550999989558,
+      "status": "manual_review",
+      "ocr_evidence_methods": [
+        "tesseract"
+      ]
+    },
+    {
+      "case": "c_manual_review",
+      "run": 5,
+      "time_to_first_result_seconds": 1.0286524999974063,
+      "status": "manual_review",
+      "ocr_evidence_methods": [
+        "tesseract"
+      ]
+    },
+    {
+      "case": "c_manual_review",
+      "run": 6,
+      "time_to_first_result_seconds": 0.927730799998244,
+      "status": "manual_review",
+      "ocr_evidence_methods": [
+        "tesseract"
+      ]
+    },
+    {
+      "case": "c_manual_review",
+      "run": 7,
+      "time_to_first_result_seconds": 0.9090532999980496,
+      "status": "manual_review",
+      "ocr_evidence_methods": [
+        "tesseract"
+      ]
+    },
+    {
+      "case": "c_manual_review",
+      "run": 8,
+      "time_to_first_result_seconds": 0.9244001000006392,
+      "status": "manual_review",
+      "ocr_evidence_methods": [
+        "tesseract"
+      ]
+    },
+    {
+      "case": "c_manual_review",
+      "run": 9,
+      "time_to_first_result_seconds": 0.8256481000025815,
+      "status": "manual_review",
+      "ocr_evidence_methods": [
+        "tesseract"
+      ]
+    },
+    {
+      "case": "c_manual_review",
+      "run": 10,
+      "time_to_first_result_seconds": 0.9763403999968432,
+      "status": "manual_review",
+      "ocr_evidence_methods": [
+        "tesseract"
+      ]
+    }
+  ]
+}

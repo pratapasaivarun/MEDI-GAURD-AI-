@@ -1,6 +1,6 @@
 # MediGuard AI
 
-**A fictional-data prototype for comparing health-insurance settlements with a transparent Python estimate.**
+**A synthetic-data-only prototype for comparing health-insurance settlements with a transparent Python estimate.**
 
 [![CI](https://github.com/pratapasaivarun/MediGuard-AI/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/pratapasaivarun/MediGuard-AI/actions/workflows/tests.yml)
 [![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
@@ -8,7 +8,7 @@
 
 ## What it does
 
-MediGuard AI compares an insurer's settlement with an estimate calculated from a hospital bill and policy. It flags deductions that may not agree with the policy evidence. Python rules decide every amount and status; an optional local language model only explains a completed result. This is a college prototype using fictional samples, not a system for deciding real claims.
+MediGuard AI compares an insurer's settlement with an estimate calculated from a hospital bill and policy. It flags deductions that may not agree with the policy evidence. Python rules decide every amount and status; an optional local language model only explains a completed result. This is a college prototype using fictional samples, not a system for deciding real claims. **Synthetic fictional data only: never upload real patient information.**
 
 ## Screenshots
 
@@ -27,7 +27,7 @@ More screens: [sign-in](docs/images/01-login.png) · [document upload](docs/imag
 - Calculates deterministic estimates with Python rules and compares the result with parsed settlement deductions.
 - Shows provisional results before reviewer confirmation and preserves review reasons for uncertain inputs.
 - Creates a watermarked provisional appeal draft only when a supported discrepancy is found.
-- Uses a LangGraph workflow of five deterministic agents (Supervisor, Document, Policy, Decision, Output) with zero automatic LLM calls by default. Optional background analysis, extraction fallback, and startup warm-up remain off by default; Python decides every amount.
+- Uses a LangGraph workflow described as five components (Supervisor plus Document, Policy, Decision, and Output workers); its core graph implements four deterministic worker stages under supervisor orchestration. Optional background analysis, extraction fallback, and startup warm-up remain off by default; Python decides every amount.
 - Answers supported claimant Q&A intents (amount breakdowns, coverage, settlement differences, review status, and next steps) deterministically from saved decision data. Only unmatched claim questions may use the optional, evidence-checked Ollama fallback; Q&A is read-only.
 - Keeps category suggestions disabled because the labeled category evidence scored 0/27 and adversarial category labels are absent.
 
@@ -47,25 +47,25 @@ Python 3.13 is the verified runtime. Tesseract is optional for scanned-page OCR.
 git clone https://github.com/pratapasaivarun/MediGuard-AI.git
 Set-Location MediGuard-AI
 py -3.13 -m venv .venv
-\.venv\Scripts\python.exe -m pip install --upgrade pip
-\.venv\Scripts\python.exe -m pip install -r requirements.txt -r tests/requirements-dev.txt
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt -r tests/requirements-dev.txt
 Copy-Item .env.example .env
 $testTemp = Join-Path $env:TEMP ("mediguard-pytest-" + [guid]::NewGuid().ToString("N"))
-\.venv\Scripts\python.exe -m pytest -q tests --basetemp $testTemp
-\.venv\Scripts\python.exe run_demo.py
+.\.venv\Scripts\python.exe -m pytest -q tests --basetemp $testTemp
+.\.venv\Scripts\python.exe run_demo.py
 ```
 
 The demo opens at <http://127.0.0.1:8506>. Create a claimant account in the app. To test the reviewer workspace, set a temporary local admin password before starting `run_demo.py`:
 
 ```powershell
 $env:MEDIGUARD_ADMIN_PASSWORD = Read-Host "Choose a local demo password"
-\.venv\Scripts\python.exe run_demo.py
+.\.venv\Scripts\python.exe run_demo.py
 ```
 
 For the regular app, stop the demo with Ctrl+C and run:
 
 ```powershell
-\.venv\Scripts\python.exe -m streamlit run app.py --server.port 8501
+.\.venv\Scripts\python.exe -m streamlit run app.py --server.port 8501
 ```
 
 Open the regular app at <http://127.0.0.1:8501>.
@@ -94,7 +94,7 @@ All case documents are fictional and labeled **FICTIONAL SAMPLE**.
 | Case | Expected outcome |
 |---|---|
 | `a_match` | No discrepancy; no appeal draft. |
-| `b_wrongful_deduction` | Possible discrepancy of INR 2,700; provisional appeal draft offered. |
+| `b_wrongful_deduction` | INR 3,000 investigation deduction; possible discrepancy of INR 2,700; provisional appeal draft offered. |
 | `c_manual_review` | Manual review because a scanned bill page and settlement total mismatch need attention; no appeal draft. |
 
 ## Evaluation results
@@ -148,7 +148,8 @@ This is a prototype for synthetic data and local demonstration only. OCR quality
 - [Evaluation scorecard](docs/06_EVALUATION_RESULTS.md)
 - [Known limitations](docs/07_LIMITATIONS.md)
 - [Regenerate screenshots](docs/08_SCREENSHOT_CAPTURE.md)
-- [Documentation index](docs/README.md)
+- [Project report](docs/PROJECT_REPORT.md)
+- [Research paper results](docs/10_RESEARCH_PAPER_RESULTS.md)
 
 ## License
 

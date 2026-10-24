@@ -1,0 +1,666 @@
+[
+  {
+    "run": "documented_baseline",
+    "phase": "documented_before_current_session",
+    "date": "2026-10-23",
+    "numerator": 8,
+    "denominator": 8,
+    "pass": true,
+    "source": "docs/06_EVALUATION_RESULTS.md, commit timestamp 2026-10-23",
+    "case_results": "8/8 matrix; individual per-case results were not preserved in the report"
+  },
+  {
+    "run": "prior_fresh_run",
+    "phase": "earlier_success_before_later_failure",
+    "date": "2026-10-24",
+    "numerator": 8,
+    "denominator": 8,
+    "pass": true,
+    "source": "prior run output recorded in session; compact result later overwritten",
+    "case_results": "8/8 matrix; individual per-case results were not preserved in the compact result"
+  },
+  {
+    "run": "latency_browser_run_2",
+    "phase": "later_failure_before_wait_fix",
+    "date": "2026-10-24T14:21:52+05:30",
+    "numerator": 7,
+    "denominator": 8,
+    "pass": false,
+    "source": "evaluation.measure_demo_latency browser-based attempt; evaluation/latest/claimant_browser_results.json captured at 2026-10-24T08:51:52Z",
+    "case_results": "a_match=pass | b_wrongful_deduction=pass | c_manual_review=pass | empty_file=pass | wrong_type=pass | oversized=pass | corrupted_pdf=FAIL | missing_settlement=pass",
+    "failure_cause": "Harness timing race: fixed 1.2-second wait elapsed before the expected result page was rendered.",
+    "failed_check": "safe and \"Your claim result\" in body and any(marker in body.casefold() for marker in (\"manual review\", \"unreadable\", \"extraction\", \"missing\", \"not identified\"))",
+    "page_text_at_failure": "Submit claim documents; Documents saved. Submit them when you are ready for assessment.; Upload a policy and a medical bill to begin. No Your claim result/manual review/unreadable/extraction/missing/not identified text was present.",
+    "screenshot": "%TEMP%\\mediguard-claimant-screenshots-o5m7l3ji\\corrupted_pdf.png"
+  },
+  {
+    "run": 1,
+    "phase": "diagnostic_before_wait_fix",
+    "command": "python -c run_claimant_browser_suite (from evaluation.claimant_browser)",
+    "captured_output": "C:\\Users\\prata\\AppData\\Local\\Temp\\1792833040394-copilot-tool-output-2180-43fab278-b50d-40ab-a863-151eea853f4d.txt",
+    "captured_file_modified_local": "2026-10-24T14:40:40+05:30",
+    "numerator": 8,
+    "denominator": 8,
+    "pass": true,
+    "reviewer_refresh_passed": true,
+    "cases": [
+      {
+        "case": "a_match",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-7hfpn3s0\\a_match-claimant-result.png"
+      },
+      {
+        "case": "b_wrongful_deduction",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-7hfpn3s0\\b_wrongful_deduction-claimant-result.png"
+      },
+      {
+        "case": "c_manual_review",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-7hfpn3s0\\c_manual_review-claimant-result.png"
+      },
+      {
+        "case": "empty_file",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-7hfpn3s0\\empty_file.png"
+      },
+      {
+        "case": "wrong_type",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-7hfpn3s0\\wrong_type.png"
+      },
+      {
+        "case": "oversized",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-7hfpn3s0\\oversized.png"
+      },
+      {
+        "case": "corrupted_pdf",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-7hfpn3s0\\corrupted_pdf.png"
+      },
+      {
+        "case": "missing_settlement",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-7hfpn3s0\\missing_settlement.png"
+      }
+    ],
+    "screenshots_directory": "%TEMP%\\mediguard-claimant-screenshots-7hfpn3s0",
+    "failure": null
+  },
+  {
+    "run": 2,
+    "phase": "diagnostic_before_wait_fix",
+    "command": "python -c run_claimant_browser_suite (from evaluation.claimant_browser)",
+    "captured_output": "C:\\Users\\prata\\AppData\\Local\\Temp\\1792833120403-copilot-tool-output-2180-f10edcec-8b1d-4fb2-95bb-8510ca132427.txt",
+    "captured_file_modified_local": "2026-10-24T14:42:00+05:30",
+    "numerator": 8,
+    "denominator": 8,
+    "pass": true,
+    "reviewer_refresh_passed": true,
+    "cases": [
+      {
+        "case": "a_match",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-f89dbypc\\a_match-claimant-result.png"
+      },
+      {
+        "case": "b_wrongful_deduction",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-f89dbypc\\b_wrongful_deduction-claimant-result.png"
+      },
+      {
+        "case": "c_manual_review",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-f89dbypc\\c_manual_review-claimant-result.png"
+      },
+      {
+        "case": "empty_file",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-f89dbypc\\empty_file.png"
+      },
+      {
+        "case": "wrong_type",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-f89dbypc\\wrong_type.png"
+      },
+      {
+        "case": "oversized",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-f89dbypc\\oversized.png"
+      },
+      {
+        "case": "corrupted_pdf",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-f89dbypc\\corrupted_pdf.png"
+      },
+      {
+        "case": "missing_settlement",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-f89dbypc\\missing_settlement.png"
+      }
+    ],
+    "screenshots_directory": "%TEMP%\\mediguard-claimant-screenshots-f89dbypc",
+    "failure": null
+  },
+  {
+    "run": 3,
+    "phase": "diagnostic_before_wait_fix",
+    "command": "python -c run_claimant_browser_suite (from evaluation.claimant_browser)",
+    "captured_output": "C:\\Users\\prata\\AppData\\Local\\Temp\\1792833199751-copilot-tool-output-2180-c7c74123-f237-4c8a-b1b7-ba3395aba175.txt",
+    "captured_file_modified_local": "2026-10-24T14:43:19+05:30",
+    "numerator": 8,
+    "denominator": 8,
+    "pass": true,
+    "reviewer_refresh_passed": true,
+    "cases": [
+      {
+        "case": "a_match",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-0uo4qa9g\\a_match-claimant-result.png"
+      },
+      {
+        "case": "b_wrongful_deduction",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-0uo4qa9g\\b_wrongful_deduction-claimant-result.png"
+      },
+      {
+        "case": "c_manual_review",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-0uo4qa9g\\c_manual_review-claimant-result.png"
+      },
+      {
+        "case": "empty_file",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-0uo4qa9g\\empty_file.png"
+      },
+      {
+        "case": "wrong_type",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-0uo4qa9g\\wrong_type.png"
+      },
+      {
+        "case": "oversized",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-0uo4qa9g\\oversized.png"
+      },
+      {
+        "case": "corrupted_pdf",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-0uo4qa9g\\corrupted_pdf.png"
+      },
+      {
+        "case": "missing_settlement",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-0uo4qa9g\\missing_settlement.png"
+      }
+    ],
+    "screenshots_directory": "%TEMP%\\mediguard-claimant-screenshots-0uo4qa9g",
+    "failure": null
+  },
+  {
+    "run": 4,
+    "phase": "diagnostic_before_wait_fix",
+    "command": "python -c run_claimant_browser_suite (from evaluation.claimant_browser)",
+    "captured_output": "C:\\Users\\prata\\AppData\\Local\\Temp\\1792833283151-copilot-tool-output-2180-29b1fe96-fbec-43bd-93fd-0b1586627acf.txt",
+    "captured_file_modified_local": "2026-10-24T14:44:43+05:30",
+    "numerator": 8,
+    "denominator": 8,
+    "pass": true,
+    "reviewer_refresh_passed": true,
+    "cases": [
+      {
+        "case": "a_match",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-iukgh8le\\a_match-claimant-result.png"
+      },
+      {
+        "case": "b_wrongful_deduction",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-iukgh8le\\b_wrongful_deduction-claimant-result.png"
+      },
+      {
+        "case": "c_manual_review",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-iukgh8le\\c_manual_review-claimant-result.png"
+      },
+      {
+        "case": "empty_file",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-iukgh8le\\empty_file.png"
+      },
+      {
+        "case": "wrong_type",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-iukgh8le\\wrong_type.png"
+      },
+      {
+        "case": "oversized",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-iukgh8le\\oversized.png"
+      },
+      {
+        "case": "corrupted_pdf",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-iukgh8le\\corrupted_pdf.png"
+      },
+      {
+        "case": "missing_settlement",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-iukgh8le\\missing_settlement.png"
+      }
+    ],
+    "screenshots_directory": "%TEMP%\\mediguard-claimant-screenshots-iukgh8le",
+    "failure": null
+  },
+  {
+    "run": 5,
+    "phase": "diagnostic_before_wait_fix",
+    "command": "python -c run_claimant_browser_suite (from evaluation.claimant_browser)",
+    "captured_output": "C:\\Users\\prata\\AppData\\Local\\Temp\\1792833361855-copilot-tool-output-2180-33eeab4b-2ed2-4e61-9aa7-ea46fd457a50.txt",
+    "captured_file_modified_local": "2026-10-24T14:46:01+05:30",
+    "numerator": 8,
+    "denominator": 8,
+    "pass": true,
+    "reviewer_refresh_passed": true,
+    "cases": [
+      {
+        "case": "a_match",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-96kqm935\\a_match-claimant-result.png"
+      },
+      {
+        "case": "b_wrongful_deduction",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-96kqm935\\b_wrongful_deduction-claimant-result.png"
+      },
+      {
+        "case": "c_manual_review",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-96kqm935\\c_manual_review-claimant-result.png"
+      },
+      {
+        "case": "empty_file",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-96kqm935\\empty_file.png"
+      },
+      {
+        "case": "wrong_type",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-96kqm935\\wrong_type.png"
+      },
+      {
+        "case": "oversized",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-96kqm935\\oversized.png"
+      },
+      {
+        "case": "corrupted_pdf",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-96kqm935\\corrupted_pdf.png"
+      },
+      {
+        "case": "missing_settlement",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-96kqm935\\missing_settlement.png"
+      }
+    ],
+    "screenshots_directory": "%TEMP%\\mediguard-claimant-screenshots-96kqm935",
+    "failure": null
+  },
+  {
+    "run": 6,
+    "phase": "after_stable_wait_fix",
+    "command": "python -c run_claimant_browser_suite (from evaluation.claimant_browser)",
+    "captured_output": "C:\\Users\\prata\\AppData\\Local\\Temp\\1792833454244-copilot-tool-output-2180-8e1e076c-1bb9-406e-9e9e-c681656d5788.txt",
+    "captured_file_modified_local": "2026-10-24T14:47:34+05:30",
+    "numerator": 8,
+    "denominator": 8,
+    "pass": true,
+    "reviewer_refresh_passed": true,
+    "cases": [
+      {
+        "case": "a_match",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-jpgennjq\\a_match-claimant-result.png"
+      },
+      {
+        "case": "b_wrongful_deduction",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-jpgennjq\\b_wrongful_deduction-claimant-result.png"
+      },
+      {
+        "case": "c_manual_review",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-jpgennjq\\c_manual_review-claimant-result.png"
+      },
+      {
+        "case": "empty_file",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-jpgennjq\\empty_file.png"
+      },
+      {
+        "case": "wrong_type",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-jpgennjq\\wrong_type.png"
+      },
+      {
+        "case": "oversized",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-jpgennjq\\oversized.png"
+      },
+      {
+        "case": "corrupted_pdf",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-jpgennjq\\corrupted_pdf.png"
+      },
+      {
+        "case": "missing_settlement",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-jpgennjq\\missing_settlement.png"
+      }
+    ],
+    "screenshots_directory": "%TEMP%\\mediguard-claimant-screenshots-jpgennjq",
+    "failure": null
+  },
+  {
+    "run": 7,
+    "phase": "after_stable_wait_fix",
+    "command": "python -c run_claimant_browser_suite (from evaluation.claimant_browser)",
+    "captured_output": "C:\\Users\\prata\\AppData\\Local\\Temp\\1792833536381-copilot-tool-output-2180-548d74f4-d56f-42e0-a7f7-2c9dcb72e0a2.txt",
+    "captured_file_modified_local": "2026-10-24T14:48:56+05:30",
+    "numerator": 8,
+    "denominator": 8,
+    "pass": true,
+    "reviewer_refresh_passed": true,
+    "cases": [
+      {
+        "case": "a_match",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-7lkcgohi\\a_match-claimant-result.png"
+      },
+      {
+        "case": "b_wrongful_deduction",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-7lkcgohi\\b_wrongful_deduction-claimant-result.png"
+      },
+      {
+        "case": "c_manual_review",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-7lkcgohi\\c_manual_review-claimant-result.png"
+      },
+      {
+        "case": "empty_file",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-7lkcgohi\\empty_file.png"
+      },
+      {
+        "case": "wrong_type",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-7lkcgohi\\wrong_type.png"
+      },
+      {
+        "case": "oversized",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-7lkcgohi\\oversized.png"
+      },
+      {
+        "case": "corrupted_pdf",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-7lkcgohi\\corrupted_pdf.png"
+      },
+      {
+        "case": "missing_settlement",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-7lkcgohi\\missing_settlement.png"
+      }
+    ],
+    "screenshots_directory": "%TEMP%\\mediguard-claimant-screenshots-7lkcgohi",
+    "failure": null
+  },
+  {
+    "run": 8,
+    "phase": "after_stable_wait_fix",
+    "command": "python -c run_claimant_browser_suite (from evaluation.claimant_browser)",
+    "captured_output": "C:\\Users\\prata\\AppData\\Local\\Temp\\1792833618371-copilot-tool-output-2180-f7e92a4c-faa9-4c9e-a4b3-68c71d61b4ff.txt",
+    "captured_file_modified_local": "2026-10-24T14:50:18+05:30",
+    "numerator": 8,
+    "denominator": 8,
+    "pass": true,
+    "reviewer_refresh_passed": true,
+    "cases": [
+      {
+        "case": "a_match",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-bn9678vz\\a_match-claimant-result.png"
+      },
+      {
+        "case": "b_wrongful_deduction",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-bn9678vz\\b_wrongful_deduction-claimant-result.png"
+      },
+      {
+        "case": "c_manual_review",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-bn9678vz\\c_manual_review-claimant-result.png"
+      },
+      {
+        "case": "empty_file",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-bn9678vz\\empty_file.png"
+      },
+      {
+        "case": "wrong_type",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-bn9678vz\\wrong_type.png"
+      },
+      {
+        "case": "oversized",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-bn9678vz\\oversized.png"
+      },
+      {
+        "case": "corrupted_pdf",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-bn9678vz\\corrupted_pdf.png"
+      },
+      {
+        "case": "missing_settlement",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-bn9678vz\\missing_settlement.png"
+      }
+    ],
+    "screenshots_directory": "%TEMP%\\mediguard-claimant-screenshots-bn9678vz",
+    "failure": null
+  },
+  {
+    "run": 9,
+    "phase": "after_stable_wait_fix",
+    "command": "python -c run_claimant_browser_suite (from evaluation.claimant_browser)",
+    "captured_output": "C:\\Users\\prata\\AppData\\Local\\Temp\\1792833696500-copilot-tool-output-2180-c0975bde-7669-4987-b446-4ece97f46aa6.txt",
+    "captured_file_modified_local": "2026-10-24T14:51:36+05:30",
+    "numerator": 8,
+    "denominator": 8,
+    "pass": true,
+    "reviewer_refresh_passed": true,
+    "cases": [
+      {
+        "case": "a_match",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-qi6paufe\\a_match-claimant-result.png"
+      },
+      {
+        "case": "b_wrongful_deduction",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-qi6paufe\\b_wrongful_deduction-claimant-result.png"
+      },
+      {
+        "case": "c_manual_review",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-qi6paufe\\c_manual_review-claimant-result.png"
+      },
+      {
+        "case": "empty_file",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-qi6paufe\\empty_file.png"
+      },
+      {
+        "case": "wrong_type",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-qi6paufe\\wrong_type.png"
+      },
+      {
+        "case": "oversized",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-qi6paufe\\oversized.png"
+      },
+      {
+        "case": "corrupted_pdf",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-qi6paufe\\corrupted_pdf.png"
+      },
+      {
+        "case": "missing_settlement",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-qi6paufe\\missing_settlement.png"
+      }
+    ],
+    "screenshots_directory": "%TEMP%\\mediguard-claimant-screenshots-qi6paufe",
+    "failure": null
+  },
+  {
+    "run": 10,
+    "phase": "after_stable_wait_fix",
+    "command": "python -c run_claimant_browser_suite (from evaluation.claimant_browser)",
+    "captured_output": "C:\\Users\\prata\\AppData\\Local\\Temp\\1792833774888-copilot-tool-output-2180-b41bbf98-0f34-4226-a544-3346e836bd77.txt",
+    "captured_file_modified_local": "2026-10-24T14:52:54+05:30",
+    "numerator": 8,
+    "denominator": 8,
+    "pass": true,
+    "reviewer_refresh_passed": true,
+    "cases": [
+      {
+        "case": "a_match",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-j81low1x\\a_match-claimant-result.png"
+      },
+      {
+        "case": "b_wrongful_deduction",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-j81low1x\\b_wrongful_deduction-claimant-result.png"
+      },
+      {
+        "case": "c_manual_review",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-j81low1x\\c_manual_review-claimant-result.png"
+      },
+      {
+        "case": "empty_file",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-j81low1x\\empty_file.png"
+      },
+      {
+        "case": "wrong_type",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-j81low1x\\wrong_type.png"
+      },
+      {
+        "case": "oversized",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-j81low1x\\oversized.png"
+      },
+      {
+        "case": "corrupted_pdf",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-j81low1x\\corrupted_pdf.png"
+      },
+      {
+        "case": "missing_settlement",
+        "passed": true,
+        "result_shown": true,
+        "screenshot": "%TEMP%\\mediguard-claimant-screenshots-j81low1x\\missing_settlement.png"
+      }
+    ],
+    "screenshots_directory": "%TEMP%\\mediguard-claimant-screenshots-j81low1x",
+    "failure": null
+  }
+]

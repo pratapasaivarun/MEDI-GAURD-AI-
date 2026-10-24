@@ -243,7 +243,7 @@ def run_claimant_browser_suite() -> dict[str, Any]:
                 if case_name != "corrupted_pdf":
                     page.get_by_text("One or more files could not be saved", exact=False).wait_for(timeout=15000)
                 else:
-                    page.wait_for_timeout(1200)
+                    page.get_by_text("document(s) ready for assessment", exact=False).wait_for(timeout=15000)
                 body = page.locator("body").inner_text()
                 if case_name == "corrupted_pdf" and "document(s) ready for assessment" in body:
                     # It passes upload validation but must fail safely during extraction.

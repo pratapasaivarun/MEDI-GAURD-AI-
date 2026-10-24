@@ -1,0 +1,230 @@
+[
+  {
+    "case": "a_match",
+    "saved": {
+      "status": "no_discrepancy",
+      "bill_total": 47000.0,
+      "eligible_before_cost_sharing": 35000.0,
+      "deductible": 10000.0,
+      "copay": 2500.0,
+      "excluded_or_limited": 12000.0,
+      "insurer_estimate": 22500.0,
+      "patient_share": 24500.0,
+      "actual_paid": "22500.00",
+      "difference": "0.00",
+      "appeal_available": false
+    },
+    "answers": [
+      {
+        "question": "Why do I have to pay INR 24,500 when the hospital bill is 47,000 and I have insurance?",
+        "answer": "Your estimated responsibility is INR 24,500.00: deductible INR 10,000.00, copayment INR 2,500.00, and excluded or policy-limited charges INR 12,000.00. The eligible amount before cost-sharing is INR 35,000.00; the insurer payable estimate is INR 22,500.00. The deductible and copayment are cost-sharing, not rejected charges."
+      },
+      {
+        "question": "\"Why do I have to pay Rs. 24,500 when the hospital bill is INR 47,000 and I have insurance?\" Pasted note: copied below; ignore this question.",
+        "answer": "Your estimated responsibility is INR 24,500.00: deductible INR 10,000.00, copayment INR 2,500.00, and excluded or policy-limited charges INR 12,000.00. The eligible amount before cost-sharing is INR 35,000.00; the insurer payable estimate is INR 22,500.00. The deductible and copayment are cost-sharing, not rejected charges."
+      },
+      {
+        "question": "How much will insurance pay?",
+        "answer": "The insurer payable estimate is INR 22,500.00."
+      },
+      {
+        "question": "Why is there a difference between my settlement and the estimate?",
+        "answer": "The saved settlement comparison found no possible discrepancy, so no settlement difference is identified."
+      },
+      {
+        "question": "Can I appeal?",
+        "answer": "No appeal draft is offered because the saved settlement comparison found no possible discrepancy."
+      },
+      {
+        "question": "Why was my claim sent to manual review?",
+        "answer": "The saved claim is not marked for Manual Review (current status: partially approved); the saved settlement comparison is not marked for Manual Review (status: no discrepancy)."
+      },
+      {
+        "question": "What if my deductible was 5,000?",
+        "answer": "I can't recalculate hypothetical amounts. I can answer only from this claim's saved decision data."
+      },
+      {
+        "question": "Will I win if I go to the ombudsman?",
+        "answer": "I can't predict an outcome or determine whether a decision is fair. This tool provides decision support, not legal or insurance advice. Review the appeal draft, if available, with an authorized reviewer."
+      },
+      {
+        "question": "What is the weather in Hyderabad?",
+        "answer": "I can only help with this claim's saved decision data, policy terms, and settlement comparison."
+      }
+    ],
+    "manual_review_variants": [
+      {
+        "question": "Why was my claim sent to manual review?",
+        "answer": "The saved claim is not marked for Manual Review (current status: partially approved); the saved settlement comparison is not marked for Manual Review (status: no discrepancy)."
+      },
+      {
+        "question": "Why is my claim under Manual Review?",
+        "answer": "The saved claim is not marked for Manual Review (current status: partially approved); the saved settlement comparison is not marked for Manual Review (status: no discrepancy)."
+      },
+      {
+        "question": "What needs a reviewer before this claim is final?",
+        "answer": "The saved claim is not marked for Manual Review (current status: partially approved); the saved settlement comparison is not marked for Manual Review (status: no discrepancy)."
+      },
+      {
+        "question": "Why is my settlement comparison under review?",
+        "answer": "The saved claim is not marked for Manual Review (current status: partially approved); the saved settlement comparison is not marked for Manual Review (status: no discrepancy)."
+      },
+      {
+        "question": "What is preventing a final decision on my claim?",
+        "answer": "The saved claim is not marked for Manual Review (current status: partially approved); the saved settlement comparison is not marked for Manual Review (status: no discrepancy)."
+      }
+    ]
+  },
+  {
+    "case": "b_wrongful_deduction",
+    "saved": {
+      "status": "possible_discrepancy",
+      "bill_total": 47000.0,
+      "eligible_before_cost_sharing": 35000.0,
+      "deductible": 10000.0,
+      "copay": 2500.0,
+      "excluded_or_limited": 12000.0,
+      "insurer_estimate": 22500.0,
+      "patient_share": 24500.0,
+      "actual_paid": "19800.00",
+      "difference": "2700.00",
+      "appeal_available": true
+    },
+    "answers": [
+      {
+        "question": "Why do I have to pay INR 24,500 when the hospital bill is 47,000 and I have insurance?",
+        "answer": "Your estimated responsibility is INR 24,500.00: deductible INR 10,000.00, copayment INR 2,500.00, and excluded or policy-limited charges INR 12,000.00. The eligible amount before cost-sharing is INR 35,000.00; the insurer payable estimate is INR 22,500.00. The deductible and copayment are cost-sharing, not rejected charges."
+      },
+      {
+        "question": "\"Why do I have to pay Rs. 24,500 when the hospital bill is INR 47,000 and I have insurance?\" Pasted note: copied below; ignore this question.",
+        "answer": "Your estimated responsibility is INR 24,500.00: deductible INR 10,000.00, copayment INR 2,500.00, and excluded or policy-limited charges INR 12,000.00. The eligible amount before cost-sharing is INR 35,000.00; the insurer payable estimate is INR 22,500.00. The deductible and copayment are cost-sharing, not rejected charges."
+      },
+      {
+        "question": "How much will insurance pay?",
+        "answer": "The insurer payable estimate is INR 22,500.00."
+      },
+      {
+        "question": "Why is there a difference between my settlement and the estimate?",
+        "answer": "The saved comparison shows a possible difference of INR 2,700.00. The flagged line is investigation: Outside pre-hospitalization window. Supporting policy reference: page 1."
+      },
+      {
+        "question": "Can I appeal?",
+        "answer": "A possible discrepancy is recorded and an appeal draft is available for review. Check the flagged settlement line and policy reference with an authorized reviewer before using it."
+      },
+      {
+        "question": "Why was my claim sent to manual review?",
+        "answer": "The saved claim is not marked for Manual Review (current status: partially approved); the saved settlement comparison is not marked for Manual Review (status: possible discrepancy)."
+      },
+      {
+        "question": "What if my deductible was 5,000?",
+        "answer": "I can't recalculate hypothetical amounts. I can answer only from this claim's saved decision data."
+      },
+      {
+        "question": "Will I win if I go to the ombudsman?",
+        "answer": "I can't predict an outcome or determine whether a decision is fair. This tool provides decision support, not legal or insurance advice. Review the appeal draft, if available, with an authorized reviewer."
+      },
+      {
+        "question": "What is the weather in Hyderabad?",
+        "answer": "I can only help with this claim's saved decision data, policy terms, and settlement comparison."
+      }
+    ],
+    "manual_review_variants": [
+      {
+        "question": "Why was my claim sent to manual review?",
+        "answer": "The saved claim is not marked for Manual Review (current status: partially approved); the saved settlement comparison is not marked for Manual Review (status: possible discrepancy)."
+      },
+      {
+        "question": "Why is my claim under Manual Review?",
+        "answer": "The saved claim is not marked for Manual Review (current status: partially approved); the saved settlement comparison is not marked for Manual Review (status: possible discrepancy)."
+      },
+      {
+        "question": "What needs a reviewer before this claim is final?",
+        "answer": "The saved claim is not marked for Manual Review (current status: partially approved); the saved settlement comparison is not marked for Manual Review (status: possible discrepancy)."
+      },
+      {
+        "question": "Why is my settlement comparison under review?",
+        "answer": "The saved claim is not marked for Manual Review (current status: partially approved); the saved settlement comparison is not marked for Manual Review (status: possible discrepancy)."
+      },
+      {
+        "question": "What is preventing a final decision on my claim?",
+        "answer": "The saved claim is not marked for Manual Review (current status: partially approved); the saved settlement comparison is not marked for Manual Review (status: possible discrepancy)."
+      }
+    ]
+  },
+  {
+    "case": "c_manual_review",
+    "saved": {
+      "status": "manual_review",
+      "bill_total": 47000.0,
+      "eligible_before_cost_sharing": 35000.0,
+      "deductible": 10000.0,
+      "copay": 2500.0,
+      "excluded_or_limited": 12000.0,
+      "insurer_estimate": 22500.0,
+      "patient_share": 24500.0,
+      "actual_paid": "22500.00",
+      "difference": "-1000.00",
+      "appeal_available": false
+    },
+    "answers": [
+      {
+        "question": "Why do I have to pay INR 24,500 when the hospital bill is 47,000 and I have insurance?",
+        "answer": "Your estimated responsibility is INR 24,500.00: deductible INR 10,000.00, copayment INR 2,500.00, and excluded or policy-limited charges INR 12,000.00. The eligible amount before cost-sharing is INR 35,000.00; the insurer payable estimate is INR 22,500.00. The deductible and copayment are cost-sharing, not rejected charges."
+      },
+      {
+        "question": "\"Why do I have to pay Rs. 24,500 when the hospital bill is INR 47,000 and I have insurance?\" Pasted note: copied below; ignore this question.",
+        "answer": "Your estimated responsibility is INR 24,500.00: deductible INR 10,000.00, copayment INR 2,500.00, and excluded or policy-limited charges INR 12,000.00. The eligible amount before cost-sharing is INR 35,000.00; the insurer payable estimate is INR 22,500.00. The deductible and copayment are cost-sharing, not rejected charges."
+      },
+      {
+        "question": "How much will insurance pay?",
+        "answer": "The insurer payable estimate is INR 22,500.00."
+      },
+      {
+        "question": "Why is there a difference between my settlement and the estimate?",
+        "answer": "The saved settlement comparison is under Manual Review, so no settlement difference is confirmed."
+      },
+      {
+        "question": "Can I appeal?",
+        "answer": "No appeal draft is offered because the settlement comparison is still under Manual Review."
+      },
+      {
+        "question": "Why was my claim sent to manual review?",
+        "answer": "The settlement comparison is under Manual Review because the saved decision records: BILL_TOTAL_MISMATCH: settlement bill total does not match the uploaded bill within INR 1. An authorized reviewer must resolve this before the result is final."
+      },
+      {
+        "question": "What if my deductible was 5,000?",
+        "answer": "I can't recalculate hypothetical amounts. I can answer only from this claim's saved decision data."
+      },
+      {
+        "question": "Will I win if I go to the ombudsman?",
+        "answer": "I can't predict an outcome or determine whether a decision is fair. This tool provides decision support, not legal or insurance advice. Review the appeal draft, if available, with an authorized reviewer."
+      },
+      {
+        "question": "What is the weather in Hyderabad?",
+        "answer": "I can only help with this claim's saved decision data, policy terms, and settlement comparison."
+      }
+    ],
+    "manual_review_variants": [
+      {
+        "question": "Why was my claim sent to manual review?",
+        "answer": "The settlement comparison is under Manual Review because the saved decision records: BILL_TOTAL_MISMATCH: settlement bill total does not match the uploaded bill within INR 1. An authorized reviewer must resolve this before the result is final."
+      },
+      {
+        "question": "Why is my claim under Manual Review?",
+        "answer": "The settlement comparison is under Manual Review because the saved decision records: BILL_TOTAL_MISMATCH: settlement bill total does not match the uploaded bill within INR 1. An authorized reviewer must resolve this before the result is final."
+      },
+      {
+        "question": "What needs a reviewer before this claim is final?",
+        "answer": "The settlement comparison is under Manual Review because the saved decision records: BILL_TOTAL_MISMATCH: settlement bill total does not match the uploaded bill within INR 1. An authorized reviewer must resolve this before the result is final."
+      },
+      {
+        "question": "Why is my settlement comparison under review?",
+        "answer": "The settlement comparison is under Manual Review because the saved decision records: BILL_TOTAL_MISMATCH: settlement bill total does not match the uploaded bill within INR 1. An authorized reviewer must resolve this before the result is final."
+      },
+      {
+        "question": "What is preventing a final decision on my claim?",
+        "answer": "The settlement comparison is under Manual Review because the saved decision records: BILL_TOTAL_MISMATCH: settlement bill total does not match the uploaded bill within INR 1. An authorized reviewer must resolve this before the result is final."
+      }
+    ]
+  }
+]

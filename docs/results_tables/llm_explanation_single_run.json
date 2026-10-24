@@ -1,0 +1,193 @@
+{
+  "dataset": "samples/evaluation_cases/ground_truth.json (first 10 discrepancy cases)",
+  "synthetic_only": true,
+  "model": "ibm/granite4.1:8b",
+  "ollama_host": "http://localhost:11434",
+  "case_count": 10,
+  "check_count": 30,
+  "earned_checks": 23,
+  "score": 0.7666666666666667,
+  "results": [
+    {
+      "case": "discrepancy_01",
+      "status": "possible_discrepancy",
+      "possible_difference": "1000.00",
+      "expected_insurer_payment": "8100.00",
+      "actual_insurer_payment": "7100.00",
+      "supporting_clause": "Deductible: INR 1000",
+      "supporting_clause_page": 1,
+      "explanation": "The documents show a possible difference of INR 1,000.00. The deductible deduction of INR 2,000.00 is greater than the amount supported by the deterministic rules. The supporting clause is on page 1. Please ask an authorized reviewer to confirm the documents and calculation.",
+      "template_fallback_used": true,
+      "comparison_unchanged": true,
+      "checks": {
+        "correct_numbers": true,
+        "correct_clause_cited": true,
+        "no_unsupported_claim": true
+      },
+      "score": 3
+    },
+    {
+      "case": "discrepancy_02",
+      "status": "possible_discrepancy",
+      "possible_difference": "1000.00",
+      "expected_insurer_payment": "18000.00",
+      "actual_insurer_payment": "17000.00",
+      "supporting_clause": "Deductible: INR 0",
+      "supporting_clause_page": 1,
+      "explanation": "The documents show a possible difference of INR 1,000.00. The deductible deduction of INR 1,000.00 is greater than the amount supported by the deterministic rules. The supporting clause is on page 1. Please ask an authorized reviewer to confirm the documents and calculation.",
+      "template_fallback_used": true,
+      "comparison_unchanged": true,
+      "checks": {
+        "correct_numbers": true,
+        "correct_clause_cited": false,
+        "no_unsupported_claim": true
+      },
+      "score": 2
+    },
+    {
+      "case": "discrepancy_03",
+      "status": "possible_discrepancy",
+      "possible_difference": "1000.00",
+      "expected_insurer_payment": "14000.00",
+      "actual_insurer_payment": "13000.00",
+      "supporting_clause": "Deductible: INR 1000",
+      "supporting_clause_page": 1,
+      "explanation": "The health insurance settlement comparison reveals a discrepancy in the deductible category. The insurer deducted INR 2000 from the patient's share, while the policy clause specifies a deductible of INR 1000. Consequently, the insurer overdeducted by INR 1000, resulting in an actual patient share of INR 2000 instead of the expected INR 1000. The investigation category matches without discrepancies. The reason for the difference stems from the insurer's incorrect application of the deductible clause. Given the overdeduction, the policyholder should consider appealing the settlement to recover the excess amount of INR 1000. The appeal is warranted to align the settlement with the policy terms as outlined on page 1 of the policy document.",
+      "template_fallback_used": false,
+      "comparison_unchanged": true,
+      "checks": {
+        "correct_numbers": true,
+        "correct_clause_cited": true,
+        "no_unsupported_claim": true
+      },
+      "score": 3
+    },
+    {
+      "case": "discrepancy_04",
+      "status": "possible_discrepancy",
+      "possible_difference": "1000.00",
+      "expected_insurer_payment": "10000.00",
+      "actual_insurer_payment": "9000.00",
+      "supporting_clause": "Deductible: INR 2000",
+      "supporting_clause_page": 1,
+      "explanation": "The health insurance settlement comparison reveals a discrepancy between the expected and actual patient shares, resulting in an excess deduction. According to the policy clause under the 'DEDUCTIBLE' category, the deductible amount is INR 2000. However, the insurer deducted INR 3000 from the claim, exceeding the deductible by INR 1000. This excess deduction directly impacts the patient's share, increasing it from the expected INR 2000 to the actual INR 3000. The 'INVESTIGATION' category shows no discrepancy, as both the insurer's deduction and the engine's disallowance are zero, matching perfectly. Therefore, the policyholder should consider appealing the excess deduction to recover the INR 1000 overcharge, aligning the patient's share with the policy's deductible clause.",
+      "template_fallback_used": false,
+      "comparison_unchanged": true,
+      "checks": {
+        "correct_numbers": true,
+        "correct_clause_cited": false,
+        "no_unsupported_claim": true
+      },
+      "score": 2
+    },
+    {
+      "case": "discrepancy_05",
+      "status": "possible_discrepancy",
+      "possible_difference": "1000.00",
+      "expected_insurer_payment": "22500.00",
+      "actual_insurer_payment": "21500.00",
+      "supporting_clause": "Deductible: INR 5000",
+      "supporting_clause_page": 1,
+      "explanation": "The documents show a possible difference of INR 1,000.00. The deductible deduction of INR 6,000.00 is greater than the amount supported by the deterministic rules. The supporting clause is on page 1. Please ask an authorized reviewer to confirm the documents and calculation.",
+      "template_fallback_used": true,
+      "comparison_unchanged": true,
+      "checks": {
+        "correct_numbers": true,
+        "correct_clause_cited": false,
+        "no_unsupported_claim": true
+      },
+      "score": 2
+    },
+    {
+      "case": "discrepancy_06",
+      "status": "possible_discrepancy",
+      "possible_difference": "1000.00",
+      "expected_insurer_payment": "8000.00",
+      "actual_insurer_payment": "7000.00",
+      "supporting_clause": "Deductible: INR 0",
+      "supporting_clause_page": 1,
+      "explanation": "The documents show a possible difference of INR 1,000.00. The deductible deduction of INR 1,000.00 is greater than the amount supported by the deterministic rules. The supporting clause is on page 1. Please ask an authorized reviewer to confirm the documents and calculation.",
+      "template_fallback_used": true,
+      "comparison_unchanged": true,
+      "checks": {
+        "correct_numbers": true,
+        "correct_clause_cited": false,
+        "no_unsupported_claim": true
+      },
+      "score": 2
+    },
+    {
+      "case": "discrepancy_07",
+      "status": "possible_discrepancy",
+      "possible_difference": "1000.00",
+      "expected_insurer_payment": "16000.00",
+      "actual_insurer_payment": "15000.00",
+      "supporting_clause": "Deductible: INR 5000",
+      "supporting_clause_page": 1,
+      "explanation": "The documents show a possible difference of INR 1,000.00. The deductible deduction of INR 6,000.00 is greater than the amount supported by the deterministic rules. The supporting clause is on page 1. Please ask an authorized reviewer to confirm the documents and calculation.",
+      "template_fallback_used": true,
+      "comparison_unchanged": true,
+      "checks": {
+        "correct_numbers": true,
+        "correct_clause_cited": false,
+        "no_unsupported_claim": true
+      },
+      "score": 2
+    },
+    {
+      "case": "discrepancy_08",
+      "status": "possible_discrepancy",
+      "possible_difference": "1000.00",
+      "expected_insurer_payment": "27000.00",
+      "actual_insurer_payment": "26000.00",
+      "supporting_clause": "Deductible: INR 10000",
+      "supporting_clause_page": 1,
+      "explanation": "The settlement comparison reveals a discrepancy in the deductible category. The insurer deducted INR 11,000 from the patient's share, while the engine's calculation only disallowed INR 10,000 based on the policy clause 'Deductible: INR 10,000' (page 1). This results in an excess deduction of INR 1,000 (actual patient share INR 14,000 vs. expected INR 13,000). The COPAY and INVESTIGATION categories match without discrepancies. The policyholder should consider appealing the excess deduction of INR 1,000 to align the settlement with the policy clause.",
+      "template_fallback_used": false,
+      "comparison_unchanged": true,
+      "checks": {
+        "correct_numbers": true,
+        "correct_clause_cited": true,
+        "no_unsupported_claim": true
+      },
+      "score": 3
+    },
+    {
+      "case": "discrepancy_09",
+      "status": "possible_discrepancy",
+      "possible_difference": "1000.00",
+      "expected_insurer_payment": "13500.00",
+      "actual_insurer_payment": "12500.00",
+      "supporting_clause": "Deductible: INR 3000",
+      "supporting_clause_page": 1,
+      "explanation": "The documents show a possible difference of INR 1,000.00. The deductible deduction of INR 4,000.00 is greater than the amount supported by the deterministic rules. The supporting clause is on page 1. Please ask an authorized reviewer to confirm the documents and calculation.",
+      "template_fallback_used": true,
+      "comparison_unchanged": true,
+      "checks": {
+        "correct_numbers": true,
+        "correct_clause_cited": false,
+        "no_unsupported_claim": true
+      },
+      "score": 2
+    },
+    {
+      "case": "discrepancy_10",
+      "status": "possible_discrepancy",
+      "possible_difference": "1000.00",
+      "expected_insurer_payment": "40500.00",
+      "actual_insurer_payment": "39500.00",
+      "supporting_clause": "Deductible: INR 5000",
+      "supporting_clause_page": 1,
+      "explanation": "The documents show a possible difference of INR 1,000.00. The deductible deduction of INR 6,000.00 is greater than the amount supported by the deterministic rules. The supporting clause is on page 1. Please ask an authorized reviewer to confirm the documents and calculation.",
+      "template_fallback_used": true,
+      "comparison_unchanged": true,
+      "checks": {
+        "correct_numbers": true,
+        "correct_clause_cited": false,
+        "no_unsupported_claim": true
+      },
+      "score": 2
+    }
+  ],
+  "evaluation_type": "live LLM, single run, variable"
+}

@@ -10,6 +10,16 @@
 
 MediGuard AI compares an insurer's settlement with an estimate calculated from a hospital bill and policy. It flags deductions that may not agree with the policy evidence. Python rules decide every amount and status; an optional local language model only explains a completed result. This is a college prototype using fictional samples, not a system for deciding real claims. **Synthetic fictional data only: never upload real patient information.**
 
+## One-command demo
+
+After installing the Python dependencies and Ollama, run this from Windows PowerShell:
+
+```powershell
+.\run_demo.ps1
+```
+
+The launcher starts the local Ollama service when needed, starts the isolated Streamlit demo, and opens the app plus a browser catalog for the three fictional cases. The catalog links to each case's bill, policy, and settlement PDFs for upload. Ollama must already have the configured model installed; the launcher does not download models. Close the Streamlit process when finished.
+
 ## Screenshots
 
 These are screenshots of the running Streamlit demo with fictional sample data. The browser viewport is 1440 × 900; no browser chrome is included.
@@ -96,6 +106,13 @@ All case documents are fictional and labeled **FICTIONAL SAMPLE**.
 | `a_match` | No discrepancy; no appeal draft. |
 | `b_wrongful_deduction` | INR 3,000 investigation deduction; possible discrepancy of INR 2,700; provisional appeal draft offered. |
 | `c_manual_review` | Manual review because a scanned bill page and settlement total mismatch need attention; no appeal draft. |
+
+## Known limitations
+
+- Before reviewer confirmation, status agreement is 6/30 because conservative routing sends uncertain cases to Manual Review.
+- The category prototype gate scored 0/27 and remains disabled.
+- A previously mentioned 43-case baseline was removed from the paper/results because its source could not be found.
+- Live LLM output varies; no seed is configured. Amounts and statuses remain deterministic and independent of that output.
 
 ## Evaluation results
 
